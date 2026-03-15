@@ -17,15 +17,11 @@
 
 #include "managers/ConnectionManager.hpp"
 #include "requests/ConnectionRequest.hpp"
-#include "util/util.hpp"
 #include "api/ApiClient.hpp"
 
 #include <QGraphicsItem>
 #include <QDebug>
-#include <qdebug.h>
-#include <qgraphicsitem.h>
 #include <algorithm>
-#include <qjsonobject.h>
 
 ConnectionManager::ConnectionManager(QObject* parent): 
     QObject(parent)
@@ -110,7 +106,7 @@ void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){
 }
 
 void ConnectionManager::sendConnectionApiRequest(ConnectionRequest req){
-    auto obj = Util::nlohmannToQJsonObject(req);
+    auto obj = req ;
     ApiClient::instance()->sendMessage(obj);
 }
 
@@ -122,16 +118,16 @@ bool ConnectionManager::connectionExists(ConnectionRequest request) const {
     return it != connections_.end() ;
 }
 
-void ConnectionManager::onApiDataReceived(const QJsonObject &json){
-    QString action = json["action"].toString();
-    bool success = json["status"].toString() == "success" ;
+void ConnectionManager::onApiDataReceived(const json& msg){
+    QString action = QString::fromStdString(msg.at("action")) ;
+    bool success = msg.at("status") == "success" ;
 
     // handle any kind of connection request. Any other api actions should be handled above this one
     if ( ! success ) return ;
 
     ConnectionRequest req ;
     try {
-        req = Util::QJsonObjectToNlohmann(json);
+        req = msg ;
     } catch (std::exception& e){
         return ;
     }

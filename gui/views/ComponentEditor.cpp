@@ -20,7 +20,6 @@
 
 #include "app/Theme.hpp"
 
-#include <QJsonObject>
 #include <QEvent>
 #include <QCloseEvent>
 #include <QBoxLayout>

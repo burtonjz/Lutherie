@@ -22,10 +22,6 @@
 #include "requests/CollectionRequest.hpp"
 
 #include <nlohmann/json.hpp>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <qjsondocument.h>
 #include <qpainter.h>
 
 PianoRollWidget::PianoRollWidget(ComponentModel* model, QWidget* parent):

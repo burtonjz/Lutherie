@@ -77,6 +77,8 @@ public:
     void createGroup(const std::vector<int> componentIds);
     void appendToGroup(int groupId, const std::vector<int> componentIds);
     void removeGroup(int groupId);
+
+    json serialize() const ;
     
 private:
     // on api response
@@ -84,10 +86,10 @@ private:
     void removeComponent(int componentId);
 
     CollectionWidget* getCollectionWidget(ComponentParameters* params) const ;
-    bool handleCollectionApiResponse(const QJsonObject &json);
+    bool handleCollectionApiResponse(const json& msg);
 
 public slots:
-    void onApiDataReceived(const QJsonObject &json);
+    void onApiDataReceived(const json& msg);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onCollectionEdited(CollectionRequest req );
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);

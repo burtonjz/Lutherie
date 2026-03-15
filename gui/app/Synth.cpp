@@ -22,27 +22,17 @@
 #include "types/ComponentType.hpp"
 #include "config/Config.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
+#include "graphics/ToastNotification.hpp"
 #include "app/Theme.hpp"
+
+#include <QStandardItemModel>
+#include <QCloseEvent>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QWindow>
 
 #include "ui_Synth.h"
 
-
-#include <QWindow>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QJsonDocument>
-#include <QStandardItemModel>
-#include <QStandardItem>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <qaction.h>
-#include <qcombobox.h>
-#include <qevent.h>
-#include <qjsonobject.h>
-#include <qkeysequence.h>
-#include <qmessagebox.h>
-#include <qobject.h>
 
 Synth::Synth(ModuleContext ctx, QWidget* parent):
     QMainWindow(parent),
@@ -170,12 +160,12 @@ void Synth::onApiConnected(){
 
 }
 
-void Synth::onApiDataReceived(const QJsonObject &json){
-    QString action = json["action"].toString();
+void Synth::onApiDataReceived(const json& j){
+    QString action = QString::fromStdString(j["action"]);
 
     if ( action == "set_state" ){
-        QString state = json["state"].toString();
-        if ( json["status"] != "success"){
+        QString state = QString::fromStdString(j["state"]);
+        if ( j["status"] != "success"){
             qDebug() << "request to set state was unsuccessful." ;
             return ;
         }
@@ -190,12 +180,12 @@ void Synth::onApiDataReceived(const QJsonObject &json){
     }
 
     if ( action == "get_configuration" ){
-        if ( json["status"] != "success" ){
+        if ( j["status"] != "success" ){
             qDebug() << "request to get configuration data failed." ;
             return ;
         }
 
-        saveData_ = json["data"].toObject() ;
+        saveData_ = j["data"] ;
         performSave();
     }
 }
@@ -217,15 +207,15 @@ void Synth::onSetupButtonClicked(){
 
 void Synth::onStartStopButtonClicked(){
     if ( ctx_.state->isRunning()){
-        QJsonObject obj ;
-        obj["action"] = "set_state" ;
-        obj["state"] = "stop" ;
-        ApiClient::instance()->sendMessage(obj);
+        json j ;
+        j["action"] = "set_state" ;
+        j["state"] = "stop" ;
+        ApiClient::instance()->sendMessage(j);
     } else {
-        QJsonObject obj ;
-        obj["action"] = "set_state" ;
-        obj["state"] = "run" ;
-        ApiClient::instance()->sendMessage(obj);
+        json j ;
+        j["action"] = "set_state" ;
+        j["state"] = "run" ;
+        ApiClient::instance()->sendMessage(j);
     }
 }
 
@@ -263,36 +253,25 @@ void Synth::onActionLoad(){
     
     QFile file(filePath);
     if ( !file.open(QIODevice::ReadOnly | QIODevice::Text) ) {
-        QMessageBox::warning(
-            this,
-            tr("Error"),
-            tr("Could not open file: %1").arg(file.errorString()));
+        ToastNotification::show(graph_->scene(), graph_,
+            "Filed to open file " + filePath + ": " + file.errorString()
+        );
         return;
     }
     
     QByteArray fileData = file.readAll();
     file.close();
     
-    QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(fileData, &parseError);
-    
-    if (parseError.error != QJsonParseError::NoError) {
-        QMessageBox::warning(
-            this,
-            tr("Parse Error"), 
-            tr("JSON parse error: %1").arg(parseError.errorString()));
-        return;
+    try {
+        saveData_ = json::parse(fileData.data());
+        saveFilePath_ = filePath ;
+    } catch (std::exception& e ){
+        ToastNotification::show(graph_->scene(), graph_, 
+            "Failed to load file " + filePath + ". Invalid json: " + e.what()
+        );
+        return ;
     }
     
-    if (!doc.isObject()) {
-        QMessageBox::warning(this, tr("Error"), 
-                           tr("JSON file does not contain an object"));
-        return;
-    }
-    
-    saveData_ = doc.object();
-    saveFilePath_ = filePath ;
-
     // send API request
     saveData_["action"] = "load_configuration" ;
     ApiClient::instance()->sendMessage(saveData_);
@@ -302,9 +281,9 @@ void Synth::onActionSave(){
     if (saveFilePath_.isEmpty()){
         onActionSaveAs();
     } else {
-        QJsonObject obj ;
-        obj["action"] = "get_configuration" ;
-        ApiClient::instance()->sendMessage(obj);
+        json j ;
+        j["action"] = "get_configuration" ;
+        ApiClient::instance()->sendMessage(j);
     }
 }
 
@@ -321,9 +300,9 @@ void Synth::onActionSaveAs(){
             filePath.append(".json");
         }
         saveFilePath_ = filePath ;
-        QJsonObject obj ;
-        obj["action"] = "get_configuration" ;
-        ApiClient::instance()->sendMessage(obj);
+        json j ;
+        j["action"] = "get_configuration" ;
+        ApiClient::instance()->sendMessage(j);
     }
 }
 
@@ -336,8 +315,8 @@ void Synth::performSave(){
         return ;
     }
 
-    QJsonDocument doc(saveData_);
-    file.write(doc.toJson(QJsonDocument::Indented));
+    QByteArray data = saveData_.dump(2).c_str();
+    file.write(data);
     file.close();
     qDebug() << "file" << saveFilePath_ << "saved." ; 
     setWindowModified(false);

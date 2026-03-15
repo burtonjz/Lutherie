@@ -20,7 +20,6 @@
 #include "app/Theme.hpp"
 #include "graphics/GroupNode.hpp"
 #include "managers/ConnectionManager.hpp"
-#include "util/util.hpp"
 #include "graphics/GraphNode.hpp"
 #include "graphics/SocketWidget.hpp"
 #include "graphics/ComponentNode.hpp"
@@ -42,17 +41,6 @@
 #include <QToolTip>
 #include <QMenu>
 #include <QLineEdit>
-
-#include <QJsonObject>
-#include <QJsonArray>
-#include <qdebug.h>
-#include <qevent.h>
-#include <qgraphicsitem.h>
-#include <qgraphicsscene.h>
-#include <qjsonobject.h>
-#include <qlogging.h>
-#include <qnamespace.h>
-#include <qvarlengtharray.h>
 
 GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
@@ -254,36 +242,31 @@ GroupNode* GraphPanel::getGroupNode(int groupId) const {
     return nullptr ;
 }
 
-QJsonArray GraphPanel::getComponentPositions() const {
-    QJsonArray positions ;
+json GraphPanel::getComponentPositions() const {
+    json positions ;
     for ( auto n : nodes_ ){
         auto component = dynamic_cast<ComponentNode*>(n);
         if ( component ){
             auto pos = component->pos();
-            positions.append(QJsonObject{
-                {"ComponentId", component->getModel()->getId()},
-                {"xpos", pos.x()},
-                {"ypos", pos.y()}
-            });
+            json cObj ;
+            cObj["componentId"] = component->getModel()->getId();
+            cObj["xpos"] = pos.x() ;
+            cObj["ypos"] = pos.y() ;
+            positions.push_back(cObj);
         }
     }
     return positions ;
 }
 
-void GraphPanel::loadConnection(const QJsonObject& request){
-    ConnectionRequest conn = Util::QJsonObjectToNlohmann(request) ;
+void GraphPanel::loadConnection(const json& request){
+    ConnectionRequest conn = request ;
 }
 
-void GraphPanel::loadPositions(const QJsonObject& request){
-    // Loop through each position object
-    auto positions = request["positions"].toArray();
-
-    for (const QJsonValue& value : positions) {
-        QJsonObject posObj = value.toObject();
-        
-        int componentID = posObj["ComponentId"].toInt();
-        int xpos = posObj["xpos"].toInt();
-        int ypos = posObj["ypos"].toInt();
+void GraphPanel::loadPositions(const json& request){
+    for ( const auto& p : request.at("positions") ) {        
+        int componentID = p.at("componentId");
+        int xpos = p.at("xpos");
+        int ypos = p.at("ypos");
         
         auto n = getComponentNode(componentID);
         if ( n ){
@@ -702,11 +685,11 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
 
 }
 
-void GraphPanel::onApiDataReceived(const QJsonObject& json){
-    QString action = json["action"].toString();
+void GraphPanel::onApiDataReceived(const json& json){
+    QString action = QString::fromStdString(json["action"]) ;
 
     if ( action == "load_configuration" ){
-        if ( json["status"] == "success"){
+        if ( json.at("status") == "success"){
             loadPositions(json);
         }
     }

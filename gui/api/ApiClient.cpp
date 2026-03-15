@@ -44,12 +44,11 @@ void ApiClient::connectToBackend(){
     socket->connectToHost(serverAddress, serverPort );
 }
 
-void ApiClient::sendMessage(const QJsonObject &msg){
-    QJsonDocument doc(msg);
-    QByteArray data = doc.toJson(QJsonDocument::Compact) + "\n" ;
-    qInfo() << "Sending Message:" << data ;
+void ApiClient::sendMessage(const json& j){
+    QByteArray msg = QByteArray::fromStdString(j.dump()) + "\n" ;
+    qInfo() << "Sending Message:" << msg ;
     if ( socket->state() == QAbstractSocket::ConnectedState ){
-        socket->write(data);
+        socket->write(msg);
     }
 }
 
@@ -58,20 +57,19 @@ void ApiClient::sendMessage(const QJsonObject &msg){
 void ApiClient::onReadyRead() {
     buffer.append(socket->readAll());
 
-    while (true){
-        int endMessageIndex = buffer.indexOf('\n');
-        if ( endMessageIndex == -1 )  break ;
+    while (true) {
+        int idxEnd = buffer.indexOf('\n');
+        if ( idxEnd == -1 ) break ;
 
-        QByteArray line = buffer.left(endMessageIndex);
-        buffer.remove(0, endMessageIndex + 1);
+        QByteArray line = buffer.left(idxEnd);
+        buffer.remove(0, idxEnd + 1);
 
-        QJsonParseError err ;
-        QJsonDocument doc = QJsonDocument::fromJson(line, &err);
-        if ( err.error == QJsonParseError::NoError && doc.isObject() ){
-            qDebug() << "Api Response Received" << doc.object() ;
-            emit dataReceived(doc.object());
-        } else {
-            qWarning() << "Invalid JSON received:" << line ;
+        try {
+            json j = json::parse(line.constData(), line.constData() + line.size());
+            qDebug() << "Api Response Received:" << line;
+            emit dataReceived(j);
+        } catch (const json::parse_error& e) {
+            qWarning() << "Invalid JSON received:" << line << "-" << e.what();
         }
     }
 }

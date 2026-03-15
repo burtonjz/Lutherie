@@ -21,8 +21,9 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QAbstractSocket>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json ;
 
 class ApiClient : public QObject
 {
@@ -42,12 +43,12 @@ public:
     ApiClient& operator=(ApiClient&&) = delete ;
 
     void connectToBackend();
-    void sendMessage(const QJsonObject &obj);
+    void sendMessage(const json& j);
 
 signals:
     void connected();
     void disconnected();
-    void dataReceived(const QJsonObject &msg);
+    void dataReceived(const json& j);
     void errorOccurred(const QString &error);
 
 private slots:

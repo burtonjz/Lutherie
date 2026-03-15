@@ -22,6 +22,9 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json ;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {class AudioMidiSetupWidget;}
@@ -34,14 +37,14 @@ public:
     Setup(ModuleContext ctx, QWidget *parent = nullptr);
     ~Setup();
 
-    void populateSetupComboBox(QComboBox* box, QJsonValue data);
+    void populateSetupComboBox(QComboBox* box, const json& data);
 
 private:
     Ui::AudioMidiSetupWidget* ui_ ;
     ModuleContext ctx_ ;
 
 private slots:
-    void onApiDataReceived(const QJsonObject& json);
+    void onApiDataReceived(const json& json);
     void onSetupSubmit();
     void onSetupCompleted();
 

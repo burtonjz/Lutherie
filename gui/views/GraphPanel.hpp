@@ -21,8 +21,7 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QPointer>
-#include <QJsonArray>
-#include <qjsonobject.h>
+#include <QJsonObject>
 #include <vector>
 
 #include "interfaces/ISocketLookup.hpp"
@@ -60,10 +59,10 @@ public:
     void addAudioOutput();
     void addMidiInput();
     
-    QJsonArray getComponentPositions() const ;
+    json getComponentPositions() const ;
 
-    void loadConnection(const QJsonObject& request); 
-    void loadPositions(const QJsonObject& request);
+    void loadConnection(const json& request); 
+    void loadPositions(const json& request);
 
     ComponentNode* getComponentNode(int componentId) const ;
     GroupNode* getGroupNode(int groupId) const ;
@@ -108,7 +107,7 @@ private:
     bool isNodeNameAvailable(const QString& name, GraphNode* target = nullptr) const ;
 
 private slots:
-    void onApiDataReceived(const QJsonObject &json);
+    void onApiDataReceived(const json& json);
     
 public  slots:
     // from parent

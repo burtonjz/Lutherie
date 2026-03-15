@@ -18,7 +18,6 @@
 #include "managers/ComponentManager.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "api/ApiClient.hpp"
-#include "util/util.hpp"
 
 ComponentManager::ComponentManager(QObject* parent):
     QObject(parent),
@@ -41,52 +40,52 @@ ComponentManager::~ComponentManager(){
 }
 
 void ComponentManager::requestAddComponent(ComponentType type){
-    QJsonObject obj ;
+    json j ;
     auto descriptor = ComponentRegistry::getComponentDescriptor(type);
 
-    obj["action"] = "add_component" ;
-    obj["name"] = QString::fromStdString(descriptor.name) ;
-    obj["type"] = static_cast<int>(type);
-    ApiClient::instance()->sendMessage(obj); 
+    j["action"] = "add_component" ;
+    j["name"] = descriptor.name ;
+    j["type"] = static_cast<int>(type);
+    ApiClient::instance()->sendMessage(j); 
 }
 
 void ComponentManager::requestRemoveComponent(int componentId){    
-    QJsonObject obj ;
-    obj["action"] = "remove_component" ;
-    obj["componentId"] = componentId ;
-    ApiClient::instance()->sendMessage(obj);
+    json j ;
+    j["action"] = "remove_component" ;
+    j["componentId"] = componentId ;
+    ApiClient::instance()->sendMessage(j);
 }
 
 void ComponentManager::requestParameterUpdate(int componentId, ParameterType p, ParameterValue v){
-    QJsonObject obj ;
-    obj["action"] = "set_parameter" ;
-    obj["componentId"] = componentId ;
-    obj["parameter"] = static_cast<int>(p);
-    obj["value"] = QVariant::fromStdVariant(v).toJsonValue();
+    json j ;
+    j["action"] = "set_parameter" ;
+    j["componentId"] = componentId ;
+    j["parameter"] = static_cast<int>(p);
+    j["value"] = ParameterValueToJson(v) ;
     
-    ApiClient::instance()->sendMessage(obj); 
+    ApiClient::instance()->sendMessage(j); 
 }
 
 void ComponentManager::requestCollectionUpdate(CollectionRequest req){
-    QJsonObject obj = Util::nlohmannToQJsonObject(req);
+    json obj = req ;
     ApiClient::instance()->sendMessage(obj); 
 }
 
 void ComponentManager::requestModulationDepthUpdate(int componentId, ParameterType p, double depth){
-    QJsonObject obj ;
+    json obj ;
     obj["action"] = "set_modulation_depth" ;
     obj["componentId"] = componentId ;
-    obj["parameter"] = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    obj["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p, name);
     obj["depth"] = depth ;
 
     ApiClient::instance()->sendMessage(obj);
 }
 
 void ComponentManager::requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy){
-    QJsonObject obj ;
+    json obj ;
     obj["action"] = "set_modulation_strategy" ;
     obj["componentId"] = componentId ;
-    obj["parameter"] = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    obj["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p, name);
     obj["strategy"] = static_cast<int>(strategy) ;
 
     ApiClient::instance()->sendMessage(obj);
@@ -292,6 +291,10 @@ void ComponentManager::removeGroup(int groupId){
     modEditor->deleteLater();
 }
 
+json ComponentManager::serialize() const {
+
+}
+
 void ComponentManager::addComponent(int componentId, ComponentType type){
     auto model = new ComponentModel(componentId, type);
     models_[componentId] = model ;
@@ -367,7 +370,7 @@ CollectionWidget* ComponentManager::getCollectionWidget(ComponentParameters* par
     return cw ;
 }
 
-bool ComponentManager::handleCollectionApiResponse(const QJsonObject &json){
+bool ComponentManager::handleCollectionApiResponse(const json& msg){
     // note: there is no centralized model for managing Collections. So we will 
     // instead break the pattern here and only do this for specialized widget stored
     // in the component editor. 
@@ -376,7 +379,7 @@ bool ComponentManager::handleCollectionApiResponse(const QJsonObject &json){
     // that we don't eat up the wrong types of request
     CollectionRequest req ;
     try {
-        req = Util::QJsonObjectToNlohmann(json);
+        req = msg ;
     } catch (std::exception& e){
         return false ;
     }
@@ -397,25 +400,25 @@ bool ComponentManager::handleCollectionApiResponse(const QJsonObject &json){
 }
 
 
-void ComponentManager::onApiDataReceived(const QJsonObject &json){
-    QString action = json["action"].toString();
-    bool success = json["status"] == "success" ;
+void ComponentManager::onApiDataReceived(const json& msg){
+    QString action = QString::fromStdString(msg["action"]);
+    bool success = msg.at("status") == "success" ;
 
     if ( action == "add_component" && success ){
-        int id = json["componentId"].toInt();
-        ComponentType type = static_cast<ComponentType>(json["type"].toInt());
+        int id = msg.at("componentId");
+        ComponentType type = static_cast<ComponentType>(msg.at("type"));
         addComponent(id, type);
         return ;
     }
 
     if ( action == "remove_component" && success ){
-        int id = json["componentId"].toInt();
+        int id = msg.at("componentId") ;
         removeComponent(id);
         return ;
     }
 
     if ( action == "set_component_parameter" && success ){
-        int id = json["componentId"].toInt();
+        int id = msg.at("componentId");
         auto it = models_.find(id);
         if ( it == models_.end() ){
             qWarning() << "Could not find model with Component ID" << id 
@@ -423,15 +426,14 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
             return ;
         }
 
-        ParameterType p = static_cast<ParameterType>(json["parameter"].toInt());
+        ParameterType p = static_cast<ParameterType>(msg.at("parameter"));
         
         // dispatch to set parameter value with correct variant
-        ParameterValue v ;
-        auto j = Util::QJsonObjectToNlohmann(json) ;
+        ParameterValue v ; 
         switch(p){
         #define X(name) \
         case ParameterType::name: \
-            v = static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(j["value"]); \
+            v = static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(msg["value"]); \
             break ; 
         PARAMETER_TYPE_LIST
         #undef X     
@@ -443,7 +445,7 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
     }
 
     if ( action == "set_modulation_depth" && success ){
-        int id = json["componentId"].toInt();
+        int id = msg["componentId"];
         auto it = models_.find(id);
         if ( it == models_.end() ){
             qWarning() << "Could not find model with Component ID" << id 
@@ -451,7 +453,7 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
             return ;
         }
 
-        ParameterType p = parameterFromString(json["parameter"].toString().toStdString());
+        ParameterType p = parameterFromString(msg.at("parameter"));
         ModulationModel* m = it->second->getModulationModel(p);
         if ( !m ){
             qWarning() << "Could not find Modulation Model for Parameter " 
@@ -460,12 +462,12 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
             return ;
         }
 
-        m->setDepth(json["depth"].toDouble());
+        m->setDepth(msg.at("depth"));
         return ;
     }
 
     if ( action == "set_modulation_strategy" && success ){
-        int id = json["componentId"].toInt();
+        int id = msg.at("componentId");
         auto it = models_.find(id);
         if ( it == models_.end() ){
             qWarning() << "Could not find model with Component ID" << id 
@@ -473,7 +475,7 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
             return ;
         }
 
-        ParameterType p = parameterFromString(json["parameter"].toString().toStdString());
+        ParameterType p = parameterFromString(msg.at("parameter"));
         ModulationModel* m = it->second->getModulationModel(p);
         if ( !m ){
             qWarning() << "Could not find Modulation Model for Parameter " 
@@ -482,11 +484,11 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
             return ;
         }
 
-        m->setStrategy(static_cast<ModulationStrategy>(json["strategy"].toInt()));
+        m->setStrategy(static_cast<ModulationStrategy>(msg.at("strategy")));
         return ;
     }
 
-    if ( success && handleCollectionApiResponse(json) ){
+    if ( success && handleCollectionApiResponse(msg) ){
         return ;
     }
 }

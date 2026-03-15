@@ -137,7 +137,6 @@ class ParameterMap {
         }
 
     private:
-        static json ParameterValueToJson(const ParameterValue& v);
         void modulateParameter(ParameterType typ);
 
         template<typename T>

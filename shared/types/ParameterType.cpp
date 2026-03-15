@@ -17,6 +17,14 @@
 
 #include "types/ParameterType.hpp"
 
+json ParameterValueToJson(const ParameterValue& v){
+    return std::visit([](auto&& v) -> json {
+        if constexpr ( std::is_same_v<std::decay_t<decltype(v)>, uint8_t> ){
+            return static_cast<int>(v);
+        } else return v ;
+    }, v);
+}
+
 ParameterType parameterFromString(std::string str) {
     static const std::unordered_map<std::string, ParameterType> str2Type = {
         #define X(NAME) {ParameterTraits<ParameterType::NAME>::name, ParameterType::NAME},

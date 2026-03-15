@@ -271,14 +271,6 @@ void ParameterMap::fromJson(const json& j){
     }
 }
 
-json ParameterMap::ParameterValueToJson(const ParameterValue& v){
-    return std::visit([](auto&& v) -> json {
-        if constexpr ( std::is_same_v<std::decay_t<decltype(v)>, uint8_t> ){
-            return static_cast<int>(v);
-        } else return v ;
-    }, v);
-}
-
 void ParameterMap::modulateParameter(ParameterType typ){
     auto p = getParameter(typ);
     auto r = reference_.find(typ);

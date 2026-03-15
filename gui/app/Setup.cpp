@@ -20,11 +20,6 @@
 #include "api/ApiClient.hpp"
 #include "ui_Setup.h"
 
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QJsonDocument>
-
 Setup::Setup(ModuleContext ctx, QWidget* parent): 
     QWidget(parent),
     ui_(new Ui::AudioMidiSetupWidget),
@@ -34,11 +29,11 @@ Setup::Setup(ModuleContext ctx, QWidget* parent):
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Setup::onApiDataReceived);
 
     // ask backend for relevant data
-    QJsonObject obj ;
-    obj["action"] = "get_audio_devices" ;
-    ApiClient::instance()->sendMessage(obj);
-    obj["action"] = "get_midi_devices" ;
-    ApiClient::instance()->sendMessage(obj); 
+    json j ;
+    j["action"] = "get_audio_devices" ;
+    ApiClient::instance()->sendMessage(j);
+    j["action"] = "get_midi_devices" ;
+    ApiClient::instance()->sendMessage(j); 
 
     ui_->setupUi(this);
 
@@ -52,46 +47,42 @@ Setup::~Setup()
     delete ui_;
 }
 
-void Setup::populateSetupComboBox(QComboBox* box, QJsonValue data){
-    if (!data.isArray()){
-        qWarning() << "Expected 'data' to be a JSON array, but is" << data ;
+void Setup::populateSetupComboBox(QComboBox* box, const json& data){
+    if ( !data.is_array() ){
+        qWarning() << "data is not in expected format. Exiting." ;
         return ;
     }
 
-    QJsonArray dataArray = data.toArray();
-
     box->clear();
-
-    for ( const QJsonValue &dev : dataArray ){
-        if ( !dev.isArray()  ){
-            qWarning() << "Expected array elements to be arrays, but object is " << dev ;
+    for ( const auto& item : data ){
+        if ( ! item.is_array()  ){
+            qWarning() << "Expected array elements to be arrays" ;
+            continue ;
         }
-        QJsonArray info = dev.toArray();
 
-        int deviceID = info.at(0).toInt();
-        QString deviceName = info.at(1).toString();
-
+        int deviceID = item.at(0);
+        QString deviceName = QString::fromStdString(item.at(1)) ;
         QString displayText = QString("(%1) %2").arg(deviceID).arg(deviceName);
         box->addItem(displayText, deviceID);
     }
 }
 
 
-void Setup::onApiDataReceived(const QJsonObject &json){
-    QString action = json["action"].toString();
+void Setup::onApiDataReceived(const json& json){
+    QString action = QString::fromStdString(json["action"]);
 
     if ( action == "get_audio_devices" ){
-        populateSetupComboBox(ui_->comboAudioDevice, json.value("data"));
+        populateSetupComboBox(ui_->comboAudioDevice, json.at("data"));
         return ;
     }
 
     if ( action == "get_midi_devices" ){
-        populateSetupComboBox(ui_->comboMidiDevice, json.value("data"));
+        populateSetupComboBox(ui_->comboMidiDevice, json.at("data"));
         return ;
     }
 
     if ( action == "set_audio_device" ){
-        QString status = json["status"].toString();
+        QString status = QString::fromStdString(json["status"]);
         qDebug() << "set_audio_device return state:" << status ;
         if ( status == "success" ){
             ctx_.state->setSetupAudioComplete(true);
@@ -100,7 +91,7 @@ void Setup::onApiDataReceived(const QJsonObject &json){
     }
 
     if ( action == "set_midi_device" ){
-        QString status = json["status"].toString();
+        QString status = QString::fromStdString(json["status"]);
         qDebug() << "set_midi_device return state:" << status ;
         if ( status == "success" ){
             ctx_.state->setSetupMidiComplete(true);
@@ -111,19 +102,19 @@ void Setup::onApiDataReceived(const QJsonObject &json){
 
 void Setup::onSetupSubmit(){
     qInfo() << "Setup submit button clicked." ;
-    QJsonObject obj ;
-    obj["action"] = "set_audio_device" ;
-    obj["device_id"] = ui_->comboAudioDevice->currentData().toInt();
-    ApiClient::instance()->sendMessage(obj);
+    json j ;
+    j["action"] = "set_audio_device" ;
+    j["device_id"] = ui_->comboAudioDevice->currentData().toInt();
+    ApiClient::instance()->sendMessage(j);
 
-    obj["action"] = "set_midi_device" ;
-    obj["device_id"] = ui_->comboMidiDevice->currentData().toInt();
-    ApiClient::instance()->sendMessage(obj);
+    j["action"] = "set_midi_device" ;
+    j["device_id"] = ui_->comboMidiDevice->currentData().toInt();
+    ApiClient::instance()->sendMessage(j);
 }
 
 void Setup::onSetupCompleted(){
     qInfo() << "setup completed." ;
-    QJsonObject obj ; 
+    json j ; 
     emit setupCompleted();
     close();
 }

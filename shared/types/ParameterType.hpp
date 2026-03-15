@@ -26,7 +26,11 @@
 #include <variant>
 #include <cstdint>
 
-using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
+using ParameterValue = std::variant<bool, uint8_t, int, float, double> ;
+using json = nlohmann::json ;
+
+json ParameterValueToJson(const ParameterValue& v);
+
 
 /*
 To add a ParameterType, the following is required:

@@ -24,15 +24,17 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QPushButton>
-#include <qevent.h>
-#include <qtmetamacros.h>
+#include <QEvent>
 
 #include "app/ModuleContext.hpp"
 #include "views/GraphPanel.hpp"
 #include "app/Setup.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
+#include <nlohmann/json.hpp>
 
 #include "ui_Synth.h"
+
+using json = nlohmann::json ;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -52,7 +54,7 @@ private:
 
     // save/load 
     QString saveFilePath_ ;
-    QJsonObject saveData_ ;
+    json saveData_ ;
     bool hasUnsavedChanges_ ;
 
 public:
@@ -73,7 +75,7 @@ signals:
 
 private slots:
     void onApiConnected();
-    void onApiDataReceived(const QJsonObject &json);
+    void onApiDataReceived(const json& json);
     void onSetupButtonClicked();
     void onStartStopButtonClicked();
     void onEngineStatusChange(bool status);
