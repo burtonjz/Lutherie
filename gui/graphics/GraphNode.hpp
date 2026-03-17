@@ -24,8 +24,11 @@
 #include <QStyleOptionGraphicsItem>
 #include <initializer_list>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 #include "graphics/SocketWidget.hpp"
+
+using json = nlohmann::json ;
 
 class GraphNode :  public QGraphicsObject {
     Q_OBJECT
@@ -75,13 +78,16 @@ public:
     void hideSocket(SocketWidget* socket);
     void hideDisconnectedSockets();
 
+    virtual json serialize() const ;
+    virtual void deserialize(const json& node);
+
 protected:
     // Graphics overrides
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
     void layoutSockets();
     void reorderSockets();
-    void positionSockets(QPointF newPos = QPointF(0,0)); 
+    void positionSockets(QPointF newPos); 
 
 signals:
     void positionChanged();

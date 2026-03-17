@@ -199,7 +199,7 @@ void ComponentManager::showGroupModulationEditor(int groupId){
     it->second->raise();
 }
 
-void ComponentManager::createGroup(const std::vector<int> componentIds){
+int ComponentManager::createGroup(const std::vector<int> componentIds, bool block){
     int id = currentGroupId_++ ;
     QString name = QString("Group %1").arg(id);
 
@@ -245,7 +245,11 @@ void ComponentManager::createGroup(const std::vector<int> componentIds){
         }
     }
 
-    emit componentGroupCreated(id, componentIds);
+    if ( ! block ){
+        emit componentGroupCreated(id, componentIds);
+    }
+    
+    return id ;
 }
 
 void ComponentManager::appendToGroup(int groupId, const std::vector<int> componentIds){

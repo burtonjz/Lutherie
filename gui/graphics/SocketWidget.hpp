@@ -23,9 +23,11 @@
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 #include <optional>
+#include <nlohmann/json.hpp>
 
 #include "types/SocketType.hpp"
 
+using json = nlohmann::json ;
 
 class GraphNode ; // forward declaration
 
@@ -42,6 +44,28 @@ struct SocketSpec {
             ;
     }
 };
+
+inline void to_json(json& j, const SocketSpec& spec){
+    j["type"] = spec.type ;
+    j["name"] = spec.name.toStdString();
+    if ( spec.componentId.has_value() ){
+        j["componentId"] = spec.componentId.value();
+    }
+    if ( spec.idx.has_value() ){
+        j["index"] = spec.idx.value();
+    }
+}
+
+inline void from_json(const json& j, SocketSpec& spec){
+    spec.type = static_cast<SocketType>(j.at("type"));
+    spec.name = QString::fromStdString(j.at("name")) ;
+    if ( j.contains("componentId") ){
+        spec.componentId = j.at("componentId") ;
+    }
+    if ( j.contains("index") ){
+        spec.idx = j.at("index");
+    }
+}
 
 class SocketWidget : public QGraphicsObject {
     Q_OBJECT

@@ -56,7 +56,7 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["set_midi_device"] = [this](int sock, const json& request){ return setMidiDevice(sock, request); };
     handlers_["set_state"] = [this](int sock, const json& request){ return setState(sock, request); };
     handlers_["get_configuration"] = [this](int sock, const json& request){ return getConfiguration(sock, request); };
-    handlers_["load_configuration"] = [this](int sock, const json& request){ return loadConfiguration(sock, request); };
+    handlers_["load_patch"] = [this](int sock, const json& request){ return loadPatch(sock, request); };
     handlers_["add_component"] = [this](int sock, const json& request){ return addComponent(sock, request); };
     handlers_["remove_component"] = [this](int sock, const json& request){ return removeComponent(sock, request); };
     handlers_["create_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
@@ -302,7 +302,7 @@ json ApiHandler::getConfiguration(int sock, const json& request){
     return sendApiResponse(sock,response);
 }
 
-json ApiHandler::loadConfiguration(int sock, const json& request){
+json ApiHandler::loadPatch(int sock, const json& request){
     json response = request ;
     
     // create components
@@ -1235,7 +1235,7 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
         }
         
         // Handle known arrays that contain bare IDs
-        std::vector<std::string> idArrayKeys = {"rootMidiHandlers", "midiListeners"};
+        std::vector<std::string> idArrayKeys = {"rootMidiHandlers", "midiListeners", "componentIds"};
         for ( const auto& key : idArrayKeys ) {
             if ( j.contains(key) && j[key].is_array() ) {
                 for (auto& element : j[key]) {

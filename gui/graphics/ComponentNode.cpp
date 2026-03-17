@@ -90,3 +90,15 @@ ComponentModel* ComponentNode::getModel() const {
 const std::vector<SocketSpec>& ComponentNode::getSpecs() const {
     return specs_ ;
 }
+
+json ComponentNode::serialize() const {
+    json msg = GraphNode::serialize();
+    msg["node_type"] = "ComponentNode" ;
+    msg["componentId"] = model_->getId();
+
+    return msg ;
+}
+
+void ComponentNode::deserialize(const json& node){
+    GraphNode::deserialize(node);
+}

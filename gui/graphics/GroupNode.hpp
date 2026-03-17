@@ -44,6 +44,9 @@ public:
 
     int getId() const ; 
 
+    json serialize() const override ;
+    // virtual void deserialize(const json& node) override ;
+
 private:
     void addSockets(ComponentNode* node);
     void removeSockets(ComponentNode* node);

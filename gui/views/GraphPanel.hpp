@@ -30,6 +30,7 @@
 #include "managers/ComponentManager.hpp"
 #include "graphics/GraphNode.hpp"
 #include "graphics/GroupNode.hpp"
+#include "graphics/PeripheralNode.hpp"
 
 class ComponentNode ; // forward declaration
 
@@ -48,21 +49,22 @@ private:
     bool isDraggingConnection_ = false ;
     QPointer<SocketWidget> lastHovered_ = nullptr ;
 
-    // hardware widgets
-    GraphNode* audioOut_ ;
-    GraphNode* midiIn_ ;
+    // peripheral nodes
+    PeripheralNode* audioOut_ ;
+    PeripheralNode* midiIn_ ;
+    static constexpr int AUDIO_OUT_DEVICE_ID = 0 ;
+    static constexpr int MIDI_IN_DEVICE_ID   = 1 ;
 
 public:
     explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
 
+    // APIs
+    json serializeNodes() const ;
+    void deserializeNodes(const json& nodes);
+
     void addAudioOutput();
     void addMidiInput();
-    
-    json getComponentPositions() const ;
-
-    void loadConnection(const json& request); 
-    void loadPositions(const json& request);
 
     ComponentNode* getComponentNode(int componentId) const ;
     GroupNode* getGroupNode(int groupId) const ;

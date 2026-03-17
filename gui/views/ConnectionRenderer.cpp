@@ -159,12 +159,13 @@ void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
         bool hasFromId = fromSpec.componentId.has_value();
         bool hasToId = toSpec.componentId.has_value();
         if ( !hasFromId && !hasToId ) continue ;
-        cable->setVisible(true);
         for ( const auto& id : componentIds ){
             if ( hasFromId && fromSpec.componentId.value() == id ){
+                cable->setVisible(true);
                 cable->setFromSocket(socketLookup_->findSocket(fromSpec));
             }
             if ( hasToId && toSpec.componentId.value() == id ){
+                cable->setVisible(true);
                 cable->setToSocket(socketLookup_->findSocket(toSpec));
             }
         }

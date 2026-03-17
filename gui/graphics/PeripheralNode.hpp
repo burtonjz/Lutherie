@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,36 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef COMPONENT_NODE_HPP_
-#define COMPONENT_NODE_HPP_
+#ifndef PERIPHERAL_NODE_HPP_
+#define PERIPHERAL_NODE_HPP_
 
-#include <QGraphicsObject>
-#include <QPainter>
-#include <QString>
-#include <QStyleOptionGraphicsItem>
-#include <qnamespace.h>
-
-#include "models/ComponentModel.hpp"
 #include "graphics/GraphNode.hpp"
-#include "graphics/SocketWidget.hpp"
 
-class ComponentNode :  public GraphNode {
+#include <QObject>
+
+class PeripheralNode : public GraphNode {
     Q_OBJECT
 
 private:
-    ComponentModel* model_ ;
-    std::vector<SocketSpec> specs_ ;
-
+    int deviceId_ ;
+    
 public:
-    explicit ComponentNode(ComponentModel* model, const QString& name, QGraphicsItem* parent = nullptr);
-    ~ComponentNode() = default ;
+    explicit PeripheralNode(int deviceId, const QString& name, QGraphicsItem* parent = nullptr);
 
-    ComponentModel* getModel() const ;
-    const std::vector<SocketSpec>& getSpecs() const ;
+    int getId() const ;
 
     json serialize() const override ;
     virtual void deserialize(const json& node) override ;
     
 };
 
-#endif // COMPONENT_NODE_HPP_
+#endif // PERIPHERAL_NODE_HPP_

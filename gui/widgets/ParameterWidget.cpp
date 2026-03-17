@@ -30,7 +30,6 @@
 #include <QLineEdit>
 
 void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
-    qDebug() << "ParameterWidget::onModelParameterChanged triggered!" ;
     if ( p != getType() ) return ;
 
     setValue(v, true);
@@ -158,7 +157,6 @@ void DelayWidget::setupUI(){
     maxSamples_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, maximum);
     maxMs_ = maxSamples_ / sampleRate_ * 1000 ;
 
-    qDebug() << "samples: " << minSamples_ << ", " << maxSamples_ << "(time ms = " << minMs_ << ", " << maxMs_ << ")" ;
     slider_ = new QSlider(Qt::Horizontal);
     slider_->setMinimum(minSamples_);
     slider_->setMaximum(maxSamples_);  

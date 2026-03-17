@@ -81,7 +81,7 @@ void GroupNode::addSockets(ComponentNode* node){
 
     layoutSockets();
     reorderSockets();
-    positionSockets();
+    positionSockets(scenePos());
 }
 
 void GroupNode::removeSockets(ComponentNode* node){
@@ -103,5 +103,17 @@ void GroupNode::removeSockets(ComponentNode* node){
     
     layoutSockets();
     reorderSockets();
-    positionSockets();
+    positionSockets(scenePos());
+}
+
+json GroupNode::serialize() const {
+    json msg = GraphNode::serialize();
+    msg["node_type"] = "GroupNode" ;
+    msg["groupId"] = groupId_ ;
+    auto& components = msg["componentIds"];
+    for ( const auto& c : children_ ){
+        components.push_back(c->getModel()->getId() );
+    }
+
+    return msg ;
 }

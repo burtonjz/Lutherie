@@ -69,7 +69,7 @@ private:
     json setState(int sock, const json& request);
     // api save/load
     json getConfiguration(int sock, const json& request);
-    json loadConfiguration(int sock, const json& request);
+    json loadPatch(int sock, const json& request);
     // component management
     json addComponent(int sock, const json& request);
     json removeComponent(int sock, const json& request);

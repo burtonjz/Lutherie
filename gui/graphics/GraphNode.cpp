@@ -337,3 +337,47 @@ void GraphNode::reorderSockets(){
     std::ranges::sort(leftSockets_, socketSortLR);
     std::ranges::sort(rightSockets_, socketSortLR);
 }
+
+json GraphNode::serialize() const {
+    json msg ;
+    msg["node_type"] = "GraphNode" ;
+    msg["name"] = name_.toStdString() ;
+    msg["xpos"] = pos().x() ;
+    msg["ypos"] = pos().y() ;
+    
+    // don't include hidden sockets if the whole node is invisible (as it is when it is grouped)
+    if ( ! isVisible() ) return msg ;
+
+    auto& hidden = msg["hidden_sockets"] ;
+    for ( const auto& s : sockets_ ){
+        if ( ! s->isVisible() ){
+            hidden.push_back(s->getSpec());
+        }
+    }
+
+    return msg ;
+}
+
+void GraphNode::deserialize(const json& node){
+    if ( node.contains("name") && node.at("name").is_string() ){
+        setName(QString::fromStdString(node.at("name")));
+    } 
+    if ( 
+        node.contains("xpos") && node.at("xpos").is_number() &&
+        node.contains("ypos") && node.at("ypos").is_number()
+    ){
+        setPos(node.at("xpos"), node.at("ypos"));
+    }
+    if ( node.contains("hidden_sockets") && node.at("hidden_sockets").is_array() ){
+        for ( const auto& s : node.at("hidden_sockets") ){
+            try {
+                SocketSpec spec = s ;
+                SocketWidget* s = getSocket(spec);
+                hideSocket(s);
+            } catch ( const std::exception& e){
+                qWarning() << "hidden sockets did not contain a valid socket spec." ;
+            }
+        }
+    }
+    update();
+}

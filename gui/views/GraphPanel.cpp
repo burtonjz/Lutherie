@@ -160,7 +160,7 @@ void GraphPanel::setNodeConnections(GraphNode* node){
 }
 
 void GraphPanel::addAudioOutput(){
-    audioOut_ = new GraphNode("Audio Output Device");
+    audioOut_ = new PeripheralNode(AUDIO_OUT_DEVICE_ID, "Audio Output Device");
     audioOut_->createSockets({{
         .type = SocketType::SignalInbound, 
         .name = "Audio In",
@@ -177,7 +177,7 @@ void GraphPanel::addAudioOutput(){
 }
 
 void GraphPanel::addMidiInput(){
-    midiIn_ = new GraphNode("MIDI Input Device");
+    midiIn_ = new PeripheralNode(MIDI_IN_DEVICE_ID, "MIDI Input Device");
     midiIn_->createSockets({{
         .type = SocketType::MidiOutbound, 
         .name = "MIDI Out"
@@ -242,35 +242,79 @@ GroupNode* GraphPanel::getGroupNode(int groupId) const {
     return nullptr ;
 }
 
-json GraphPanel::getComponentPositions() const {
-    json positions ;
+json GraphPanel::serializeNodes() const {
+    json nodes ;
     for ( auto n : nodes_ ){
-        auto component = dynamic_cast<ComponentNode*>(n);
-        if ( component ){
-            auto pos = component->pos();
-            json cObj ;
-            cObj["componentId"] = component->getModel()->getId();
-            cObj["xpos"] = pos.x() ;
-            cObj["ypos"] = pos.y() ;
-            positions.push_back(cObj);
-        }
+        nodes.push_back(n->serialize());
     }
-    return positions ;
+    return nodes ;
 }
 
-void GraphPanel::loadConnection(const json& request){
-    ConnectionRequest conn = request ;
-}
+void GraphPanel::deserializeNodes(const json& nodes){
+    if ( ! nodes.is_array() ){
+        qWarning() << "nodes are not in expected json format." ;
+        return ;
+    }
 
-void GraphPanel::loadPositions(const json& request){
-    for ( const auto& p : request.at("positions") ) {        
-        int componentID = p.at("componentId");
-        int xpos = p.at("xpos");
-        int ypos = p.at("ypos");
-        
-        auto n = getComponentNode(componentID);
-        if ( n ){
-            n->setPos(xpos,ypos);
+    for ( const auto& n : nodes ) {        
+        if ( ! n.contains("node_type") || ! n.at("node_type").is_string() ){
+            qWarning() << "serialized node does not have a type identifier. Ignoring object." ;
+            continue ;
+        }
+
+        const std::string nodeType = n.at("node_type");
+
+        if ( nodeType == "ComponentNode" ){
+            if ( ! n.contains("componentId") || ! n.at("componentId").is_number() ){
+                qWarning() << "component node does not have id specified" ;
+                continue ;
+            }
+            auto c = getComponentNode(n.at("componentId"));
+            if ( ! c){
+                qWarning() << "component node not found for id " << n.at("componentId").dump() ;
+                continue ;
+            }
+            c->deserialize(n);
+        } else if ( nodeType == "PeripheralNode" ){
+            if ( !n.contains("deviceId") || ! n.at("deviceId").is_number() ){
+                qWarning() << "peripheral node does not have a defined deviceId" ;
+                continue ;
+            }
+
+            PeripheralNode* p = nullptr ;
+            if ( n.at("deviceId") == MIDI_IN_DEVICE_ID ){
+                p = midiIn_ ;
+            } else if ( n.at("deviceId") == AUDIO_OUT_DEVICE_ID ){
+                p = audioOut_ ;
+            }
+            if ( p ){
+                p->deserialize(n);
+            } else {
+                qWarning() << "Invalid deviceId specified." ;
+            }
+        } else if ( nodeType == "GroupNode" ){
+            if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
+                continue ;
+            }
+
+            std::vector<int> ids ;
+            for ( const auto& id : n.at("componentIds") ){
+                if ( ! id.is_number() || ! componentManager_->getModel(id) ){
+                    qWarning() << "component id is either malformed or invalid." ;
+                    continue ;
+                }
+                ids.push_back(id);
+            }
+
+            if ( ids.size() > 1 ){
+                int groupId = componentManager_->createGroup(ids, true); 
+                onComponentGroupCreated(groupId, ids);
+                auto g = getGroupNode(groupId);
+                g->deserialize(n);
+            } else {
+                qWarning() << "Group node does not contain more than 2 valid component ids.";
+                continue ;
+            }
         }
     }
 }
@@ -417,10 +461,6 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
             event->accept();
             return ;
         }
-    }
-
-    if ( event->button() == Qt::RightButton ){
-        // TODO: maybe if we right click a module we #include "meta/ComponentDescriptor.hpp"can do some stuff...
     }
 
     QGraphicsView::mousePressEvent(event); // pass event through
@@ -685,12 +725,14 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
 
 }
 
-void GraphPanel::onApiDataReceived(const json& json){
-    QString action = QString::fromStdString(json["action"]) ;
+void GraphPanel::onApiDataReceived(const json& msg){
+    QString action = QString::fromStdString(msg["action"]) ;
 
-    if ( action == "load_configuration" ){
-        if ( json.at("status") == "success"){
-            loadPositions(json);
+    if ( action == "load_patch" ){
+        if ( msg.at("status") == "success"){
+            if ( msg.contains("nodes") ){
+                deserializeNodes(msg.at("nodes"));
+            }
         }
     }
 }

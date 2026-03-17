@@ -273,7 +273,7 @@ void Synth::onActionLoad(){
     }
     
     // send API request
-    saveData_["action"] = "load_configuration" ;
+    saveData_["action"] = "load_patch" ;
     ApiClient::instance()->sendMessage(saveData_);
 }
 
@@ -307,7 +307,7 @@ void Synth::onActionSaveAs(){
 }
 
 void Synth::performSave(){
-    saveData_["positions"] = graph_->getComponentPositions();
+    saveData_["nodes"] = graph_->serializeNodes();
     QFile file(saveFilePath_);
     if (!file.open(QIODevice::WriteOnly)){
         QMessageBox::warning(this, "Save Failed",

@@ -74,7 +74,7 @@ public:
     void showGroupEditor(int groupId);
     void showGroupModulationEditor(int groupId);
 
-    void createGroup(const std::vector<int> componentIds);
+    int createGroup(const std::vector<int> componentIds, bool block = false);
     void appendToGroup(int groupId, const std::vector<int> componentIds);
     void removeGroup(int groupId);
 
