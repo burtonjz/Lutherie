@@ -37,6 +37,10 @@ private:
     // child modulation/parameter storage
     std::array<BaseModulator*, N_PARAMETER_TYPES> modulators_ ;
     std::array<ModulationData, N_PARAMETER_TYPES> modulationData_ ;
+
+    std::array<BaseModulator*, N_PARAMETER_TYPES> depthModulators_ ;
+    std::array<ModulationData, N_PARAMETER_TYPES> depthModulationData_ ;
+    
     std::array<std::optional<double>, N_PARAMETER_TYPES> depthOverrides_ ;
     std::array<std::optional<ModulationStrategy>, N_PARAMETER_TYPES> strategyOverrides_ ;
     
@@ -56,17 +60,23 @@ public:
     void onKeyOff(ActiveNote anote) override ;
 
     // BaseComponent Overrides
-    void updateParameters() override ;
     BaseModulator* getParameterModulator(ParameterType p) const  override ;
+    BaseModulator* getParameterDepthModulator(ParameterType p) const override ;
+    double getParameterDepth(ParameterType p) const override ;
     void setParameterDepth(ParameterType p, double depth) override ;
+    ModulationStrategy getParameterModulationStrategy(ParameterType p) const override ;
     void setParameterModulationStrategy(ParameterType p, ModulationStrategy strat) override ;
+    void updateParameters() override ;
     void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
     void onRemoveParameterModulation(ParameterType p) override ;
+    void onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
+    void onRemoveParameterDepthModulation(ParameterType p) override ;
 
     void updateGain();
+
 private:
     void updateModulationInitialValue(Oscillator* osc);
-    void setOverrides(Oscillator* osc);
+    void setOverrides(Oscillator* osc, uint8_t midiNote);
 
 };  
 

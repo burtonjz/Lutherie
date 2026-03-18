@@ -257,24 +257,20 @@ class Parameter : public ParameterBase {
 
                 // now, modulate this parameter itself
                 if( !modulatable_ || !modulator_ ) return ;
-                if( modStrategy_ == ModulationStrategy::NONE ) return ;
 
                 switch(modStrategy_){
                 case ModulationStrategy::ADDITIVE:
                     setInstantaneousValue(value_ + instDepth * modulator_->modulate(value_, &modData_));
                     return ;
-                case ModulationStrategy::MULTIPLICATIVE:
+                case ModulationStrategy::MULTIPLICATIVE_ZERO:
                     setInstantaneousValue( value_ * instDepth * modulator_->modulate(value_, &modData_));
+                    return ;
+                case ModulationStrategy::MULTIPLICATIVE_UNITY:
+                    setInstantaneousValue( value_ * ( 1 + instDepth * modulator_->modulate(value_, &modData_)));
                     return ;
                 case ModulationStrategy::EXPONENTIAL:
                     setInstantaneousValue(value_ * exp2f(instDepth * modulator_->modulate(value_, &modData_)));
                     return ;
-                case ModulationStrategy::LOGARITHMIC:
-                {
-                    float mout = instDepth * modulator_->modulate(value_, &modData_);
-                    setInstantaneousValue(value_ + copysignf(log2f(1.0f + fabsf(mout)), mout));
-                    return ;
-                }
                 case ModulationStrategy::REPLACE:
                     setInstantaneousValue(instDepth * modulator_->modulate(value_, &modData_));
                     return ;

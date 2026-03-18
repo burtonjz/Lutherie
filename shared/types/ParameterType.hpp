@@ -93,9 +93,9 @@ a Parameter instance.
 */ 
 #define MODULATION_STRATEGY_LIST \
     X(ADDITIVE) \
-    X(MULTIPLICATIVE) \
+    X(MULTIPLICATIVE_ZERO) \
+    X(MULTIPLICATIVE_UNITY) \
     X(EXPONENTIAL) \
-    X(LOGARITHMIC) \
     X(REPLACE) \
     X(NONE) 
 
@@ -180,7 +180,7 @@ template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::MULTIPLICATIVE_UNITY ;
     static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
@@ -190,7 +190,7 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::MULTIPLICATIVE_UNITY ;
     static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
@@ -330,7 +330,7 @@ template <> struct ParameterTraits<ParameterType::BPM>{
     static constexpr float minimum = 0 ;
     static constexpr float maximum = 300 ;
     static constexpr float defaultValue = 120 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::MULTIPLICATIVE ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
     static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 

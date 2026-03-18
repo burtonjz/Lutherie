@@ -91,19 +91,8 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
         osc->addReferenceParameters(*parameters_);
         osc->setFrequency(anote->note.getFrequency());
         osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
-        setOverrides(osc);
+        setOverrides(osc, anote->note.getMidiNote());
         
-        // if there are modulators that need MIDI_NOTE, the module needs to make sure that gets set
-        for ( auto p : osc->getParameters()->getModulatableParameters()){
-            auto pIndex = static_cast<size_t>(p);
-            if ( modulators_[pIndex] ){
-                auto modParams = modulators_[pIndex]->getRequiredModulationParameters();
-                if ( modParams.contains(ModulationParameter::MIDI_NOTE)){
-                    modulationData_[static_cast<size_t>(p)].set(ModulationParameter::MIDI_NOTE, anote->note.getMidiNote());
-                }
-                osc->getParameters()->getParameter(p)->setModulation(modulators_[pIndex], modulationData_[pIndex]);
-            }
-        }
         children_.insert(std::make_pair(anote->note.getMidiNote(),osc));
     } 
 }
@@ -123,13 +112,27 @@ void PolyOscillator::onKeyOff(ActiveNote anote){
     }
 }
 
-void PolyOscillator::updateParameters(){
-    BaseComponent::updateParameters();
-    childPool_.forEachActive(&Oscillator::updateParameters);
+BaseModulator* PolyOscillator::getParameterModulator(ParameterType p) const {
+    return modulators_.at(static_cast<size_t>(p)) ;
 }
 
-BaseModulator* PolyOscillator::getParameterModulator(ParameterType p) const {
-    return modulators_[static_cast<size_t>(p)] ;
+BaseModulator* PolyOscillator::getParameterDepthModulator(ParameterType p) const {
+    return depthModulators_.at(static_cast<size_t>(p)) ;
+}
+
+double PolyOscillator::getParameterDepth(ParameterType p) const {
+    auto parentParam = parameters_->getParameter(p);
+    if ( parentParam ){
+        return BaseComponent::getParameterDepth(p);
+    }
+
+    auto d = depthOverrides_[static_cast<int>(p)];
+
+    if ( !d.has_value() ){
+        return GET_PARAMETER_TRAIT_MEMBER(ParameterType::DEPTH, defaultValue);
+    }
+
+    return d.value() ;
 }
 
 void PolyOscillator::setParameterDepth(ParameterType p, double depth){
@@ -143,6 +146,21 @@ void PolyOscillator::setParameterDepth(ParameterType p, double depth){
     childPool_.forEachActive(&Oscillator::setParameterDepth, p, depth);
 }
 
+ModulationStrategy PolyOscillator::getParameterModulationStrategy(ParameterType p) const {
+    auto parentParam = parameters_->getParameter(p);
+    if ( parentParam ){
+        return BaseComponent::getParameterModulationStrategy(p);
+    }
+
+    auto s = strategyOverrides_[static_cast<int>(p)];
+
+    if ( ! s.has_value() ){
+        return GET_PARAMETER_TRAIT_MEMBER(p, defaultStrategy);
+    }
+    
+    return s.value() ;
+}
+
 void PolyOscillator::setParameterModulationStrategy(ParameterType p, ModulationStrategy strat){
     auto parentParam = parameters_->getParameter(p);
     if ( parentParam ){
@@ -152,6 +170,11 @@ void PolyOscillator::setParameterModulationStrategy(ParameterType p, ModulationS
 
     strategyOverrides_[static_cast<int>(p)] = strat ;
     childPool_.forEachActive(&Oscillator::setParameterModulationStrategy, p, strat);
+}
+
+void PolyOscillator::updateParameters(){
+    BaseComponent::updateParameters();
+    childPool_.forEachActive(&Oscillator::updateParameters);
 }
 
 void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
@@ -172,6 +195,26 @@ void PolyOscillator::onRemoveParameterModulation(ParameterType p){
     modulationData_[static_cast<size_t>(p)] = {} ;
 
     childPool_.forEachActive(&Oscillator::removeParameterModulation, p);
+}
+
+void PolyOscillator::onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d){
+    if ( d.isEmpty() ){
+        auto required = m->getRequiredModulationParameters();
+        for ( auto mp : required ){
+            d.set(mp, 0.0f);
+        }
+    }
+    depthModulators_[static_cast<size_t>(p)] = m ;
+    depthModulationData_[static_cast<size_t>(p)] = d ;
+
+    childPool_.forEachActive(&Oscillator::setParameterDepthModulation, p, m, d);
+}
+
+void PolyOscillator::onRemoveParameterDepthModulation(ParameterType p){
+    depthModulators_[static_cast<size_t>(p)] = nullptr ;
+    depthModulationData_[static_cast<size_t>(p)] = {} ;
+
+    childPool_.forEachActive(&Oscillator::removeParameterDepthModulation, p);
 }
 
 void PolyOscillator::updateGain(){
@@ -196,18 +239,41 @@ void PolyOscillator::updateModulationInitialValue(Oscillator* osc){
     } 
 }
 
-void PolyOscillator::setOverrides(Oscillator* osc){
+void PolyOscillator::setOverrides(Oscillator* osc, uint8_t midiNote){
     if ( ! osc ) return ;
 
     // modulation depth & strategy
     for ( const auto& p : osc->getParameters()->getModulatableParameters() ){
+        // modulation depth
         int idx = static_cast<int>(p);
         if ( depthOverrides_.at(idx).has_value() ){
             osc->setParameterDepth(p, depthOverrides_.at(idx).value());
         }
 
+        // modulation strategy
         if ( strategyOverrides_.at(idx).has_value() ){
             osc->setParameterModulationStrategy(p, strategyOverrides_.at(idx).value());
         }
+
+        // set modulator & update modulation data
+        auto pIndex = static_cast<size_t>(p);
+        if ( modulators_[pIndex] ){
+            auto modParams = modulators_[pIndex]->getRequiredModulationParameters();
+            if ( modParams.contains(ModulationParameter::MIDI_NOTE)){
+                modulationData_[static_cast<size_t>(p)].set(ModulationParameter::MIDI_NOTE, midiNote);
+            }
+            osc->getParameters()->getParameter(p)
+                ->setModulation(modulators_[pIndex], modulationData_[pIndex]);
+        }   
+
+        // set depth modulator & update data
+        if ( depthModulators_[pIndex] ){
+            auto modParams = depthModulators_[pIndex]->getRequiredModulationParameters();
+            if ( modParams.contains(ModulationParameter::MIDI_NOTE)){
+                depthModulationData_[static_cast<size_t>(p)].set(ModulationParameter::MIDI_NOTE, midiNote);
+            }
+            osc->getParameters()->getParameter(p)->getDepth()
+                ->setModulation(depthModulators_[pIndex], depthModulationData_[pIndex]);
+        }   
     }
 }
