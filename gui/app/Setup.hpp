@@ -18,8 +18,6 @@
 #ifndef UI_HPP
 #define UI_HPP
 
-#include "app/ModuleContext.hpp"
-
 #include <QWidget>
 #include <QComboBox>
 #include <nlohmann/json.hpp>
@@ -34,14 +32,13 @@ class Setup : public QWidget {
     Q_OBJECT
 
 public:
-    Setup(ModuleContext ctx, QWidget *parent = nullptr);
+    Setup(QWidget *parent = nullptr);
     ~Setup();
 
     void populateSetupComboBox(QComboBox* box, const json& data);
 
 private:
     Ui::AudioMidiSetupWidget* ui_ ;
-    ModuleContext ctx_ ;
 
 private slots:
     void onApiDataReceived(const json& json);

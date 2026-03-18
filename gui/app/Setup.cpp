@@ -16,14 +16,13 @@
  */
 
 #include "app/Setup.hpp"
-#include "app/ModuleContext.hpp"
+#include "managers/StateManager.hpp"
 #include "api/ApiClient.hpp"
 #include "ui_Setup.h"
 
-Setup::Setup(ModuleContext ctx, QWidget* parent): 
+Setup::Setup(QWidget* parent): 
     QWidget(parent),
-    ui_(new Ui::AudioMidiSetupWidget),
-    ctx_(ctx)
+    ui_(new Ui::AudioMidiSetupWidget)
 {
     // create API connections
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Setup::onApiDataReceived);
@@ -39,7 +38,7 @@ Setup::Setup(ModuleContext ctx, QWidget* parent):
 
     // connections
     connect(ui_->pushButtonSubmit, &QPushButton::clicked, this, &Setup::onSetupSubmit);
-    connect(ctx_.state, &StateManager::setupCompleted, this, &Setup::onSetupCompleted);
+    connect(StateManager::instance(), &StateManager::setupCompleted, this, &Setup::onSetupCompleted);
 }
 
 Setup::~Setup()
@@ -85,7 +84,7 @@ void Setup::onApiDataReceived(const json& json){
         QString status = QString::fromStdString(json["status"]);
         qDebug() << "set_audio_device return state:" << status ;
         if ( status == "success" ){
-            ctx_.state->setSetupAudioComplete(true);
+            StateManager::instance()->setSetupAudioComplete(true);
         }
         return ;
     }
@@ -94,7 +93,7 @@ void Setup::onApiDataReceived(const json& json){
         QString status = QString::fromStdString(json["status"]);
         qDebug() << "set_midi_device return state:" << status ;
         if ( status == "success" ){
-            ctx_.state->setSetupMidiComplete(true);
+            StateManager::instance()->setSetupMidiComplete(true);
         }
         return ;
     }

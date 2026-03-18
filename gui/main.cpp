@@ -16,8 +16,6 @@
  */
 
 #include "api/ApiClient.hpp"
-#include "managers/StateManager.hpp"
-#include "app/ModuleContext.hpp"
 #include "app/Theme.hpp"
 #include "app/Synth.hpp"
 
@@ -32,8 +30,7 @@ int main(int argc, char *argv[]){
     QApplication app(argc, argv);
     ApiClient::instance() ; // initialize ApiClient singleton
 
-    ModuleContext ctx_{new StateManager(), "Synth"};
-    Synth* synth = new Synth(ctx_) ;
+    Synth* synth = new Synth() ;
 
     ApiClient::instance()->connectToBackend();
     synth->show();

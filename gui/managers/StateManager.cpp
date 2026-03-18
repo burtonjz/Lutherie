@@ -17,9 +17,13 @@
 
 #include "managers/StateManager.hpp"
 
-StateManager::StateManager(QObject *parent)
-    : QObject{parent} {
+StateManager::StateManager()
+    : QObject{nullptr} 
+{}
 
+StateManager* StateManager::instance(){
+    static StateManager manager ;
+    return &manager ;
 }
 
 void StateManager::setSetupAudioComplete(bool v){

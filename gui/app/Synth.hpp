@@ -26,7 +26,6 @@
 #include <QPushButton>
 #include <QEvent>
 
-#include "app/ModuleContext.hpp"
 #include "views/GraphPanel.hpp"
 #include "app/Setup.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
@@ -45,7 +44,6 @@ class Synth : public QMainWindow {
 
 private:
     Ui::MainWindow* ui_ ;
-    ModuleContext ctx_ ;
     GraphPanel* graph_ ;
     Setup* setup_ ;
 
@@ -58,7 +56,7 @@ private:
     bool hasUnsavedChanges_ ;
 
 public:
-    Synth(ModuleContext ctx, QWidget* parent = nullptr);
+    Synth(QWidget* parent = nullptr);
     ~Synth();
 
 private:

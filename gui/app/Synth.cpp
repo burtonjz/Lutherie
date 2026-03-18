@@ -16,6 +16,7 @@
  */
 
 #include "app/Synth.hpp"
+#include "managers/StateManager.hpp"
 #include "views/GraphPanel.hpp"
 #include "api/ApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
@@ -37,15 +38,15 @@
 #include "ui_Synth.h"
 
 
-Synth::Synth(ModuleContext ctx, QWidget* parent):
+Synth::Synth(QWidget* parent):
     QMainWindow(parent),
     ui_(new Ui::MainWindow),
-    ctx_(ctx),
     graph_(nullptr),
     spectrumWidget_(nullptr),
     setup_(nullptr),
     hasUnsavedChanges_(false)
 {
+    StateManager::instance();
     ui_->setupUi(this);
 
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
@@ -241,8 +242,7 @@ void Synth::onApiDataReceived(const json& j){
 
 void Synth::onActionSetup(){
     if ( !setup_ ){
-        ModuleContext ctx = {ctx_.state, "Setup"};
-        setup_ = new Setup(ctx) ;
+        setup_ = new Setup() ;
         setup_->show();
     } else {
         if (!setup_->isVisible()){
@@ -252,7 +252,7 @@ void Synth::onActionSetup(){
 }
 
 void Synth::onActionStart(){
-    if ( ctx_.state->isRunning() ) return ;
+    if ( StateManager::instance()->isRunning() ) return ;
     
     json j ;
     j["action"] = "set_state" ;
@@ -261,7 +261,7 @@ void Synth::onActionStart(){
 }
 
 void Synth::onActionStop(){
-    if ( ! ctx_.state->isRunning() ) return ;
+    if ( ! StateManager::instance()->isRunning() ) return ;
     json j ;
     j["action"] = "set_state" ;
     j["state"] = "stop" ;
@@ -269,7 +269,7 @@ void Synth::onActionStop(){
 }
 
 void Synth::onEngineStatusChange(bool status){
-    ctx_.state->setRunning(status);
+    StateManager::instance()->setRunning(status);
     ui_->actionStart->setVisible(!status);
     ui_->actionStop->setVisible(status);
 }

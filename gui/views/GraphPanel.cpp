@@ -20,6 +20,7 @@
 #include "app/Theme.hpp"
 #include "graphics/GroupNode.hpp"
 #include "managers/ConnectionManager.hpp"
+#include "managers/StateManager.hpp"
 #include "graphics/GraphNode.hpp"
 #include "graphics/SocketWidget.hpp"
 #include "graphics/ComponentNode.hpp"
@@ -836,6 +837,10 @@ void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
 }
 
 void GraphPanel::onDeletePressed(){
+    if ( StateManager::instance()->isRunning() ){
+        ToastNotification::show(scene_, this, "Cannot delete components while the engine is running.");
+        return ;
+    }
     // delete all selected components
     for ( const auto c : getSelectedComponents() ){
         componentManager_->requestRemoveComponent(c->getModel()->getId());

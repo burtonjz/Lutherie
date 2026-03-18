@@ -28,8 +28,15 @@ private:
     bool setupMidi_  = false ;
     bool running_    = false ;
 
+    explicit StateManager();
+
 public:
-    explicit StateManager(QObject *parent = nullptr);
+    static StateManager* instance();
+
+    StateManager(const StateManager&) = delete;
+    StateManager& operator=(const StateManager&) = delete;
+    StateManager(StateManager&&) = delete;
+    StateManager& operator=(StateManager&&) = delete;
 
     void setSetupAudioComplete(bool v);
     void setSetupMidiComplete(bool v);
