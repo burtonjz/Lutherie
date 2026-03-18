@@ -19,7 +19,6 @@
 #include "views/GraphPanel.hpp"
 #include "api/ApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
-#include "types/ComponentType.hpp"
 #include "config/Config.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
 #include "graphics/ToastNotification.hpp"
@@ -30,6 +29,10 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QWindow>
+#include <QToolButton>
+#include <QLineEdit>
+#include <QWidgetAction>
+#include <QCompleter>
 
 #include "ui_Synth.h"
 
@@ -56,87 +59,18 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     graph_ = new GraphPanel(this);
     ui_->graphPanelContainer->layout()->addWidget(graph_);
 
-    configureWidgetButtons();
     configureMenuActions();
+    configureToolBar();
 
-    // api and configuration buttons
-    connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
-    connect(ui_->setupButton, &QPushButton::clicked, this, &Synth::onSetupButtonClicked);
-    connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
+    // other connections
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
-
-    // mark modified
     connect(graph_, &GraphPanel::wasModified, this, &Synth::markModified);
-    
 }
 
 
 Synth::~Synth(){
     if ( spectrumWidget_ ) spectrumWidget_->close();
     delete ui_ ;
-}
-
-void Synth::configureWidgetButtons(){
-    // widget config
-    ui_->addModuleBox->addItem("Add a Module...");
-    ui_->addModuleBox->setCurrentIndex(0);
-    ui_->addModuleBox->insertSeparator(1);
-
-    ui_->addModulatorBox->addItem("Add a Modulator...");
-    ui_->addModulatorBox->setCurrentIndex(0);
-    ui_->addModulatorBox->insertSeparator(1);
-
-    ui_->addMidiComponentBox->addItem("Add a Midi Component...");
-    ui_->addMidiComponentBox->setCurrentIndex(0);
-    ui_->addMidiComponentBox->insertSeparator(1);
-
-    // force that first index to be a label and not enabled to select
-    QStandardItemModel* m = qobject_cast<QStandardItemModel*>(ui_->addModuleBox->model());
-    if(m){
-        QStandardItem* item = m->item(0);
-        if (item) item->setEnabled(false);
-    }
-
-    m = qobject_cast<QStandardItemModel*>(ui_->addModulatorBox->model());
-    if(m){
-        QStandardItem* item = m->item(0);
-        if (item) item->setEnabled(false);
-    }
-
-    m = qobject_cast<QStandardItemModel*>(ui_->addMidiComponentBox->model());
-    if(m){
-        QStandardItem* item = m->item(0);
-        if (item) item->setEnabled(false);
-    }
-
-    // now loop through descriptors and add them to the appropriate box
-    auto reg = ComponentRegistry::getAllComponentDescriptors();
-    QString name ;
-    int typ ;
-    for ( auto item : reg ){
-        name = QString::fromStdString(item.second.name);
-        if ( item.second.isModule() ){
-            typ = static_cast<int>(item.first);
-            ui_->addModuleBox->addItem(name, typ);
-        } 
-        if ( item.second.isModulator() ){
-            typ = static_cast<int>(item.first);
-            ui_->addModulatorBox->addItem(name, typ);
-        }
-        if ( item.second.isMidiHandler() ){
-            typ = static_cast<int>(item.first);
-            ui_->addMidiComponentBox->addItem(name, typ);
-        }
-    }
-
-    // connections
-    connect(ui_->addModuleBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-        this, [this](int index){ onComponentSelected(index); });
-    connect(ui_->addModulatorBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-        this, [this](int index){ onComponentSelected(index); });
-    connect(ui_->addMidiComponentBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-        this, [this](int index){ onComponentSelected(index); });
-    connect(this, &Synth::componentSelected, graph_, &GraphPanel::onComponentSelected);
 }
 
 void Synth::configureMenuActions(){
@@ -149,6 +83,122 @@ void Synth::configureMenuActions(){
     connect(ui_->actionSpectrumAnalyzer, &QAction::triggered, this, &Synth::onActionSpectrumAnalyzer);
 }
 
+void Synth::configureToolBar(){
+    ui_->toolBar->setFixedHeight(Theme::TOOLBAR_HEIGHT);
+    ui_->toolBar->setMovable(false);
+
+    ui_->actionStart->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+    ui_->actionStop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+    ui_->actionStop->setVisible(false);
+
+    // handle ui actions
+    connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
+    connect(ui_->actionSetup, &QAction::triggered, this, &Synth::onActionSetup);
+    connect(ui_->actionStart, &QAction::triggered, this, &Synth::onActionStart);
+    connect(ui_->actionStop, &QAction::triggered, this, &Synth::onActionStop);
+
+    // custom toolbar actions below
+    QMenu* componentMenu = buildComponentMenu();
+    QToolButton* addComponent = new QToolButton(this);
+    addComponent->setText("Add Component");
+    addComponent->setMenu(componentMenu);
+    addComponent->setPopupMode(QToolButton::InstantPopup);
+    ui_->toolBar->addWidget(addComponent);
+}
+
+QMenu* Synth::buildComponentMenu(){
+    QMenu* menu = new QMenu(this);
+
+    QStringList componentNames ;
+    for ( const auto& [typ, descriptor] : ComponentRegistry::getAllComponentDescriptors() ){
+        componentNames.append(QString::fromStdString(descriptor.name));
+    }
+
+    QLineEdit* search = new QLineEdit(menu);
+    search->setPlaceholderText("Search...");
+    search->setClearButtonEnabled(true);
+
+    QCompleter* completer = new QCompleter(componentNames, search);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    completer->setFilterMode(Qt::MatchContains);
+    search->setCompleter(completer);
+
+    QWidgetAction* searchAction = new QWidgetAction(menu);
+    searchAction->setDefaultWidget(search);
+    menu->addAction(searchAction);
+    menu->addSeparator();
+
+    // submenus
+    QMenu* sigGen = menu->addMenu("Signal Generators");
+    QMenu* sigProc = menu->addMenu("Signal Processors");
+    QMenu* midiGen = menu->addMenu("MIDI Generators");
+    QMenu* midiProc = menu->addMenu("MIDI Processors");
+    QMenu* modulator = menu->addMenu("Modulators");
+    
+    for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
+        if ( desc.numAudioInputs == 0 && desc.numAudioOutputs > 0 ){
+            QAction* action = sigGen->addAction(QString::fromStdString(desc.name));
+            connect(
+                action, &QAction::triggered, 
+                this, [this, typ](){
+                    graph_->onComponentSelected(typ);
+                }
+            );
+        } else if ( desc.numAudioInputs > 0 && desc.numAudioOutputs > 0 ){
+            QAction* action = sigProc->addAction(QString::fromStdString(desc.name));
+            connect(
+                action, &QAction::triggered, 
+                this, [this, typ](){
+                    graph_->onComponentSelected(typ);
+                }
+            );
+        }
+        if ( desc.numMidiInputs == 0 && desc.numMidiOutputs > 0 ){
+            QAction* action = midiGen->addAction(QString::fromStdString(desc.name));
+            connect(
+                action, &QAction::triggered, 
+                this, [this, typ](){
+                    graph_->onComponentSelected(typ);
+                }
+            );
+        } else if ( desc.numMidiInputs > 0 && desc.numMidiOutputs > 0 ){
+            QAction* action = midiProc->addAction(QString::fromStdString(desc.name));
+            connect(
+                action, &QAction::triggered, 
+                this, [this, typ](){
+                    graph_->onComponentSelected(typ);
+                }
+            );
+        }
+        if ( desc.canModulate ){
+            QAction* action = modulator->addAction(QString::fromStdString(desc.name));
+            connect(
+                action, &QAction::triggered, 
+                this, [this, typ](){
+                    graph_->onComponentSelected(typ);
+                }
+            );
+        }
+    }
+
+    // completer connections
+    connect(
+        completer, QOverload<const QString&>::of(&QCompleter::activated),
+        this, [search, this](const QString& componentName){
+        QTimer::singleShot(0, search, [search](){ search->clear();});
+        for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
+            if ( componentName == desc.name ){
+                graph_->onComponentSelected(typ);
+                return ;
+            }    
+        }
+        qDebug() << "component add completer did not match a component name: " << componentName ;
+    });
+
+    connect(menu, &QMenu::aboutToShow, search, &QLineEdit::clear);
+    return menu ;
+}
+
 void Synth::closeEvent(QCloseEvent* event){
     if ( spectrumWidget_ ) spectrumWidget_->close();
     if ( setup_ ) setup_->close() ;
@@ -157,7 +207,6 @@ void Synth::closeEvent(QCloseEvent* event){
 }
 
 void Synth::onApiConnected(){
-
 }
 
 void Synth::onApiDataReceived(const json& j){
@@ -190,53 +239,39 @@ void Synth::onApiDataReceived(const json& j){
     }
 }
 
-void Synth::onSetupButtonClicked(){
-    qDebug() << "launching setup window" ;
+void Synth::onActionSetup(){
     if ( !setup_ ){
-        qDebug() << "Setup window does not exist, creating widget..." ;
         ModuleContext ctx = {ctx_.state, "Setup"};
         setup_ = new Setup(ctx) ;
         setup_->show();
     } else {
-        qDebug() << "Setup window already exists, displaying..." ;
         if (!setup_->isVisible()){
             setup_->show();
         }
     }
 }
 
-void Synth::onStartStopButtonClicked(){
-    if ( ctx_.state->isRunning()){
-        json j ;
-        j["action"] = "set_state" ;
-        j["state"] = "stop" ;
-        ApiClient::instance()->sendMessage(j);
-    } else {
-        json j ;
-        j["action"] = "set_state" ;
-        j["state"] = "run" ;
-        ApiClient::instance()->sendMessage(j);
-    }
+void Synth::onActionStart(){
+    if ( ctx_.state->isRunning() ) return ;
+    
+    json j ;
+    j["action"] = "set_state" ;
+    j["state"] = "run" ;
+    ApiClient::instance()->sendMessage(j);
+}
+
+void Synth::onActionStop(){
+    if ( ! ctx_.state->isRunning() ) return ;
+    json j ;
+    j["action"] = "set_state" ;
+    j["state"] = "stop" ;
+    ApiClient::instance()->sendMessage(j);
 }
 
 void Synth::onEngineStatusChange(bool status){
-    qDebug() << "engine status changed. Setting new button text" ;
     ctx_.state->setRunning(status);
-    if (status){
-        ui_->startStopButton->setText("Stop");
-    } else {
-        ui_->startStopButton->setText("Play");
-    }
-}
-
-void Synth::onComponentSelected(int index){
-    if ( index == 0 ) return ;
-
-    auto cbox = dynamic_cast<QComboBox*>(sender());
-
-    ComponentType typ = static_cast<ComponentType>(cbox->itemData(index).toInt());
-    cbox->setCurrentIndex(0); 
-    emit componentSelected(typ);
+    ui_->actionStart->setVisible(!status);
+    ui_->actionStop->setVisible(status);
 }
 
 void Synth::onActionLoad(){

@@ -187,6 +187,38 @@ void Theme::applyDarkTheme() {
         padding: 5px;
         border-radius: 3px;
     }
+    QToolBar {
+        background-color: %2;
+        spacing: 4px;
+        border: none;
+    }
+    QToolButton {
+        color: %5 ;
+        background-color: %2;
+        border: 1px solid %1;
+        padding: 4px 8px ;
+    }
+    QToolButton:hover {
+        background-color: %6;
+    }
+    QAbstractItemView {
+        background-color: %4;
+        color: %5;
+        border: 1px solid %1;
+        selection-background-color: %3;
+        selection-color: %5;
+    }
+    QMenuBar {
+        background-color: %2;
+        color: %5;
+    }
+    QMenuBar::item {
+        background: transparent;
+    }
+    QMenuBar::item:selected {
+        background: %3 ;
+        color: %5 ;
+    }
     QMenu {
         background-color: %2;
         color: %5;
@@ -194,14 +226,10 @@ void Theme::applyDarkTheme() {
         padding: 5px;
         border-radius: 3px;
     }
-    QMenuBar {
-        background-color: %2;
-        color: %5
-    }
     QMenu::item {
+        color: %5;
         padding: 4px 20px;
         border-radius: 3px;
-        background-color: transparent;
     }
     QMenu::item:selected {
         background-color: %3;

@@ -100,10 +100,12 @@ public:
     */
 
     static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
+    static constexpr int TOOLBAR_HEIGHT = 32 ;
 
     static constexpr int   GRAPH_DOUBLE_CLICK_MS = 300 ;
     static constexpr qreal GRAPH_GRID_SIZE = 20.0 ;
     static constexpr qreal GRAPH_WHEEL_SCALE_FACTOR = 1.15 ;
+    
 
     static constexpr qreal COMPONENT_WIDTH = 120.0 ;
     static constexpr qreal COMPONENT_HEIGHT = 80.0 ;

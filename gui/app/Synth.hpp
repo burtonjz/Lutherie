@@ -63,7 +63,8 @@ public:
 
 private:
     void configureMenuActions();
-    void configureWidgetButtons();
+    void configureToolBar();
+    QMenu* buildComponentMenu();
 
     void performSave();
 
@@ -71,21 +72,26 @@ private:
 
 signals:
     void engineStatusChanged(bool status);
-    void componentSelected(ComponentType typ);
 
 private slots:
     void onApiConnected();
     void onApiDataReceived(const json& json);
-    void onSetupButtonClicked();
-    void onStartStopButtonClicked();
+
+    // tool bar
+    void onActionSetup();
+    void onActionStart();
+    void onActionStop();
+
     void onEngineStatusChange(bool status);
-    void onComponentSelected(int index);
 
     // menu bar actions
     void onActionLoad();
     void onActionSave();
     void onActionSaveAs();
     void onActionSpectrumAnalyzer();
+
+    // docking logic
+    // QDockWidget* registerEditor(const QString& title, QWidget* editor);
 
 public slots:
     void markModified();
