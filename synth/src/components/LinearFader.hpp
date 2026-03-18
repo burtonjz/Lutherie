@@ -35,6 +35,7 @@ public:
     
     // MODULATOR OVERRIDES
     double modulate(double value, ModulationData* mData) const override;
+    ModulatorRange getModulatorRange() const override { return ModulatorRange::UNIPOLAR ; }
     
     // MIDI EVENT HANDLER OVERRIDES
     virtual bool shouldKillNote(const ActiveNote& note) const override ;

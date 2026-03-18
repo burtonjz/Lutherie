@@ -46,6 +46,7 @@ public:
     bool isGenerative() const override ;
     void calculateSample() override ; 
     double modulate([[maybe_unused]] double value, [[maybe_unused]] ModulationData* mdat ) const override ;
+    ModulatorRange getModulatorRange() const override { return ModulatorRange::BIPOLAR ; }
 
     void tick() override ;
     void reset();

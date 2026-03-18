@@ -21,7 +21,7 @@ ModulationModel::ModulationModel(int id, ParameterType p):
     id_(id),
     parameter_(p),
     depth_(1.0),
-    strategy_(GET_PARAMETER_TRAIT_MEMBER(p,defaultStrategy)),
+    strategy_(GET_PARAMETER_MODULATION_STRATEGY(p,ModulatorRange::UNKNOWN)),
     isConnected_(false),
     connectedId_(-1)
 {}
@@ -56,4 +56,8 @@ void ModulationModel::setStrategy(ModulationStrategy strat, bool block){
     if ( !block ){
         emit modulationStrategyChanged(id_, parameter_, strategy_);
     }
+}
+
+void ModulationModel::sync() const {
+    emit modulationStrategyChanged(id_, parameter_, strategy_);
 }

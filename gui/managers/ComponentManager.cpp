@@ -165,6 +165,7 @@ void ComponentManager::showEditor(int componentId){
         qWarning() << "requested editor for invalid component id:" << componentId ;
         return ;
     }
+    getModel(componentId)->sync();
     it->second->show();
     it->second->raise();
 }
@@ -175,6 +176,7 @@ void ComponentManager::showModulationEditor(int componentId){
         qWarning() << "requested modulation editor for invalid component id:" << componentId ;
         return ;
     }
+    getModel(componentId)->sync();
     it->second->show();
     it->second->raise();
 }
@@ -185,6 +187,7 @@ void ComponentManager::showGroupEditor(int groupId){
         qWarning() << "requested group editor for invalid group id:" << groupId ;
         return ;
     }
+    getGroupModel(groupId)->sync();
     it->second->show();
     it->second->raise();
 }
@@ -195,6 +198,7 @@ void ComponentManager::showGroupModulationEditor(int groupId){
         qWarning() << "requested group editor for invalid group id:" << groupId ;
         return ;
     }
+    getGroupModel(groupId)->sync();
     it->second->show();
     it->second->raise();
 }

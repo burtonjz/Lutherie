@@ -67,6 +67,10 @@ public:
     virtual const std::set<ModulationParameter>& getRequiredModulationParameters() const {
         return requiredParams_ ;
     }
+    
+    virtual ModulatorRange getModulatorRange() const {
+        return ModulatorRange::UNKNOWN ;
+    }
 
     std::set<ModulationTarget>& getModulationTargets(){
         return modulated_ ;

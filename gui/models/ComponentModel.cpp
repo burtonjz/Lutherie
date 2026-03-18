@@ -116,6 +116,15 @@ void ComponentModel::setParameterToDefault(ParameterType p, bool block){
     }
 }
 
+void ComponentModel::sync() const {
+    for ( const auto& [p,v]: parameters_ ){
+        emit parameterValueChanged(p, getParameterValue(p) );
+    }
+    for ( const auto& [p, mod] : modulations_ ){
+        mod->sync();
+    }
+}
+
 bool ComponentModel::validParam(ParameterType p) const {
     auto it = std::find(
         descriptor_.controllableParameters.begin(), 

@@ -34,6 +34,8 @@ public:
 
     double modulate(double value, ModulationData* mData ) const override ;
 
+    ModulatorRange getModulatorRange() const override { return ModulatorRange::UNKNOWN ; }
+
     void calculateSample() override ;
     void tick() override ;
     void onParameterChanged(ParameterType p) override ;

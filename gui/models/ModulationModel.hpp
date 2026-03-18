@@ -47,9 +47,11 @@ public:
     ModulationStrategy getStrategy() const ;
     void setStrategy(ModulationStrategy strat, bool block = false);
 
+    void sync() const ;
+
 signals:
-    void modulationDepthChanged(int componentId, ParameterType p, double depth);
-    void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
+    void modulationDepthChanged(int componentId, ParameterType p, double depth) const ;
+    void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy) const ;
 };
 
 #endif // MODULATION_MODEL_HPP_

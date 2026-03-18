@@ -70,6 +70,8 @@ public:
         if ( modulator){
             modData_ = modData ;
             modulator_ = modulator ;
+            modStrategy_ = GET_PARAMETER_MODULATION_STRATEGY(type_, modulator_->getModulatorRange());
+            SPDLOG_DEBUG("modulation strategy set to {}", (uint8_t)modStrategy_);
         } else {
             SPDLOG_WARN("Modulation was not set because the modulator was a null pointer.");
         }
@@ -163,7 +165,7 @@ class Parameter : public ParameterBase {
             instantaneousValue_(value_),
             defaultValue_(value_)
         {
-            modStrategy_ = ParameterTraits<typ>::defaultStrategy ;
+            modStrategy_ = GET_PARAMETER_MODULATION_STRATEGY(typ, ModulatorRange::UNKNOWN) ;
 
             if constexpr (typ != ParameterType::DEPTH){
                 depth_ = new (depthStorage_.buf) Parameter<ParameterType::DEPTH>(

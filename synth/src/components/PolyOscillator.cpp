@@ -155,7 +155,7 @@ ModulationStrategy PolyOscillator::getParameterModulationStrategy(ParameterType 
     auto s = strategyOverrides_[static_cast<int>(p)];
 
     if ( ! s.has_value() ){
-        return GET_PARAMETER_TRAIT_MEMBER(p, defaultStrategy);
+        return GET_PARAMETER_MODULATION_STRATEGY(p, ModulatorRange::UNKNOWN);
     }
     
     return s.value() ;
@@ -186,6 +186,7 @@ void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m,
     }
     modulators_[static_cast<size_t>(p)] = m ;
     modulationData_[static_cast<size_t>(p)] = d ;
+    strategyOverrides_[static_cast<size_t>(p)] = GET_PARAMETER_MODULATION_STRATEGY(p, m->getModulatorRange());
 
     childPool_.forEachActive(&Oscillator::setParameterModulation, p, m, d);
 }

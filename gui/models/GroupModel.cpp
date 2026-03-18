@@ -65,6 +65,12 @@ const std::vector<int> GroupModel::getComponents() const {
     return keys ;
 } 
 
+void GroupModel::sync() const {
+    for ( const auto& [id, model]: models_ ){
+        model->sync();
+    }
+}
+
 // ParameterExposure GroupModel::getExposure(int componentId, ParameterType p) const {
     
 // } 

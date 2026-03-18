@@ -50,11 +50,13 @@ public:
     void setParameterValue(ParameterType p, ParameterValue v, bool block = false);
     void setParameterToDefault(ParameterType p, bool block = false);
 
+    void sync() const ;
+
 private:
     bool validParam(ParameterType p) const ;
 
 signals:
-    void parameterValueChanged(ParameterType p, ParameterValue v);
+    void parameterValueChanged(ParameterType p, ParameterValue v) const ;
     void collectionUpdated(const CollectionRequest& req);
     void modulationDepthChanged(int componentId, ParameterType p, double depth);
     void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);

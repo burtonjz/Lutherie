@@ -27,7 +27,7 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
             modStrategyToString(ModulationStrategy::NAME)), static_cast<uint8_t>(ModulationStrategy::NAME));
     MODULATION_STRATEGY_LIST
     #undef X
-    ModulationStrategy s = GET_PARAMETER_TRAIT_MEMBER(p, defaultStrategy);
+    ModulationStrategy s = GET_PARAMETER_MODULATION_STRATEGY(p, ModulatorRange::UNKNOWN);
     auto idx = strategySelector_->findData(static_cast<uint8_t>(s));
     strategySelector_->setCurrentIndex(idx);
 
