@@ -52,9 +52,7 @@ public:
     void addComponent(ComponentModel* model);
     void removeComponent(int componentId);
     const std::vector<int> getComponents() const ;
-    
-    void sync() const ;
-    
+
     // ParameterExposure getExposure(int componentId, ParameterType p) const ;
     // void setExposure(int componentId, ParameterType p, ParameterExposure e);
 

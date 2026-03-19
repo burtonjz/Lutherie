@@ -56,6 +56,7 @@ public:
     void requestCollectionUpdate(CollectionRequest req);
     void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
     void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
+    void requestModelSync(int componentId);
 
     void renameComponent(int id, const QString& name);
     void renameGroup(int id, const QString& name);
@@ -84,6 +85,8 @@ private:
     // on api response
     void addComponent(int componentId, ComponentType type);
     void removeComponent(int componentId);
+    void setParameterValue(int componentId, ParameterType p, const json& parameterValue);
+    void syncModel(const json& msg);
 
     CollectionWidget* getCollectionWidget(ComponentParameters* params) const ;
     bool handleCollectionApiResponse(const json& msg);

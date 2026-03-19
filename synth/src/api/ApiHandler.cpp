@@ -63,6 +63,7 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["remove_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
     handlers_["create_depth_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
     handlers_["remove_depth_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
+    handlers_["sync_component"] = [this](int sock, const json& request){ return syncComponent(sock, request); };
     handlers_["get_parameter"] = [this](int sock, const json& request){ return getParameter(sock, request); };
     handlers_["set_parameter"] = [this](int sock, const json& request){ return setParameter(sock, request); };
     handlers_["get_parameter_default"] = [this](int sock, const json& request){ return getParameterDefault(sock, request); };
@@ -403,6 +404,25 @@ json ApiHandler::removeComponent(int sock, const json& request){
     return sendApiResponse(sock, response);    
 }
 
+json ApiHandler::syncComponent(int sock, const json& request){
+    json response = request ;
+
+    int componentId ;
+    try {
+        componentId = response.at("componentId");
+    } catch ( const std::exception& e ){
+        return sendApiResponse(sock, response, "required parameters were not provided.");
+    }
+
+    auto c = engine_->componentManager.getRaw(componentId);
+
+    if ( !c ){
+        return sendApiResponse(sock, response, "could not find component with specified ID");
+    }
+
+    response["data"] = engine_->componentManager.serializeComponent(c);
+    return sendApiResponse(sock, response);
+}
 
 json ApiHandler::parseConnectionRequest(int sock, const json& request){
     json response = request ;

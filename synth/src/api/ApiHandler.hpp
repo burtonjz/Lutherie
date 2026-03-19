@@ -75,6 +75,7 @@ private:
     json removeComponent(int sock, const json& request);
     json parseConnectionRequest(int sock, const json& request);
     bool routeConnectionRequest(ConnectionRequest request);
+    json syncComponent(int sock, const json& request);
     
     // parameter management
     json getParameter(int sock, const json& request);

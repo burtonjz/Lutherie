@@ -91,6 +91,14 @@ void ComponentManager::requestModulationStrategyUpdate(int componentId, Paramete
     ApiClient::instance()->sendMessage(obj);
 }
 
+void ComponentManager::requestModelSync(int componentId){
+    json obj ;
+    obj["action"] = "sync_component" ;
+    obj["componentId"] = componentId ;
+    
+    ApiClient::instance()->sendMessage(obj);
+}
+
 void ComponentManager::renameComponent(int id, const QString& name){
     auto editor = getEditor(id);
 
@@ -165,7 +173,7 @@ void ComponentManager::showEditor(int componentId){
         qWarning() << "requested editor for invalid component id:" << componentId ;
         return ;
     }
-    getModel(componentId)->sync();
+    requestModelSync(componentId);
     it->second->show();
     it->second->raise();
 }
@@ -176,7 +184,7 @@ void ComponentManager::showModulationEditor(int componentId){
         qWarning() << "requested modulation editor for invalid component id:" << componentId ;
         return ;
     }
-    getModel(componentId)->sync();
+    requestModelSync(componentId);
     it->second->show();
     it->second->raise();
 }
@@ -187,7 +195,9 @@ void ComponentManager::showGroupEditor(int groupId){
         qWarning() << "requested group editor for invalid group id:" << groupId ;
         return ;
     }
-    getGroupModel(groupId)->sync();
+    for ( auto id : getGroupModel(groupId)->getComponents() ){
+        requestModelSync(id);
+    }
     it->second->show();
     it->second->raise();
 }
@@ -198,7 +208,9 @@ void ComponentManager::showGroupModulationEditor(int groupId){
         qWarning() << "requested group editor for invalid group id:" << groupId ;
         return ;
     }
-    getGroupModel(groupId)->sync();
+    for ( auto id : getGroupModel(groupId)->getComponents() ){
+        requestModelSync(id);
+    }
     it->second->show();
     it->second->raise();
 }
@@ -364,6 +376,41 @@ void ComponentManager::removeComponent(int componentId){
     emit componentRemoved(componentId);
 }
 
+void ComponentManager::setParameterValue(int componentId, ParameterType p, const json& value){
+        // dispatch to set parameter value with correct variant
+        ParameterValue v ; 
+        switch(p){
+        #define X(name) \
+        case ParameterType::name: \
+            v = static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(value); \
+            break ; 
+        PARAMETER_TYPE_LIST
+        #undef X     
+        default:
+            break ;
+        }
+
+        getModel(componentId)->setParameterValue(p,v);
+        return ;
+}
+
+void ComponentManager::syncModel(const json& msg){
+    int id = msg.at("componentId");
+    const json& data = msg.at("data");
+
+    auto model = getModel(id);
+    if ( !model ){
+        qWarning() << "Cannot find model with id = " << id ;
+        return ;
+    }
+
+    if ( data.contains("parameters") ){
+        for ( const auto& [p, obj] : data.at("parameters").items() ){
+            if ( ! obj.contains("currentValue") ) continue ;
+            setParameterValue(id, parameterFromString(p), obj.at("currentValue") );
+        }
+    }
+}
 
 CollectionWidget* ComponentManager::getCollectionWidget(ComponentParameters* params) const {
     if ( !params ) return nullptr ;
@@ -425,6 +472,11 @@ void ComponentManager::onApiDataReceived(const json& msg){
         return ;
     }
 
+    if ( action == "sync_component" && success ){
+        syncModel(msg);
+        return ;
+    }
+
     if ( action == "set_component_parameter" && success ){
         int id = msg.at("componentId");
         auto it = models_.find(id);
@@ -435,20 +487,8 @@ void ComponentManager::onApiDataReceived(const json& msg){
         }
 
         ParameterType p = static_cast<ParameterType>(msg.at("parameter"));
-        
-        // dispatch to set parameter value with correct variant
-        ParameterValue v ; 
-        switch(p){
-        #define X(name) \
-        case ParameterType::name: \
-            v = static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(msg["value"]); \
-            break ; 
-        PARAMETER_TYPE_LIST
-        #undef X     
-        default:
-            break ;
-        }
-        it->second->setParameterValue(p, v);
+
+        setParameterValue(id, p, msg.at("value"));
         return ;
     }
 
@@ -476,19 +516,19 @@ void ComponentManager::onApiDataReceived(const json& msg){
 
     if ( action == "set_modulation_strategy" && success ){
         int id = msg.at("componentId");
-        auto it = models_.find(id);
-        if ( it == models_.end() ){
+        auto model = getModel(id);
+        if (  !model ){
             qWarning() << "Could not find model with Component ID" << id 
                 << ". Will not process modulation strategy request" ;
             return ;
         }
 
         ParameterType p = parameterFromString(msg.at("parameter"));
-        ModulationModel* m = it->second->getModulationModel(p);
+        ModulationModel* m = model->getModulationModel(p);
         if ( !m ){
             qWarning() << "Could not find Modulation Model for Parameter " 
                 << GET_PARAMETER_TRAIT_MEMBER(p, name) 
-                << "from Component Model: " << it->second ;
+                << "from Component Model: " << id ;
             return ;
         }
 

@@ -71,7 +71,6 @@ public:
             modData_ = modData ;
             modulator_ = modulator ;
             modStrategy_ = GET_PARAMETER_MODULATION_STRATEGY(type_, modulator_->getModulatorRange());
-            SPDLOG_DEBUG("modulation strategy set to {}", (uint8_t)modStrategy_);
         } else {
             SPDLOG_WARN("Modulation was not set because the modulator was a null pointer.");
         }

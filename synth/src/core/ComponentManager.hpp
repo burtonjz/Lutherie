@@ -50,9 +50,7 @@ private:
     std::unordered_set<ComponentId> modules_ ;
 
 public:
-    ComponentManager(MidiController* midiCtrl):
-        midiController_(midiCtrl)
-    {}
+    ComponentManager(MidiController* midiCtrl);
 
     template<ComponentType T>
     ComponentId create([[maybe_unused]] const std::string& name, ComponentConfig_t<T> cfg) {        
@@ -72,12 +70,6 @@ public:
         return id;
     }
 
-    BaseComponent* getRaw(ComponentId id) const {
-        auto it = components_.find(id);
-        if ( it == components_.end() ) return nullptr ;
-        return it->second.get() ;
-    }
-
     template<ComponentType T>
     ComponentType_t<T>* get(ComponentId id) const {
         BaseComponent* m = getRaw(id);
@@ -90,113 +82,25 @@ public:
         return nullptr ;
     }
 
-    BaseModule* getModule(ComponentId id) const {
-        if ( modules_.find(id) == modules_.end() ) return nullptr ;
-        return dynamic_cast<BaseModule*>(getRaw(id));
-    }
+    BaseComponent* getRaw(ComponentId id) const ;
+    BaseModule* getModule(ComponentId id) const ;
+    const std::unordered_set<ComponentId>& getModuleIds() const ;
+    BaseModulator* getModulator(ComponentId id) const ;
+    const std::unordered_set<ComponentId>& getModulatorIds() const ;
+    MidiEventHandler* getMidiHandler(ComponentId id) const ;
+    const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
+    MidiEventListener* getMidiListener(ComponentId id) const ;
+    const std::unordered_set<ComponentId>& getMidiListenerIds() const ;
 
-    std::unordered_set<ComponentId>& getModuleIds(){
-        return modules_ ;
-    }
+    void remove(ComponentId id);
 
-    BaseModulator* getModulator(ComponentId id) const {
-        if ( modulators_.find(id) == modulators_.end() ) return nullptr ;
-        return dynamic_cast<BaseModulator*>(getRaw(id));
-    }
+    void reset();
 
-    const std::unordered_set<ComponentId>& getModulatorIds() const{
-        return modulators_ ;
-    }
-
-    MidiEventHandler* getMidiHandler(ComponentId id) const {
-        if ( midiHandlers_.find(id) == midiHandlers_.end() ) return nullptr ;
-        return dynamic_cast<MidiEventHandler*>(getRaw(id));
-    }
-
-    const std::unordered_set<ComponentId>& getMidiHandlerIds() const {
-        return midiHandlers_ ;
-    }
-    
-    MidiEventListener* getMidiListener(ComponentId id) const {
-        if ( midiListeners_.find(id) == midiListeners_.end() ) return nullptr ;
-        return dynamic_cast<MidiEventListener*>(getRaw(id));
-    }
-
-    const std::unordered_set<ComponentId>& getMidiListenerIds() const {
-        return midiListeners_ ;
-    }
-
-    void remove(ComponentId id){
-        midiHandlers_.erase(id);
-        modules_.erase(id);
-        modulators_.erase(id);
-
-        components_.erase(id);
-    }
-
-    void reset(){
-        nextID_ = 0 ;
-        components_.clear();
-        midiHandlers_.clear();
-        modulators_.clear();
-        modules_.clear();
-    }
-
-    void runParameterModulation(){
-        for (auto it = components_.begin(); it != components_.end(); ++it){
-            it->second->updateParameters();
-        }
-    }
+    void runParameterModulation();
 
     // saving / loading
-    json serializeComponents() const {
-        json output ;
-        for ( auto it = components_.begin(); it != components_.end(); ++it ){
-            json componentConfig ;
-
-            componentConfig["id"] = it->second->getId() ;
-            componentConfig["type"] = it->second->getType() ;
-
-            // parameters
-            componentConfig["parameters"] = it->second->getParameters()->toJson();
-
-            // get any additional modulations
-            auto modulatableParameters = ComponentRegistry::getComponentDescriptor(it->second->getType()).modulatableParameters ;
-            for ( auto p : modulatableParameters ){
-                auto modulator = it->second->getParameterModulator(p);
-                if ( modulator ){
-                    componentConfig["parameters"][GET_PARAMETER_TRAIT_MEMBER(p, name)]["modulatorId"] = modulator->getId();
-                }
-            }
-
-            // get input signal component ids
-            BaseModule* module = dynamic_cast<BaseModule*>(it->second.get());
-            if ( module ){
-                for ( size_t i = 0; i < module->getNumInputs(); ++i ){
-                    for ( const auto& conn : module->getInputs(i) ){
-                        componentConfig["signalInputs"][i].push_back(conn);
-                    }
-                }
-            }
-
-            // get midi handler listeners
-            MidiEventHandler* handler = dynamic_cast<MidiEventHandler*>(it->second.get());
-            if ( handler ){
-                for ( auto listener : handler->getListeners() ){
-                    auto listenerModule = dynamic_cast<BaseComponent*>(listener);
-                    if ( listenerModule ){
-                        componentConfig["midiListeners"].push_back(listenerModule->getId());
-                    }
-                        
-                }
-            }
-            
-            output.push_back(componentConfig);
-
-            componentConfig.clear();
-        }
-        return output ;
-    }
+    json serializeComponent(BaseComponent* c) const ;
+    json serializeComponents() const ;
 };
 
 #endif // __COMPONENT_MANAGER_HPP_
