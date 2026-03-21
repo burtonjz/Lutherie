@@ -194,5 +194,6 @@ const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ComponentTy
     if (it != registry.end()){
         return  it->second ;
     }
+    SPDLOG_ERROR("Unknown ComponentType: {}", static_cast<int>(type));
     throw std::runtime_error("Unknown ComponentType");
 }

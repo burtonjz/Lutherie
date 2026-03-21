@@ -22,6 +22,7 @@
 #include "types/Waveform.hpp"
 #include "types/ScaleType.hpp"
 #include "types/ScaleNote.hpp"
+#include "config/Config.hpp"
 
 #include <variant>
 #include <cstdint>
@@ -194,7 +195,7 @@ template <> struct ParameterTraits<ParameterType::FREQUENCY>{
     using ValueType = double ;
     static constexpr std::string name = "frequency" ;
     static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 30000.0 ;
+    static constexpr float maximum = 30000 ; // static safeguard, implementation should use dynamic nyquist 
     static constexpr float defaultValue = 440.0 ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},

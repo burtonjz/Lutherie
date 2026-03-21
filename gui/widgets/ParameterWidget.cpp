@@ -524,7 +524,14 @@ void SliderWidget::setupUI(){
     // value slider
     slider_ = new QSlider(Qt::Horizontal);
     slider_->setMinimum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_, minimum)));
-    slider_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
+
+    if ( param_ == ParameterType::FREQUENCY ){
+        // nyquist override
+        slider_->setMaximum(scaleByPrecision(Config::get<double>("audio.sample_rate").value() / 2.0)); 
+    } else {
+        slider_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
+    }
+    
     slider_->setEnabled(true);
     layout->addWidget(slider_);
     layout->addStretch();

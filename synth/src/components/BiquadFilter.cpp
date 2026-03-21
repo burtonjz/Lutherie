@@ -3,6 +3,7 @@
 #include "params/ParameterMap.hpp"
 #include "types/FilterType.hpp"
 #include "types/ParameterType.hpp"
+#include "config/Config.hpp"
 #include <cmath>
 
 BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
@@ -14,7 +15,8 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     dirty_(false)
 {
     parameters_->add<ParameterType::FILTER_TYPE>(cfg.filterType, false);
-    parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true);
+    parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true, 
+        0, sampleRate_/ 2.0); // limit to nyquist
     parameters_->add<ParameterType::DBGAIN>(cfg.gain, true);
     parameters_->add<ParameterType::Q_FACTOR>(cfg.qFactor,true);
     parameters_->add<ParameterType::BANDWIDTH>(cfg.bandwidth,true);
