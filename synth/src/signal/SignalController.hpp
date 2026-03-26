@@ -67,6 +67,7 @@ public:
 
         double output = 0 ; 
         for (BaseModule*  mod : chain){
+            mod->updateParameters();
             mod->tick();
             mod->calculateSample();
 

@@ -287,6 +287,7 @@ class Parameter : public ParameterBase {
 
     private:
         void setInstantaneousValue(ValueType v){
+            v = limitToRange(v);
             if ( v != instantaneousValue_ ){
                 instantaneousValue_ = v ;
                 notifyListeners();

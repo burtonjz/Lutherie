@@ -96,6 +96,9 @@ public:
 
     void reset();
 
+    /**
+     * @brief runs parameter modulation all non-module components
+     */
     void runParameterModulation();
 
     // saving / loading

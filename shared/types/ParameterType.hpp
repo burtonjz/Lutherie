@@ -152,8 +152,8 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
 template <> struct ParameterTraits<ParameterType::DEPTH>{
     using ValueType = float ;
     static constexpr std::string name = "depth" ;
-    static constexpr float minimum = -1.0 ;
-    static constexpr float maximum = 1.0 ;
+    static constexpr float minimum = -10.0 ;
+    static constexpr float maximum = 10.0 ;
     static constexpr float defaultValue = 1.0 ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},

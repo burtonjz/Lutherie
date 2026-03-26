@@ -81,7 +81,9 @@ void ComponentManager::reset(){
 
 void ComponentManager::runParameterModulation(){
     for (auto it = components_.begin(); it != components_.end(); ++it){
-        it->second->updateParameters();
+        if ( !modules_.contains(it->first) ){
+            it->second->updateParameters();
+        }
     }
 }
 

@@ -16,7 +16,7 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
 {
     parameters_->add<ParameterType::FILTER_TYPE>(cfg.filterType, false);
     parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true, 
-        0, sampleRate_/ 2.0); // limit to nyquist
+        20, sampleRate_ * 0.495); // limit to nyquist
     parameters_->add<ParameterType::DBGAIN>(cfg.gain, true);
     parameters_->add<ParameterType::Q_FACTOR>(cfg.qFactor,true);
     parameters_->add<ParameterType::BANDWIDTH>(cfg.bandwidth,true);
