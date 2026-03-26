@@ -14,7 +14,7 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
     strategySelector_(new QComboBox(this)),
     modIndicator_(new ModulationIndicator(this))
 {
-    QString pString = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    QString pString = QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)));
     paramLabel_->setText(pString.toCaseFolded());
     paramLabel_->setStyleSheet(Theme::getLabelHeaderStyle());
     QFont f = paramLabel_->font();

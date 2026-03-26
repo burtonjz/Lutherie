@@ -106,6 +106,19 @@ public:
 
 };
 
+class MonophonicTriggerBehaviorWidget : public ParameterWidget {
+private:
+    QLabel* label_ ;
+    QComboBox* type_ ;
+
+public:
+    explicit MonophonicTriggerBehaviorWidget(QWidget* parent = nullptr);
+
+    ParameterType getType() const override ;
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
+};
+
 class StatusWidget : public ParameterWidget {
 private:
     QLabel* label_ ;

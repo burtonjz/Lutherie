@@ -941,7 +941,7 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
         bool depthExists = std::find(depthExisting.begin(), depthExisting.end(), p) != depthExisting.end();
         if ( ! modExists ){
             QAction* param = new QAction(
-                QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name)),
+                QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(p, name))),
                 &menu
             );
             menu.addAction(param);
@@ -949,7 +949,7 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
         }   
         if ( modExists && ! depthExists ){
             QAction* param = new QAction(
-                QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name) + " depth"),
+                QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " depth"),
                 &menu
             );
             menu.addAction(param);

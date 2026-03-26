@@ -3,7 +3,6 @@
 #include "params/ParameterMap.hpp"
 #include "types/FilterType.hpp"
 #include "types/ParameterType.hpp"
-#include "config/Config.hpp"
 #include <cmath>
 
 BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):

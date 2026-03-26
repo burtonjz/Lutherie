@@ -76,7 +76,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 "ADSR Envelope",
                 ComponentType::ADSREnvelope,
                 {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
-                {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
+                {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE, ParameterType::TRIGGER},
                 {},
                 0,
                 0,

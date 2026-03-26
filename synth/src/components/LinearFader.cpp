@@ -47,8 +47,8 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
     if ( !mData->has(ModulationParameter::INITIAL_VALUE) ){ 
         mData->set(ModulationParameter::INITIAL_VALUE, 0.0f) ;     
     }
-    if ( !mData->has(ModulationParameter::OUTPUT_1) ){ 
-        mData->set(ModulationParameter::OUTPUT_1, 0.0f );    
+    if ( !mData->has(ModulationParameter::LAST_OUTPUT) ){ 
+        mData->set(ModulationParameter::LAST_OUTPUT, 0.0f );    
     }
     
     uint8_t midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
@@ -75,7 +75,7 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
         }
     }
 
-    mData->set(ModulationParameter::OUTPUT_1, output) ;
+    mData->set(ModulationParameter::LAST_OUTPUT, output) ;
     return output ;
 }
 

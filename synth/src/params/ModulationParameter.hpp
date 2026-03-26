@@ -29,11 +29,10 @@
 */
 enum class ModulationParameter : int {
     MIDI_NOTE,
+    LAST_MIDI_NOTE,
     INITIAL_VALUE, 
-    INPUT_1,
-    INPUT_2,
-    OUTPUT_1,
-    OUTPUT_2,
+    LAST_OUTPUT,
+    LAST_STATE,
     FILTER_STATE_1,
     FILTER_STATE_2,
     N_PARAMETERS

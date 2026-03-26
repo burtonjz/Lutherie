@@ -27,6 +27,7 @@ ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
     parameters_->add<ParameterType::DECAY>(cfg.decay, true);
     parameters_->add<ParameterType::SUSTAIN>(cfg.sustain, true);
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);
+    parameters_->add<ParameterType::TRIGGER>(cfg.trigger, false);
 
     requiredParams_ = {
         ModulationParameter::MIDI_NOTE, 
@@ -43,27 +44,36 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
     if ( !mData->has(ModulationParameter::INITIAL_VALUE) ){
         mData->set(ModulationParameter::INITIAL_VALUE, 0.0f);
     }
-    if ( !mData->has(ModulationParameter::OUTPUT_1) ){ 
-        mData->set(ModulationParameter::OUTPUT_1, 0.0f) ;    
+    if ( !mData->has(ModulationParameter::LAST_OUTPUT) ){ 
+        mData->set(ModulationParameter::LAST_OUTPUT, 0.0f) ;    
     }
     
+    // get the midi note
+    bool monophonicMode = !mData->has(ModulationParameter::MIDI_NOTE);
+    auto behavior = MonophonicTriggerBehavior::from_uint8(
+        parameters_->getParameter<ParameterType::TRIGGER>()->getValue()
+    );
     uint8_t midiNote ;
-    if ( mData->has(ModulationParameter::MIDI_NOTE) ){ 
-        // polyphonic mode
-        midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
-    } else { 
-        // global mode
+    if ( monophonicMode ){ 
         midiNote = activeCount_ > 0 ? lastPressedNote_ : lastReleasedNote_ ;
         if ( midiNote == 255 ) return output ; // no notes ever played!
+        midiNote = resolveMonophonicNote(midiNote, mData, behavior);
+        
+    } else {
+        midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
     }
     
     auto anote = notes_[midiNote] ;
     if ( !isNoteActive(midiNote) ) return output ;
 
+    // set start level
+    if ( monophonicMode ){
+        updateMonophonicState(midiNote, anote.note.getStatus(), mData, behavior);
+    }
     float start_level = mData->get(ModulationParameter::INITIAL_VALUE);
-    
-    if ( anote.note.getStatus() ){
-        // then note is pressed
+
+    // calculate ADSR
+    if ( anote.note.getStatus() ){ // Attack Decay Sustain
         float attack = parameters_->getParameter<ParameterType::ATTACK>()->getInstantaneousValue() ;
         float decay = parameters_->getParameter<ParameterType::DECAY>()->getInstantaneousValue() ;
         float sustain = parameters_->getParameter<ParameterType::SUSTAIN>()->getInstantaneousValue() ;
@@ -75,7 +85,7 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
         } else {
             output = sustain ;
         }
-    } else {
+    } else { // Release
         float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
         if ( anote.time >= release ){
             output = 0.0 ;
@@ -84,11 +94,59 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
         }
     }
 
-    mData->set(ModulationParameter::OUTPUT_1, output) ;
+    mData->set(ModulationParameter::LAST_OUTPUT, output) ;
     return output ;
 }
 
 bool ADSREnvelope::shouldKillNote(const ActiveNote& note) const {
     float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
     return ( !note.note.getStatus() && note.time > release ) ;
+}
+
+uint8_t ADSREnvelope::resolveMonophonicNote(
+    uint8_t currentNote, ModulationData* mData, 
+    MonophonicTriggerBehavior behavior) const 
+{
+    if ( behavior == MonophonicTriggerBehavior::LEGATO ){
+        if ( mData->has(ModulationParameter::LAST_MIDI_NOTE) ){
+            uint8_t latchedNote = static_cast<uint8_t>(mData->get(ModulationParameter::LAST_MIDI_NOTE));
+            if ( isNoteActive(latchedNote) ){
+                return latchedNote ;
+            }
+        }
+    }
+    return currentNote ;
+}
+
+void ADSREnvelope::updateMonophonicState(
+    uint8_t midiNote, bool isPressed, 
+    ModulationData* mData, MonophonicTriggerBehavior behavior) const 
+{
+    bool wasPressed = mData->has(ModulationParameter::LAST_STATE) &&
+        mData->get(ModulationParameter::LAST_STATE) > 0.0f ;
+    bool noteChanged = mData->has(ModulationParameter::LAST_MIDI_NOTE) &&
+        mData->get(ModulationParameter::LAST_MIDI_NOTE) != midiNote ;
+    switch ( behavior ){
+    case MonophonicTriggerBehavior::LEGATO:
+        if ( isPressed != wasPressed ){
+            mData->set(ModulationParameter::INITIAL_VALUE, mData->get(ModulationParameter::LAST_OUTPUT));
+        }
+        break ;
+    case MonophonicTriggerBehavior::RETRIGGER_LEGATO:
+        if (( isPressed != wasPressed ) || noteChanged ){
+            mData->set(ModulationParameter::INITIAL_VALUE, mData->get(ModulationParameter::LAST_OUTPUT));
+        }
+        break ;
+    case MonophonicTriggerBehavior::RETRIGGER_RESET:
+        if (( isPressed && !wasPressed ) || noteChanged ){
+            mData->set(ModulationParameter::INITIAL_VALUE, 0.0f);
+        } else if ( !isPressed && wasPressed ){
+            mData->set(ModulationParameter::INITIAL_VALUE, mData->get(ModulationParameter::LAST_OUTPUT));
+        }
+        break ;
+    default:
+        break ;
+    }
+    mData->set(ModulationParameter::LAST_MIDI_NOTE, midiNote);
+    mData->set(ModulationParameter::LAST_STATE, isPressed ? 1.0f : 0.0f);
 }

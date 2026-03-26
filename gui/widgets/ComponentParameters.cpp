@@ -66,6 +66,9 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     case ParameterType::FILTER_TYPE:
         w = new FilterTypeWidget(this);
         break ;
+    case ParameterType::TRIGGER:
+        w = new MonophonicTriggerBehaviorWidget(this);
+        break ;
     case ParameterType::STATUS:
         w = new StatusWidget(this);
         break ;

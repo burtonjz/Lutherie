@@ -232,9 +232,9 @@ void PolyOscillator::updateModulationInitialValue(Oscillator* osc){
             auto d = osc->getParameters()->getParameter(p)->getModulationData();
             if ( 
                 d->has(ModulationParameter::INITIAL_VALUE) &&
-                d->has(ModulationParameter::OUTPUT_1)
+                d->has(ModulationParameter::LAST_OUTPUT)
             ){
-                d->set(ModulationParameter::INITIAL_VALUE, d->get(ModulationParameter::OUTPUT_1)) ;
+                d->set(ModulationParameter::INITIAL_VALUE, d->get(ModulationParameter::LAST_OUTPUT)) ;
             }
         }
     } 

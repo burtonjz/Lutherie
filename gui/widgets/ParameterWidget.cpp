@@ -141,7 +141,7 @@ void DelayWidget::setupUI(){
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
     
     // widget label
-    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, name)));
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, name))));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
@@ -245,7 +245,7 @@ WaveformWidget::WaveformWidget(QWidget* parent):
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     // label
-    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, name)));
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, name))));
     layout->addWidget(label_);
 
     // populate waveforms
@@ -307,7 +307,7 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     // label
-    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, name)));
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, name))));
     layout->addWidget(label_);
 
     // populate types
@@ -358,6 +358,69 @@ void FilterTypeWidget::setValue(const ParameterValue& value, bool block){
 
 /*
 =========================================
+===== MONOPHONIC TRIGGER BEHAVIOR =======
+=========================================
+*/
+MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent):
+    label_(nullptr),
+    type_(nullptr)
+{
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+
+    // label
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::TRIGGER, name))));
+    layout->addWidget(label_);
+
+    // populate types
+    type_ = new QComboBox(this);
+    for ( auto b : MonophonicTriggerBehavior::getBehaviors()){
+        MonophonicTriggerBehavior behavior = MonophonicTriggerBehavior(b);
+        type_->addItem(QString::fromStdString(behavior.toString()),behavior.to_uint8());
+    }
+
+    // set default type
+    int idx = type_->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::TRIGGER, defaultValue));
+    if ( idx != -1 ){
+        type_->setCurrentIndex(idx);
+    } 
+
+    layout->addWidget(type_);
+    layout->addStretch();
+
+    // connections
+    connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
+}
+
+ParameterType MonophonicTriggerBehaviorWidget::getType() const {
+    return ParameterType::TRIGGER ;
+}
+
+ParameterValue MonophonicTriggerBehaviorWidget::getValue() const {
+    return type_->itemData(type_->currentIndex()).value<uint8_t>();
+}
+
+void MonophonicTriggerBehaviorWidget::setValue(const ParameterValue& value, bool block){
+    using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::TRIGGER);
+
+    QSignalBlocker blocker(type_);
+    if ( !block ) blocker.unblock();
+
+    uint8_t behavior = std::get<ValueType>(value);
+
+    int idx = type_->findData(behavior);
+
+    if ( idx != -1 ){
+        type_->setCurrentIndex(idx);
+    } else {
+        qWarning() << "could not set filter type value, enum not found in data" ;
+        return ;
+    }
+}
+
+/*
+=========================================
 ================== STATUS ===============
 =========================================
 */
@@ -370,7 +433,7 @@ StatusWidget::StatusWidget(QWidget* parent):
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     // label
-    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::STATUS, name)));
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::STATUS, name))));
     layout->addWidget(label_);
     layout->addStretch();
 
@@ -512,7 +575,7 @@ void SliderWidget::setupUI(){
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
     
     // widget label
-    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(param_, name)));
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(param_, name))));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 

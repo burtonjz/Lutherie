@@ -110,7 +110,7 @@ struct CollectionRequest {
 
     bool validateSyncParams(const CollectionDescriptor& d, const json& value) const {
         for ( auto p : d.params ){
-            const std::string& pName = GET_PARAMETER_TRAIT_MEMBER(p, name);
+            std::string pName = std::string(GET_PARAMETER_TRAIT_MEMBER(p, name));
             if ( !value.contains(pName) ) return false ;
             if ( !value[pName].is_number() ) return false ;
         }

@@ -35,6 +35,11 @@ public:
     // MIDI EVENT HANDLER OVERRIDES
     virtual bool shouldKillNote(const ActiveNote& note) const override ;
 
+private:
+    uint8_t resolveMonophonicNote(uint8_t currentNote, ModulationData* mData, MonophonicTriggerBehavior behavior) const ;
+    void updateMonophonicState(uint8_t midiNote, bool isPressed, ModulationData* mData, MonophonicTriggerBehavior behavior) const ;
+
+
 };
 
 #endif // __MODULATOR_ADSR_ENVELOPE_HPP_

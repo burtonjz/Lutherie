@@ -884,7 +884,7 @@ json ApiHandler::getModulationStrategy(int sock, const json& request){
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
         return sendApiResponse(sock, response,
-            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+            "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
 
@@ -930,7 +930,7 @@ json ApiHandler::setModulationStrategy(int sock, const json& request){
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
         return sendApiResponse(sock, response,
-            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+            "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
 
@@ -967,7 +967,7 @@ json ApiHandler::getModulationDepth(int sock, const json& request){
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
         return sendApiResponse(sock, response,
-            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+            "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
 
@@ -1014,7 +1014,7 @@ json ApiHandler::setModulationDepth(int sock, const json& request){
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
         return sendApiResponse(sock, response,
-            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+            "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
 
