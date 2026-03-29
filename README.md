@@ -11,6 +11,7 @@ see the [LICENSE](LICENSE) file for details.
 
 This project uses:
 - Qt6 (LGPL v3)
+- KDDockWidgets (LGPL v3)
 - RtMidi (MIT-style)
 - RtAudio (MIT-style)
 - KissFFT (BSD 3-Clause)
