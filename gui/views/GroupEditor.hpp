@@ -21,39 +21,38 @@
 #include "widgets/ComponentParameters.hpp"
 #include "types/ParameterType.hpp"
 
-#include <QWidget>
+#include <kddockwidgets/DockWidget.h>
+#include <kddockwidgets/MainWindow.h>
 #include <QPushButton>
 #include <QGridLayout>
 #include <unordered_map>
 
 // forward declarations
 class ComponentModel ;
+namespace KDDW = KDDockWidgets::QtWidgets ;
 
-class GroupEditor : public QWidget {
+class GroupEditor : public KDDW::DockWidget {
     Q_OBJECT
 
 private:
+    QWidget* container_ ;
     std::unordered_map<int, ComponentParameters*> params_ ;
-    QLabel* name_ ;
-    QGridLayout* paramsLayout_ ;
+    QVBoxLayout* paramsLayout_ ;
     QPushButton* closeButton_ ;
 
 public:
-    explicit GroupEditor(const QString& name, QWidget* parent = nullptr);
+    explicit GroupEditor(const QString& name, KDDW::MainWindow* mainWindow);
 
+    QString getName() const ;
     void setName(const QString& name);
 
     void addComponent(ComponentModel* model);
     void removeComponent(ComponentModel* model);
     ComponentParameters* getComponentParameters(int componentId);
-    
-protected:
-    void changeEvent(QEvent *event) override ;
 
 private:
     void setupLayout();
     void relayoutParams();
-    void closeEvent(QCloseEvent* event) override ;
 
 signals:
     void parameterEdited(int componentId, ParameterType p, ParameterValue value);

@@ -22,41 +22,46 @@
 #include "types/ParameterType.hpp"
 #include "widgets/ModulationControl.hpp"
 
+#include <kddockwidgets/DockWidget.h>
+#include <kddockwidgets/MainWindow.h>
 #include <QWidget>
-#include <QLabel>
+#include <QScrollArea>
 #include <QPushButton>
 #include <QGridLayout>
 #include <map>
 #include <utility>
 #include <vector>
 
-class ModulationEditor : public QWidget {
+namespace KDDW = KDDockWidgets::QtWidgets ;
+
+class ModulationEditor : public KDDW::DockWidget {
     Q_OBJECT
 
 private:
+    QWidget* container_ ;
+    QWidget* gridContainer_ ;
+    QScrollArea* scroll_ ;
     std::map<std::pair<int, ParameterType>, ModulationControl*> modulationControls_ ;
     std::vector<std::pair<int, ParameterType>> controlOrder_ ;
 
-    QLabel* editorLabel_ ;
     QGridLayout* ctrlLayout_ ;
     QPushButton* closeButton_ ;
 
 public:
-    ModulationEditor(QString name, QWidget* parent = nullptr);
+    ModulationEditor(QString name, KDDW::MainWindow* mainWindow);
     ~ModulationEditor();
 
     void add(ModulationModel* model);
     void remove(int componentId, ParameterType p);
 
+    QString getName() const ;
     void setName(const QString& name);
-    void setModulationStatus(int componentId, ParameterType p, bool active);
 
-protected:
-    void changeEvent(QEvent *event) override ;
+    void setModulationStatus(int componentId, ParameterType p, bool active);
     
 private:
+    void setupLayout();
     void updateLayout();
-    void closeEvent(QCloseEvent* event) override ;
     
 private slots:
     void onCloseButtonClicked();

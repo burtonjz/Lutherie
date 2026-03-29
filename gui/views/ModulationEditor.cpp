@@ -25,32 +25,27 @@
 #include "app/Theme.hpp"
 
 #include <QVBoxLayout>
-#include <QScrollArea>
 #include <QEvent>
 #include <QApplication>
+#include <QScrollBar>
 
-ModulationEditor::ModulationEditor(QString name, QWidget* parent):
+ModulationEditor::ModulationEditor(QString name, KDDW::MainWindow* mainWindow):
+    KDDW::DockWidget(name),
+    container_(new QWidget()),
+    gridContainer_(new QWidget()),
     modulationControls_(),
     controlOrder_(),
-    editorLabel_(new QLabel(name, this)),
     ctrlLayout_(new QGridLayout()),
-    closeButton_(new QPushButton("Close", this))
+    closeButton_(new QPushButton("Close", container_))
 {
-    setWindowTitle(" ");
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-
-    editorLabel_->setStyleSheet(Theme::getLabelTitleStyle());
-    mainLayout->addWidget(editorLabel_, 0, Qt::AlignCenter);
-    mainLayout->addStretch();
-    QWidget* gridContainer = new QWidget();
-    gridContainer->setLayout(ctrlLayout_);
-    auto scroll = new QScrollArea(this);
-    scroll->setWidget(gridContainer);
-    scroll->setWidgetResizable(true);
-    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    mainLayout->addWidget(scroll, 1);
-    mainLayout->addWidget(closeButton_);
+    setOptions(
+        KDDockWidgets::DockWidgetOption_None
+    );
+    
+    setTitle(name + "Modulation");
+    setupLayout();
+    setFloating(true);
+    close();
 
     connect(
         closeButton_, &QPushButton::clicked, 
@@ -114,7 +109,7 @@ void ModulationEditor::remove(int componentId, ParameterType p){
 }
 
 void ModulationEditor::setName(const QString& name){
-    editorLabel_->setText(name);
+    setTitle(name);
 }
 
 void ModulationEditor::setModulationStatus(int componentId, ParameterType p, bool active){
@@ -130,16 +125,22 @@ void ModulationEditor::setModulationStatus(int componentId, ParameterType p, boo
     ctrl->setConnectionStatus(active);
 }
 
-void ModulationEditor::changeEvent(QEvent *event){
-    // handle close events on focus loss
-    if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
-        QWidget* active = QApplication::activeWindow();
-        if ( !active ){
-            return ; // ignore null new active windows -- means its a drag/resize/whatever
-        }
-        onCloseButtonClicked(); 
-    }
-    QWidget::changeEvent(event); 
+void ModulationEditor::setupLayout(){
+    QVBoxLayout* mainLayout = new QVBoxLayout(container_);
+
+    gridContainer_ = new QWidget();
+    gridContainer_->setLayout(ctrlLayout_);
+
+    scroll_ = new QScrollArea(container_);
+    scroll_->setWidget(gridContainer_);
+    scroll_->setWidgetResizable(true);
+    scroll_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scroll_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
+    mainLayout->addWidget(scroll_);
+    mainLayout->addWidget(closeButton_);
+
+    setWidget(container_);
 }
 
 void ModulationEditor::updateLayout(){
@@ -154,12 +155,35 @@ void ModulationEditor::updateLayout(){
         ctrlLayout_->addWidget(modulationControls_.at(key), row, col);
         count++ ;
     }
-}
 
-void ModulationEditor::closeEvent(QCloseEvent* event){
+    if ( modulationControls_.empty() ) return ;
 
+    // handle sizing
+    auto controlSize = modulationControls_.begin()->second->sizeHint();
+    int nRows = (count + 1) / 2 ;
+    int vSpacing = ctrlLayout_->verticalSpacing();
+    int vMargins = ctrlLayout_->contentsMargins().top() +
+                   ctrlLayout_->contentsMargins().bottom() ;
+    int hSpacing = ctrlLayout_->horizontalSpacing();
+    int hMargins = ctrlLayout_->contentsMargins().left() +
+                   ctrlLayout_->contentsMargins().right() ;
+    
+    int contentWidth = controlSize.width() * 2 + hSpacing + hMargins ;
+    int contentHeight = controlSize.height() * nRows + vSpacing * (nRows - 1) + vMargins ;
+
+    int scrollWidth = scroll_->verticalScrollBar()->sizeHint().width() + scroll_->frameWidth() * 2 ;
+    int totalWidth = scrollWidth + contentWidth ;
+
+    scroll_->setFixedWidth(totalWidth);
+    scroll_->setMaximumHeight(contentHeight);
+
+    adjustSize();
+    container_->setFixedWidth(container_->sizeHint().width());
+    container_->setMaximumHeight(
+        contentHeight + closeButton_->sizeHint().height()
+    );
 }
 
 void ModulationEditor::onCloseButtonClicked(){
-    hide();
+    close();
 }

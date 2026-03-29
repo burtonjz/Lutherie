@@ -22,23 +22,31 @@
 #include <QScrollArea>
 #include <QCloseEvent>
 
-GroupEditor::GroupEditor(const QString& name, QWidget* parent):
-    QWidget(nullptr),
+GroupEditor::GroupEditor(const QString& name, KDDW::MainWindow* mainWindow):
+    KDDW::DockWidget(name),
+    container_(new QWidget()),
     params_(),
-    name_(new QLabel(name, this)),
-    paramsLayout_(new QGridLayout()),
-    closeButton_(new QPushButton("Close",this))
+    paramsLayout_(new QVBoxLayout(container_)),
+    closeButton_(new QPushButton("Close",container_))
 {
-    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
-    setWindowTitle(" ");
+    setOptions(
+        KDDockWidgets::DockWidgetOption_None
+    );
 
-    setAttribute(Qt::WA_ShowWithoutActivating);
-
+    setTitle(name);
     setupLayout();
+    setFloating(true);
+    close();
+
+    setWidget(container_);
+}
+
+QString GroupEditor::getName() const {
+    return title();
 }
 
 void GroupEditor::setName(const QString& name){
-    name_->setText(name);
+    setTitle(name);
 }
 
 void GroupEditor::addComponent(ComponentModel* model){
@@ -48,13 +56,9 @@ void GroupEditor::addComponent(ComponentModel* model){
     if ( params_.contains(id) ) return ;
     int count = params_.size() ;
 
-    params_[id] = new ComponentParameters(model, this);
+    params_[id] = new ComponentParameters(model, container_);
 
-    // handle layout
-    int row = count / Theme::GROUP_EDITOR_GRID_MAX_COLUMNS ;
-    int col = count % Theme::GROUP_EDITOR_GRID_MAX_COLUMNS ;
-
-    paramsLayout_->addWidget(params_[id], row, col);
+    paramsLayout_->addWidget(params_[id]);
 
     connect(
         params_[id], &ComponentParameters::parameterEdited,
@@ -81,20 +85,8 @@ ComponentParameters* GroupEditor::getComponentParameters(int componentId){
     return params_.at(componentId);
 }
 
-void GroupEditor::changeEvent(QEvent *event){
-    // handle close events on focus loss
-    if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
-        QWidget* active = QApplication::activeWindow();
-        if ( !active ){
-            return ; // ignore null new active windows -- means its a drag/resize/whatever
-        }
-        onCloseButtonClicked(); 
-    }
-    QWidget::changeEvent(event);
-}
-
 void GroupEditor::setupLayout(){
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    QVBoxLayout* mainLayout = new QVBoxLayout(container_);
     mainLayout->setContentsMargins(
         Theme::COMPONENT_DETAIL_MARGINS,
         0,
@@ -102,12 +94,10 @@ void GroupEditor::setupLayout(){
         Theme::COMPONENT_DETAIL_MARGINS
     );
 
-    mainLayout->addWidget(name_);
-
     // parameters
     auto gridContainer = new QWidget();
     gridContainer->setLayout(paramsLayout_);
-    auto scroll = new QScrollArea(this);
+    auto scroll = new QScrollArea(container_);
     scroll->setWidget(gridContainer);
     scroll->setWidgetResizable(true);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -132,22 +122,14 @@ void GroupEditor::relayoutParams(){
         paramsLayout_->removeWidget(p);
     }
 
-    int count = 0 ;
     for ( auto [id, p]: params_ ){
-        int row = count / Theme::GROUP_EDITOR_GRID_MAX_COLUMNS ;
-        int col = count % Theme::GROUP_EDITOR_GRID_MAX_COLUMNS ;
-        paramsLayout_->addWidget(p, row, col);
-        count++ ;
+        paramsLayout_->addWidget(p);
     }
 
     adjustSize();
-}
-
-void GroupEditor::closeEvent(QCloseEvent* event){
-    event->ignore();
-    hide();
+    setFixedSize(sizeHint());
 }
 
 void GroupEditor::onCloseButtonClicked(){
-    hide();
+    close();
 }

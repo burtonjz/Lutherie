@@ -43,7 +43,8 @@
 #include <QMenu>
 #include <QLineEdit>
 
-GraphPanel::GraphPanel(QWidget* parent):
+GraphPanel::GraphPanel(KDDW::MainWindow* mainWindow, QWidget* parent):
+    mainWindow_(mainWindow),
     QGraphicsView(parent),
     isDraggingConnection_(false)
 {
@@ -51,7 +52,7 @@ GraphPanel::GraphPanel(QWidget* parent):
 
     connectionManager_ = new ConnectionManager(this);
     connectionRenderer_ = new ConnectionRenderer(scene_, connectionManager_, this, this);
-    componentManager_ = new ComponentManager(this);
+    componentManager_ = new ComponentManager(mainWindow_, this);
 
     addMidiInput();
     addAudioOutput();

@@ -29,12 +29,16 @@
 #include "widgets/ComponentParameters.hpp"
 #include "requests/ConnectionRequest.hpp"
 
+#include <kddockwidgets/MainWindow.h>
 #include <QObject>
+
+namespace KDDW = KDDockWidgets::QtWidgets ;
 
 class ComponentManager : public QObject {
     Q_OBJECT
 
 private:
+    KDDW::MainWindow* mainWindow_ ;
     std::map<int, ComponentModel*> models_ ;
     std::map<int, ComponentEditor*> editors_ ;
     std::map<int, ModulationEditor*> modulationEditors_ ;
@@ -46,7 +50,7 @@ private:
     int currentGroupId_ = 0 ;
 
 public:
-    ComponentManager(QObject* parent = nullptr);
+    ComponentManager(KDDW::MainWindow* mainWindow, QObject* parent = nullptr);
     ~ComponentManager();
 
     // API requests

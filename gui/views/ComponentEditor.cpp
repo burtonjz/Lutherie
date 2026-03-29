@@ -24,21 +24,24 @@
 #include <QCloseEvent>
 #include <QBoxLayout>
 #include <QScrollArea>
+#include <QMainWindow>
 
-ComponentEditor::ComponentEditor(ComponentModel* model, QWidget* parent):
-    QWidget(nullptr),
-    params_(new ComponentParameters(model, this)),
-    name_(new QLabel(QString::fromStdString(model->getDescriptor().name), this)),
-    closeButton_(new QPushButton("Close",this)),
-    resetButton_(new QPushButton("Reset", this))
+ComponentEditor::ComponentEditor(ComponentModel* model, KDDW::MainWindow* mainWindow):
+    KDDW::DockWidget(QString("dock_%1").arg(model->getId())),
+    container_(new QWidget()),
+    params_(new ComponentParameters(model, container_)),
+    closeButton_(new QPushButton("Close",container_)),
+    resetButton_(new QPushButton("Reset", container_))
 {
-    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
-    setWindowTitle(" ");
+    setOptions(
+        KDDockWidgets::DockWidgetOption_None
+    );
 
-    setAttribute(Qt::WA_ShowWithoutActivating);
-    
+    setTitle(QString::fromStdString(model->getDescriptor().name));
     setupLayout();
-
+    setFloating(true);
+    close();
+    
     connect(
         params_, &ComponentParameters::parameterEdited,
         this, &ComponentEditor::parameterEdited
@@ -54,27 +57,15 @@ ComponentParameters* ComponentEditor::getComponentParameters() const {
 }
 
 QString ComponentEditor::getName() const {
-    return name_->text();
+    return title();
 }
 
 void ComponentEditor::setName(const QString& name){
-    name_->setText(name);
-}
-
-void ComponentEditor::changeEvent(QEvent *event){
-    // handle close events on focus loss
-    if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
-        QWidget* active = QApplication::activeWindow();
-        if ( !active ){
-            return ; // ignore null new active windows -- means its a drag/resize/whatever
-        }
-        onCloseButtonClicked(); 
-    }
-    QWidget::changeEvent(event);
+    setTitle(name);
 }
    
 void ComponentEditor::setupLayout(){
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    QVBoxLayout* mainLayout = new QVBoxLayout(container_);
     mainLayout->setContentsMargins(
         Theme::COMPONENT_DETAIL_MARGINS,
         0,
@@ -82,17 +73,28 @@ void ComponentEditor::setupLayout(){
         Theme::COMPONENT_DETAIL_MARGINS
     );
 
-    mainLayout->addWidget(name_);
-
     // params
     mainLayout->addSpacing(Theme::COMPONENT_DETAIL_MARGINS);
-    mainLayout->addWidget(params_, 1);
+    mainLayout->addWidget(params_);
 
     // buttons
     QHBoxLayout* buttonLayout = new QHBoxLayout();
     buttonLayout->addWidget(closeButton_);
     buttonLayout->addWidget(resetButton_);
     mainLayout->addLayout(buttonLayout);
+
+    setWidget(container_);
+    adjustSize();
+
+    // set fixed size policy to container as long as we don't have a specialty widget that is not fixed.
+    auto* w = params_->getSpecializedWidget();
+    if ( !w || (
+        w->sizePolicy().horizontalPolicy() == QSizePolicy::Fixed &&
+        w->sizePolicy().verticalPolicy() == QSizePolicy::Fixed
+    )){
+        container_->setFixedSize(sizeHint());
+        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    }
 
     connect(
         closeButton_, &QPushButton::clicked, 
@@ -102,17 +104,10 @@ void ComponentEditor::setupLayout(){
         resetButton_, &QPushButton::clicked, 
         this, &ComponentEditor::onResetButtonClicked
     );
-
-    adjustSize();
-}
-
-void ComponentEditor::closeEvent(QCloseEvent* event){
-    event->ignore();
-    hide();
 }
 
 void ComponentEditor::onCloseButtonClicked(){
-    hide();
+    close();
 }
 
 void ComponentEditor::onResetButtonClicked(){

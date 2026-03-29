@@ -21,36 +21,34 @@
 #include "types/ParameterType.hpp"
 #include "widgets/ComponentParameters.hpp"
 
-#include <QWidget>
+#include <kddockwidgets/DockWidget.h>
+#include <kddockwidgets/MainWindow.h>
 #include <QPushButton>
 
 // forward declarations
 class ComponentModel ;
+namespace KDDW = KDDockWidgets::QtWidgets ;
 
-class ComponentEditor : public QWidget {
+class ComponentEditor : public KDDW::DockWidget {
     Q_OBJECT
     
 private:
+    QWidget* container_ ;
     ComponentParameters* params_ ;
-    QLabel* name_ ;
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
 
 public:
-    explicit ComponentEditor(ComponentModel* model, QWidget* parent = nullptr);
+    explicit ComponentEditor(ComponentModel* model, KDDW::MainWindow* mainWindow);
     ~ComponentEditor() override ;
 
     ComponentParameters* getComponentParameters() const ;
 
     QString getName() const ;
     void setName(const QString& name);
-
-protected:
-     void changeEvent(QEvent *event) override ;
      
 private:
     void setupLayout();
-    void closeEvent(QCloseEvent* event) override ;
 
 signals:
     // passthrough for ComponentParameters

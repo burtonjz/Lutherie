@@ -99,6 +99,8 @@ QWidget* ComponentParameters::createSpecializedWidget(ComponentType t){
         auto* scroll = new QScrollArea(this) ;
         PianoRollWidget* pianoRoll = new PianoRollWidget(model_, this);
         scroll->setWidget(pianoRoll);
+        scroll->setWidgetResizable(true);
+        scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         connect(
             model_, &ComponentModel::parameterValueChanged, 
             pianoRoll, &PianoRollWidget::onParameterChanged
@@ -116,15 +118,19 @@ void ComponentParameters::layoutParameters(){
 
     // component-specific widget belongs at the top
     if ( specializedWidget_ ){
-        layout->addWidget(specializedWidget_);
+        layout->addWidget(specializedWidget_, 1);
     }
 
     // parameter widgets horizontally spaced
-    QHBoxLayout* parameterLayout = new QHBoxLayout();
+    QGridLayout* parameterLayout = new QGridLayout();
     parameterLayout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
+    int count = 0 ;
     for ( auto p : model_->getDescriptor().controllableParameters ){
-        parameterLayout->addWidget(parameterWidgets_[p]);
+        int row = count / 2 ;
+        int col = count % 2 ;
+        parameterLayout->addWidget(parameterWidgets_[p], row, col);
+        ++count ;
     }
 
     layout->addLayout(parameterLayout);

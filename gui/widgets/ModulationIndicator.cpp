@@ -33,6 +33,7 @@ ModulationIndicator::ModulationIndicator(QWidget* parent):
 void ModulationIndicator::setActive(bool active){
     if ( active_ == active ) return;
     active_ = active ;
+    update();
 }
 
 bool ModulationIndicator::isActive() const { 

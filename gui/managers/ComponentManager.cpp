@@ -19,8 +19,9 @@
 #include "meta/ComponentRegistry.hpp"
 #include "api/ApiClient.hpp"
 
-ComponentManager::ComponentManager(QObject* parent):
+ComponentManager::ComponentManager(KDDW::MainWindow* mainWindow, QObject* parent):
     QObject(parent),
+    mainWindow_(mainWindow),
     models_(),
     editors_(),
     groupModels_(),
@@ -174,7 +175,8 @@ void ComponentManager::showEditor(int componentId){
         return ;
     }
     requestModelSync(componentId);
-    it->second->show();
+    it->second->move(QCursor::pos());
+    it->second->open();
     it->second->raise();
 }
 
@@ -220,8 +222,8 @@ int ComponentManager::createGroup(const std::vector<int> componentIds, bool bloc
     QString name = QString("Group %1").arg(id);
 
     GroupModel* m = new GroupModel(id);
-    GroupEditor* g = new GroupEditor(name);
-    ModulationEditor* me = new ModulationEditor(name);
+    GroupEditor* g = new GroupEditor(name, mainWindow_);
+    ModulationEditor* me = new ModulationEditor(name, mainWindow_);
     groupModels_[id] = m ;
     groupEditors_[id] = g ;
     groupModulationEditors_[id] = me ;
@@ -319,10 +321,10 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     auto model = new ComponentModel(componentId, type);
     models_[componentId] = model ;
 
-    auto editor = new ComponentEditor(model);
+    auto editor = new ComponentEditor(model, mainWindow_);
     editors_[componentId] = editor ;
 
-    auto modEditor = new ModulationEditor(editor->getName());
+    auto modEditor = new ModulationEditor(editor->getName(), mainWindow_);
     modulationEditors_[componentId] = modEditor ;
 
     const ComponentDescriptor& d = model->getDescriptor();

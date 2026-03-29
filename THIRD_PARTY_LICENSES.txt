@@ -8,6 +8,13 @@ Website: https://www.qt.io/
 License Text: https://www.gnu.org/licenses/lgpl-3.0.html
 
 -------------------------------------------------------------------------------
+KDDockWidgets
+License: LGPL v3
+Copyright: Klarälvdalens Datakonsult AB (KDAB)
+Website: https://github.com/KDAB/kddockwidgets
+License Text: https://www.gnu.org/licenses/lgpl-3.0.html
+
+-------------------------------------------------------------------------------
 RtMidi
 License: MIT-style
 Copyright: Gary P. Scavone, 2003-2021

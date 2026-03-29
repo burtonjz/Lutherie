@@ -18,7 +18,7 @@
 #ifndef __UI_SYNTH_HPP_
 #define __UI_SYNTH_HPP_
 
-#include <QMainWindow>
+#include <kddockwidgets/MainWindow.h>
 #include <QUiLoader>
 #include <QFile>
 #include <QWidget>
@@ -31,29 +31,35 @@
 #include "widgets/SpectrumAnalyzerWidget.hpp"
 #include <nlohmann/json.hpp>
 
-#include "ui_Synth.h"
-
 using json = nlohmann::json ;
+namespace KDDW = KDDockWidgets::QtWidgets ;
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
-
-class Synth : public QMainWindow {
+class Synth : public KDDW::MainWindow {
     Q_OBJECT
 
 private:
-    Ui::MainWindow* ui_ ;
     GraphPanel* graph_ ;
     Setup* setup_ ;
-
-    // menu widgets
-    QPointer<SpectrumAnalyzerWidget> spectrumWidget_ ;
+    SpectrumAnalyzerWidget* spectrumWidget_ ;
 
     // save/load 
     QString saveFilePath_ ;
     json saveData_ ;
     bool hasUnsavedChanges_ ;
+
+    // menu Actions
+    QAction* actionLoad_ ;
+    QAction* actionSave_ ;
+    QAction* actionSaveAs_ ;
+    QAction* actionSpectrumAnalyzer_ ;
+
+    // toolbar Actions
+    QAction* actionSetup_ ;
+    QAction* actionStart_ ;
+    QAction* actionStop_ ;
+
+    QMenuBar* menuBar_ ;
+    QToolBar* toolBar_ ;
 
 public:
     Synth(QWidget* parent = nullptr);
@@ -75,21 +81,15 @@ private slots:
     void onApiConnected();
     void onApiDataReceived(const json& json);
 
-    // tool bar
+    void onEngineStatusChange(bool status);
+
     void onActionSetup();
     void onActionStart();
     void onActionStop();
-
-    void onEngineStatusChange(bool status);
-
-    // menu bar actions
     void onActionLoad();
     void onActionSave();
     void onActionSaveAs();
     void onActionSpectrumAnalyzer();
-
-    // docking logic
-    // QDockWidget* registerEditor(const QString& title, QWidget* editor);
 
 public slots:
     void markModified();

@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED  ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network LinguistTools UiTools Gui)
+find_package(KDDockWidgets-qt6 REQUIRED)
 
 qt_standard_project_setup()
 
@@ -31,6 +32,7 @@ target_link_libraries(gui
         Qt::Network
         Qt::UiTools
         Qt::Gui
+        KDAB::kddockwidgets
 )
 
 target_include_directories(gui PRIVATE

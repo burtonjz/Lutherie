@@ -192,11 +192,15 @@ void Theme::applyDarkTheme() {
         spacing: 4px;
         border: none;
     }
-    QToolButton {
+    QToolBar QToolButton {
         color: %5 ;
         background-color: %2;
         border: 1px solid %1;
         padding: 4px 8px ;
+    }
+    QToolButton {
+        color: %5 ;
+        background-color: %2
     }
     QToolButton:hover {
         background-color: %6;

@@ -24,6 +24,12 @@
 #include <qobject.h>
 
 int main(int argc, char *argv[]){
+#ifdef __linux__
+    qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/QDockWidget support matures
+#endif 
+
+    KDDockWidgets::initFrontend(KDDockWidgets::FrontendType::QtWidgets);
+
     Theme::applyDarkTheme();
     qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss.zzz}] %{type}: %{message}");
     
@@ -33,7 +39,7 @@ int main(int argc, char *argv[]){
     Synth* synth = new Synth() ;
 
     ApiClient::instance()->connectToBackend();
-    synth->show();
+    synth->showMaximized();
 
     return app.exec() ;
 }

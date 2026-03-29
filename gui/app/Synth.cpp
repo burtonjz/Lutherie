@@ -34,36 +34,69 @@
 #include <QLineEdit>
 #include <QWidgetAction>
 #include <QCompleter>
-
-#include "ui_Synth.h"
-
+#include <QMenuBar>
+#include <QMenu>
+#include <QToolBar>
 
 Synth::Synth(QWidget* parent):
-    QMainWindow(parent),
-    ui_(new Ui::MainWindow),
+    KDDockWidgets::QtWidgets::MainWindow(
+        Theme::DEFAULT_WINDOW_TITLE,
+        {KDDockWidgets::MainWindowOption_HasCentralWidget}, 
+        parent
+    ),
     graph_(nullptr),
     spectrumWidget_(nullptr),
     setup_(nullptr),
     hasUnsavedChanges_(false)
 {
     StateManager::instance();
-    ui_->setupUi(this);
-
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
-    qDebug() << "creating window: " << windowTitle() ;
-
-    // API connections
-    connect(ApiClient::instance(), &ApiClient::connected, this, &Synth::onApiConnected);
     
-    
+    // Actions
+    actionLoad_             = new QAction("Load Patch", this);
+    actionSave_             = new QAction("Save", this);
+    actionSaveAs_           = new QAction("Save As...", this);
+    actionSpectrumAnalyzer_ = new QAction("Spectrum Analyzer", this);
+    actionSetup_            = new QAction("Setup", this);
+    actionStart_            = new QAction("Start", this);
+    actionStop_             = new QAction("Stop", this);
 
-    graph_ = new GraphPanel(this);
-    ui_->graphPanelContainer->layout()->addWidget(graph_);
+    actionLoad_->setShortcut(QKeySequence("Ctrl+O"));
+    actionSpectrumAnalyzer_->setShortcut(QKeySequence("Ctrl+E"));
+    actionSetup_->setMenuRole(QAction::NoRole);
+    actionStart_->setMenuRole(QAction::NoRole);
+    actionStop_->setMenuRole(QAction::NoRole);
+
+    // Menu Bar
+    auto* menuFile = menuBar()->addMenu("File");
+    menuFile->addSeparator();
+    menuFile->addAction(actionLoad_);
+    menuFile->addSeparator();
+    menuFile->addAction(actionSaveAs_);
+    menuFile->addAction(actionSave_);
+
+    auto* menuView = menuBar()->addMenu("View");
+    menuView->addAction(actionSpectrumAnalyzer_);
+
+    auto* menuTools = menuBar()->addMenu("Tools");
+    auto* menuHelp = menuBar()->addMenu("Help");
 
     configureMenuActions();
     configureToolBar();
 
-    // other connections
+    // central widget
+    auto* container = new QWidget(this);
+    auto* layout = new QVBoxLayout(container);
+    layout->setContentsMargins(0,0,0,0);
+    layout->setSpacing(0);
+
+    graph_ = new GraphPanel(this, this);
+    layout->addWidget(graph_);
+    container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setPersistentCentralWidget(container);
+
+    // connections
+    connect(ApiClient::instance(), &ApiClient::connected, this, &Synth::onApiConnected);
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
     connect(graph_, &GraphPanel::wasModified, this, &Synth::markModified);
 }
@@ -71,32 +104,37 @@ Synth::Synth(QWidget* parent):
 
 Synth::~Synth(){
     if ( spectrumWidget_ ) spectrumWidget_->close();
-    delete ui_ ;
 }
 
 void Synth::configureMenuActions(){
-    ui_->actionSave->setShortcut(QKeySequence::Save);
-    ui_->actionSaveAs->setShortcut(QKeySequence::SaveAs);
+    actionSave_->setShortcut(QKeySequence::Save);
+    actionSaveAs_->setShortcut(QKeySequence::SaveAs);
 
-    connect(ui_->actionLoad, &QAction::triggered, this, &Synth::onActionLoad);
-    connect(ui_->actionSave, &QAction::triggered, this, &Synth::onActionSave);
-    connect(ui_->actionSaveAs, &QAction::triggered, this, &Synth::onActionSaveAs);
-    connect(ui_->actionSpectrumAnalyzer, &QAction::triggered, this, &Synth::onActionSpectrumAnalyzer);
+    connect(actionLoad_, &QAction::triggered, this, &Synth::onActionLoad);
+    connect(actionSave_, &QAction::triggered, this, &Synth::onActionSave);
+    connect(actionSaveAs_, &QAction::triggered, this, &Synth::onActionSaveAs);
+    connect(actionSpectrumAnalyzer_, &QAction::triggered, this, &Synth::onActionSpectrumAnalyzer);
 }
 
 void Synth::configureToolBar(){
-    ui_->toolBar->setFixedHeight(Theme::TOOLBAR_HEIGHT);
-    ui_->toolBar->setMovable(false);
+    toolBar_ = new QToolBar(this);
 
-    ui_->actionStart->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
-    ui_->actionStop->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
-    ui_->actionStop->setVisible(false);
+    toolBar_->setFixedHeight(Theme::TOOLBAR_HEIGHT);
+    toolBar_->setMovable(false);
+
+    actionStart_->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+    actionStop_->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+    actionStop_->setVisible(false);
+
+    toolBar_->addAction(actionSetup_);
+    toolBar_->addAction(actionStart_);
+    toolBar_->addAction(actionStop_);
 
     // handle ui actions
     connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
-    connect(ui_->actionSetup, &QAction::triggered, this, &Synth::onActionSetup);
-    connect(ui_->actionStart, &QAction::triggered, this, &Synth::onActionStart);
-    connect(ui_->actionStop, &QAction::triggered, this, &Synth::onActionStop);
+    connect(actionSetup_, &QAction::triggered, this, &Synth::onActionSetup);
+    connect(actionStart_, &QAction::triggered, this, &Synth::onActionStart);
+    connect(actionStop_, &QAction::triggered, this, &Synth::onActionStop);
 
     // custom toolbar actions below
     QMenu* componentMenu = buildComponentMenu();
@@ -104,7 +142,9 @@ void Synth::configureToolBar(){
     addComponent->setText("Add Component");
     addComponent->setMenu(componentMenu);
     addComponent->setPopupMode(QToolButton::InstantPopup);
-    ui_->toolBar->addWidget(addComponent);
+    toolBar_->addWidget(addComponent);
+
+    addToolBar(Qt::TopToolBarArea, toolBar_);
 }
 
 QMenu* Synth::buildComponentMenu(){
@@ -270,8 +310,8 @@ void Synth::onActionStop(){
 
 void Synth::onEngineStatusChange(bool status){
     StateManager::instance()->setRunning(status);
-    ui_->actionStart->setVisible(!status);
-    ui_->actionStop->setVisible(status);
+    actionStart_->setVisible(!status);
+    actionStop_->setVisible(status);
 }
 
 void Synth::onActionLoad(){
