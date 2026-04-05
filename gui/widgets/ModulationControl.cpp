@@ -35,23 +35,47 @@ ModulationControl::ModulationControl(ParameterType p, QWidget* parent):
     connect( 
         depthSlider_, &ParameterWidget::valueChanged,
         this, [this](){
-            emit depthEdited(
-                parameter_, 
-                std::get<GET_PARAMETER_VALUE_TYPE(ParameterType::DEPTH)>(depthSlider_->getValue()) 
-            );
+            emit depthEdited();
         }
     );
 
     connect( 
         strategySelector_, &QComboBox::currentIndexChanged,
         this, [this](){
-            emit strategyEdited(
-                parameter_, 
-                static_cast<ModulationStrategy>(strategySelector_->currentData().toInt())
-            );
+            emit strategyEdited();
         }
     );
 
+}
+
+ParameterType ModulationControl::getType() const {
+    return parameter_ ;
+}
+
+double ModulationControl::getDepth() const {
+    return std::get<GET_PARAMETER_VALUE_TYPE(ParameterType::DEPTH)>(depthSlider_->getValue());
+}
+
+void ModulationControl::setDepth(double depth, bool block){
+    depthSlider_->setValue(depth, block);
+}
+
+ModulationStrategy ModulationControl::getStrategy() const {
+    return static_cast<ModulationStrategy>(strategySelector_->currentData().toInt());
+}
+
+void ModulationControl::setStrategy(ModulationStrategy strategy, bool block){
+    QSignalBlocker blocker(strategySelector_);
+    if ( !block ) blocker.unblock();
+
+    auto idx = strategySelector_->findData(static_cast<uint8_t>(strategy));
+
+    if ( idx == -1 ){
+        qWarning() << "modulation strategy set to an invalid value. This is a programming bug." ;
+        return ;
+    }
+
+    strategySelector_->setCurrentIndex(idx);
 }
 
 void ModulationControl::setConnectionStatus(bool active){
@@ -78,13 +102,11 @@ void ModulationControl::setupLayout(){
 
 void ModulationControl::onModelDepthChanged(ParameterType p, double depth){
     if ( p != parameter_ ) return ;
-    depthSlider_->setValue(depth, true);
+    setDepth(depth, true);
 }
 
 void ModulationControl::onModelStrategyChanged(ParameterType p, ModulationStrategy strategy){
     if ( p != parameter_ ) return ;
-
-    auto idx = strategySelector_->findData(static_cast<uint8_t>(strategy));
-    strategySelector_->setCurrentIndex(idx);
+    setStrategy(strategy, true);
 }
 

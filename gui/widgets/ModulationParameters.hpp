@@ -50,8 +50,8 @@ private:
     void layoutControls();
 
 private slots:
-    void onDepthEdited(ParameterType p, double depth);
-    void onStrategyEdited(ParameterType p, ModulationStrategy strategy);
+    void onDepthEdited();
+    void onStrategyEdited();
     void flushPendingChanges();
 
     void onModelDepthChanged(int componentId, ParameterType p, double depth);

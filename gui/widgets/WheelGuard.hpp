@@ -33,9 +33,6 @@ protected:
     bool eventFilter(QObject* obj, QEvent* event) override {
         if ( event->type() == QEvent::Wheel ){
             auto* w = qobject_cast<QWidget*>(obj);
-            qDebug() << "Wheel event on:" << obj
-                 << "hasFocus:" << (w ? w->hasFocus() : false)
-                 << "focusWidget:" << QApplication::focusWidget();
             if ( w && QApplication::focusWidget() != w ){
                 event->ignore();
                 return true ;

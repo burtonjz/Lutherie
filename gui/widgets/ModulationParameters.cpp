@@ -109,16 +109,26 @@ void ModulationParameters::setConnectionStatus(ParameterType p, bool active){
     modulationControls_.at(p)->setConnectionStatus(active);
 }
 
-void ModulationParameters::onDepthEdited(ParameterType p, double depth){
-    if ( ! hasModulationControl(p) ) return ;
+void ModulationParameters::onDepthEdited(){
+    auto w = dynamic_cast<ModulationControl*>(sender());
+    if ( !w ) return ;
 
-    emit modulationDepthEdited(componentId_, p, depth);
+    ParameterType p = w->getType();
+    double d = w->getDepth();
+    
+    pendingDepth_[p] = d ;
+    controlChangedTimer_->start();
 }
 
-void ModulationParameters::onStrategyEdited(ParameterType p, ModulationStrategy strategy){
-    if ( ! hasModulationControl(p) ) return ;
+void ModulationParameters::onStrategyEdited(){
+    auto w = dynamic_cast<ModulationControl*>(sender());
+    if ( !w ) return ;
 
-    emit modulationStrategyEdited(componentId_, p, strategy);
+    ParameterType p = w->getType();
+    ModulationStrategy s = w->getStrategy();
+    
+    pendingStrategy_[p] = s ;
+    controlChangedTimer_->start();
 }
 
 void ModulationParameters::flushPendingChanges(){

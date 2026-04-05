@@ -43,6 +43,13 @@ public:
     ModulationControl(ParameterType p, QWidget* parent = nullptr);
 
     void setConnectionStatus(bool active);
+
+    ParameterType getType() const ;
+    double getDepth() const ;
+    void setDepth(double depth, bool block = false);
+
+    ModulationStrategy getStrategy() const ;
+    void setStrategy(ModulationStrategy strategy, bool block = false);
     
 private:
     void setupLayout();
@@ -52,8 +59,8 @@ public slots:
     void onModelStrategyChanged(ParameterType p, ModulationStrategy strategy);
 
 signals:
-    void depthEdited(ParameterType p, double depth);
-    void strategyEdited(ParameterType p, ModulationStrategy strategy);
+    void depthEdited();
+    void strategyEdited();
 
 };
 
