@@ -31,9 +31,7 @@ class ParameterWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit ParameterWidget(QWidget* parent = nullptr):
-        QWidget(parent)
-    {}
+    explicit ParameterWidget(QWidget* parent = nullptr);
 
     virtual ~ParameterWidget() = default ;
 
@@ -41,6 +39,9 @@ public:
     virtual ParameterValue getValue() const = 0 ;
     virtual void setValue(const ParameterValue& value, bool block = false) = 0 ;
 
+protected:
+    void childEvent(QChildEvent* event) override ;
+    
 public slots:
     void onModelParameterChanged(ParameterType p, ParameterValue v);
 

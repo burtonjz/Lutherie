@@ -21,6 +21,7 @@
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
+#include "widgets/WheelGuard.hpp"
 
 #include <cmath>
 #include <QVBoxLayout>
@@ -29,10 +30,26 @@
 #include <QShortcut>
 #include <QLineEdit>
 
+
+ParameterWidget::ParameterWidget(QWidget* parent):
+    QWidget(parent)
+{}
+
 void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
     if ( p != getType() ) return ;
 
     setValue(v, true);
+}
+
+void ParameterWidget::childEvent(QChildEvent* event){
+    if ( event->added() ){
+        auto* w = dynamic_cast<QWidget*>(event->child());
+        if ( w ){
+            w->installEventFilter(new WheelGuard(this));
+            w->setFocusPolicy(Qt::ClickFocus);
+        }
+    }
+    QWidget::childEvent(event);
 }
 
 /*
