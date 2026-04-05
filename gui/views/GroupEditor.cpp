@@ -22,8 +22,8 @@
 #include <QScrollArea>
 #include <QCloseEvent>
 
-GroupEditor::GroupEditor(const QString& name, KDDW::MainWindow* mainWindow):
-    KDDW::DockWidget(name),
+GroupEditor::GroupEditor(const QString& name, KDDWQt::MainWindow* mainWindow):
+    KDDWQt::DockWidget(name),
     container_(new QWidget()),
     params_(),
     paramsLayout_(new QVBoxLayout(container_)),

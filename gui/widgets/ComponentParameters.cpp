@@ -57,6 +57,10 @@ QWidget* ComponentParameters::getSpecializedWidget() const {
     return specializedWidget_ ; 
 }
 
+bool ComponentParameters::hasSpecializedWidget() const {
+    return specializedWidget_ != nullptr ;
+}
+
 ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     ParameterWidget* w ;
     switch(p){
@@ -133,6 +137,9 @@ void ComponentParameters::layoutParameters(){
         ++count ;
     }
 
+    parameterLayout->setRowStretch(parameterLayout->rowCount(), 1);
+    parameterLayout->setColumnStretch(parameterLayout->columnCount(), 1);
+    
     layout->addLayout(parameterLayout);
 
     adjustSize();

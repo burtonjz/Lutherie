@@ -1,3 +1,23 @@
+Current Task List:
+- Update ComponentManager to contain ModulationParameters/ComponentParameters
+- Update show editor logic to open the associated controlPanel docks and maximize the relevant component
+- Add show control panels logic to the top toolbar
+- Adjust grouping events so that they reorder components together and give them a frame
+- For ComponentParameters, add a widget to launch the specialized widget if one exists for that component
+- Specialized Widgets are wrapped into a KDDW::DockWidget and are floating on initialization
+- Update Graph Panel to default to central widget, but don't force it as central widget
+- Expose Max/Min and Default parameters via right click tool window. 
+- Additional right click context menu to map a parameter widget to a MIDI control
+  - Continuous variables generates a wiggle to map
+  - Discrete works on num of button presses (set a threshold value in config so users can accommodate their controller)
+  - if in discrete mode and we dont see continuous values coming through, consider a warning message (vice versa for other case)
+- Indicator for Midi Control, hover to see which control id it is associated with
+- Add a Macro Knob panel that is forced to dock to the edge of the graph panel and moves with it.
+  - Socket for a macro control for modulation of macro knob
+  - Macro Edit mode where an indicator appears next to each control in the control panel and lets you drag it to macro knob
+  - indicator outside of macro edit mode to indicate it has a macro control (same as midi control)
+
+
 UI:
 - FUNCTIONALITY/FLOW
   - Midi Control Mapping 

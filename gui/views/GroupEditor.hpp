@@ -29,9 +29,10 @@
 
 // forward declarations
 class ComponentModel ;
-namespace KDDW = KDDockWidgets::QtWidgets ;
 
-class GroupEditor : public KDDW::DockWidget {
+namespace KDDWQt = KDDockWidgets::QtWidgets ;
+
+class GroupEditor : public KDDWQt::DockWidget {
     Q_OBJECT
 
 private:
@@ -41,7 +42,7 @@ private:
     QPushButton* closeButton_ ;
 
 public:
-    explicit GroupEditor(const QString& name, KDDW::MainWindow* mainWindow);
+    explicit GroupEditor(const QString& name, KDDWQt::MainWindow* mainWindow);
 
     QString getName() const ;
     void setName(const QString& name);

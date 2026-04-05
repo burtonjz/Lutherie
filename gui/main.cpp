@@ -19,21 +19,56 @@
 #include "app/Theme.hpp"
 #include "app/Synth.hpp"
 
+#include <kddockwidgets/KDDockWidgets.h>
+#include <kddockwidgets/core/ViewFactory.h>
+#include <kddockwidgets/core/DockWidget.h>
+#include <kddockwidgets/Config.h>
 #include <QApplication>
 #include <qlogging.h>
 #include <qobject.h>
 
+namespace KDDW   = KDDockWidgets ;
+
 int main(int argc, char *argv[]){
 #ifdef __linux__
-    qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/QDockWidget support matures
+    qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/docking support matures
 #endif 
 
-    KDDockWidgets::initFrontend(KDDockWidgets::FrontendType::QtWidgets);
+    QApplication app(argc, argv);
+
+    KDDW::initFrontend(KDDW::FrontendType::QtWidgets);
+    KDDW::Core::ViewFactory::s_dropIndicatorType = KDDW::DropIndicatorType::Segmented ;
+    KDDW::Config::self().setFlags(
+       KDDW::Config::Flag_HideTitleBarWhenTabsVisible 
+    );
+    
+    KDDW::Config::self().setDropIndicatorAllowedFunc(
+    [](KDDW::DropLocation location,
+       const KDDW::Core::DockWidget::List& source,
+       const KDDW::Core::DockWidget::List& target,
+       KDDW::Core::DropArea* ) -> bool
+    {
+        const bool isControlPanel = std::any_of(
+            source.cbegin(), source.cend(),
+            [](KDDW::Core::DockWidget *dw) {
+                return dw->uniqueName() == "__modulationDock"
+                    || dw->uniqueName() == "__parameterDock";
+            });
+        
+        // editors cannot be placed on top/bottom docks.
+        if (isControlPanel) {
+            constexpr auto denied = 
+                KDDW::DropLocation_OutterBottom |
+                KDDW::DropLocation_OutterTop ;
+            return !(location & denied);
+        }
+
+        return true ;
+    });
 
     Theme::applyDarkTheme();
     qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss.zzz}] %{type}: %{message}");
     
-    QApplication app(argc, argv);
     ApiClient::instance() ; // initialize ApiClient singleton
 
     Synth* synth = new Synth() ;

@@ -42,6 +42,8 @@ public:
     ComponentModel* getModel() const ;
     QWidget* getSpecializedWidget() const ;
 
+    bool hasSpecializedWidget() const ;
+
 protected:
     ParameterWidget* createParameterWidget(ParameterType p);
     QWidget* createSpecializedWidget(ComponentType t);

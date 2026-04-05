@@ -31,7 +31,6 @@ class ModulationControl : public QWidget {
     Q_OBJECT
 
 private:
-    int componentId_ ;
     ParameterType parameter_ ;
 
     QLabel* paramLabel_ ;
@@ -41,7 +40,7 @@ private:
     ModulationIndicator* modIndicator_ ;
 
 public:
-    ModulationControl(int componentId, ParameterType p, QWidget* parent = nullptr);
+    ModulationControl(ParameterType p, QWidget* parent = nullptr);
 
     void setConnectionStatus(bool active);
     
@@ -49,13 +48,12 @@ private:
     void setupLayout();
 
 public slots:
-    void onModelDepthChanged(int componentId, ParameterType p, double depth);
-    void onModelStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
-    void onModelConnectionUpdated(int componentId, ParameterType p, bool active);
+    void onModelDepthChanged(ParameterType p, double depth);
+    void onModelStrategyChanged(ParameterType p, ModulationStrategy strategy);
 
 signals:
-    void modulationDepthEdited(int componentId, ParameterType p, double depth);
-    void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
+    void depthEdited(ParameterType p, double depth);
+    void strategyEdited(ParameterType p, ModulationStrategy strategy);
 
 };
 

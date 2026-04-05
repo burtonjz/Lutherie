@@ -19,38 +19,28 @@
 #define COMPONENT_MANAGER_HPP_
 
 #include "models/ComponentModel.hpp"
-#include "models/GroupModel.hpp"
-#include "views/ComponentEditor.hpp"
-#include "views/GroupEditor.hpp"
-#include <views/ModulationEditor.hpp>
 #include "types/ComponentType.hpp"
 #include "requests/CollectionRequest.hpp"
 #include "widgets/CollectionWidget.hpp"
 #include "widgets/ComponentParameters.hpp"
+#include "widgets/ModulationParameters.hpp"
 #include "requests/ConnectionRequest.hpp"
 
 #include <kddockwidgets/MainWindow.h>
 #include <QObject>
 
-namespace KDDW = KDDockWidgets::QtWidgets ;
-
 class ComponentManager : public QObject {
     Q_OBJECT
 
 private:
-    KDDW::MainWindow* mainWindow_ ;
     std::map<int, ComponentModel*> models_ ;
-    std::map<int, ComponentEditor*> editors_ ;
-    std::map<int, ModulationEditor*> modulationEditors_ ;
-
-    std::map<int, GroupModel*> groupModels_ ;
-    std::map<int, GroupEditor*> groupEditors_ ;
-    std::map<int, ModulationEditor*> groupModulationEditors_ ;
+    std::map<int, ComponentParameters*> parameters_ ;
+    std::map<int, ModulationParameters*> modParameters_ ;
 
     int currentGroupId_ = 0 ;
 
 public:
-    ComponentManager(KDDW::MainWindow* mainWindow, QObject* parent = nullptr);
+    ComponentManager(QObject* parent = nullptr);
     ~ComponentManager();
 
     // API requests
@@ -66,24 +56,17 @@ public:
     void renameGroup(int id, const QString& name);
     
     ComponentModel* getModel(int componentId) const ;
-    ComponentEditor* getEditor(int componentId) const ;
-    ModulationEditor* getModulationEditor(int componentId) const ;
-
-    GroupModel* getGroupModel(int groupId) const ;
-    GroupEditor* getGroupEditor(int groupId) const ;
-    ModulationEditor* getGroupModulationEditor(int groupId) const ;
+    ComponentParameters* getParameters(int componentId) const ;
+    ModulationParameters* getModulationParameters(int componentId) const ;
     
-    void showEditor(int componentId);
-    void showModulationEditor(int componentId);
-
-    void showGroupEditor(int groupId);
-    void showGroupModulationEditor(int groupId);
+    void showParameters(int componentId);
+    void showModulation(int componentId);
+    void showGroupParameters(int groupId);
+    void showGroupModulation(int groupId);
 
     int createGroup(const std::vector<int> componentIds, bool block = false);
     void appendToGroup(int groupId, const std::vector<int> componentIds);
     void removeGroup(int groupId);
-
-    json serialize() const ;
     
 private:
     // on api response
@@ -107,7 +90,7 @@ public slots:
     void onConnectionRemoved(const ConnectionRequest& req);
 
 signals:
-    void componentAdded(int componentId, ComponentType type);
+    void componentAdded(int ComponentId, ComponentType typ);
     void componentRemoved(int componentId);
 
     void componentGroupCreated(int groupId, const std::vector<int> componentIds); // new group id, components added

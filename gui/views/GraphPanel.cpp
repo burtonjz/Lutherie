@@ -43,16 +43,15 @@
 #include <QMenu>
 #include <QLineEdit>
 
-GraphPanel::GraphPanel(KDDW::MainWindow* mainWindow, QWidget* parent):
-    mainWindow_(mainWindow),
+GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
     QGraphicsView(parent),
+    componentManager_(manager),
     isDraggingConnection_(false)
 {
     setupScene();
 
     connectionManager_ = new ConnectionManager(this);
     connectionRenderer_ = new ConnectionRenderer(scene_, connectionManager_, this, this);
-    componentManager_ = new ComponentManager(mainWindow_, this);
 
     addMidiInput();
     addAudioOutput();
@@ -524,12 +523,12 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     QAction* openEdit = new QAction("Editor", editorMenu);
     if ( auto c = dynamic_cast<ComponentNode*>(node) ){
         connect ( openEdit, &QAction::triggered, [this,c](){
-            componentManager_->showEditor(c->getModel()->getId());
+            componentManager_->showParameters(c->getModel()->getId());
         });
         editorMenu->addAction(openEdit);
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
         connect ( openEdit, &QAction::triggered, [this,g](){
-            componentManager_->showGroupEditor(g->getId());
+            componentManager_->showGroupParameters(g->getId());
         });
         editorMenu->addAction(openEdit);
     }
@@ -537,12 +536,12 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     QAction* openMod = new QAction("Modulation", editorMenu);
     if ( auto c = dynamic_cast<ComponentNode*>(node) ){
         connect ( openMod, &QAction::triggered, [this,c](){
-            componentManager_->showModulationEditor(c->getModel()->getId());
+            componentManager_->showModulation(c->getModel()->getId());
         });
         editorMenu->addAction(openMod);
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
         connect ( openMod, &QAction::triggered, [this,g](){
-            componentManager_->showGroupModulationEditor(g->getId());
+            componentManager_->showGroupModulation(g->getId());
         });
         editorMenu->addAction(openMod);
     }
@@ -827,12 +826,12 @@ void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> component
 
 void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     if ( auto c = dynamic_cast<ComponentNode*>(widget) ){
-        componentManager_->showEditor(c->getModel()->getId());
+        componentManager_->showParameters(c->getModel()->getId());
         return ;
     }
 
     if ( auto g = dynamic_cast<GroupNode*>(widget) ){
-        componentManager_->showGroupEditor(g->getId());
+        componentManager_->showGroupParameters(g->getId());
         return ;
     }
 }

@@ -69,6 +69,10 @@ ModulationModel* ComponentModel::getModulationModel(ParameterType p) const {
     return modulations_.at(p);
 }
 
+const std::map<ParameterType, ModulationModel*>& ComponentModel::getModulationModels() const {
+    return modulations_ ;
+}
+
 const ParameterValue& ComponentModel::getParameterValue(ParameterType p) const {
     if ( !validParam(p) ){
         throw std::logic_error(

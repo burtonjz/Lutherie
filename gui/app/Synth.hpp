@@ -18,6 +18,11 @@
 #ifndef __UI_SYNTH_HPP_
 #define __UI_SYNTH_HPP_
 
+#include "app/Setup.hpp"
+#include "views/GraphPanel.hpp"
+#include "views/ControlPanel.hpp"
+#include "widgets/SpectrumAnalyzerWidget.hpp"
+
 #include <kddockwidgets/MainWindow.h>
 #include <QUiLoader>
 #include <QFile>
@@ -25,27 +30,31 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QEvent>
-
-#include "views/GraphPanel.hpp"
-#include "app/Setup.hpp"
-#include "widgets/SpectrumAnalyzerWidget.hpp"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
-namespace KDDW = KDDockWidgets::QtWidgets ;
 
-class Synth : public KDDW::MainWindow {
+namespace KDDWQt = KDDockWidgets::QtWidgets ;
+
+class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
 
 private:
-    GraphPanel* graph_ ;
     Setup* setup_ ;
+    GraphPanel* graph_ ;
+    ComponentManager* componentManager_ ;
     SpectrumAnalyzerWidget* spectrumWidget_ ;
+
+    // docks
+    ControlPanel* parameterPanel_ ;
+    KDDWQt::DockWidget* parameterDock_ ;
+
+    ControlPanel* modulationPanel_ ;
+    KDDWQt::DockWidget* modulationDock_ ;
 
     // save/load 
     QString saveFilePath_ ;
     json saveData_ ;
-    bool hasUnsavedChanges_ ;
 
     // menu Actions
     QAction* actionLoad_ ;
@@ -92,7 +101,8 @@ private slots:
     void onActionSpectrumAnalyzer();
 
 public slots:
-    void markModified();
+    void onComponentAdded(int componentId, ComponentType typ);
+    void onComponentRemoved(int componentId);
 
 };
 

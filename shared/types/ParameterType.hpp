@@ -152,7 +152,7 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
 };
 
 template <> struct ParameterTraits<ParameterType::DEPTH>{
-    using ValueType = float ;
+    using ValueType = double ;
     static constexpr std::string_view name = "depth" ;
     static constexpr float minimum = -10.0 ;
     static constexpr float maximum = 10.0 ;

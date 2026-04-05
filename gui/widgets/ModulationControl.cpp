@@ -4,9 +4,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 
-ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* parent):
+ModulationControl::ModulationControl(ParameterType p, QWidget* parent):
     QWidget(parent),
-    componentId_(componentId),
     parameter_(p),
     paramLabel_(new QLabel(this)),
     depthSlider_(new SliderWidget(ParameterType::DEPTH, this)),
@@ -36,8 +35,7 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
     connect( 
         depthSlider_, &ParameterWidget::valueChanged,
         this, [this](){
-            emit modulationDepthEdited(
-                componentId_, 
+            emit depthEdited(
                 parameter_, 
                 std::get<GET_PARAMETER_VALUE_TYPE(ParameterType::DEPTH)>(depthSlider_->getValue()) 
             );
@@ -47,8 +45,7 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
     connect( 
         strategySelector_, &QComboBox::currentIndexChanged,
         this, [this](){
-            emit modulationStrategyEdited(
-                componentId_, 
+            emit strategyEdited(
                 parameter_, 
                 static_cast<ModulationStrategy>(strategySelector_->currentData().toInt())
             );
@@ -79,19 +76,15 @@ void ModulationControl::setupLayout(){
     layout->addLayout(body);
 }
 
-void ModulationControl::onModelDepthChanged(int componentId, ParameterType p, double depth){
-    if ( componentId_ != componentId || p != parameter_ ) return ;
+void ModulationControl::onModelDepthChanged(ParameterType p, double depth){
+    if ( p != parameter_ ) return ;
     depthSlider_->setValue(depth, true);
 }
 
-void ModulationControl::onModelStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy){
-    if ( componentId_ != componentId || p != parameter_ ) return ;
+void ModulationControl::onModelStrategyChanged(ParameterType p, ModulationStrategy strategy){
+    if ( p != parameter_ ) return ;
 
     auto idx = strategySelector_->findData(static_cast<uint8_t>(strategy));
-    strategySelector_->setCurrentIndex(idx);}
-
-void ModulationControl::onModelConnectionUpdated(int componentId, ParameterType p, bool active){
-    if ( componentId_ != componentId || p != parameter_ ) return ;
-
-    modIndicator_->setActive(active);
+    strategySelector_->setCurrentIndex(idx);
 }
+

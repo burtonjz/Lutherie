@@ -45,6 +45,7 @@ public:
     ComponentType getType() const ;
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;
+    const std::map<ParameterType, ModulationModel*>& getModulationModels() const ;
 
     const ParameterValue& getParameterValue(ParameterType p) const ;
     void setParameterValue(ParameterType p, ParameterValue v, bool block = false);

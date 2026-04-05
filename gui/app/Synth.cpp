@@ -25,6 +25,7 @@
 #include "graphics/ToastNotification.hpp"
 #include "app/Theme.hpp"
 
+#include <kddockwidgets/DockWidget.h>
 #include <QStandardItemModel>
 #include <QCloseEvent>
 #include <QFileDialog>
@@ -38,19 +39,39 @@
 #include <QMenu>
 #include <QToolBar>
 
+namespace KDDW   = KDDockWidgets ;
+
 Synth::Synth(QWidget* parent):
     KDDockWidgets::QtWidgets::MainWindow(
         Theme::DEFAULT_WINDOW_TITLE,
         {KDDockWidgets::MainWindowOption_HasCentralWidget}, 
         parent
     ),
+    setup_(nullptr),
+    componentManager_(new ComponentManager(this)),
     graph_(nullptr),
     spectrumWidget_(nullptr),
-    setup_(nullptr),
-    hasUnsavedChanges_(false)
+    parameterPanel_(new ControlPanel(this)),
+    parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
+    modulationPanel_(new ControlPanel(this)),
+    modulationDock_(new KDDWQt::DockWidget("__modulationDock"))
 {
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
+
+    graph_ = new GraphPanel(componentManager_, this);
+
+    // Docks
+    parameterDock_->setWidget(parameterPanel_);
+    parameterDock_->setTitle("Parameters");
+    addDockWidget(parameterDock_, KDDW::Location_OnRight);
+
+    modulationDock_->setWidget(modulationPanel_);
+    modulationDock_->setTitle("Modulation");
+    addDockWidget(modulationDock_, KDDW::Location_OnBottom, parameterDock_);
+
+    parameterDock_->close();
+    modulationDock_->close();
     
     // Actions
     actionLoad_             = new QAction("Load Patch", this);
@@ -90,15 +111,27 @@ Synth::Synth(QWidget* parent):
     layout->setContentsMargins(0,0,0,0);
     layout->setSpacing(0);
 
-    graph_ = new GraphPanel(this, this);
     layout->addWidget(graph_);
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setPersistentCentralWidget(container);
 
     // connections
-    connect(ApiClient::instance(), &ApiClient::connected, this, &Synth::onApiConnected);
-    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
-    connect(graph_, &GraphPanel::wasModified, this, &Synth::markModified);
+
+    // api client
+    connect(
+        ApiClient::instance(), &ApiClient::connected, 
+        this, &Synth::onApiConnected
+    );
+    connect(
+        ApiClient::instance(), &ApiClient::dataReceived, 
+        this, &Synth::onApiDataReceived
+    );
+
+    // component manager
+    connect( 
+        componentManager_, &ComponentManager::componentAdded,
+        this, &Synth::onComponentAdded
+    );
 }
 
 
@@ -396,17 +429,7 @@ void Synth::performSave(){
     qDebug() << "file" << saveFilePath_ << "saved." ; 
     setWindowModified(false);
     windowHandle()->requestUpdate();
-    hasUnsavedChanges_ = false ;
     return ;
-}
-
-void Synth::markModified(){
-    if ( !hasUnsavedChanges_ ){
-        qDebug() << "marking modified." ;
-        hasUnsavedChanges_ = true ;
-        setWindowModified(true);
-        windowHandle()->requestUpdate();
-    }
 }
 
 void Synth::onActionSpectrumAnalyzer(){
@@ -420,4 +443,28 @@ void Synth::onActionSpectrumAnalyzer(){
     spectrumWidget_->show();
     spectrumWidget_->raise();
     spectrumWidget_->activateWindow();
+}
+
+void Synth::onComponentAdded(int componentId, ComponentType typ){
+    auto params = componentManager_->getParameters(componentId);
+
+    auto modParams = componentManager_->getModulationParameters(componentId);
+
+    QString name = QString::fromStdString(params->getModel()->getDescriptor().name);
+
+    parameterPanel_->addContent(name, params);
+    if ( ! parameterDock_->isOpen() ) parameterDock_->open();
+    connect(params, &QObject::destroyed, this, [this, params](){
+        parameterPanel_->removeContent(params);
+    });
+
+    modulationPanel_->addContent(name + " Modulation", modParams);
+    if ( ! modulationDock_->isOpen() ) modulationDock_->open();
+    connect(modParams, &QObject::destroyed, this, [this, modParams](){
+        modulationPanel_->removeContent(modParams);
+    });
+}
+
+
+void Synth::onComponentRemoved(int componentId){
 }

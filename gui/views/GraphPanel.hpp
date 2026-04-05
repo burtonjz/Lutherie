@@ -33,12 +33,10 @@
 #include "graphics/PeripheralNode.hpp"
 
 class ComponentNode ; // forward declaration
-
 class GraphPanel : public QGraphicsView, public ISocketLookup {
     Q_OBJECT
 
 private:
-    KDDW::MainWindow* mainWindow_ ;
     QGraphicsScene* scene_ ;
     ConnectionRenderer* connectionRenderer_ ;
     ConnectionManager* connectionManager_ ;
@@ -57,7 +55,7 @@ private:
     static constexpr int MIDI_IN_DEVICE_ID   = 1 ;
 
 public:
-    explicit GraphPanel(KDDW::MainWindow* mainWindow, QWidget* parent = nullptr);
+    explicit GraphPanel(ComponentManager* manager, QWidget* parent = nullptr);
     ~GraphPanel();
 
     // APIs

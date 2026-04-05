@@ -172,8 +172,9 @@ public:
     static constexpr int TOAST_NOTIFICATION_MARGIN = 24 ;
     static constexpr int TOAST_NOTIFICATION_BG_MAX_ALPHA = 220 ;
 
-    static constexpr int DOCK_TITLE_BAR_MARGIN_LR = 6 ;
-    static constexpr int DOCK_TITLE_BAR_MARGIN_TB = 4 ;
+    static constexpr int COLLAPSIBLE_EDITOR_MARGIN = 4 ;
+    static constexpr int TOOL_BUTTON_SIZE = 16 ;
+
     /*
     =======================================================
     =============== STYLE SHEET DEFINITIONS ===============

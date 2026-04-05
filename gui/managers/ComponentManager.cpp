@@ -19,13 +19,11 @@
 #include "meta/ComponentRegistry.hpp"
 #include "api/ApiClient.hpp"
 
-ComponentManager::ComponentManager(KDDW::MainWindow* mainWindow, QObject* parent):
+ComponentManager::ComponentManager(QObject* parent):
     QObject(parent),
-    mainWindow_(mainWindow),
     models_(),
-    editors_(),
-    groupModels_(),
-    groupEditors_()
+    parameters_(),
+    modParameters_()
 {
     connect(
         ApiClient::instance(), &ApiClient::dataReceived, 
@@ -35,9 +33,8 @@ ComponentManager::ComponentManager(KDDW::MainWindow* mainWindow, QObject* parent
 
 ComponentManager::~ComponentManager(){
     for ( const auto& m : models_ ) m.second->deleteLater();
-    for ( const auto& e : editors_ ) e.second->deleteLater();
-    for ( const auto& gm: groupModels_ ) gm.second->deleteLater();
-    for ( const auto& ge : groupEditors_ ) ge.second->deleteLater();
+    for ( const auto& p : parameters_ ) p.second->deleteLater();
+    for ( const auto& mp: modParameters_ ) mp.second->deleteLater();
 }
 
 void ComponentManager::requestAddComponent(ComponentType type){
@@ -101,17 +98,11 @@ void ComponentManager::requestModelSync(int componentId){
 }
 
 void ComponentManager::renameComponent(int id, const QString& name){
-    auto editor = getEditor(id);
-
-    if ( !editor ) return ;
-    editor->setName(name);
+    ///
 }
 
 void ComponentManager::renameGroup(int id, const QString& name){
-    auto editor = getGroupEditor(id);
-
-    if ( !editor ) return ;
-    editor->setName(name);
+    ///
 }
 
 ComponentModel* ComponentManager::getModel(int componentId) const {
@@ -123,239 +114,181 @@ ComponentModel* ComponentManager::getModel(int componentId) const {
     return models_.at(componentId) ;
 }
 
-ComponentEditor* ComponentManager::getEditor(int componentId) const {
-    if ( !editors_.contains(componentId) ){
+ComponentParameters* ComponentManager::getParameters(int componentId) const {
+    if ( !parameters_.contains(componentId) ){
         qWarning() << "No component editor found with id = " << componentId ;
         return nullptr ;
     } 
 
-    return editors_.at(componentId) ;
+    return parameters_.at(componentId) ;
 }
 
-ModulationEditor* ComponentManager::getModulationEditor(int componentId) const {
-    if ( !modulationEditors_.contains(componentId) ){
+ModulationParameters* ComponentManager::getModulationParameters(int componentId) const {
+    if ( !modParameters_.contains(componentId) ){
         qWarning() << "No modulation editor found with id = " << componentId ;
         return nullptr ;
     } 
 
-    return modulationEditors_.at(componentId) ;
+    return modParameters_.at(componentId);
 }
 
-GroupModel* ComponentManager::getGroupModel(int groupId) const {
-    if ( !groupModels_.contains(groupId) ){
-        qWarning() << "No group model found with id = " << groupId ;
-        return nullptr ;
-    } 
-
-    return groupModels_.at(groupId) ;
+void ComponentManager::showParameters(int componentId){
+    // auto it = parameters_.find(componentId);
+    // if ( it == parameters_.end() ){
+    //     qWarning() << "requested editor for invalid component id:" << componentId ;
+    //     return ;
+    // }
+    // requestModelSync(componentId);
+    // it->second->move(QCursor::pos());
+    // it->second->open();
+    // it->second->raise();
 }
 
-GroupEditor* ComponentManager::getGroupEditor(int groupId) const {
-    if ( !groupEditors_.contains(groupId) ){
-        qWarning() << "No group editor found with id = " << groupId ;
-        return nullptr ;
-    }
-
-    return groupEditors_.at(groupId) ;
+void ComponentManager::showModulation(int componentId){
+    // auto it = modParameters_.find(componentId);
+    // if ( it == modParameters_.end() ){
+    //     qWarning() << "requested modulation editor for invalid component id:" << componentId ;
+    //     return ;
+    // }
+    // requestModelSync(componentId);
+    // it->second->show();
+    // it->second->raise();
 }
 
-ModulationEditor* ComponentManager::getGroupModulationEditor(int groupId) const {
-    if ( !groupModulationEditors_.contains(groupId) ){
-        qWarning() << "No group modulation editor found with id = " << groupId ;
-        return nullptr ;
-    }
+void ComponentManager::showGroupParameters(int componentId){}
 
-    return groupModulationEditors_.at(groupId) ;
-}
-
-void ComponentManager::showEditor(int componentId){
-    auto it = editors_.find(componentId);
-    if ( it == editors_.end() ){
-        qWarning() << "requested editor for invalid component id:" << componentId ;
-        return ;
-    }
-    requestModelSync(componentId);
-    it->second->move(QCursor::pos());
-    it->second->open();
-    it->second->raise();
-}
-
-void ComponentManager::showModulationEditor(int componentId){
-    auto it = modulationEditors_.find(componentId);
-    if ( it == modulationEditors_.end() ){
-        qWarning() << "requested modulation editor for invalid component id:" << componentId ;
-        return ;
-    }
-    requestModelSync(componentId);
-    it->second->show();
-    it->second->raise();
-}
-
-void ComponentManager::showGroupEditor(int groupId){
-    auto it = groupEditors_.find(groupId);
-    if ( it == groupEditors_.end() ){
-        qWarning() << "requested group editor for invalid group id:" << groupId ;
-        return ;
-    }
-    for ( auto id : getGroupModel(groupId)->getComponents() ){
-        requestModelSync(id);
-    }
-    it->second->show();
-    it->second->raise();
-}
-
-void ComponentManager::showGroupModulationEditor(int groupId){
-    auto it = groupModulationEditors_.find(groupId);
-    if ( it == groupModulationEditors_.end() ){
-        qWarning() << "requested group editor for invalid group id:" << groupId ;
-        return ;
-    }
-    for ( auto id : getGroupModel(groupId)->getComponents() ){
-        requestModelSync(id);
-    }
-    it->second->show();
-    it->second->raise();
-}
+void ComponentManager::showGroupModulation(int componentId){}
 
 int ComponentManager::createGroup(const std::vector<int> componentIds, bool block){
-    int id = currentGroupId_++ ;
-    QString name = QString("Group %1").arg(id);
+    // int id = currentGroupId_++ ;
+    // QString name = QString("Group %1").arg(id);
 
-    GroupModel* m = new GroupModel(id);
-    GroupEditor* g = new GroupEditor(name, mainWindow_);
-    ModulationEditor* me = new ModulationEditor(name, mainWindow_);
-    groupModels_[id] = m ;
-    groupEditors_[id] = g ;
-    groupModulationEditors_[id] = me ;
+    // GroupModel* m = new GroupModel(id);
+    // GroupEditor* g = new GroupEditor(name, mainWindow_);
+    // ModulationParameters* me = new ModulationParameters(name, mainWindow_);
+    // groupModels_[id] = m ;
+    // groupEditors_[id] = g ;
+    // groupModulationEditors_[id] = me ;
 
-    connect(
-        g, &GroupEditor::parameterEdited,
-        this, &ComponentManager::onParameterEdited
-    );
+    // connect(
+    //     g, &GroupEditor::parameterEdited,
+    //     this, &ComponentManager::onParameterEdited
+    // );
 
-    connect(
-        me, &ModulationEditor::modulationDepthEdited,
-        this, &ComponentManager::onModulationDepthEdited
-    );
+    // connect(
+    //     me, &ModulationParameters::modulationDepthEdited,
+    //     this, &ComponentManager::onModulationDepthEdited
+    // );
 
-    connect(
-        me, &ModulationEditor::modulationStrategyEdited,
-        this, &ComponentManager::onModulationStrategyEdited
-    );
+    // connect(
+    //     me, &ModulationParameters::modulationStrategyEdited,
+    //     this, &ComponentManager::onModulationStrategyEdited
+    // );
 
-    for ( auto i : componentIds ){
-        auto model = getModel(i);
-        m->addComponent(model);
-        g->addComponent(model);
+    // for ( auto i : componentIds ){
+    //     auto model = getModel(i);
+    //     m->addComponent(model);
+    //     g->addComponent(model);
 
-        const ComponentDescriptor& d = model->getDescriptor();
-        for ( const auto& p : d.modulatableParameters ){
-            me->add(model->getModulationModel(p));
-        }
+    //     const ComponentDescriptor& d = model->getDescriptor();
+    //     for ( const auto& p : d.modulatableParameters ){
+    //         me->add(model->getModulationModel(p));
+    //     }
         
-        // handle specialized collection widgets
-        auto cw = getCollectionWidget(g->getComponentParameters(i));
-        if ( cw ){
-            connect(
-                cw, &CollectionWidget::collectionEdited,
-                this, &ComponentManager::onCollectionEdited
-            );
-        }
-    }
+    //     // handle specialized collection widgets
+    //     auto cw = getCollectionWidget(g->getComponentParameters(i));
+    //     if ( cw ){
+    //         connect(
+    //             cw, &CollectionWidget::collectionEdited,
+    //             this, &ComponentManager::onCollectionEdited
+    //         );
+    //     }
+    // }
 
-    if ( ! block ){
-        emit componentGroupCreated(id, componentIds);
-    }
+    // if ( ! block ){
+    //     emit componentGroupCreated(id, componentIds);
+    // }
     
-    return id ;
+    // return id ;
 }
 
 void ComponentManager::appendToGroup(int groupId, const std::vector<int> componentIds){
-    auto model = getGroupModel(groupId);
-    auto editor = getGroupEditor(groupId);
-    auto modEditor = getGroupModulationEditor(groupId);
+    // auto model = getGroupModel(groupId);
+    // auto editor = getGroupEditor(groupId);
+    // auto modParams = getGroupModulationEditor(groupId);
 
-    if ( !model || !editor || !modEditor ){
-        qWarning() << "Could not find group editor with Id " << groupId ;
-        return ;
-    }
+    // if ( !model || !editor || !modParams ){
+    //     qWarning() << "Could not find group editor with Id " << groupId ;
+    //     return ;
+    // }
     
-    for ( auto id : componentIds ){
-        auto m = getModel(id);
+    // for ( auto id : componentIds ){
+    //     auto m = getModel(id);
 
-        model->addComponent(m);
-        editor->addComponent(m);
+    //     model->addComponent(m);
+    //     editor->addComponent(m);
 
-        const ComponentDescriptor& d = m->getDescriptor();
-        for ( const auto& p : d.modulatableParameters ){
-            modEditor->add(m->getModulationModel(p));
-        }
-    }
+    //     const ComponentDescriptor& d = m->getDescriptor();
+    //     for ( const auto& p : d.modulatableParameters ){
+    //         modParams->add(m->getModulationModel(p));
+    //     }
+    // }
 
-    emit componentGroupUpdated(groupId, model->getComponents());
+    // emit componentGroupUpdated(groupId, model->getComponents());
 }
 
 void ComponentManager::removeGroup(int groupId){
-    auto model = getGroupModel(groupId);
-    auto editor = getGroupEditor(groupId);
-    auto modEditor = getGroupModulationEditor(groupId);
+    // auto model = getGroupModel(groupId);
+    // auto editor = getGroupEditor(groupId);
+    // auto modParams = getGroupModulationEditor(groupId);
 
-    if ( !model || !editor || !modEditor ) return ;
+    // if ( !model || !editor || !modParams ) return ;
 
-    emit componentGroupRemoved(groupId, model->getComponents());
+    // emit componentGroupRemoved(groupId, model->getComponents());
 
-    groupModels_.erase(groupId);
-    groupEditors_.erase(groupId);
-    groupModulationEditors_.erase(groupId);
+    // groupModels_.erase(groupId);
+    // groupEditors_.erase(groupId);
+    // groupModulationEditors_.erase(groupId);
     
-    model->deleteLater();
-    editor->deleteLater();    
-    modEditor->deleteLater();
-}
-
-json ComponentManager::serialize() const {
-
+    // model->deleteLater();
+    // editor->deleteLater();    
+    // modParams->deleteLater();
 }
 
 void ComponentManager::addComponent(int componentId, ComponentType type){
     auto model = new ComponentModel(componentId, type);
     models_[componentId] = model ;
 
-    auto editor = new ComponentEditor(model, mainWindow_);
-    editors_[componentId] = editor ;
+    auto params = new ComponentParameters(model);
+    parameters_[componentId] = params ;
 
-    auto modEditor = new ModulationEditor(editor->getName(), mainWindow_);
-    modulationEditors_[componentId] = modEditor ;
+    auto modParams = new ModulationParameters(model);
+    modParameters_[componentId] = modParams ;
 
-    const ComponentDescriptor& d = model->getDescriptor();
-    for ( const auto& p : d.modulatableParameters ){
-        modEditor->add(model->getModulationModel(p));
-    }
-
-    // handle editor communications
+    // handle edit communications
     connect(
-        editors_[componentId], &ComponentEditor::parameterEdited,
+        parameters_[componentId], &ComponentParameters::parameterEdited,
         this, &ComponentManager::onParameterEdited
     );
 
     connect(
-        modEditor, &ModulationEditor::modulationDepthEdited,
+        modParams, &ModulationParameters::modulationDepthEdited,
         this, &ComponentManager::onModulationDepthEdited
     );
 
     connect(
-        modEditor, &ModulationEditor::modulationStrategyEdited,
+        modParams, &ModulationParameters::modulationStrategyEdited,
         this, &ComponentManager::onModulationStrategyEdited
     );
     
-    // handle collection widget if exists
-    auto cw = getCollectionWidget(editor->getComponentParameters());
-    if ( cw ){
-        connect(
-            cw, &CollectionWidget::collectionEdited,
-            this, &ComponentManager::onCollectionEdited
-        );
-    }
+    // // handle collection widget if exists
+    // auto cw = getCollectionWidget(editor->getComponentParameters());
+    // if ( cw ){
+    //     connect(
+    //         cw, &CollectionWidget::collectionEdited,
+    //         this, &ComponentManager::onCollectionEdited
+    //     );
+    // }
 
     emit componentAdded(componentId, type);
 }
@@ -369,11 +302,11 @@ void ComponentManager::removeComponent(int componentId){
     }
 
     models_[componentId]->deleteLater();
-    editors_[componentId]->deleteLater();
-    modulationEditors_[componentId]->deleteLater();
+    parameters_[componentId]->deleteLater();
+    modParameters_[componentId]->deleteLater();
     models_.erase(componentId);
-    editors_.erase(componentId);
-    modulationEditors_.erase(componentId);
+    parameters_.erase(componentId);
+    modParameters_.erase(componentId);
 
     emit componentRemoved(componentId);
 }
@@ -441,17 +374,17 @@ bool ComponentManager::handleCollectionApiResponse(const json& msg){
         return false ;
     }
 
-    auto it = editors_.find(req.componentId);
-    if ( it == editors_.end() ){
+    auto it = parameters_.find(req.componentId);
+    if ( it == parameters_.end() ){
         qWarning() << "Could not find model with Component ID" << req.componentId 
             << ". Will not process collection request" ;
         return true ;
     }
     
-    auto cw = getCollectionWidget(it->second->getComponentParameters());
-    if ( cw ){
-        cw->updateCollection(req);
-    }
+    // auto cw = getCollectionWidget(it->second->getComponentParameters());
+    // if ( cw ){
+    //     cw->updateCollection(req);
+    // }
     
     return true ;
 }
@@ -566,9 +499,9 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
         req.inboundID.has_value() &&
         req.inboundParameter.has_value()
     ){
-        auto editor = getModulationEditor(req.inboundID.value());
-        if ( !editor ) return ;
-        editor->setModulationStatus(req.inboundID.value(), req.inboundParameter.value(), true);
+        auto modParams = getModulationParameters(req.inboundID.value());
+        if ( !modParams ) return ;
+        modParams->setConnectionStatus(req.inboundParameter.value(), true);
     }
 }
 
@@ -578,8 +511,8 @@ void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
         req.inboundID.has_value() &&
         req.inboundParameter.has_value()
     ){
-        auto editor = getModulationEditor(req.inboundID.value());
-        if ( !editor ) return ;
-        editor->setModulationStatus(req.inboundID.value(), req.inboundParameter.value(), false);
+        auto modParams = getModulationParameters(req.inboundID.value());
+        if ( !modParams ) return ;
+        modParams->setConnectionStatus(req.inboundParameter.value(), false);
     }
 }
