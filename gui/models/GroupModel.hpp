@@ -37,11 +37,8 @@ public:
 
     void addComponent(int componentId);
     void removeComponent(int componentId);
+    bool hasComponent(int componentId);
     const std::unordered_set<int>& getComponents() const ;
-
-signals:
-    void componentAdded(int componentId);
-    void componentRemoved(int componentId);
 };
 
 #endif // GROUP_MODEL_HPP_

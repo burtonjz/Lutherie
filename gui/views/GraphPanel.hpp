@@ -110,7 +110,7 @@ private:
 private slots:
     void onApiDataReceived(const json& json);
     
-public  slots:
+public slots:
     // from parent
     void onComponentSelected(ComponentType type);
     
@@ -118,9 +118,9 @@ public  slots:
     void onComponentAdded(int componentId, ComponentType type);
     void onComponentRemoved(int componentId);
 
-    void onComponentGroupCreated(int groupId, std::vector<int> componentIds);
-    void onComponentGroupRemoved(int groupId, std::vector<int> componentIds);
-    void onComponentGroupUpdated(int groupId, std::vector<int> componentIds);
+    void onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds);
+    void onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds);
+    void onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds);
 
     void onNodeZUpdate();
 

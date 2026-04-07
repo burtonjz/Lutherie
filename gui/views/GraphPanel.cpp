@@ -743,7 +743,7 @@ void GraphPanel::onComponentRemoved(int componentId){
     n->deleteLater();
 }
 
-void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
+void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
     auto gNode =  new GroupNode(groupId, QString("Group %1").arg(groupId));
     nodes_.push_back(gNode);
     gNode->addToScene(scene_);
@@ -758,7 +758,7 @@ void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> component
     connectionRenderer_->onComponentGroup(componentIds);
 }
 
-void GraphPanel::onComponentGroupRemoved(int groupId, std::vector<int> componentIds){
+void GraphPanel::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){
@@ -774,7 +774,7 @@ void GraphPanel::onComponentGroupRemoved(int groupId, std::vector<int> component
     connectionRenderer_->onComponentGroup(componentIds);
 }
 
-void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> componentIds){
+void GraphPanel::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){

@@ -152,7 +152,7 @@ void ConnectionRenderer::sendDragCableRequest(){
     cancelDrag(); // destroy temporary cable
 }
 
-void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
+void ConnectionRenderer::onComponentGroup(const std::unordered_set<int>& componentIds){
     for ( auto cable : cables_ ){
         SocketSpec fromSpec = cable->getFromSocket()->getSpec();
         SocketSpec toSpec = cable->getToSocket()->getSpec();

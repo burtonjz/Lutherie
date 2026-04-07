@@ -36,14 +36,15 @@ QString GroupModel::getName() const {
 
 void GroupModel::addComponent(int componentId){
     auto [ it, inserted ] = componentIds_.insert(componentId);
-    if ( inserted ) emit componentAdded(componentId);
 } 
 
 void GroupModel::removeComponent(int componentId){
-    if ( componentIds_.erase(componentId) > 0 ){
-        emit componentRemoved(componentId);
-    }
+    componentIds_.erase(componentId);
 } 
+
+bool GroupModel::hasComponent(int componentId){
+    return componentIds_.contains(componentId);
+}
 
 const std::unordered_set<int>& GroupModel::getComponents() const {
     return componentIds_ ;

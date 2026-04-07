@@ -19,6 +19,8 @@
 #define __UI_SYNTH_HPP_
 
 #include "app/Setup.hpp"
+#include "managers/ComponentManager.hpp"
+#include "managers/GroupManager.hpp"
 #include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
@@ -43,6 +45,8 @@ private:
     Setup* setup_ ;
     GraphPanel* graph_ ;
     ComponentManager* componentManager_ ;
+    GroupManager* groupManager_ ;
+    
     SpectrumAnalyzerWidget* spectrumWidget_ ;
 
     // docks
@@ -116,14 +120,15 @@ public slots:
     void onComponentAdded(int componentId, ComponentType typ);
     void onComponentRemoved(int componentId);
 
-    void onRequestGroupCreate(std::vector<int> componentIds);
-    void onRequestGroupUpdate(int groupId, std::vector<int> componentIds);
-    void onRequestGroupRemove(int groupId);
-
     void onShowParameters(int componentId);
     void onShowModulation(int componentId);
     void onShowGroupParameters(int groupId);
     void onShowGroupModulation(int groupId);
+
+    // for framing groups in panels
+    void onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds);
+    void onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds);
+    void onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds);
 
 };
 

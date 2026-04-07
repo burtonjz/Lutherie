@@ -49,6 +49,7 @@ Synth::Synth(QWidget* parent):
     ),
     setup_(nullptr),
     componentManager_(new ComponentManager(this)),
+    groupManager_(new GroupManager(this)),
     graph_(nullptr),
     spectrumWidget_(nullptr),
     parameterPanel_(new ControlPanel(this)),
@@ -107,7 +108,7 @@ Synth::Synth(QWidget* parent):
         this, &Synth::onComponentAdded
     );
     
-    // graph panel
+    // graph to main
     connect(
         graph_, &GraphPanel::requestShowParameters,
         this, &Synth::onShowParameters
@@ -124,20 +125,49 @@ Synth::Synth(QWidget* parent):
         graph_, &GraphPanel::requestShowGroupModulation,
         this, &Synth::onShowGroupModulation
     );
+
+    // graph to group
     connect(
         graph_, &GraphPanel::requestGroupCreate,
-        this, &Synth::onRequestGroupCreate
+        groupManager_, &GroupManager::onRequestGroupCreate
     );
     connect(
         graph_, &GraphPanel::requestGroupUpdate,
-        this, &Synth::onRequestGroupUpdate
+        groupManager_, &GroupManager::onRequestGroupUpdate
     );
     connect(
         graph_, &GraphPanel::requestGroupRemove,
-        this, &Synth::onRequestGroupRemove
+        groupManager_, &GroupManager::onRequestGroupRemove
+    );
+
+    // group to graph
+    connect(
+        groupManager_, &GroupManager::groupCreated,
+        graph_, &GraphPanel::onComponentGroupCreated
+    );
+    connect(
+        groupManager_, &GroupManager::groupUpdated,
+        graph_, &GraphPanel::onComponentGroupUpdated
+    );
+    connect(
+        groupManager_, &GroupManager::groupRemoved,
+        graph_, &GraphPanel::onComponentGroupRemoved
+    );
+
+    // group to main
+    connect(
+        groupManager_, &GroupManager::groupCreated,
+        this, &Synth::onComponentGroupCreated
+    );
+    connect(
+        groupManager_, &GroupManager::groupUpdated,
+        this, &Synth::onComponentGroupUpdated
+    );
+    connect(
+        groupManager_, &GroupManager::groupRemoved,
+        this, &Synth::onComponentGroupRemoved
     );
 }
-
 
 Synth::~Synth(){
     if ( spectrumWidget_ ) spectrumWidget_->close();
@@ -561,18 +591,6 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
 void Synth::onComponentRemoved(int componentId){
 }
 
-void Synth::onRequestGroupCreate(std::vector<int> componentIds){
-
-}
-
-void Synth::onRequestGroupUpdate(int groupId, std::vector<int> componentIds){
-
-}
-
-void Synth::onRequestGroupRemove(int groupId){
-
-}
-
 void Synth::onShowParameters(int componentId){
     if ( parameterDock_->isHidden() ) parameterDock_->open() ;
     parameterPanel_->maximizeSection(componentManager_->getParameters(componentId));
@@ -587,4 +605,14 @@ void Synth::onShowGroupParameters(int groupId){
 }
 
 void Synth::onShowGroupModulation(int groupId){
+}
+
+void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
+
+}
+void Synth::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
+
+}
+void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
+
 }
