@@ -22,7 +22,7 @@
 GroupModel::GroupModel(int id, QString name):
     id_(id),
     name_(name),
-    models_()
+    componentIds_()
 {}
 
 
@@ -34,49 +34,17 @@ QString GroupModel::getName() const {
     return name_ ;
 } 
 
-void GroupModel::addComponent(ComponentModel* model){
-    if ( !model ) return ;
-
-    int id = model->getId() ;
-
-    if ( models_.contains(id) ){
-        qWarning() << "group with id " << id << "already exists in group model map." ;
-        return ;
-    }
-
-    models_[id] = model ;
+void GroupModel::addComponent(int componentId){
+    auto [ it, inserted ] = componentIds_.insert(componentId);
+    if ( inserted ) emit componentAdded(componentId);
 } 
 
 void GroupModel::removeComponent(int componentId){
-    if ( !models_.contains(componentId) ){
-        qWarning() << "group with id " << componentId << "does not exist in group model map." ;
-        return ;
+    if ( componentIds_.erase(componentId) > 0 ){
+        emit componentRemoved(componentId);
     }
-
-    models_.erase(componentId);
 } 
 
-const std::vector<int> GroupModel::getComponents() const {
-    std::vector<int> keys ;
-    keys.reserve(models_.size());
-    for ( const auto& [k, _] : models_ ){
-        keys.push_back(k);
-    }
-    return keys ;
+const std::unordered_set<int>& GroupModel::getComponents() const {
+    return componentIds_ ;
 } 
-
-// ParameterExposure GroupModel::getExposure(int componentId, ParameterType p) const {
-    
-// } 
-
-// void GroupModel::setExposure(int componentId, ParameterType p, ParameterExposure e){
-
-// } 
-
-// bool GroupModel::isVisible(int componentId, ParameterType p) const {
-
-// } 
-
-// bool GroupModel::isLocked(int componentId, ParameterType p) const {
-
-// } 

@@ -127,7 +127,14 @@ public  slots:
     void ondragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
 
 signals:
-    void wasModified();
+    void requestGroupCreate(std::vector<int> componentIds);
+    void requestGroupUpdate(int groupId, std::vector<int> componentIds);
+    void requestGroupRemove(int groupId);
+
+    void requestShowParameters(int componentId);
+    void requestShowModulation(int componentId);
+    void requestShowGroupParameters(int groupId);
+    void requestShowGroupModulation(int groupId);
 
 };
 

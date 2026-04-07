@@ -73,36 +73,8 @@ Synth::Synth(QWidget* parent):
     parameterDock_->close();
     modulationDock_->close();
     
-    // Actions
-    actionLoad_             = new QAction("Load Patch", this);
-    actionSave_             = new QAction("Save", this);
-    actionSaveAs_           = new QAction("Save As...", this);
-    actionSpectrumAnalyzer_ = new QAction("Spectrum Analyzer", this);
-    actionSetup_            = new QAction("Setup", this);
-    actionStart_            = new QAction("Start", this);
-    actionStop_             = new QAction("Stop", this);
-
-    actionLoad_->setShortcut(QKeySequence("Ctrl+O"));
-    actionSpectrumAnalyzer_->setShortcut(QKeySequence("Ctrl+E"));
-    actionSetup_->setMenuRole(QAction::NoRole);
-    actionStart_->setMenuRole(QAction::NoRole);
-    actionStop_->setMenuRole(QAction::NoRole);
-
-    // Menu Bar
-    auto* menuFile = menuBar()->addMenu("File");
-    menuFile->addSeparator();
-    menuFile->addAction(actionLoad_);
-    menuFile->addSeparator();
-    menuFile->addAction(actionSaveAs_);
-    menuFile->addAction(actionSave_);
-
-    auto* menuView = menuBar()->addMenu("View");
-    menuView->addAction(actionSpectrumAnalyzer_);
-
-    auto* menuTools = menuBar()->addMenu("Tools");
-    auto* menuHelp = menuBar()->addMenu("Help");
-
-    configureMenuActions();
+    // menus
+    configureMenu();
     configureToolBar();
 
     // central widget
@@ -115,7 +87,9 @@ Synth::Synth(QWidget* parent):
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setPersistentCentralWidget(container);
 
-    // connections
+    // ==============================
+    // ======== CONNECTIONS =========
+    // ==============================
 
     // api client
     connect(
@@ -132,6 +106,36 @@ Synth::Synth(QWidget* parent):
         componentManager_, &ComponentManager::componentAdded,
         this, &Synth::onComponentAdded
     );
+    
+    // graph panel
+    connect(
+        graph_, &GraphPanel::requestShowParameters,
+        this, &Synth::onShowParameters
+    );
+    connect(
+        graph_, &GraphPanel::requestShowModulation,
+        this, &Synth::onShowModulation
+    );
+    connect(
+        graph_, &GraphPanel::requestShowGroupParameters,
+        this, &Synth::onShowGroupParameters
+    );
+    connect(
+        graph_, &GraphPanel::requestShowGroupModulation,
+        this, &Synth::onShowGroupModulation
+    );
+    connect(
+        graph_, &GraphPanel::requestGroupCreate,
+        this, &Synth::onRequestGroupCreate
+    );
+    connect(
+        graph_, &GraphPanel::requestGroupUpdate,
+        this, &Synth::onRequestGroupUpdate
+    );
+    connect(
+        graph_, &GraphPanel::requestGroupRemove,
+        this, &Synth::onRequestGroupRemove
+    );
 }
 
 
@@ -139,37 +143,92 @@ Synth::~Synth(){
     if ( spectrumWidget_ ) spectrumWidget_->close();
 }
 
-void Synth::configureMenuActions(){
+void Synth::configureMenu(){
+    // file menu
+    auto* menuFile = menuBar()->addMenu("File");
+
+    actionLoad_ = new QAction("Load Patch", this);
+    actionLoad_->setShortcut(QKeySequence("Ctrl+O"));
+
+    actionSave_ = new QAction("Save", this);
     actionSave_->setShortcut(QKeySequence::Save);
+
+    actionSaveAs_ = new QAction("Save As...", this);
     actionSaveAs_->setShortcut(QKeySequence::SaveAs);
 
-    connect(actionLoad_, &QAction::triggered, this, &Synth::onActionLoad);
-    connect(actionSave_, &QAction::triggered, this, &Synth::onActionSave);
-    connect(actionSaveAs_, &QAction::triggered, this, &Synth::onActionSaveAs);
-    connect(actionSpectrumAnalyzer_, &QAction::triggered, this, &Synth::onActionSpectrumAnalyzer);
+    menuFile->addSeparator();
+    menuFile->addAction(actionLoad_);
+    menuFile->addSeparator();
+    menuFile->addAction(actionSaveAs_);
+    menuFile->addAction(actionSave_);
+
+    // view menu
+    auto* menuView = menuBar()->addMenu("View");
+
+    actionShowParameterPanel_ = new QAction("Parameter Panel", this);
+    actionShowParameterPanel_->setShortcut(QKeySequence("Ctrl+P"));
+
+    actionShowModulationPanel_ = new QAction("Parameter Panel", this);
+    actionShowModulationPanel_->setShortcut(QKeySequence("Ctrl+M"));
+
+    actionSpectrumAnalyzer_ = new QAction("Spectrum Analyzer", this);
+    actionSpectrumAnalyzer_->setShortcut(QKeySequence("Ctrl+E"));
+
+    menuView->addAction(actionShowParameterPanel_);
+    menuView->addAction(actionShowModulationPanel_);
+    menuView->addAction(actionSpectrumAnalyzer_);
+
+    auto* menuTools = menuBar()->addMenu("Tools");
+    auto* menuHelp = menuBar()->addMenu("Help");
+
+    // connections
+    connect(
+        actionLoad_, &QAction::triggered, 
+        this, &Synth::onActionLoad
+    );
+    connect(
+        actionSave_, &QAction::triggered, 
+        this, &Synth::onActionSave
+    );
+    connect(
+        actionSaveAs_, &QAction::triggered, 
+        this, &Synth::onActionSaveAs
+    );
+    connect(
+        actionShowParameterPanel_, &QAction::triggered, 
+        this, &Synth::onActionToggleParameterPanel
+    );
+    connect(
+        actionShowModulationPanel_, &QAction::triggered, 
+        this, &Synth::onActionToggleModulationPanel
+    );
+    connect(
+        actionSpectrumAnalyzer_, &QAction::triggered, 
+        this, &Synth::onActionToggleSpectrumAnalyzer
+    );
 }
 
 void Synth::configureToolBar(){
     toolBar_ = new QToolBar(this);
-
     toolBar_->setFixedHeight(Theme::TOOLBAR_HEIGHT);
     toolBar_->setMovable(false);
 
+    actionSetup_ = new QAction("Setup", this);
+    actionSetup_->setMenuRole(QAction::NoRole);
+    toolBar_->addAction(actionSetup_);
+
+    actionStart_ = new QAction("Start", this);
+    actionStart_->setMenuRole(QAction::NoRole);
     actionStart_->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+    toolBar_->addAction(actionStart_);
+    
+    actionStop_ = new QAction("Stop", this);
+    actionStop_->setMenuRole(QAction::NoRole);
     actionStop_->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
     actionStop_->setVisible(false);
-
-    toolBar_->addAction(actionSetup_);
-    toolBar_->addAction(actionStart_);
     toolBar_->addAction(actionStop_);
 
-    // handle ui actions
-    connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
-    connect(actionSetup_, &QAction::triggered, this, &Synth::onActionSetup);
-    connect(actionStart_, &QAction::triggered, this, &Synth::onActionStart);
-    connect(actionStop_, &QAction::triggered, this, &Synth::onActionStop);
-
-    // custom toolbar actions below
+    // component menu
     QMenu* componentMenu = buildComponentMenu();
     QToolButton* addComponent = new QToolButton(this);
     addComponent->setText("Add Component");
@@ -178,6 +237,24 @@ void Synth::configureToolBar(){
     toolBar_->addWidget(addComponent);
 
     addToolBar(Qt::TopToolBarArea, toolBar_);
+
+    // connections
+    connect(
+        this, &Synth::engineStatusChanged, 
+        this, &Synth::onEngineStatusChange
+    );
+    connect(
+        actionSetup_, &QAction::triggered, 
+        this, &Synth::onActionSetup
+    );
+    connect(
+        actionStart_, &QAction::triggered, 
+        this, &Synth::onActionStart
+    );
+    connect(
+        actionStop_, &QAction::triggered, 
+        this, &Synth::onActionStop
+    );
 }
 
 QMenu* Synth::buildComponentMenu(){
@@ -432,7 +509,7 @@ void Synth::performSave(){
     return ;
 }
 
-void Synth::onActionSpectrumAnalyzer(){
+void Synth::onActionToggleSpectrumAnalyzer(){
     if ( !spectrumWidget_ ){
         spectrumWidget_ = new SpectrumAnalyzerWidget();
         int port = Config::get<int>("analysis.spectrum_analyzer.port").value_or(54322);
@@ -443,6 +520,22 @@ void Synth::onActionSpectrumAnalyzer(){
     spectrumWidget_->show();
     spectrumWidget_->raise();
     spectrumWidget_->activateWindow();
+}
+
+void Synth::onActionToggleParameterPanel(){
+    if ( parameterDock_->isOpen() ){
+        parameterDock_->close();
+    } else {
+        parameterDock_->open();
+    }
+}
+
+void Synth::onActionToggleModulationPanel(){
+    if ( modulationDock_->isOpen() ){
+        modulationDock_->close();
+    } else {
+        modulationDock_->open();
+    }
 }
 
 void Synth::onComponentAdded(int componentId, ComponentType typ){
@@ -465,6 +558,33 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
     });
 }
 
-
 void Synth::onComponentRemoved(int componentId){
+}
+
+void Synth::onRequestGroupCreate(std::vector<int> componentIds){
+
+}
+
+void Synth::onRequestGroupUpdate(int groupId, std::vector<int> componentIds){
+
+}
+
+void Synth::onRequestGroupRemove(int groupId){
+
+}
+
+void Synth::onShowParameters(int componentId){
+    if ( parameterDock_->isHidden() ) parameterDock_->open() ;
+    parameterPanel_->maximizeSection(componentManager_->getParameters(componentId));
+}
+
+void Synth::onShowModulation(int componentId){
+    if ( modulationDock_->isHidden() ) modulationDock_->open() ;
+    modulationPanel_->maximizeSection(componentManager_->getModulationParameters(componentId));
+}
+
+void Synth::onShowGroupParameters(int groupId){
+}
+
+void Synth::onShowGroupModulation(int groupId){
 }

@@ -41,6 +41,12 @@ public:
     void clear();
 
     const std::vector<CollapsibleEditor*>& getSections() const ;
+    void maximizeSection(QWidget* content);
+    void minimizeSection(QWidget* content);
+
+private:
+    CollapsibleEditor* getSection(QWidget* content) const ;
+
 };
 
 #endif // CONTROL_PANEL_HPP_

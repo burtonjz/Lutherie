@@ -37,8 +37,6 @@ private:
     std::map<int, ComponentParameters*> parameters_ ;
     std::map<int, ModulationParameters*> modParameters_ ;
 
-    int currentGroupId_ = 0 ;
-
 public:
     ComponentManager(QObject* parent = nullptr);
     ~ComponentManager();
@@ -51,23 +49,11 @@ public:
     void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
     void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
     void requestModelSync(int componentId);
-
-    void renameComponent(int id, const QString& name);
-    void renameGroup(int id, const QString& name);
     
     ComponentModel* getModel(int componentId) const ;
     ComponentParameters* getParameters(int componentId) const ;
     ModulationParameters* getModulationParameters(int componentId) const ;
-    
-    void showParameters(int componentId);
-    void showModulation(int componentId);
-    void showGroupParameters(int groupId);
-    void showGroupModulation(int groupId);
 
-    int createGroup(const std::vector<int> componentIds, bool block = false);
-    void appendToGroup(int groupId, const std::vector<int> componentIds);
-    void removeGroup(int groupId);
-    
 private:
     // on api response
     void addComponent(int componentId, ComponentType type);
@@ -92,10 +78,6 @@ public slots:
 signals:
     void componentAdded(int ComponentId, ComponentType typ);
     void componentRemoved(int componentId);
-
-    void componentGroupCreated(int groupId, const std::vector<int> componentIds); // new group id, components added
-    void componentGroupRemoved(int groupId, const std::vector<int> componentIds); // existing group id, components removed
-    void componentGroupUpdated(int groupId, const std::vector<int> componentIds); // existing group id, new component id list
 };
 
 #endif // COMPONENT_MANAGER_HPP_

@@ -56,13 +56,18 @@ private:
     QString saveFilePath_ ;
     json saveData_ ;
 
-    // menu Actions
+    // ========= ACTIONS =========
+    // file menu
     QAction* actionLoad_ ;
     QAction* actionSave_ ;
     QAction* actionSaveAs_ ;
-    QAction* actionSpectrumAnalyzer_ ;
 
-    // toolbar Actions
+    // view menu
+    QAction* actionSpectrumAnalyzer_ ;
+    QAction* actionShowParameterPanel_ ;
+    QAction* actionShowModulationPanel_ ;
+
+    // toolbar 
     QAction* actionSetup_ ;
     QAction* actionStart_ ;
     QAction* actionStop_ ;
@@ -75,7 +80,7 @@ public:
     ~Synth();
 
 private:
-    void configureMenuActions();
+    void configureMenu();
     void configureToolBar();
     QMenu* buildComponentMenu();
 
@@ -92,17 +97,33 @@ private slots:
 
     void onEngineStatusChange(bool status);
 
+    // tool bar menu actions
     void onActionSetup();
     void onActionStart();
     void onActionStop();
+
+    // file menu actions
     void onActionLoad();
     void onActionSave();
     void onActionSaveAs();
-    void onActionSpectrumAnalyzer();
+
+    // view menu actions
+    void onActionToggleSpectrumAnalyzer();
+    void onActionToggleParameterPanel();
+    void onActionToggleModulationPanel();
 
 public slots:
     void onComponentAdded(int componentId, ComponentType typ);
     void onComponentRemoved(int componentId);
+
+    void onRequestGroupCreate(std::vector<int> componentIds);
+    void onRequestGroupUpdate(int groupId, std::vector<int> componentIds);
+    void onRequestGroupRemove(int groupId);
+
+    void onShowParameters(int componentId);
+    void onShowModulation(int componentId);
+    void onShowGroupParameters(int groupId);
+    void onShowGroupModulation(int groupId);
 
 };
 

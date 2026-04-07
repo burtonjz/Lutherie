@@ -74,18 +74,6 @@ GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
         this, &GraphPanel::onComponentRemoved
     );
     connect(
-        componentManager_, &ComponentManager::componentGroupCreated,
-        this, &GraphPanel::onComponentGroupCreated
-    );
-    connect(
-        componentManager_, &ComponentManager::componentGroupUpdated,
-        this, &GraphPanel::onComponentGroupUpdated
-    );
-    connect(
-        componentManager_, &ComponentManager::componentGroupRemoved,
-        this, &GraphPanel::onComponentGroupRemoved
-    );
-    connect(
         connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
         this, &GraphPanel::ondragCableParameterNeeded
     );
@@ -136,28 +124,6 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         node, &GraphNode::socketUnhidden,
         connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
     );
-
-    // component nodes
-    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        int id = c->getModel()->getId();
-        connect(
-            c, &GraphNode::nodeNameUpdated,
-            [this, id](const QString& name){
-                componentManager_->renameComponent(id, name);
-            }
-        );
-    }
-
-    // group nodes
-    if ( auto g = dynamic_cast<GroupNode*>(node) ){
-        int id = g->getId();
-        connect(
-            g, &GraphNode::nodeNameUpdated,
-            [this, id](const QString& name){
-                componentManager_->renameGroup(id, name);
-            }
-        );
-    }
 }
 
 void GraphPanel::addAudioOutput(){
@@ -293,30 +259,30 @@ void GraphPanel::deserializeNodes(const json& nodes){
             } else {
                 qWarning() << "Invalid deviceId specified." ;
             }
-        } else if ( nodeType == "GroupNode" ){
-            if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
-                continue ;
-            }
+        } // else if ( nodeType == "GroupNode" ){
+        //     if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
+        //         continue ;
+        //     }
 
-            std::vector<int> ids ;
-            for ( const auto& id : n.at("componentIds") ){
-                if ( ! id.is_number() || ! componentManager_->getModel(id) ){
-                    qWarning() << "component id is either malformed or invalid." ;
-                    continue ;
-                }
-                ids.push_back(id);
-            }
+        //     std::vector<int> ids ;
+        //     for ( const auto& id : n.at("componentIds") ){
+        //         if ( ! id.is_number() || ! componentManager_->getModel(id) ){
+        //             qWarning() << "component id is either malformed or invalid." ;
+        //             continue ;
+        //         }
+        //         ids.push_back(id);
+        //     }
 
-            if ( ids.size() > 1 ){
-                int groupId = componentManager_->createGroup(ids, true); 
-                onComponentGroupCreated(groupId, ids);
-                auto g = getGroupNode(groupId);
-                g->deserialize(n);
-            } else {
-                qWarning() << "Group node does not contain more than 2 valid component ids.";
-                continue ;
-            }
-        }
+        //     if ( ids.size() > 1 ){
+        //         int groupId = componentManager_->createGroup(ids, true); 
+        //         onComponentGroupCreated(groupId, ids);
+        //         auto g = getGroupNode(groupId);
+        //         g->deserialize(n);
+        //     } else {
+        //         qWarning() << "Group node does not contain more than 2 valid component ids.";
+        //         continue ;
+        //     }
+        // }
     }
 }
 
@@ -523,12 +489,12 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     QAction* openEdit = new QAction("Editor", editorMenu);
     if ( auto c = dynamic_cast<ComponentNode*>(node) ){
         connect ( openEdit, &QAction::triggered, [this,c](){
-            componentManager_->showParameters(c->getModel()->getId());
+            emit requestShowParameters(c->getModel()->getId());
         });
         editorMenu->addAction(openEdit);
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
         connect ( openEdit, &QAction::triggered, [this,g](){
-            componentManager_->showGroupParameters(g->getId());
+            emit requestShowGroupParameters(g->getId());
         });
         editorMenu->addAction(openEdit);
     }
@@ -536,12 +502,12 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     QAction* openMod = new QAction("Modulation", editorMenu);
     if ( auto c = dynamic_cast<ComponentNode*>(node) ){
         connect ( openMod, &QAction::triggered, [this,c](){
-            componentManager_->showModulation(c->getModel()->getId());
+            emit requestShowModulation(c->getModel()->getId());
         });
         editorMenu->addAction(openMod);
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
         connect ( openMod, &QAction::triggered, [this,g](){
-            componentManager_->showGroupModulation(g->getId());
+            emit requestShowGroupModulation(g->getId());
         });
         editorMenu->addAction(openMod);
     }
@@ -826,12 +792,12 @@ void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> component
 
 void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     if ( auto c = dynamic_cast<ComponentNode*>(widget) ){
-        componentManager_->showParameters(c->getModel()->getId());
+        emit requestShowParameters(c->getModel()->getId());
         return ;
     }
 
     if ( auto g = dynamic_cast<GroupNode*>(widget) ){
-        componentManager_->showGroupParameters(g->getId());
+        emit requestShowGroupParameters(g->getId());
         return ;
     }
 }
@@ -864,18 +830,18 @@ void GraphPanel::handleGroupEvent(){
     
     // case 1: no groups selected, create new group
     if ( groupIds.size() == 0 ){
-        componentManager_->createGroup(componentIds);
+       emit requestGroupCreate(componentIds);
     }
 
     // case 2: one group selected, add into group
     if ( groupIds.size() == 1 ){
-        componentManager_->appendToGroup(groupIds[0], componentIds);
+        emit requestGroupUpdate(groupIds[0], componentIds);
     }
 }
 
 void GraphPanel::handleUngroupEvent(){
     for ( const auto& g : getSelectedGroups() ){
-        componentManager_->removeGroup(g->getId());
+        emit requestGroupRemove(g->getId());
     }
 }
 

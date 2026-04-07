@@ -18,30 +18,16 @@
 #ifndef GROUP_MODEL_HPP_
 #define GROUP_MODEL_HPP_
 
-#include "models/ComponentModel.hpp"
-#include "types/ParameterType.hpp"
-
 #include <QObject>
-#include <vector>
-#include <map>
-
-enum class ParameterExposure {
-    Visible, // normal visibility
-    Hidden,  // not shown, not modulatable
-    Locked   // shown as read-only display, not modulatable
-};
+#include <unordered_set>
 
 class GroupModel : public QObject {
     Q_OBJECT
 
 private:
-    struct ParameterConfig {
-        ParameterExposure exposure = ParameterExposure::Visible ;
-    };
-    
     int id_ ;
     QString name_ ;
-    std::map<int, ComponentModel*> models_ ;
+    std::unordered_set<int> componentIds_ ;
 
 public:
     GroupModel(int id, QString name = "");
@@ -49,19 +35,13 @@ public:
     int getId() const ;
     QString getName() const ;
 
-    void addComponent(ComponentModel* model);
+    void addComponent(int componentId);
     void removeComponent(int componentId);
-    const std::vector<int> getComponents() const ;
-
-    // ParameterExposure getExposure(int componentId, ParameterType p) const ;
-    // void setExposure(int componentId, ParameterType p, ParameterExposure e);
-
-    // bool isVisible(int componentId, ParameterType p) const ;
-    // bool isLocked(int componentId, ParameterType p) const ;
+    const std::unordered_set<int>& getComponents() const ;
 
 signals:
-    void ParameterExposureChanged(int componentId, ParameterType p, ParameterExposure e);
-
+    void componentAdded(int componentId);
+    void componentRemoved(int componentId);
 };
 
 #endif // GROUP_MODEL_HPP_
