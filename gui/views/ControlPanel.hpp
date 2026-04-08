@@ -41,11 +41,10 @@ public:
     void clear();
 
     const std::vector<CollapsibleEditor*>& getSections() const ;
+    CollapsibleEditor* getSection(QWidget* content) const ;
+
     void maximizeSection(QWidget* content);
     void minimizeSection(QWidget* content);
-
-private:
-    CollapsibleEditor* getSection(QWidget* content) const ;
 
 };
 

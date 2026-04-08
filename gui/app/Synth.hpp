@@ -130,6 +130,9 @@ public slots:
     void onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds);
     void onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds);
 
+    void onRequestComponentRename(int componentId, QString name);
+    void onRequestGroupRename(int groupId, QString name);
+
 };
 
 #endif // __UI_SYNTH_HPP_

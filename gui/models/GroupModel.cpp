@@ -30,9 +30,13 @@ int GroupModel::getId() const {
     return id_ ;
 } 
 
-QString GroupModel::getName() const {
+const QString& GroupModel::getName() const {
     return name_ ;
 } 
+
+void GroupModel::setName(QString name){
+    name_ = name ;
+}
 
 void GroupModel::addComponent(int componentId){
     auto [ it, inserted ] = componentIds_.insert(componentId);

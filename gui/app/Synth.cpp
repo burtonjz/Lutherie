@@ -125,6 +125,14 @@ Synth::Synth(QWidget* parent):
         graph_, &GraphPanel::requestShowGroupModulation,
         this, &Synth::onShowGroupModulation
     );
+    connect(
+        graph_, &GraphPanel::requestComponentRename,
+        this, &Synth::onRequestComponentRename
+    );
+    connect(
+        graph_, &GraphPanel::requestGroupRename, 
+        this, &Synth::onRequestGroupRename
+    );
 
     // graph to group
     connect(
@@ -615,4 +623,41 @@ void Synth::onComponentGroupRemoved(int groupId, std::unordered_set<int> compone
 }
 void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
 
+}
+
+void Synth::onRequestComponentRename(int componentId, QString name){
+    auto m = componentManager_->getModel(componentId);
+    if ( !m ) return ;
+
+    m->setName(name);
+    
+    // graph node renames
+    auto n = graph_->getComponentNode(componentId);
+    if ( n ){
+        n->onRename(name);
+    }
+
+    // tell panels to update headers
+    auto paramContent = componentManager_->getParameters(componentId);
+    auto paramSection = parameterPanel_->getSection(paramContent);
+    paramSection->setTitle(name);
+    
+    auto modContent = componentManager_->getModulationParameters(componentId);
+    auto modSection = modulationPanel_->getSection(modContent);
+    modSection->setTitle(name);
+}
+
+void Synth::onRequestGroupRename(int groupId, QString name){
+    auto m = groupManager_->getModel(groupId);
+    if ( !m ) return ;
+
+    m->setName(name);
+
+    // graph node renames
+    auto n = graph_->getGroupNode(groupId);
+    if ( n ){
+        n->onRename(name);
+    }
+
+    // tell panels to update headers
 }

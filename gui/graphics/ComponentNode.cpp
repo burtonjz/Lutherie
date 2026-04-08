@@ -102,3 +102,7 @@ json ComponentNode::serialize() const {
 void ComponentNode::deserialize(const json& node){
     GraphNode::deserialize(node);
 }
+
+void ComponentNode::requestRename(const QString& name ){
+    emit requestComponentRename(model_->getId(), name);
+}

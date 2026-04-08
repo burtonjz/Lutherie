@@ -40,7 +40,10 @@ public:
     explicit CollapsibleEditor(QString title, QWidget* content, QWidget* parent = nullptr);
 
     QWidget* getContent() const ;
+    
     QString getTitle() const ;
+    void setTitle(QString name);
+
     bool isCollapsed() const ;
     void setCollapsed(bool collapsed);
 

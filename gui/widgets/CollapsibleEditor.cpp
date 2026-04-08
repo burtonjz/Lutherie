@@ -42,6 +42,10 @@ QString CollapsibleEditor::getTitle() const {
     return titleLabel_->text();
 }
 
+void CollapsibleEditor::setTitle(QString name){
+    titleLabel_->setText(name);
+}
+
 bool CollapsibleEditor::isCollapsed() const {
     return collapsed_ ;
 }

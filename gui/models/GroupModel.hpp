@@ -33,7 +33,8 @@ public:
     GroupModel(int id, QString name = "");
 
     int getId() const ;
-    QString getName() const ;
+    const QString& getName() const ;
+    void setName(QString name);
 
     void addComponent(int componentId);
     void removeComponent(int componentId);

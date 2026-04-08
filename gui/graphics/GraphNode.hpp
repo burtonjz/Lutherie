@@ -63,7 +63,7 @@ public:
     const QString& getName() const { return name_ ; }
     QGraphicsTextItem* getNameItem() const { return titleText_ ; }
 
-    void setName(const QString& name );
+    virtual void requestRename(const QString& name );
 
     void createSockets(std::initializer_list<SocketSpec> specs );
     void createSockets(const std::vector<SocketSpec> specs );
@@ -89,10 +89,12 @@ protected:
     void reorderSockets();
     void positionSockets(QPointF newPos); 
 
+public slots:
+    void onRename(QString name);
+
 signals:
     void positionChanged();
     void needsZUpdate();
-    void nodeNameUpdated(const QString& name);
     void socketHidden(SocketWidget* socket);
     void socketUnhidden(SocketWidget* socket);
 

@@ -117,3 +117,7 @@ json GroupNode::serialize() const {
 
     return msg ;
 }
+
+void GroupNode::requestRename(const QString& name ){
+    emit requestGroupRename(groupId_, name);
+}

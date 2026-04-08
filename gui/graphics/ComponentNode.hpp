@@ -44,7 +44,11 @@ public:
 
     json serialize() const override ;
     virtual void deserialize(const json& node) override ;
-    
+
+    void requestRename(const QString& name ) override ;
+
+signals:
+    void requestComponentRename(int componentId, QString name);
 };
 
 #endif // COMPONENT_NODE_HPP_

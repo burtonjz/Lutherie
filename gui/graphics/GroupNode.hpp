@@ -47,6 +47,8 @@ public:
     json serialize() const override ;
     // virtual void deserialize(const json& node) override ;
 
+    void requestRename(const QString& name ) override ;
+
 private:
     void addSockets(ComponentNode* node);
     void removeSockets(ComponentNode* node);
@@ -55,6 +57,8 @@ signals:
     // signal group events to connection renderer
     void SocketGrouped(SocketSpec spec);
     void SocketUngrouped(SocketSpec spec);
+
+    void requestGroupRename(int groupId, QString name);
 
 };
 

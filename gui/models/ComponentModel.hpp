@@ -25,6 +25,7 @@
 #include "models/ModulationModel.hpp"
 
 #include <QObject>
+#include <QString>
 #include <map>
 
 class ComponentModel : public QObject {
@@ -36,6 +37,7 @@ private:
     ComponentDescriptor descriptor_ ;
     std::map<ParameterType, ParameterValue> parameters_ ;
     std::map<ParameterType, ModulationModel*> modulations_ ;
+    QString name_ ;
 
 public:
     ComponentModel(int id, ComponentType typ);
@@ -43,6 +45,7 @@ public:
 
     int getId() const ;
     ComponentType getType() const ;
+    void setName(QString name);
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;
     const std::map<ParameterType, ModulationModel*>& getModulationModels() const ;

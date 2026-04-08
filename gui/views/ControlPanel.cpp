@@ -83,6 +83,15 @@ const std::vector<CollapsibleEditor*>& ControlPanel::getSections() const {
     return sections_ ;
 }
 
+CollapsibleEditor* ControlPanel::getSection(QWidget* content) const {
+    for ( auto s : sections_ ){
+        if ( s->getContent() == content ){
+            return s ;
+        }
+    }
+    return nullptr ;
+}
+
 void ControlPanel::maximizeSection(QWidget* content){
     auto section = getSection(content);
     if ( ! section ) return ;
@@ -93,13 +102,4 @@ void ControlPanel::minimizeSection(QWidget* content){
     auto section = getSection(content);
     if ( ! section ) return ;
     section->setCollapsed(true);
-}
-
-CollapsibleEditor* ControlPanel::getSection(QWidget* content) const {
-    for ( auto s : sections_ ){
-        if ( s->getContent() == content ){
-            return s ;
-        }
-    }
-    return nullptr ;
 }

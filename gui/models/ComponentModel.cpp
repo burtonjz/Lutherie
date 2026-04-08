@@ -60,6 +60,10 @@ ComponentType ComponentModel::getType() const {
     return type_ ;
 }
 
+void ComponentModel::setName(QString name){
+    name_ = name ;
+}
+
 const ComponentDescriptor& ComponentModel::getDescriptor() const {
     return descriptor_ ;
 }

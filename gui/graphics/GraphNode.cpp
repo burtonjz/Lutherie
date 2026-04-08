@@ -83,10 +83,9 @@ SocketWidget* GraphNode::getSocket(SocketSpec s) const {
     return nullptr ;
 }
 
-void GraphNode::setName(const QString& name){
-    name_ = name ;
-    titleText_->setPlainText(name);
-    emit nodeNameUpdated(name_);
+void GraphNode::requestRename(const QString& name){
+    // default case no request necessary, just rename
+    onRename(name);
 }
 
 void GraphNode::createSockets(std::initializer_list<SocketSpec> specs ){
@@ -360,7 +359,7 @@ json GraphNode::serialize() const {
 
 void GraphNode::deserialize(const json& node){
     if ( node.contains("name") && node.at("name").is_string() ){
-        setName(QString::fromStdString(node.at("name")));
+        requestRename(QString::fromStdString(node.at("name")));
     } 
     if ( 
         node.contains("xpos") && node.at("xpos").is_number() &&
@@ -380,4 +379,9 @@ void GraphNode::deserialize(const json& node){
         }
     }
     update();
+}
+
+void GraphNode::onRename(QString name){
+    name_ = name ;
+    titleText_->setPlainText(name);
 }

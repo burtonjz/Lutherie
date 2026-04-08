@@ -136,6 +136,8 @@ signals:
     void requestShowGroupParameters(int groupId);
     void requestShowGroupModulation(int groupId);
 
+    void requestComponentRename(int componentId, QString name);
+    void requestGroupRename(int groupId, QString name);
 };
 
 #endif // GRAPH_PANEL_HPP_

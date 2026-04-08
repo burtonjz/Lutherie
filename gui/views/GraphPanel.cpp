@@ -124,6 +124,24 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         node, &GraphNode::socketUnhidden,
         connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
     );
+
+    // component node
+    auto component = dynamic_cast<ComponentNode*>(node);
+    if ( component ){
+        connect(
+            component, &ComponentNode::requestComponentRename,
+            this, &GraphPanel::requestComponentRename
+        );
+    }
+
+    // group node
+    auto group = dynamic_cast<GroupNode*>(node);
+    if ( group ){
+        connect(
+            group, &GroupNode::requestGroupRename,
+            this, &GraphPanel::requestGroupRename
+        );
+    }
 }
 
 void GraphPanel::addAudioOutput(){
@@ -641,7 +659,7 @@ void GraphPanel::startRename(GraphNode* node ){
         QString newName = edit->text().trimmed();
         if ( ! newName.isEmpty() ){
             if ( isNodeNameAvailable(newName, node) ){
-                node->setName(newName);
+                node->requestRename(newName);
             } else {
                 ToastNotification::show(scene_, this, 
                     "Cannot name widget '" + newName + "'. Name is unavailable.");
