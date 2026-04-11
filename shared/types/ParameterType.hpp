@@ -280,15 +280,23 @@ template <> struct ParameterTraits<ParameterType::PAN>{
 template <> struct ParameterTraits<ParameterType::DETUNE>{
     using ValueType = float ;
     static constexpr std::string_view name = "detune" ;
-    static constexpr float minimum = -1250.0f ;
-    static constexpr float maximum = 1250.0f ;
+    static constexpr float minimum = -4800.0f ;
+    static constexpr float maximum = 4800.0f ;
     static constexpr float defaultValue = 0.0 ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr size_t uiPrecision = 2 ; // num decimals
+
+    // ui decomposition constants
+    static constexpr float harmonicMin = 0.5f;
+    static constexpr float harmonicMax = 8.0f;
+    static constexpr size_t harmonicPrecision = 2;
+    static constexpr float detuneCentsMin = -100.0f;
+    static constexpr float detuneCentsMax = 100.0f;
+    static constexpr size_t detunePrecision = 1;
 };
 
 template <> struct ParameterTraits<ParameterType::ATTACK>{

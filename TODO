@@ -1,61 +1,58 @@
-Current Task List:
-- Update ComponentManager to contain ModulationParameters/ComponentParameters
-- Update show editor logic to open the associated controlPanel docks and maximize the relevant component
-- Add show control panels logic to the top toolbar
-- Adjust grouping events so that they reorder components together and give them a frame
-- For ComponentParameters, add a widget to launch the specialized widget if one exists for that component
-- Specialized Widgets are wrapped into a KDDW::DockWidget and are floating on initialization
-- Update Graph Panel to default to central widget, but don't force it as central widget
-- Expose Max/Min and Default parameters via right click tool window. 
-- Additional right click context menu to map a parameter widget to a MIDI control
-  - Continuous variables generates a wiggle to map
-  - Discrete works on num of button presses (set a threshold value in config so users can accommodate their controller)
-  - if in discrete mode and we dont see continuous values coming through, consider a warning message (vice versa for other case)
-- Indicator for Midi Control, hover to see which control id it is associated with
-- Add a Macro Knob panel that is forced to dock to the edge of the graph panel and moves with it.
-  - Socket for a macro control for modulation of macro knob
-  - Macro Edit mode where an indicator appears next to each control in the control panel and lets you drag it to macro knob
-  - indicator outside of macro edit mode to indicate it has a macro control (same as midi control)
+# Lutherie TODO
 
+## UI
 
-UI:
-- FUNCTIONALITY/FLOW
-  - Midi Control Mapping 
-    - Dockable parameters and allow users to map them to Midi Control signals 
-  - Editors
-    - create a dock and popout system for detail widgets for easier management (probably unify with the Midi Control Mapping stuff)
-  - Setup
-    - Move setup to the menu toolbar, add shortcut, and add saved hardware midi/audio choices to config file so it loads up when the application loads up.
-  - Run
-    - Block deletion of components while in run mode. 
-- COMPONENTS
-  - General
-    - Ensure that modules do not spawn on top of eachother during add logic
-    - Move add logic to a toolbar menu, and make hot keys that open up a context menu to quickly add new components
-    - Allow component duplication -- one method where you just copy the component, and another where you copy it with any possible connections
-  - SEQUENCER
-    - Support per-note velocities
-    - Make the horizontal scroll bar scroll with shift+mouse wheel
-    - Do not allow sequence notes to be created while the engine is running 
-    - Ensure when the sequencer status knob is toggled, that it immediately sends note off signals for any active note (or don't allow toggling during run)
+### Layout
+- GraphPanel defaults to central widget but can be docked/moved freely
+- Add "open editor" button to ComponentParameters (and node right click context menu) that launches specialized widget as a floating KDDW::DockWidget
 
+### Components
+- Expose Min/Max/Default parameters via right click tool window
+- Prevent modules from spawning on top of each other
+- Move add logic to toolbar menu with hotkeys for quick-add context menu
+- Component duplication — plain copy, and copy-with-connections
 
-BACKEND:
-- COMPONENT IMPROVEMENTS
-  - [POLYPHONIC] OSCILLATOR
-    - add hard sync feature between two oscillators 
-    - Phase syncing to minimize wave interference?
-- COMPONENTS TO ADD
-  - Arpeggiator
-  - Pitchbend support
-  - Panner
-  - Reverb
-  - Inverter
-  - Quantizer? 
-  - Mixer (with different mixing strategies so this can support ring modulation, for example)
-  - Bitcrusher
+### Sequencer
+- Per-note velocity support
+- Shift+scroll for horizontal scrollbar
+- Prevent note creation while engine is running
+- On sequencer status toggle, send note-off for all active notes (or disallow toggling during run)
 
-ONE DAY:
-- Envelope that supports drawing curve
-- Custom Wavetable Drawing
-- export custom synths to VST or LV2 or whatever
+## Signal Flow
+
+### Control Connections
+- create boolean control port signal/trigger system
+  - hard sync ( phase cycle complete signal, phase reset trigger)
+
+### Macro Knobs
+- Macro Knob panel docked to edge of graph panel, moves with it
+- Modulation socket on each macro knob
+- Macro Edit Mode: indicator appears next to each control panel parameter, drag to assign to macro knob
+- Indicator outside of Macro Edit Mode showing a macro is assigned (same style as MIDI indicator)
+- Arbitrary functions to apply value from macro knob to control knob, listed below the macro knob
+  
+### MIDI Control Mapping
+- Right click context menu on parameter widget to map to MIDI control
+- Continuous variables: generate wiggle to map
+- Discrete variables: map on button press count with configurable threshold
+- Warn if continuous mode sees no continuous values coming in (and vice versa)
+- Indicator on parameter showing MIDI association, hover to reveal control id
+
+### Peripheral Devices
+- match audio output to the number of ports on the peripheral device
+- allow for multiple midi peripheral devices
+- support midi output peripherals
+  
+## Components to Add
+- Arpeggiator
+- Pitchbend Support
+- Panner
+- Inverter
+- Quantizer
+- Mixer (with pluggable mixing strategies, e.g. ring modulation)
+- Bitcrusher
+
+## One Day
+- Envelope with drawable curve
+- Custom wavetable drawing
+- Export synths to VST/LV2

@@ -206,7 +206,7 @@ void Synth::configureMenu(){
     actionShowParameterPanel_ = new QAction("Parameter Panel", this);
     actionShowParameterPanel_->setShortcut(QKeySequence("Ctrl+P"));
 
-    actionShowModulationPanel_ = new QAction("Parameter Panel", this);
+    actionShowModulationPanel_ = new QAction("Modulation Panel", this);
     actionShowModulationPanel_->setShortcut(QKeySequence("Ctrl+M"));
 
     actionSpectrumAnalyzer_ = new QAction("Spectrum Analyzer", this);

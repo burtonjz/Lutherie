@@ -1,7 +1,7 @@
 
 
 #include "dsp/detune.hpp"
-#include "config/Config.hpp" // or wherever Config is defined
+#include "types/ParameterType.hpp"
 #include <vector>
 #include <cmath>
 
@@ -16,7 +16,7 @@ namespace dsp {
         if (initialized) return;
         
         Config::load();
-        maxDetune = Config::get<double>("audio.max_detune_cents").value_or(1250);
+        maxDetune = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DETUNE, maximum);
         
         size_t lutSize = maxDetune * 2 + 1;
         detuneLUT.resize(lutSize);
@@ -31,9 +31,8 @@ namespace dsp {
     
     double getDetuneScale(int cents) {
         int index = cents + static_cast<int>(maxDetune);
-        if (index < 0 || index >= static_cast<int>(detuneLUT.size())) {
-            return 1.0; // No detune if out of range
-        }
+        assert(index >= 0 && index < static_cast<int>(detuneLUT.size()));
+        index = std::clamp(index, 0, static_cast<int>(detuneLUT.size()) - 1);
         return detuneLUT[index];
     }
 }

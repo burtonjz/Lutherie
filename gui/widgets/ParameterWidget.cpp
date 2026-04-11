@@ -27,6 +27,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QEvent>
+#include <QMouseEvent>
 #include <QShortcut>
 #include <QLineEdit>
 
@@ -649,3 +650,197 @@ void SliderWidget::updateDisplay(){
 int SliderWidget::scaleByPrecision(double v) const {
     return v * std::pow(10, precision_);
 }
+
+/*
+=========================================
+================= DETUNE ================
+=========================================
+*/
+
+DetuneWidget::DetuneWidget(QWidget* parent):
+    ParameterWidget(parent),
+    harmonicLabel_(nullptr),
+    harmonicSlider_(nullptr),
+    harmonicValueLabel_(nullptr),
+    detuneLabel_(nullptr),
+    detuneSlider_(nullptr),
+    detuneValueLabel_(nullptr),
+    harmonicPrecision_(ParameterTraits<ParameterType::DETUNE>::harmonicPrecision),
+    detunePrecision_(ParameterTraits<ParameterType::DETUNE>::detunePrecision)
+{
+    setupUI();
+    connectSignals();
+}
+
+ParameterType DetuneWidget::getType() const {
+    return ParameterType::DETUNE;
+}
+
+double DetuneWidget::harmonicValue() const {
+    return harmonicSlider_->value() * std::pow(10, -1.0 * harmonicPrecision_);
+}
+
+double DetuneWidget::detuneValue() const {
+    return detuneSlider_->value() * std::pow(10, -1.0 * detunePrecision_);
+}
+
+double DetuneWidget::combinedValue() const {
+    double harmonicCents = 1200.0 * std::log2(harmonicValue());
+    return harmonicCents + detuneValue();
+}
+
+void DetuneWidget::setFromCombined(double combined, bool block){
+    // if the sliders already produce this value
+    if ( std::abs(combinedValue() - combined) < 0.5 ){
+        updateDisplays();
+        return ;
+    }
+
+    // otherwise, decompose by finding nearest harmonic ratio (remainder in cents)
+    double totalRatio = std::pow(2.0, combined / 1200.0);
+    double scale = std::pow(10, harmonicPrecision_);
+    double harmonicRatio = std::round(totalRatio * scale) / scale ;
+
+    // clamp harmonic
+    double harmonicMin = harmonicSlider_->minimum() * std::pow(10, -1.0 * harmonicPrecision_);
+    double harmonicMax = harmonicSlider_->maximum() * std::pow(10, -1.0 * harmonicPrecision_);
+    harmonicRatio = std::clamp(harmonicRatio, harmonicMin, harmonicMax);
+
+    // remainder goes to detune
+    double harmonicCents = 1200.0 * std::log2(harmonicRatio);
+    double detuneCents = combined - harmonicCents ;
+
+    // clamp detune
+    double detuneMin = detuneSlider_->minimum() * std::pow(10, -1.0 * detunePrecision_);
+    double detuneMax = detuneSlider_->maximum() * std::pow(10, -1.0 * detunePrecision_);
+    detuneCents = std::clamp(detuneCents, detuneMin, detuneMax);
+    
+    QSignalBlocker hBlocker(harmonicSlider_);
+    QSignalBlocker dBlocker(detuneSlider_);
+    if ( !block ){
+        hBlocker.unblock();
+        dBlocker.unblock();
+    }
+    
+    harmonicSlider_->setValue(scaleByPrecision(harmonicRatio, harmonicPrecision_));
+    detuneSlider_->setValue(scaleByPrecision(detuneCents, detunePrecision_));
+
+    updateDisplays();
+}
+
+ParameterValue DetuneWidget::getValue() const {
+    return static_cast<double>(combinedValue());
+}
+
+void DetuneWidget::setValue(const ParameterValue& value, bool block){
+    double combined = std::get<double>(value);
+    setFromCombined(combined, block);
+}
+
+void DetuneWidget::setupUI(){
+    auto* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+
+    // harmonic ratio
+    auto hLayout = new QVBoxLayout();
+    
+    harmonicLabel_ = new QLabel("harmonic");
+    harmonicLabel_->setAlignment(Qt::AlignCenter);
+    hLayout->addWidget(harmonicLabel_);
+
+    harmonicValueLabel_ = new QLabel();
+    harmonicValueLabel_->setAlignment(Qt::AlignCenter);
+    hLayout->addWidget(harmonicValueLabel_);
+
+    harmonicSlider_ = new QSlider(Qt::Horizontal);
+    auto hMin = ParameterTraits<ParameterType::DETUNE>::harmonicMin ;
+    harmonicSlider_->setMinimum(scaleByPrecision(hMin, harmonicPrecision_));
+    auto hMax = ParameterTraits<ParameterType::DETUNE>::harmonicMax ;
+    harmonicSlider_->setMaximum(scaleByPrecision(hMax, harmonicPrecision_));
+    harmonicSlider_->setSingleStep(scaleByPrecision(1.0, harmonicPrecision_)); 
+
+    hLayout->addWidget(harmonicSlider_);
+
+    layout->addLayout(hLayout);
+
+    // fine detune
+    auto dLayout = new QVBoxLayout();
+
+    detuneLabel_ = new QLabel("detune (cents)");
+    detuneLabel_->setAlignment(Qt::AlignCenter);
+    dLayout->addWidget(detuneLabel_);
+
+    detuneValueLabel_ = new QLabel();
+    detuneValueLabel_->setAlignment(Qt::AlignCenter);
+    dLayout->addWidget(detuneValueLabel_);
+
+    detuneSlider_ = new QSlider(Qt::Horizontal);
+    auto dMin = ParameterTraits<ParameterType::DETUNE>::detuneCentsMin ;
+    detuneSlider_->setMinimum(scaleByPrecision(dMin, detunePrecision_));
+    auto dMax = ParameterTraits<ParameterType::DETUNE>::detuneCentsMax ;
+    detuneSlider_->setMaximum(scaleByPrecision(dMax, detunePrecision_));
+    dLayout->addWidget(detuneSlider_);
+
+    layout->addLayout(dLayout);
+    layout->addStretch();
+
+    setFromCombined(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DETUNE, defaultValue), true);
+    updateDisplays();
+}
+
+
+void DetuneWidget::connectSignals(){
+    connect(harmonicSlider_, &QSlider::valueChanged, this, [this](){
+        updateDisplays();
+        emit valueChanged();
+    });
+    connect(detuneSlider_, &QSlider::valueChanged, this, [this](){
+        updateDisplays();
+        emit valueChanged();
+    });
+}
+
+void DetuneWidget::updateDisplays(){
+    harmonicValueLabel_->setText(
+        QString::number(harmonicValue(), 'f', harmonicPrecision_)
+    );
+    detuneValueLabel_->setText(
+        QString::number(detuneValue(), 'f', detunePrecision_) + " ct"
+    );
+}
+
+void DetuneWidget::showEditor(QLabel* valueLabel, QSlider* slider, int precision){
+    auto s2v = [precision](int v){ return v * std::pow(10, -1.0 * precision); };
+    auto* edit = new QLineEdit(this);
+    edit->setText(QString::number(s2v(slider->value())));
+    edit->setGeometry(valueLabel->geometry());
+    double min = s2v(slider->minimum());
+    double max = s2v(slider->maximum());
+    edit->setValidator(new QDoubleValidator(min, max, precision, edit));
+    edit->show();
+    edit->setFocus();
+    edit->selectAll();
+    connect(edit, &QLineEdit::editingFinished, this, [this, edit, slider, precision](){
+        if ( !edit->hasAcceptableInput() ){
+            edit->deleteLater();
+            return;
+        }
+        double val = edit->text().toDouble();
+        edit->deleteLater();
+        slider->setValue(scaleByPrecision(val, precision));
+    });
+}
+
+void DetuneWidget::mouseDoubleClickEvent(QMouseEvent* event){
+    if ( harmonicValueLabel_->geometry().contains(event->pos()) ){
+        showEditor(harmonicValueLabel_, harmonicSlider_, harmonicPrecision_);
+    } else if ( detuneValueLabel_->geometry().contains(event->pos()) ){
+        showEditor(detuneValueLabel_, detuneSlider_, detunePrecision_);
+    }
+}
+
+int DetuneWidget::scaleByPrecision(double v, int precision) const {
+    return static_cast<int>(v * std::pow(10, precision));
+}
+

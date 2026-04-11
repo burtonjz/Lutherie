@@ -159,4 +159,37 @@ private:
     int scaleByPrecision(double v) const ;
 };
 
+class DetuneWidget : public ParameterWidget {
+private:
+    QLabel* harmonicLabel_ ;
+    QSlider* harmonicSlider_ ;
+    QLabel* harmonicValueLabel_ ;
+    QLabel* detuneLabel_ ;
+    QSlider* detuneSlider_ ;
+    QLabel* detuneValueLabel_ ;
+
+    int harmonicPrecision_ ;
+    int detunePrecision_ ;
+
+public:
+    explicit DetuneWidget(QWidget* parent = nullptr);
+    ParameterType getType() const override ;
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
+
+protected:
+    void mouseDoubleClickEvent(QMouseEvent* event) override ;
+    
+private:
+    void setupUI();
+    void connectSignals();
+    void updateDisplays();
+    void showEditor(QLabel* valueLabel, QSlider* slider, int precision);
+    double harmonicValue() const;
+    double detuneValue() const;
+    double combinedValue() const;
+    void setFromCombined(double combined, bool block = false);
+    int scaleByPrecision(double v, int precision) const;
+};
+
 #endif // PARAMETER_WIDGET_HPP_

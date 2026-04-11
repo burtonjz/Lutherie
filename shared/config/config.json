@@ -5,8 +5,7 @@
     },
     "audio": {
         "sample_rate": 48000,
-        "buffer_size": 256,
-        "max_detune_cents": 1250
+        "buffer_size": 256
     }, 
     "oscillator": {
         "wavetable_size": 8196,

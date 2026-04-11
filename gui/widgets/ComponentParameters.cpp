@@ -79,6 +79,9 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     case ParameterType::DELAY:
         w = new DelayWidget(this);
         break ;
+    case ParameterType::DETUNE:
+        w = new DetuneWidget(this);
+        break ;
     default:
         w = new SliderWidget(p, this);
         break ;
