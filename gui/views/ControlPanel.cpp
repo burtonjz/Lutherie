@@ -103,3 +103,37 @@ void ControlPanel::minimizeSection(QWidget* content){
     if ( ! section ) return ;
     section->setCollapsed(true);
 }
+
+void ControlPanel::moveContent(QWidget* content, QWidget* destination){
+    auto* section = getSection(content);
+    if ( !section ) return ;
+
+    if ( destination && !container_->isAncestorOf(destination) ){
+        qWarning() << "Cannot move content: destination is not owned by this control panel" ;
+        return ;
+    }
+
+    if ( destination && !destination->layout() ){
+        qWarning() << "Cannot move content: destination has no layout" ;
+        return ;
+    }
+
+    if ( section->parentWidget() == destination ) return ; // already nested, no action needed
+
+    layout_->removeWidget(section);
+    destination->layout()->addWidget(section);
+    section->setParent(destination);
+    section->setIndent(1);
+}
+
+void ControlPanel::promoteContent(QWidget* content){
+    auto section = getSection(content);
+    if ( !section ) return ;
+    if ( section->parentWidget() == container_ ) return ;
+
+    section->parentWidget()->layout()->removeWidget(section);
+    const int stretchIndex = layout_->count() - 1 ;
+    layout_->insertWidget(stretchIndex, section);
+    section->setParent(container_);
+    section->setIndent(0);
+}

@@ -24,6 +24,7 @@ CollapsibleEditor::CollapsibleEditor(QString title, QWidget* content, QWidget* p
     QWidget(parent),
     layout_(new QVBoxLayout(this)),
     header_(new QWidget(this)),
+    headerLine_(new QFrame(this)),
     expandButton_(new QToolButton(header_)),
     content_(content),
     titleLabel_(new QLabel(this)),
@@ -58,6 +59,23 @@ void CollapsibleEditor::setCollapsed(bool collapsed){
     expandButton_->setArrowType(collapsed_ ? Qt::RightArrow : Qt::DownArrow);
     updateGeometry();
     adjustSize();
+}
+
+void CollapsibleEditor::setIndent(int level){
+    auto headerLayout = dynamic_cast<QHBoxLayout*>(header_->layout());
+    if ( !headerLayout ) return ;
+
+    auto indent = Theme::COLLAPSIBLE_EDITOR_MARGIN + 
+        Theme::COLLAPSIBLE_EDITOR_INDENT * level ;
+
+    headerLayout->setContentsMargins(
+        indent,
+        Theme::COLLAPSIBLE_EDITOR_MARGIN,
+        Theme::COLLAPSIBLE_EDITOR_MARGIN,
+        Theme::COLLAPSIBLE_EDITOR_MARGIN
+    );
+
+    headerLine_->setContentsMargins(indent, 0, 0, 0);
 }
 
 bool CollapsibleEditor::eventFilter(QObject* watched, QEvent* event){
@@ -101,11 +119,18 @@ void CollapsibleEditor::setupLayout(){
     headerLayout->addWidget(titleLabel_);
     header_->installEventFilter(this);
 
-    auto *line = new QFrame(this);
-    line->setFrameShape(QFrame::HLine);
+    headerLine_->setFrameShape(QFrame::HLine);
+    headerLine_->setStyleSheet(
+        "color: " + 
+        Theme::COMPONENT_BORDER.name() + ";"
+    );
+    headerLine_->setContentsMargins(
+        Theme::COLLAPSIBLE_EDITOR_MARGIN,
+        0, 0, 0
+    );
 
     layout_->addWidget(header_);
-    layout_->addWidget(line);
+    layout_->addWidget(headerLine_);
     layout_->addWidget(content_);
 
     setLayout(layout_);

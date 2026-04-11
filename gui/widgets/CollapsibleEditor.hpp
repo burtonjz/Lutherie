@@ -30,6 +30,7 @@ private:
     QVBoxLayout* layout_ ;
 
     QWidget* header_ ;
+    QFrame* headerLine_ ;
     QToolButton* expandButton_ ;
     QLabel* titleLabel_ ;
     QWidget* content_ ;
@@ -40,12 +41,14 @@ public:
     explicit CollapsibleEditor(QString title, QWidget* content, QWidget* parent = nullptr);
 
     QWidget* getContent() const ;
-    
+
     QString getTitle() const ;
     void setTitle(QString name);
 
     bool isCollapsed() const ;
     void setCollapsed(bool collapsed);
+
+    void setIndent(int level);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override ;

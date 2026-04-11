@@ -30,6 +30,8 @@ class GroupManager : public QObject {
 private:
     int currentGroupId_ ;
     std::unordered_map<int, GroupModel*> groups_ ;
+    std::unordered_map<int, QWidget*> parameterContent_ ;
+    std::unordered_map<int, QWidget*> modulationContent_ ;
 
 public:
     explicit GroupManager(QObject* parent = nullptr);
@@ -37,6 +39,14 @@ public:
 
     GroupModel* getModel(int groupId) const ;
     GroupModel* getComponentGroup(int componentId) const ;
+
+    QWidget* getParameters(int groupId) const ;
+    QWidget* getModulationParameters(int groupId) const ;
+
+    void setParameters(int groupId, QWidget* content);
+    void setModulationParameters(int groupId, QWidget* content);
+
+    void removeContent(int groupId);
 
 public slots:
     void onRequestGroupCreate(std::vector<int> componentIds);
@@ -47,8 +57,6 @@ signals:
     void groupCreated(int groupId, const std::unordered_set<int>& componentIds);
     void groupUpdated(int groupId, const std::unordered_set<int>& componentIds);
     void groupRemoved(int groupId, const std::unordered_set<int>& componentIds);
-
-
 
 };
 

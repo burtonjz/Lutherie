@@ -173,6 +173,8 @@ public:
     static constexpr int TOAST_NOTIFICATION_BG_MAX_ALPHA = 220 ;
 
     static constexpr int COLLAPSIBLE_EDITOR_MARGIN = 4 ;
+    static constexpr int COLLAPSIBLE_EDITOR_INDENT = 8 ;
+
     static constexpr int TOOL_BUTTON_SIZE = 16 ;
 
     /*

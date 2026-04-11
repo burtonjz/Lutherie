@@ -16,12 +16,16 @@
  */
 
 #include "managers/GroupManager.hpp"
+
 #include <QDebug>
+#include <QWidget>
 
 GroupManager::GroupManager(QObject* parent):
     QObject(parent),
     currentGroupId_(0),
-    groups_()
+    groups_(),
+    parameterContent_(),
+    modulationContent_()
 {
 
 }
@@ -43,6 +47,39 @@ GroupModel* GroupManager::getComponentGroup(int componentId) const {
         if ( g->hasComponent(componentId) ) return g ;
     }
     return nullptr ;
+}
+
+QWidget* GroupManager::getParameters(int groupId) const {
+    if ( parameterContent_.contains(groupId) ){
+        return parameterContent_.at(groupId);
+    }
+    return nullptr ;
+}
+
+QWidget* GroupManager::getModulationParameters(int groupId) const {
+    if ( modulationContent_.contains(groupId) ){
+        return modulationContent_.at(groupId);
+    }
+    return nullptr ;
+}
+
+void GroupManager::setParameters(int groupId, QWidget* content){
+    parameterContent_[groupId] = content ;
+}
+
+void GroupManager::setModulationParameters(int groupId, QWidget* content){
+    modulationContent_[groupId] = content ;
+}
+
+void GroupManager::removeContent(int groupId){
+    if ( parameterContent_.contains(groupId) ){
+        parameterContent_.at(groupId)->deleteLater();
+        parameterContent_.erase(groupId);
+    }
+    if ( modulationContent_.contains(groupId) ){
+        modulationContent_.at(groupId)->deleteLater();
+        modulationContent_.erase(groupId);
+    }
 }
 
 void GroupManager::onRequestGroupCreate(std::vector<int> componentIds){

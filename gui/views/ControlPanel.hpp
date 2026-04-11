@@ -46,6 +46,12 @@ public:
     void maximizeSection(QWidget* content);
     void minimizeSection(QWidget* content);
 
+    // move content to a containered widget owned by this panel (for nesting)
+    void moveContent(QWidget* content, QWidget* destination);
+
+    // move nested content back to a top level section (unnest)
+    void promoteContent(QWidget* content);
+
 };
 
 #endif // CONTROL_PANEL_HPP_

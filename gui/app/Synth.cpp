@@ -589,7 +589,7 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
         parameterPanel_->removeContent(params);
     });
 
-    modulationPanel_->addContent(name + " Modulation", modParams);
+    modulationPanel_->addContent(name, modParams);
     if ( ! modulationDock_->isOpen() ) modulationDock_->open();
     connect(modParams, &QObject::destroyed, this, [this, modParams](){
         modulationPanel_->removeContent(modParams);
@@ -597,6 +597,8 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
 }
 
 void Synth::onComponentRemoved(int componentId){
+    // the docks are cleaned up off the "destroyed" signal of the content widgets
+    // so nothing needed here unless we introduce additional removal tasks
 }
 
 void Synth::onShowParameters(int componentId){
@@ -610,19 +612,80 @@ void Synth::onShowModulation(int componentId){
 }
 
 void Synth::onShowGroupParameters(int groupId){
+    if ( parameterDock_->isHidden() ) parameterDock_->open() ;
+    parameterPanel_->maximizeSection(groupManager_->getParameters(groupId));
 }
 
 void Synth::onShowGroupModulation(int groupId){
+    if ( modulationDock_->isHidden() ) modulationDock_->open() ;
+    modulationPanel_->maximizeSection(groupManager_->getModulationParameters(groupId));
 }
 
 void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
+    auto m = groupManager_->getModel(groupId);
+    if ( !m ) return ;
 
+    QString name = m->getName();
+
+    // create group container widgets
+    QWidget* paramContent = new QWidget();
+    QVBoxLayout* paramLayout = new QVBoxLayout(paramContent);
+    paramLayout->setContentsMargins(0,0,0,0);
+    paramLayout->setSpacing(1);
+    groupManager_->setParameters(groupId, paramContent);
+    parameterPanel_->addContent(name, paramContent);
+    connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
+        parameterPanel_->removeContent(paramContent);
+    });
+
+    QWidget* modContent = new QWidget();
+    QVBoxLayout* modLayout = new QVBoxLayout(modContent);
+    modLayout->setContentsMargins(0,0,0,0);
+    modLayout->setSpacing(1);
+    groupManager_->setModulationParameters(groupId, modContent);
+    modulationPanel_->addContent(name, modContent);
+    connect(paramContent, &QObject::destroyed, this, [this, modContent](){
+        modulationPanel_->removeContent(modContent);
+    });
+
+    // loop through parameters and move content to group container
+    for ( auto componentId : componentIds ){
+        auto params = componentManager_->getParameters(componentId);
+        auto modParams = componentManager_->getModulationParameters(componentId);
+        parameterPanel_->moveContent(params, paramContent);
+        modulationPanel_->moveContent(modParams, modContent);
+    }
 }
+
 void Synth::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
+    auto m = groupManager_->getModel(groupId);
+    if ( !m ) return ;
 
+    // loop through parameters and promote all content to top-level
+    for ( auto componentId : componentIds ){
+        auto params = componentManager_->getParameters(componentId);
+        auto modParams = componentManager_->getModulationParameters(componentId);
+        parameterPanel_->promoteContent(params);
+        modulationPanel_->promoteContent(modParams);
+    }
+
+    groupManager_->removeContent(groupId);
 }
-void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
 
+void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
+    auto m = groupManager_->getModel(groupId);
+    if ( !m ) return ;
+
+    auto paramContent = groupManager_->getParameters(groupId);
+    auto modContent = groupManager_->getModulationParameters(groupId);
+
+    // loop through parameters and move content to group container
+    for ( auto componentId : componentIds ){
+        auto params = componentManager_->getParameters(componentId);
+        auto modParams = componentManager_->getModulationParameters(componentId);
+        parameterPanel_->moveContent(params, paramContent);
+        modulationPanel_->moveContent(modParams, modContent);
+    }
 }
 
 void Synth::onRequestComponentRename(int componentId, QString name){
@@ -660,4 +723,11 @@ void Synth::onRequestGroupRename(int groupId, QString name){
     }
 
     // tell panels to update headers
+    auto paramContent = groupManager_->getParameters(groupId);
+    auto paramSection = parameterPanel_->getSection(paramContent);
+    paramSection->setTitle(name);
+    
+    auto modContent = groupManager_->getModulationParameters(groupId);
+    auto modSection = modulationPanel_->getSection(modContent);
+    modSection->setTitle(name);
 }
