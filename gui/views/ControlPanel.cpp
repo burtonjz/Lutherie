@@ -18,16 +18,17 @@
 #include "views/ControlPanel.hpp"
 
 ControlPanel::ControlPanel(QWidget* parent):
-    QScrollArea(parent)
+    QScrollArea(parent),
+    container_(new QWidget(this)),
+    layout_(new QVBoxLayout(container_))
 {
     setWidgetResizable(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setFrameShape(QFrame::NoFrame);
 
-    container_ = new QWidget(this);
+    container_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     
-    layout_ = new QVBoxLayout(container_);
     layout_->setContentsMargins(0,0,0,0);
     layout_->setSpacing(1);
     layout_->addStretch();

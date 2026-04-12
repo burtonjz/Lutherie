@@ -52,6 +52,8 @@ public:
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override ;
+    QSize sizeHint() const override ;
+    QSize minimumSizeHint() const override ;
 
 private:
     void setupLayout();

@@ -58,7 +58,7 @@ void CollapsibleEditor::setCollapsed(bool collapsed){
     content_->setVisible(!collapsed_);
     expandButton_->setArrowType(collapsed_ ? Qt::RightArrow : Qt::DownArrow);
     updateGeometry();
-    adjustSize();
+    if ( parentWidget() ) parentWidget()->updateGeometry();
 }
 
 void CollapsibleEditor::setIndent(int level){
@@ -84,6 +84,20 @@ bool CollapsibleEditor::eventFilter(QObject* watched, QEvent* event){
         return true ;
     }
     return QWidget::eventFilter(watched, event);
+}
+
+QSize CollapsibleEditor::sizeHint() const {
+    if ( !content_->isVisible() ){
+        return QSize(
+            QWidget::sizeHint().width(), 
+            header_->sizeHint().height() + headerLine_->sizeHint().height()
+        );
+    }
+    return QWidget::sizeHint();
+}
+
+QSize CollapsibleEditor::minimumSizeHint() const {
+    return sizeHint();
 }
 
 void CollapsibleEditor::setupLayout(){
