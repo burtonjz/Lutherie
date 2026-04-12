@@ -20,11 +20,11 @@
 
 #include "types/ParameterType.hpp"
 #include "widgets/SwitchWidget.hpp"
+#include "widgets/KnobWidget.hpp"
 
 #include <QWidget>
 #include <QLabel>
 #include <QComboBox>
-#include <QSlider>
 
 // base class
 class ParameterWidget : public QWidget {
@@ -52,7 +52,7 @@ signals:
 class DelayWidget : public ParameterWidget {
 private:
     QLabel* label_ ;
-    QSlider* slider_ ;
+    KnobWidget* knob_ ;
     QComboBox* unitCombo_ ;
     QLabel* valueLabel_ ;
     double sampleRate_ ;
@@ -139,7 +139,7 @@ private:
     ParameterType param_ ;
     size_t precision_ ; // number of decimals
     QLabel* label_ ;
-    QSlider* slider_ ;
+    KnobWidget* knob_ ;
     QLabel* valueLabel_ ;
 
 public:
@@ -162,10 +162,10 @@ private:
 class DetuneWidget : public ParameterWidget {
 private:
     QLabel* harmonicLabel_ ;
-    QSlider* harmonicSlider_ ;
+    KnobWidget* harmonicKnob_ ;
     QLabel* harmonicValueLabel_ ;
     QLabel* detuneLabel_ ;
-    QSlider* detuneSlider_ ;
+    KnobWidget* detuneKnob_ ;
     QLabel* detuneValueLabel_ ;
 
     int harmonicPrecision_ ;
@@ -184,7 +184,7 @@ private:
     void setupUI();
     void connectSignals();
     void updateDisplays();
-    void showEditor(QLabel* valueLabel, QSlider* slider, int precision);
+    void showEditor(QLabel* valueLabel, KnobWidget* knob, int precision);
     double harmonicValue() const;
     double detuneValue() const;
     double combinedValue() const;

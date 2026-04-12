@@ -61,7 +61,7 @@ void ParameterWidget::childEvent(QChildEvent* event){
 DelayWidget::DelayWidget(QWidget* parent): 
     ParameterWidget(parent),
     label_(nullptr),
-    slider_(nullptr),
+    knob_(nullptr),
     unitCombo_(nullptr),
     valueLabel_(nullptr),
     minSamples_(0),
@@ -83,9 +83,9 @@ ParameterValue DelayWidget::getValue() const {
     QString unit = unitCombo_->currentText();
 
     if ( unitCombo_->currentText() == "ms") { 
-            return static_cast<int>(slider_->value() / 1000.0f * sampleRate_);
+            return static_cast<int>(knob_->value() / 1000.0f * sampleRate_);
     } else {
-        return static_cast<int>(slider_->value());
+        return static_cast<int>(knob_->value());
     }
 }
 
@@ -100,14 +100,14 @@ void DelayWidget::setValue(const ParameterValue& value, bool block){
 void DelayWidget::setValue(size_t samples, bool block){
     QString unit = unitCombo_->currentText();
     
-    QSignalBlocker blocker(slider_);
+    QSignalBlocker blocker(knob_);
     if ( !block ) blocker.unblock();
     
     
     if (unit == "ms") { 
-        slider_->setValue((samples / sampleRate_) * 1000.0f) ;
+        knob_->setValue((samples / sampleRate_) * 1000.0f) ;
     } else {
-        slider_->setValue(samples);
+        knob_->setValue(samples);
     }
 
     updateDisplay();
@@ -115,7 +115,7 @@ void DelayWidget::setValue(size_t samples, bool block){
 
 void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
     auto* edit = new QLineEdit(this);
-    edit->setText(QString::number(slider_->value()));
+    edit->setText(QString::number(knob_->value()));
     edit->setGeometry(valueLabel_->geometry());
 
     // Enforce min/max based on current unit
@@ -175,12 +175,18 @@ void DelayWidget::setupUI(){
     maxSamples_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, maximum);
     maxMs_ = maxSamples_ / sampleRate_ * 1000 ;
 
-    slider_ = new QSlider(Qt::Horizontal);
-    slider_->setMinimum(minSamples_);
-    slider_->setMaximum(maxSamples_);  
-    slider_->setValue(0);
-    slider_->setEnabled(true);
-    layout->addWidget(slider_);
+    knob_ = new KnobWidget(Qt::Horizontal);
+    knob_->setMinimum(minSamples_);
+    knob_->setMaximum(maxSamples_);  
+    knob_->setValue(0);
+    knob_->setEnabled(true);
+
+    QHBoxLayout* knobRow = new QHBoxLayout();
+    knobRow->setContentsMargins(0,0,0,0);
+    knobRow->addStretch();
+    knobRow->addWidget(knob_);
+    knobRow->addStretch();
+    layout->addLayout(knobRow);
     
     // unit selector
     QWidget* unitContainer = new QWidget();
@@ -201,7 +207,7 @@ void DelayWidget::setupUI(){
 }
 
 void DelayWidget::connectSignals(){
-    connect(slider_, &QSlider::valueChanged, this, [this](){
+    connect(knob_, &QSlider::valueChanged, this, [this](){
         updateDisplay();
         emit valueChanged();
     });
@@ -215,27 +221,27 @@ void DelayWidget::connectSignals(){
         double sampleRate = Config::get<double>("audio.sample_rate").value();
 
         if (oldUnit == "ms") { 
-            samples = slider_->value() / 1000.0f * sampleRate ;
+            samples = knob_->value() / 1000.0f * sampleRate ;
         } else {
-            samples = slider_->value();
+            samples = knob_->value();
         }
 
         // Update slider for new unit
         if (newUnit == "ms") {
-            slider_->setMaximum(maxMs_); 
-            slider_->setMinimum(minMs_);
+            knob_->setMaximum(maxMs_); 
+            knob_->setMinimum(minMs_);
             setValue(samples);
         } else {
-            slider_->setMinimum(minSamples_);
-            slider_->setMaximum(maxSamples_);
-            slider_->setValue(samples);  
+            knob_->setMinimum(minSamples_);
+            knob_->setMaximum(maxSamples_);
+            knob_->setValue(samples);  
         }
     });
 }
 
 void DelayWidget::updateDisplay(){
     QString unit = unitCombo_->currentText();
-    int val = slider_->value();
+    int val = knob_->value();
 
     if (unit == "ms") {
         valueLabel_->setText(QString::number(val, 'f', 1) + " ms");
@@ -491,7 +497,7 @@ SliderWidget::SliderWidget(ParameterType p, QWidget* parent):
     ParameterWidget(parent),
     param_(p),
     label_(nullptr),
-    slider_(nullptr),
+    knob_(nullptr),
     valueLabel_(nullptr)
 {
     precision_ = GET_PARAMETER_TRAIT_MEMBER(p, uiPrecision);
@@ -504,7 +510,7 @@ ParameterType SliderWidget::getType() const {
 }
 
 ParameterValue SliderWidget::getValue() const {
-    double v = slider_->value() * std::pow(10, -1.0 * precision_);
+    double v = knob_->value() * std::pow(10, -1.0 * precision_);
     switch(param_){
         #define X(name) \
             case ParameterType::name: \
@@ -522,13 +528,13 @@ ParameterValue SliderWidget::getValue() const {
 
 void SliderWidget::setValue(const ParameterValue& value, bool block){
     // dispatch for value type, multiplying by precision to properly convert to int slider
-    QSignalBlocker blocker(slider_);
+    QSignalBlocker blocker(knob_);
     if ( !block ) blocker.unblock();
     
     switch(param_){
         #define X(name) \
             case ParameterType::name: \
-                slider_->setValue( \
+                knob_->setValue( \
                     scaleByPrecision(std::get<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(value)) \
                 ); \
                 break ; 
@@ -548,11 +554,11 @@ void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
     auto s2v = [this](int v){ return v * std::pow(10, -1.0 * precision_);};
 
     auto* edit = new QLineEdit(this);
-    edit->setText(QString::number(s2v(slider_->value())));
+    edit->setText(QString::number(s2v(knob_->value())));
     edit->setGeometry(valueLabel_->geometry());
 
-    double min = s2v(slider_->minimum());
-    double max = s2v(slider_->maximum());
+    double min = s2v(knob_->minimum());
+    double max = s2v(knob_->maximum());
     edit->setValidator(new QDoubleValidator(min, max, precision_, edit));
     
     edit->show();
@@ -602,20 +608,24 @@ void SliderWidget::setupUI(){
     valueLabel_->setAlignment(Qt::AlignCenter);
     layout->addWidget(valueLabel_);
     
-    // value slider
-    slider_ = new QSlider(Qt::Horizontal);
-    slider_->setMinimum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_, minimum)));
+    // value knob
+    knob_ = new KnobWidget(Qt::Horizontal);
+    knob_->setMinimum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_, minimum)));
 
     if ( param_ == ParameterType::FREQUENCY ){
         // nyquist override
-        slider_->setMaximum(scaleByPrecision(Config::get<double>("audio.sample_rate").value() / 2.0)); 
+        knob_->setMaximum(scaleByPrecision(Config::get<double>("audio.sample_rate").value() / 2.0)); 
     } else {
-        slider_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
+        knob_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
     }
     
-    slider_->setEnabled(true);
-    layout->addWidget(slider_);
-    layout->addStretch();
+    knob_->setEnabled(true);
+    QHBoxLayout* knobRow = new QHBoxLayout();
+    knobRow->setContentsMargins(0,0,0,0);
+    knobRow->addStretch();
+    knobRow->addWidget(knob_);
+    knobRow->addStretch();
+    layout->addLayout(knobRow);
 
     // initialize to default value via dispatch
     switch(param_){
@@ -630,21 +640,21 @@ void SliderWidget::setupUI(){
             qWarning() << "Parameter of type " << 
                 GET_PARAMETER_TRAIT_MEMBER(param_, name) 
                 << " is not in enum. This shouldn't happen." ;
-            slider_->setValue(0);
+            knob_->setValue(0);
     }
 
     updateDisplay();
 }
 
 void SliderWidget::connectSignals(){
-    connect(slider_, &QSlider::valueChanged, this, [this](){
+    connect(knob_, &QSlider::valueChanged, this, [this](){
         updateDisplay();
         emit valueChanged();
     });
 }
 
 void SliderWidget::updateDisplay(){
-    valueLabel_->setText(QString::number(slider_->value() * std::pow(10, -1.0 * precision_)));
+    valueLabel_->setText(QString::number(knob_->value() * std::pow(10, -1.0 * precision_)));
 }
 
 int SliderWidget::scaleByPrecision(double v) const {
@@ -660,10 +670,10 @@ int SliderWidget::scaleByPrecision(double v) const {
 DetuneWidget::DetuneWidget(QWidget* parent):
     ParameterWidget(parent),
     harmonicLabel_(nullptr),
-    harmonicSlider_(nullptr),
+    harmonicKnob_(nullptr),
     harmonicValueLabel_(nullptr),
     detuneLabel_(nullptr),
-    detuneSlider_(nullptr),
+    detuneKnob_(nullptr),
     detuneValueLabel_(nullptr),
     harmonicPrecision_(ParameterTraits<ParameterType::DETUNE>::harmonicPrecision),
     detunePrecision_(ParameterTraits<ParameterType::DETUNE>::detunePrecision)
@@ -677,11 +687,11 @@ ParameterType DetuneWidget::getType() const {
 }
 
 double DetuneWidget::harmonicValue() const {
-    return harmonicSlider_->value() * std::pow(10, -1.0 * harmonicPrecision_);
+    return harmonicKnob_->value() * std::pow(10, -1.0 * harmonicPrecision_);
 }
 
 double DetuneWidget::detuneValue() const {
-    return detuneSlider_->value() * std::pow(10, -1.0 * detunePrecision_);
+    return detuneKnob_->value() * std::pow(10, -1.0 * detunePrecision_);
 }
 
 double DetuneWidget::combinedValue() const {
@@ -702,8 +712,8 @@ void DetuneWidget::setFromCombined(double combined, bool block){
     double harmonicRatio = std::round(totalRatio * scale) / scale ;
 
     // clamp harmonic
-    double harmonicMin = harmonicSlider_->minimum() * std::pow(10, -1.0 * harmonicPrecision_);
-    double harmonicMax = harmonicSlider_->maximum() * std::pow(10, -1.0 * harmonicPrecision_);
+    double harmonicMin = harmonicKnob_->minimum() * std::pow(10, -1.0 * harmonicPrecision_);
+    double harmonicMax = harmonicKnob_->maximum() * std::pow(10, -1.0 * harmonicPrecision_);
     harmonicRatio = std::clamp(harmonicRatio, harmonicMin, harmonicMax);
 
     // remainder goes to detune
@@ -711,19 +721,19 @@ void DetuneWidget::setFromCombined(double combined, bool block){
     double detuneCents = combined - harmonicCents ;
 
     // clamp detune
-    double detuneMin = detuneSlider_->minimum() * std::pow(10, -1.0 * detunePrecision_);
-    double detuneMax = detuneSlider_->maximum() * std::pow(10, -1.0 * detunePrecision_);
+    double detuneMin = detuneKnob_->minimum() * std::pow(10, -1.0 * detunePrecision_);
+    double detuneMax = detuneKnob_->maximum() * std::pow(10, -1.0 * detunePrecision_);
     detuneCents = std::clamp(detuneCents, detuneMin, detuneMax);
     
-    QSignalBlocker hBlocker(harmonicSlider_);
-    QSignalBlocker dBlocker(detuneSlider_);
+    QSignalBlocker hBlocker(harmonicKnob_);
+    QSignalBlocker dBlocker(detuneKnob_);
     if ( !block ){
         hBlocker.unblock();
         dBlocker.unblock();
     }
     
-    harmonicSlider_->setValue(scaleByPrecision(harmonicRatio, harmonicPrecision_));
-    detuneSlider_->setValue(scaleByPrecision(detuneCents, detunePrecision_));
+    harmonicKnob_->setValue(scaleByPrecision(harmonicRatio, harmonicPrecision_));
+    detuneKnob_->setValue(scaleByPrecision(detuneCents, detunePrecision_));
 
     updateDisplays();
 }
@@ -753,14 +763,19 @@ void DetuneWidget::setupUI(){
     harmonicValueLabel_->setAlignment(Qt::AlignCenter);
     hLayout->addWidget(harmonicValueLabel_);
 
-    harmonicSlider_ = new QSlider(Qt::Horizontal);
+    harmonicKnob_ = new KnobWidget(Qt::Horizontal);
     auto hMin = ParameterTraits<ParameterType::DETUNE>::harmonicMin ;
-    harmonicSlider_->setMinimum(scaleByPrecision(hMin, harmonicPrecision_));
+    harmonicKnob_->setMinimum(scaleByPrecision(hMin, harmonicPrecision_));
     auto hMax = ParameterTraits<ParameterType::DETUNE>::harmonicMax ;
-    harmonicSlider_->setMaximum(scaleByPrecision(hMax, harmonicPrecision_));
-    harmonicSlider_->setSingleStep(scaleByPrecision(1.0, harmonicPrecision_)); 
+    harmonicKnob_->setMaximum(scaleByPrecision(hMax, harmonicPrecision_));
+    harmonicKnob_->setSingleStep(scaleByPrecision(1.0, harmonicPrecision_)); 
 
-    hLayout->addWidget(harmonicSlider_);
+    QHBoxLayout* hKnobRow = new QHBoxLayout();
+    hKnobRow->setContentsMargins(0,0,0,0);
+    hKnobRow->addStretch();
+    hKnobRow->addWidget(harmonicKnob_);
+    hKnobRow->addStretch();
+    hLayout->addLayout(hKnobRow);
 
     layout->addLayout(hLayout);
 
@@ -775,12 +790,17 @@ void DetuneWidget::setupUI(){
     detuneValueLabel_->setAlignment(Qt::AlignCenter);
     dLayout->addWidget(detuneValueLabel_);
 
-    detuneSlider_ = new QSlider(Qt::Horizontal);
+    detuneKnob_ = new KnobWidget(Qt::Horizontal);
     auto dMin = ParameterTraits<ParameterType::DETUNE>::detuneCentsMin ;
-    detuneSlider_->setMinimum(scaleByPrecision(dMin, detunePrecision_));
+    detuneKnob_->setMinimum(scaleByPrecision(dMin, detunePrecision_));
     auto dMax = ParameterTraits<ParameterType::DETUNE>::detuneCentsMax ;
-    detuneSlider_->setMaximum(scaleByPrecision(dMax, detunePrecision_));
-    dLayout->addWidget(detuneSlider_);
+    detuneKnob_->setMaximum(scaleByPrecision(dMax, detunePrecision_));
+    QHBoxLayout* dKnobRow = new QHBoxLayout();
+    dKnobRow->setContentsMargins(0,0,0,0);
+    dKnobRow->addStretch();
+    dKnobRow->addWidget(detuneKnob_);
+    dKnobRow->addStretch();
+    dLayout->addLayout(dKnobRow);
 
     layout->addLayout(dLayout);
     layout->addStretch();
@@ -791,11 +811,11 @@ void DetuneWidget::setupUI(){
 
 
 void DetuneWidget::connectSignals(){
-    connect(harmonicSlider_, &QSlider::valueChanged, this, [this](){
+    connect(harmonicKnob_, &QSlider::valueChanged, this, [this](){
         updateDisplays();
         emit valueChanged();
     });
-    connect(detuneSlider_, &QSlider::valueChanged, this, [this](){
+    connect(detuneKnob_, &QSlider::valueChanged, this, [this](){
         updateDisplays();
         emit valueChanged();
     });
@@ -810,33 +830,33 @@ void DetuneWidget::updateDisplays(){
     );
 }
 
-void DetuneWidget::showEditor(QLabel* valueLabel, QSlider* slider, int precision){
+void DetuneWidget::showEditor(QLabel* valueLabel, KnobWidget* knob, int precision){
     auto s2v = [precision](int v){ return v * std::pow(10, -1.0 * precision); };
     auto* edit = new QLineEdit(this);
-    edit->setText(QString::number(s2v(slider->value())));
+    edit->setText(QString::number(s2v(knob->value())));
     edit->setGeometry(valueLabel->geometry());
-    double min = s2v(slider->minimum());
-    double max = s2v(slider->maximum());
+    double min = s2v(knob->minimum());
+    double max = s2v(knob->maximum());
     edit->setValidator(new QDoubleValidator(min, max, precision, edit));
     edit->show();
     edit->setFocus();
     edit->selectAll();
-    connect(edit, &QLineEdit::editingFinished, this, [this, edit, slider, precision](){
+    connect(edit, &QLineEdit::editingFinished, this, [this, edit, knob, precision](){
         if ( !edit->hasAcceptableInput() ){
             edit->deleteLater();
             return;
         }
         double val = edit->text().toDouble();
         edit->deleteLater();
-        slider->setValue(scaleByPrecision(val, precision));
+        knob->setValue(scaleByPrecision(val, precision));
     });
 }
 
 void DetuneWidget::mouseDoubleClickEvent(QMouseEvent* event){
     if ( harmonicValueLabel_->geometry().contains(event->pos()) ){
-        showEditor(harmonicValueLabel_, harmonicSlider_, harmonicPrecision_);
+        showEditor(harmonicValueLabel_, harmonicKnob_, harmonicPrecision_);
     } else if ( detuneValueLabel_->geometry().contains(event->pos()) ){
-        showEditor(detuneValueLabel_, detuneSlider_, detunePrecision_);
+        showEditor(detuneValueLabel_, detuneKnob_, detunePrecision_);
     }
 }
 

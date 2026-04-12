@@ -35,65 +35,72 @@ Midi: 132, 169, 192 // steel blue
 */
 
 // Main Panel Colors
-const QColor Theme::BACKGROUND_DARK = QColor(22, 26, 30);  
+const QColor Theme::BACKGROUND_DARK   = QColor(22, 26, 30);  
 const QColor Theme::BACKGROUND_MEDIUM = QColor(32, 38, 42);  
-const QColor Theme::BACKGROUND_LIGHT = QColor(42, 48, 52);  
-const QColor Theme::TEXT_PRIMARY = QColor(245, 237, 240);
-const QColor Theme::TEXT_SECONDARY = QColor(160, 165, 168);  
-const QColor Theme::ACCENT_COLOR = QColor(213, 137, 54);  
-const QColor Theme::GRAPH_GRID_COLOR = QColor(38, 44, 48);
+const QColor Theme::BACKGROUND_LIGHT  = QColor(42, 48, 52);  
+const QColor Theme::TEXT_PRIMARY      = QColor(245, 237, 240);
+const QColor Theme::TEXT_SECONDARY    = QColor(160, 165, 168);  
+const QColor Theme::ACCENT_COLOR      = QColor(213, 137, 54);  
+const QColor Theme::GRAPH_GRID_COLOR  = QColor(38, 44, 48);
 
 // Component colors
-const QColor Theme::COMPONENT_BACKGROUND = QColor(42, 52, 58, 180); 
-const QColor Theme::COMPONENT_BORDER = QColor(58, 68, 74);  
-const QColor Theme::COMPONENT_BORDER_SELECTED = QColor(245, 237, 240);  
+const QColor Theme::COMPONENT_BACKGROUND       = QColor(42, 52, 58, 180); 
+const QColor Theme::COMPONENT_BORDER           = QColor(58, 68, 74);  
+const QColor Theme::COMPONENT_BORDER_SELECTED  = QColor(245, 237, 240);  
 const QColor Theme::COMPONENT_BACKGROUND_HOVER = QColor(52, 62, 68, 200);
-const QColor Theme::COMPONENT_TEXT = QColor(245, 237, 240);
+const QColor Theme::COMPONENT_TEXT             = QColor(245, 237, 240);
 
 // Cable colors - warmer and more saturated
-const QColor Theme::CABLE_SHADOW = QColor(0, 0, 0, 60);
-const QColor Theme::CABLE_AUDIO = QColor(135, 179, 141);  
+const QColor Theme::CABLE_SHADOW     = QColor(0, 0, 0, 60);
+const QColor Theme::CABLE_AUDIO      = QColor(135, 179, 141);  
 const QColor Theme::CABLE_MODULATION = QColor(185, 49, 79); 
-const QColor Theme::CABLE_MIDI = QColor(132, 169, 192); 
+const QColor Theme::CABLE_MIDI       = QColor(132, 169, 192); 
 
 // Socket colors - match cables
-const QColor Theme::SOCKET_AUDIO = QColor(135, 179, 141);
-const QColor Theme::SOCKET_MODULATION = QColor(185, 49, 79);
-const QColor Theme::SOCKET_MIDI = QColor(132, 169, 192);
-const QColor Theme::SOCKET_AUDIO_LIGHT = Theme::SOCKET_AUDIO.lighter(140);
+const QColor Theme::SOCKET_AUDIO            = QColor(135, 179, 141);
+const QColor Theme::SOCKET_MODULATION       = QColor(185, 49, 79);
+const QColor Theme::SOCKET_MIDI             = QColor(132, 169, 192);
+const QColor Theme::SOCKET_AUDIO_LIGHT      = Theme::SOCKET_AUDIO.lighter(140);
 const QColor Theme::SOCKET_MODULATION_LIGHT = Theme::SOCKET_MODULATION.lighter(140);
-const QColor Theme::SOCKET_MIDI_LIGHT = Theme::SOCKET_MIDI.lighter(140);
+const QColor Theme::SOCKET_MIDI_LIGHT       = Theme::SOCKET_MIDI.lighter(140);
 
 // Piano Roll
-const QColor Theme::PIANO_ROLL_KEY_WHITE = QColor(220, 218, 215);  
-const QColor Theme::PIANO_ROLL_KEY_BLACK = QColor(32, 38, 42);
-const QColor Theme::PIANO_ROLL_KEY_BORDER = QColor(75, 82, 88);
-const QColor Theme::PIANO_ROLL_KEY_LABEL = QColor(32, 38, 42);
-const QColor Theme::PIANO_ROLL_NOTE_COLOR = QColor(135, 175, 155, 180);  
+const QColor Theme::PIANO_ROLL_KEY_WHITE           = QColor(220, 218, 215);  
+const QColor Theme::PIANO_ROLL_KEY_BLACK           = QColor(32, 38, 42);
+const QColor Theme::PIANO_ROLL_KEY_BORDER          = QColor(75, 82, 88);
+const QColor Theme::PIANO_ROLL_KEY_LABEL           = QColor(32, 38, 42);
+const QColor Theme::PIANO_ROLL_NOTE_COLOR          = QColor(135, 175, 155, 180);  
 const QColor Theme::PIANO_ROLL_NOTE_SELECTED_COLOR = QColor(220, 155, 85, 200);  
-const QColor Theme::PIANO_ROLL_NOTE_BORDER = QColor(115, 155, 135);
-const QColor Theme::PIANO_ROLL_BACKGROUND = QColor(28, 32, 36);
-const QColor Theme::PIANO_ROLL_GRID_PRIMARY = QColor(65, 72, 78);
-const QColor Theme::PIANO_ROLL_GRID_SECONDARY = QColor(42, 48, 52);
+const QColor Theme::PIANO_ROLL_NOTE_BORDER         = QColor(115, 155, 135);
+const QColor Theme::PIANO_ROLL_BACKGROUND          = QColor(28, 32, 36);
+const QColor Theme::PIANO_ROLL_GRID_PRIMARY        = QColor(65, 72, 78);
+const QColor Theme::PIANO_ROLL_GRID_SECONDARY      = QColor(42, 48, 52);
 
 // switch button
-const QColor Theme::SWITCH_WIDGET_ON_COLOR = QColor(135, 175, 155);
-const QColor Theme::SWITCH_WIDGET_OFF_COLOR = QColor(45, 52, 56);
-const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON = QColor(245, 237, 240);
+const QColor Theme::SWITCH_WIDGET_ON_COLOR        = QColor(135, 175, 155);
+const QColor Theme::SWITCH_WIDGET_OFF_COLOR       = QColor(45, 52, 56);
+const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON  = QColor(245, 237, 240);
 const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(130, 135, 138);
-const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR = QColor(38, 44, 48);
+const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR  = QColor(38, 44, 48);
 
 // spectrum analyzer
 const QColor Theme::ANALYZER_BACKGROUND_COLOR = QColor(22, 26, 30);
-const QColor Theme::ANALYZER_GRID_COLOR = QColor(38, 44, 48);
-const QColor Theme::ANALYZER_LINE_COLOR = QColor(135, 175, 155);
+const QColor Theme::ANALYZER_GRID_COLOR       = QColor(38, 44, 48);
+const QColor Theme::ANALYZER_LINE_COLOR       = QColor(135, 175, 155);
 
-
-const QColor Theme::MODULATION_ACTIVE = QColor(185, 49, 79);  
+const QColor Theme::MODULATION_ACTIVE   = QColor(185, 49, 79);  
 const QColor Theme::MODULATION_INACTIVE = QColor(15, 15, 15);
 
-const QColor Theme::TOAST_NOTIFICATION_BG = QColor(58, 68, 74);
+const QColor Theme::TOAST_NOTIFICATION_BG   = QColor(58, 68, 74);
 const QColor Theme::TOAST_NOTIFICATION_TEXT = QColor(245, 237, 240);
+
+const QColor Theme::KNOB_WIDGET_TRACK_COLOR       = Theme::COMPONENT_BORDER ;
+const QColor Theme::KNOB_WIDGET_ARC_COLOR         = Theme::ACCENT_COLOR ;
+const QColor Theme::KNOB_WIDGET_HANDLE_COLOR      = Theme::ACCENT_COLOR.lighter(130);
+const QColor Theme::KNOB_WIDGET_NOTCH_COLOR       = Theme::ACCENT_COLOR ;
+const QColor Theme::KNOB_WIDGET_BODY_COLOR        = Theme::BACKGROUND_LIGHT ;
+const QColor Theme::KNOB_WIDGET_BODY_BORDER_COLOR = Theme::COMPONENT_BORDER ;
+const QColor Theme::KNOB_WIDGET_HIGHLIGHT_COLOR   = QColor(235, 162, 85) ;
 
 void Theme::applyDarkTheme() {
 
