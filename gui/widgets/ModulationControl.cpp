@@ -84,20 +84,28 @@ void ModulationControl::setConnectionStatus(bool active){
 
 void ModulationControl::setupLayout(){
     QVBoxLayout* layout = new QVBoxLayout(this);
-    QHBoxLayout* header = new QHBoxLayout();
-    QHBoxLayout* body = new QHBoxLayout();
+    layout->setContentsMargins(0,0,0,0);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
 
+    QHBoxLayout* header = new QHBoxLayout();
     header->addWidget(paramLabel_);
     header->addStretch();
     header->addWidget(modIndicator_);
     layout->addLayout(header);
 
-    body->addWidget(depthSlider_);
+    QHBoxLayout* body = new QHBoxLayout();
+    body->setAlignment(Qt::AlignTop);
+    body->addWidget(depthSlider_, 0, Qt::AlignTop);
+
     QVBoxLayout* strategy = new QVBoxLayout();
+    strategy->setContentsMargins(0,0,0,0);
     strategy->addWidget(strategyLabel_);
     strategy->addWidget(strategySelector_);
+    strategy->addStretch();
     body->addLayout(strategy);
+
     layout->addLayout(body);
+    layout->addStretch();
 }
 
 void ModulationControl::onModelDepthChanged(ParameterType p, double depth){

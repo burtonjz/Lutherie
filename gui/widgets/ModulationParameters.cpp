@@ -93,7 +93,7 @@ void ModulationParameters::layoutControls(){
     for ( auto [p, ctrl] : modulationControls_ ){
         int row = count / 1 ;
         int col = count % 1 ;
-        ctrlLayout_->addWidget(ctrl, row, col);
+        ctrlLayout_->addWidget(ctrl, row, col, 1, 1, Qt::AlignTop);
         ++count ;
     }
 
