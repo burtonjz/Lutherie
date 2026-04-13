@@ -477,7 +477,11 @@ StatusWidget::StatusWidget(QWidget* parent):
     // create status toggle
     toggle_ = new SwitchWidget(this);
     toggle_->setChecked(true);
-    layout->addWidget(toggle_);
+    QHBoxLayout* toggleRow = new QHBoxLayout();
+    toggleRow->addStretch();
+    toggleRow->addWidget(toggle_);
+    toggleRow->addStretch();
+    layout->addLayout(toggleRow);
 
     // connections
     connect(toggle_, &QAbstractButton::toggled, this, &ParameterWidget::valueChanged);
