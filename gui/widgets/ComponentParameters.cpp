@@ -123,28 +123,70 @@ QWidget* ComponentParameters::createSpecializedWidget(ComponentType t){
 void ComponentParameters::layoutParameters(){
     auto layout = new QVBoxLayout(this);
 
-    // component-specific widget belongs at the top
     if ( specializedWidget_ ){
         layout->addWidget(specializedWidget_, 1);
     }
 
-    // parameter widgets horizontally spaced
     QGridLayout* parameterLayout = new QGridLayout();
-    parameterLayout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    parameterLayout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
 
-    int count = 0 ;
+    // fix column widths
+    const int COLS = Theme::PARAMETER_GRID_N_COLS ;
+    for ( int c = 0 ; c < COLS ; ++c ){
+        parameterLayout->setColumnMinimumWidth(c, Theme::PARAMETER_WIDGET_WIDTH);
+        parameterLayout->setColumnStretch(c, 0);
+    }
+
+    // build placement list
+    std::vector<ParameterWidget*> remaining ; 
     for ( auto p : model_->getDescriptor().controllableParameters ){
-        int row = count / 2 ;
-        int col = count % 2 ;
-        parameterLayout->addWidget(parameterWidgets_[p], row, col);
-        ++count ;
+        remaining.push_back(parameterWidgets_[p]);
+    }
+
+    // fix widget width to span
+    for ( auto* widget : remaining ){
+        int span = widget->gridColumnSpan();
+        widget->setFixedWidth(
+            Theme::PARAMETER_WIDGET_WIDTH * span +
+            (span - 1) * Theme::PARAMETER_WIDGET_SPACING
+        );
+    }
+
+    // place widgets, look ahead to avoid gaps
+    // TODO: this could be more robust, (e.g., find optimal placement)
+    // but we might just let users position in future, so maybe not worth
+    int col = 0, row = 0;
+    while ( !remaining.empty() ){
+        int slotsLeft = COLS - col;
+        
+        auto it = std::find_if(remaining.begin(), remaining.end(),
+            [slotsLeft](ParameterWidget* w){
+                return w->gridColumnSpan() <= slotsLeft;
+            });
+
+        if ( it == remaining.end() ){
+            // nothing fits — advance to next row
+            ++row;
+            col = 0;
+            continue;
+        }
+
+        auto* widget = *it ;
+        remaining.erase(it);
+        const int span = widget->gridColumnSpan();
+
+        parameterLayout->addWidget(widget, row, col, 1, span, Qt::AlignTop);
+        col += span ;
+
+        if (col >= COLS){
+            ++row ;
+            col = 0 ;
+        }
     }
 
     parameterLayout->setRowStretch(parameterLayout->rowCount(), 1);
-    parameterLayout->setColumnStretch(parameterLayout->columnCount(), 1);
-    
+    parameterLayout->setColumnStretch(COLS, 1);
     layout->addLayout(parameterLayout);
-
     adjustSize();
 }
 

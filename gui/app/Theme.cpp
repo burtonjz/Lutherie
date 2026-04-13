@@ -16,8 +16,7 @@
  */
 
 #include "app/Theme.hpp"
-#include <qcolor.h>
-#include <qpalette.h>
+#include <QColor>
 
 /*
 ==================== PALETTE ===================
@@ -104,207 +103,139 @@ const QColor Theme::KNOB_WIDGET_HIGHLIGHT_COLOR   = QColor(235, 162, 85) ;
 
 void Theme::applyDarkTheme() {
 
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, BACKGROUND_MEDIUM);
-    darkPalette.setColor(QPalette::WindowText, TEXT_PRIMARY);
-    darkPalette.setColor(QPalette::Base, BACKGROUND_DARK);
-    darkPalette.setColor(QPalette::AlternateBase, BACKGROUND_MEDIUM);
-    darkPalette.setColor(QPalette::Text, TEXT_PRIMARY);
-    darkPalette.setColor(QPalette::Button, BACKGROUND_MEDIUM);
-    darkPalette.setColor(QPalette::ButtonText, TEXT_PRIMARY);
-    darkPalette.setColor(QPalette::BrightText, Qt::red);
-    darkPalette.setColor(QPalette::Link, ACCENT_COLOR);
-    darkPalette.setColor(QPalette::Highlight, ACCENT_COLOR);
-    darkPalette.setColor(QPalette::HighlightedText, Qt::black);
-    
+    QPalette darkPalette ;
+    // Window / panels
+    darkPalette.setColor(QPalette::Window,        Theme::BACKGROUND_MEDIUM);
+    darkPalette.setColor(QPalette::WindowText,    Theme::TEXT_PRIMARY);
+
+    // Input fields, list views, combo dropdowns
+    darkPalette.setColor(QPalette::Base,          Theme::BACKGROUND_DARK);
+    darkPalette.setColor(QPalette::AlternateBase, Theme::BACKGROUND_LIGHT);
+    darkPalette.setColor(QPalette::Text,          Theme::TEXT_PRIMARY);
+
+    // Buttons
+    darkPalette.setColor(QPalette::Button,        Theme::BACKGROUND_LIGHT);
+    darkPalette.setColor(QPalette::ButtonText,    Theme::TEXT_PRIMARY);
+
+    // Highlight — this drives selection everywhere: combos, lists, tables
+    darkPalette.setColor(QPalette::Highlight,        Theme::ACCENT_COLOR);
+    darkPalette.setColor(QPalette::HighlightedText,  Theme::BACKGROUND_DARK);
+
+    // Tooltips
+    darkPalette.setColor(QPalette::ToolTipBase, Theme::BACKGROUND_MEDIUM);
+    darkPalette.setColor(QPalette::ToolTipText, Theme::TEXT_PRIMARY);
+
+    // Placeholder text in line edits
+    darkPalette.setColor(QPalette::PlaceholderText, Theme::TEXT_SECONDARY);
+
+    // Disabled states
+    darkPalette.setColor(QPalette::Disabled, QPalette::Text,       Theme::TEXT_SECONDARY);
+    darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, Theme::TEXT_SECONDARY);
+    darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, Theme::TEXT_SECONDARY);
+    darkPalette.setColor(QPalette::Disabled, QPalette::Base,       Theme::BACKGROUND_DARK);
+    darkPalette.setColor(QPalette::Disabled, QPalette::Button,     Theme::BACKGROUND_MEDIUM);
+    darkPalette.setColor(QPalette::Active,   QPalette::ButtonText, Theme::TEXT_PRIMARY);
+    darkPalette.setColor(QPalette::Inactive, QPalette::ButtonText, Theme::TEXT_PRIMARY);
+    darkPalette.setColor(QPalette::Active,   QPalette::WindowText, Theme::TEXT_PRIMARY);
+    darkPalette.setColor(QPalette::Inactive, QPalette::WindowText, Theme::TEXT_PRIMARY);
+
+    // Borders / mid tones (used by Fusion for dividers, frames, spin box arrows)
+    darkPalette.setColor(QPalette::Mid,    Theme::COMPONENT_BORDER);
+    darkPalette.setColor(QPalette::Dark,   Theme::BACKGROUND_DARK);
+    darkPalette.setColor(QPalette::Shadow, Theme::BACKGROUND_DARK);
+    darkPalette.setColor(QPalette::Light,  Theme::BACKGROUND_LIGHT);
+
     qApp->setStyle("Fusion");
+    qApp->setPalette(darkPalette);    
     
-    qApp->setPalette(darkPalette);
-    
-    // Global stylesheet
+    // stylesheet for layout/sizing definitions
+    // also a couple things that apparently don't respect the pallette...
     QString styleSheet = QString(R"(
-    QWidget {
-        font-size: 11pt;
-    }
-    
-    QLineEdit {
-        background-color: %2 ;
-        color: %5;
-        border: 1px solid ;
-        padding: 2px ;
-    }
-    
-    QMessageBox {
-        background-color: %2;
-        color: %5;
-    }
-    QMessageBox QLabel {
-        color: %5;
-    }
-    QMessageBox QPushButton {
-        background-color: %2;
-        color: %5;
-        border: 1px solid %1;
-        padding: 5px 15px;
-        border-radius: 3px;
-    }
-    QMessageBox QPushButton:hover {
-        background-color: %3;
-    }
-    QFileDialog {
-        background-color: %2;
-        color: %5;
-    }
-    QFileDialog QLabel {
-        color: %5;
-    }
-    QFileDialog QPushButton {
-        background-color: %2;
-        color: %5;
-        border: 1px solid %1;
-        padding: 5px 15px;
-        border-radius: 3px;
-    }
-    QFileDialog QPushButton:hover {
-        background-color: %3;
-    }
-    QFileDialog QLineEdit {
-        background-color: %4;
-        color: %5;
-        border: 1px solid %1;
-        padding: 3px;
-        border-radius: 3px;
-    }
-    QFileDialog QListView, QFileDialog QTreeView {
-        background-color: %4;
-        color: %5;
-        border: 1px solid %1;
-    }
-    QFileDialog QListView::item:hover, QFileDialog QTreeView::item:hover {
-        background-color: %3;
-    }
-    QFileDialog QListView::item:selected, QFileDialog QTreeView::item:selected {
-        background-color: %6;
-        color: #000;
-    }
-    QToolTip {
-        background-color: %2;
-        color: %5;
-        border: 1px solid %1;
-        padding: 5px;
-        border-radius: 3px;
-    }
-    QToolBar {
-        background-color: %2;
-        spacing: 4px;
-        border: none;
-    }
-    QToolBar QToolButton {
-        color: %5 ;
-        background-color: %2;
-        border: 1px solid %1;
-        padding: 4px 8px ;
-    }
-    QToolButton {
-        color: %5 ;
-        background-color: %2
-    }
-    QToolButton:hover {
-        background-color: %6;
-    }
-    QAbstractItemView {
-        background-color: %4;
-        color: %5;
-        border: 1px solid %1;
-        selection-background-color: %3;
-        selection-color: %5;
-    }
-    QMenuBar {
-        background-color: %2;
-        color: %5;
-    }
-    QMenuBar::item {
-        background: transparent;
-    }
-    QMenuBar::item:selected {
-        background: %3 ;
-        color: %5 ;
-    }
-    QMenu {
-        background-color: %2;
-        color: %5;
-        border: 1px solid %1;
-        padding: 5px;
-        border-radius: 3px;
-    }
-    QMenu::item {
-        color: %5;
-        padding: 4px 20px;
-        border-radius: 3px;
-    }
-    QMenu::item:selected {
-        background-color: %3;
-        color: %5;                
-    }
-    QGroupBox {
-        font-weight: bold;
-        border: 1px solid %1;
-        border-radius: 5px;
-        margin-top: 10px;
-        padding-top: 10px;
-        background-color: %2;
-    }
-    QGroupBox::title {
-        subcontrol-origin: margin;
-        left: 10px;
-        padding: 0 5px;
-    }
-    QPushButton {
-        padding: 5px 15px;
-        border-radius: 3px;
-        background-color: %2;
-        border: 1px solid %1;
-        color: %5;
-    }
-    QPushButton:hover {
-        background-color: %3;
-    }
-    QDoubleSpinBox, QSpinBox, QComboBox {
-        padding: 3px;
-        background-color: %4;
-        border: 1px solid %1;
-        border-radius: 3px;
-        color: %5;
-    }
-    QComboBox QAbstractItemView {
-        background-color: %4;
-        border: 1px solid %1;
-        outline: none;
-        selection-background-color: %3;
-        selection-color: %5;
-    }
-    QComboBox QAbstractItemView::item {
-        border-bottom: 1px solid %7;
-        padding: 4px;
-    }
-    QComboBox QAbstractItemView::item:hover {
-        background-color: %3;
-        color: %5;
-    }
-    QComboBox QAbstractItemView::item:selected {
-        background-color: %6;        
-        color: #000;                   
-    }
-    QLabel {
-        color: %5;
-    }
-)").arg(COMPONENT_BORDER.name())               // %1
-   .arg(BACKGROUND_MEDIUM.name())              // %2
-   .arg(COMPONENT_BACKGROUND_HOVER.name())     // %3
-   .arg(BACKGROUND_DARK.name())                // %4
-   .arg(TEXT_PRIMARY.name())                   // %5
-   .arg(ACCENT_COLOR.name())                   // %6
-   .arg(BACKGROUND_LIGHT.name());              // %7
+        QWidget {
+            font-size: 11pt;
+        }
+        QPushButton {
+            padding: 5px 15px;
+            border-radius: 3px;
+        }
+        QLineEdit, QDoubleSpinBox, QSpinBox, QComboBox {
+            padding: 3px;
+            border-radius: 3px;
+        }
+        QComboBox QAbstractItemView::item {
+            min-height: 24px;
+            padding: 0px 8px;
+        }
+        QMenu {
+            padding: 5px;
+            border-radius: 3px;
+        }
+        QMenu::item {
+            padding: 4px 20px;
+            border-radius: 3px;
+        }
+        QGroupBox {
+            border-radius: 5px;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        QToolTip {
+            background-color: %3;
+            color: %4;
+            border: 1px solid %5;
+            padding: 5px;
+            border-radius: 3px;
+            opacity: 255;
+        }
+        QMenu::item:selected {
+            background-color: %1;
+            color: %2;           
+        }
+        QMenuBar::item:selected {
+            background-color: %1;
+            color: %2;
+        }
+        QToolBar QToolButton {
+            color: %4;   
+            background-color: transparent;
+            border: none;
+        }
+        QToolBar QToolButton[popupMode="1"],
+        QToolBar QToolButton[popupMode="2"] {
+            padding-right: 10px;
+        }
+        QToolBar QToolButton:hover {
+            background-color: %1;
+            color: %2;
+        }
+        QToolBar QToolButton:pressed, 
+        QToolBar QToolButton:open {
+            background-color: %1;
+            color: %2;
+        }
+        QToolButton#unitToggle,
+        QToolButton#unitToggle:checked {
+            color: %1;
+            border: 1px solid %5;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-size: 9pt;
+            background-color: transparent;
+        }
+        QToolButton#unitToggle:hover,
+        QToolButton#unitToggle:checked:hover {
+            color: %4;
+            border: 1px solid %5;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-size: 9pt;
+            background-color: %1
+        }
+    )").arg(ACCENT_COLOR.name())
+    .arg(BACKGROUND_DARK.name())
+    .arg(BACKGROUND_MEDIUM.name())
+    .arg(TEXT_PRIMARY.name())
+    .arg(COMPONENT_BORDER.name());
     
     qApp->setStyleSheet(styleSheet);
 }

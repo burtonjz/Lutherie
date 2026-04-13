@@ -67,14 +67,14 @@
 // void ComponentEditor::setupLayout(){
 //     QVBoxLayout* mainLayout = new QVBoxLayout(container_);
 //     mainLayout->setContentsMargins(
-//         Theme::COMPONENT_DETAIL_MARGINS,
+//         Theme::PARAMETER_WIDGET_MARGINS,
 //         0,
-//         Theme::COMPONENT_DETAIL_MARGINS,
-//         Theme::COMPONENT_DETAIL_MARGINS
+//         Theme::PARAMETER_WIDGET_MARGINS,
+//         Theme::PARAMETER_WIDGET_MARGINS
 //     );
 
 //     // params
-//     mainLayout->addSpacing(Theme::COMPONENT_DETAIL_MARGINS);
+//     mainLayout->addSpacing(Theme::PARAMETER_WIDGET_MARGINS);
 //     mainLayout->addWidget(params_);
 
 //     // buttons

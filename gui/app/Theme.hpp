@@ -135,9 +135,10 @@ public:
     static constexpr qreal CABLE_ARROW_HEIGHT       = 12.0 ;
     static constexpr qreal CABLE_ARROW_BASE_WIDTH   = 6.0 ; 
 
-    static constexpr qreal COMPONENT_DETAIL_WIDGET_SPACING = 10 ;
-    static constexpr qreal COMPONENT_DETAIL_WIDGET_WIDTH   = 120 ;
-    static constexpr qreal COMPONENT_DETAIL_MARGINS        = 20 ;
+    static constexpr qreal PARAMETER_WIDGET_SPACING = 10 ;
+    static constexpr qreal PARAMETER_WIDGET_WIDTH   = 120 ;
+    static constexpr qreal PARAMETER_WIDGET_MARGINS = 20 ;
+    static constexpr int   PARAMETER_GRID_N_COLS    = 2 ;
 
     static constexpr qreal COMPONENT_DETAIL_COLLECTION_ROW_SPACING     = 2 ;
     static constexpr qreal COMPONENT_DETAIL_COLLECTION_WIDGET_SPACING  = 8 ;

@@ -36,6 +36,10 @@ ParameterWidget::ParameterWidget(QWidget* parent):
     QWidget(parent)
 {}
 
+int ParameterWidget::gridColumnSpan() const {
+    return 1 ;
+}
+
 void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
     if ( p != getType() ) return ;
 
@@ -62,7 +66,7 @@ DelayWidget::DelayWidget(QWidget* parent):
     ParameterWidget(parent),
     label_(nullptr),
     knob_(nullptr),
-    unitCombo_(nullptr),
+    unitToggle_(new QToolButton()),
     valueLabel_(nullptr),
     minSamples_(0),
     maxSamples_(0),
@@ -80,9 +84,9 @@ ParameterType DelayWidget::getType() const {
 }
 
 ParameterValue DelayWidget::getValue() const {
-    QString unit = unitCombo_->currentText();
+    QString unit = unitToggle_->text();
 
-    if ( unitCombo_->currentText() == "ms") { 
+    if ( unitToggle_->text() == "ms") { 
             return static_cast<int>(knob_->value() / 1000.0f * sampleRate_);
     } else {
         return static_cast<int>(knob_->value());
@@ -98,7 +102,7 @@ void DelayWidget::setValue(const ParameterValue& value, bool block){
 }
 
 void DelayWidget::setValue(size_t samples, bool block){
-    QString unit = unitCombo_->currentText();
+    QString unit = unitToggle_->text();
     
     QSignalBlocker blocker(knob_);
     if ( !block ) blocker.unblock();
@@ -115,11 +119,12 @@ void DelayWidget::setValue(size_t samples, bool block){
 
 void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
     auto* edit = new QLineEdit(this);
+    edit->setAlignment(Qt::AlignCenter);
     edit->setText(QString::number(knob_->value()));
     edit->setGeometry(valueLabel_->geometry());
 
     // Enforce min/max based on current unit
-    QString unit = unitCombo_->currentText();
+    QString unit = unitToggle_->text();
     if (unit == "ms") {
         edit->setValidator(new QDoubleValidator(minMs_, maxMs_, 1, edit));
     } else {
@@ -139,7 +144,7 @@ void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
             return ;
         }
 
-        QString unit = unitCombo_->currentText();
+        QString unit = unitToggle_->text();
         double val = edit->text().toDouble();
         edit->deleteLater();
 
@@ -156,18 +161,39 @@ void DelayWidget::setupUI(){
     // can toggle to time in ms
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
-    
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
+
     // widget label
     label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, name))));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
-    // value label
-    valueLabel_ = new QLabel("0 samples");
-    valueLabel_->setAlignment(Qt::AlignCenter);
+    // value label    
+    valueLabel_ = new QLabel("0");
+    QFontMetrics fm(valueLabel_->fontMetrics());
+    valueLabel_->setMinimumWidth(fm.horizontalAdvance("0000"));
+    valueLabel_->setAlignment(Qt::AlignRight);
+
     layout->addWidget(valueLabel_);
     
+    // unit selector
+    unitToggle_->setAttribute(Qt::WA_Hover, true);
+    unitToggle_->setText("samples");
+    unitToggle_->setCheckable(true);
+    unitToggle_->setChecked(false);
+    unitToggle_->setAutoRaise(true);
+    unitToggle_->setToolTip("Toggle between samples and milliseconds");
+    unitToggle_->setObjectName("unitToggle");
+
+    QHBoxLayout* valueRow = new QHBoxLayout();
+    valueRow->setContentsMargins(0,0,0,0);
+    valueRow->addStretch();
+    valueRow->addWidget(valueLabel_);
+    valueRow->addWidget(unitToggle_);
+    valueRow->addStretch();
+    layout->addLayout(valueRow);
+
     // value slider
     minSamples_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, minimum);
     minMs_ = minSamples_ / sampleRate_ * 1000 ;
@@ -188,22 +214,6 @@ void DelayWidget::setupUI(){
     knobRow->addStretch();
     layout->addLayout(knobRow);
     
-    // unit selector
-    QWidget* unitContainer = new QWidget();
-    QHBoxLayout* unitLayout = new QHBoxLayout(unitContainer);
-    unitLayout->setContentsMargins(0, 0, 0, 0);
-    
-    QLabel* unitLabel = new QLabel("Unit:");
-    unitCombo_ = new QComboBox();
-    unitCombo_->addItem("samples");
-    unitCombo_->addItem("ms");
-    
-    unitLayout->addWidget(unitLabel);
-    unitLayout->addWidget(unitCombo_);
-    unitLayout->addStretch();
-    
-    layout->addWidget(unitContainer);
-    layout->addStretch();
 }
 
 void DelayWidget::connectSignals(){
@@ -213,45 +223,38 @@ void DelayWidget::connectSignals(){
     });
 
     // changing units updates the slider but doesn't send updates
-    connect(unitCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-            this, [this](int index) {
-        size_t samples ; 
-        QString oldUnit = (index == 0) ? "ms" : "samples"; 
-        QString newUnit = unitCombo_->currentText();
+    connect(unitToggle_, &QToolButton::toggled,
+        this, [this](bool ms){
+        unitToggle_->setText(ms ? "ms" : "samples");
+        
+        // convert current knob value to samples regardless of old unit
         double sampleRate = Config::get<double>("audio.sample_rate").value();
+        size_t samples = ms 
+            ? static_cast<size_t>(knob_->value())  
+            : static_cast<size_t>(knob_->value() / 1000.0 * sampleRate);                      
 
-        if (oldUnit == "ms") { 
-            samples = knob_->value() / 1000.0f * sampleRate ;
-        } else {
-            samples = knob_->value();
-        }
-
-        // Update slider for new unit
-        if (newUnit == "ms") {
-            knob_->setMaximum(maxMs_); 
+        // update knob range and restore value in new unit
+        if ( ms ){
             knob_->setMinimum(minMs_);
-            setValue(samples);
+            knob_->setMaximum(maxMs_);
+            knob_->setValue(samples / sampleRate * 1000.0);
         } else {
             knob_->setMinimum(minSamples_);
             knob_->setMaximum(maxSamples_);
-            knob_->setValue(samples);  
+            knob_->setValue(samples);
         }
+        updateDisplay();
     });
 }
 
 void DelayWidget::updateDisplay(){
-    QString unit = unitCombo_->currentText();
+    QString unit = unitToggle_->text();
     int val = knob_->value();
 
     if (unit == "ms") {
-        valueLabel_->setText(QString::number(val, 'f', 1) + " ms");
+        valueLabel_->setText(QString::number(val, 'f', 1));
     } else {
-        if ( val == 1 ){
-            valueLabel_->setText(QString::number(val) + " sample");
-        } else {
-            valueLabel_->setText(QString::number(val) + " samples");
-        }
-        
+        valueLabel_->setText(QString::number(val));
     }
 }
 
@@ -266,26 +269,27 @@ WaveformWidget::WaveformWidget(QWidget* parent):
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
 
     // label
-    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, name))));
+    label_ = new QLabel(QString::fromStdString(
+        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, name))
+    ));
+    label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
-    // populate waveforms
+    // waveforms
     waveforms_ = new QComboBox(this);
     for ( auto wf : Waveform::getWaveforms()){
         Waveform wave = Waveform(wf);
         waveforms_->addItem(QString::fromStdString(wave.toString()),wave.to_uint8());
     }
-
-    // set default waveform
     int idx = waveforms_->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, defaultValue));
     if ( idx != -1 ){
         waveforms_->setCurrentIndex(idx);
     } 
     layout->addWidget(waveforms_);
-    layout->addStretch();
 
     // connections
     connect(waveforms_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
@@ -328,10 +332,14 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
 
     // label
-    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, name))));
+    label_ = new QLabel(QString::fromStdString(
+        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, name))
+    ));
+    label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
     // populate types
@@ -348,7 +356,6 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
     } 
 
     layout->addWidget(type_);
-    layout->addStretch();
 
     // connections
     connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
@@ -391,10 +398,14 @@ MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
 
     // label
-    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::TRIGGER, name))));
+    label_ = new QLabel(QString::fromStdString(
+        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::TRIGGER, name))
+    ));
+    label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
     // populate types
@@ -411,7 +422,6 @@ MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent
     } 
 
     layout->addWidget(type_);
-    layout->addStretch();
 
     // connections
     connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
@@ -454,12 +464,15 @@ StatusWidget::StatusWidget(QWidget* parent):
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
 
     // label
-    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::STATUS, name))));
+    label_ = new QLabel(QString::fromStdString(
+        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::STATUS, name))
+    ));
+    label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
-    layout->addStretch();
 
     // create status toggle
     toggle_ = new SwitchWidget(this);
@@ -596,10 +609,13 @@ void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
 void SliderWidget::setupUI(){
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
     
     // widget label
-    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(param_, name))));
+    label_ = new QLabel(QString::fromStdString(
+        std::string(GET_PARAMETER_TRAIT_MEMBER(param_, name))
+    ));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
@@ -609,11 +625,10 @@ void SliderWidget::setupUI(){
     layout->addWidget(valueLabel_);
     
     // value knob
-    knob_ = new KnobWidget(Qt::Horizontal);
+    knob_ = new KnobWidget();
     knob_->setMinimum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_, minimum)));
 
-    if ( param_ == ParameterType::FREQUENCY ){
-        // nyquist override
+    if ( param_ == ParameterType::FREQUENCY ){ // nyquist override
         knob_->setMaximum(scaleByPrecision(Config::get<double>("audio.sample_rate").value() / 2.0)); 
     } else {
         knob_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
@@ -680,6 +695,10 @@ DetuneWidget::DetuneWidget(QWidget* parent):
 {
     setupUI();
     connectSignals();
+}
+
+int DetuneWidget::gridColumnSpan() const {
+    return 2 ;
 }
 
 ParameterType DetuneWidget::getType() const {
@@ -750,11 +769,13 @@ void DetuneWidget::setValue(const ParameterValue& value, bool block){
 void DetuneWidget::setupUI(){
     auto* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
 
     // harmonic ratio
-    auto hLayout = new QVBoxLayout();
-    
+    auto* hWidget = new QWidget();
+    hWidget->setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
+    auto hLayout = new QVBoxLayout(hWidget);
+
     harmonicLabel_ = new QLabel("harmonic");
     harmonicLabel_->setAlignment(Qt::AlignCenter);
     hLayout->addWidget(harmonicLabel_);
@@ -776,11 +797,12 @@ void DetuneWidget::setupUI(){
     hKnobRow->addWidget(harmonicKnob_);
     hKnobRow->addStretch();
     hLayout->addLayout(hKnobRow);
-
-    layout->addLayout(hLayout);
+    layout->addWidget(hWidget);
 
     // fine detune
-    auto dLayout = new QVBoxLayout();
+    auto dWidget = new QWidget();
+    dWidget->setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
+    auto dLayout = new QVBoxLayout(dWidget);
 
     detuneLabel_ = new QLabel("detune (cents)");
     detuneLabel_->setAlignment(Qt::AlignCenter);
@@ -801,9 +823,7 @@ void DetuneWidget::setupUI(){
     dKnobRow->addWidget(detuneKnob_);
     dKnobRow->addStretch();
     dLayout->addLayout(dKnobRow);
-
-    layout->addLayout(dLayout);
-    layout->addStretch();
+    layout->addWidget(dWidget);
 
     setFromCombined(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DETUNE, defaultValue), true);
     updateDisplays();
@@ -832,9 +852,14 @@ void DetuneWidget::updateDisplays(){
 
 void DetuneWidget::showEditor(QLabel* valueLabel, KnobWidget* knob, int precision){
     auto s2v = [precision](int v){ return v * std::pow(10, -1.0 * precision); };
+    
     auto* edit = new QLineEdit(this);
+    edit->setAlignment(Qt::AlignCenter);
     edit->setText(QString::number(s2v(knob->value())));
-    edit->setGeometry(valueLabel->geometry());
+
+    QRect labelRect(valueLabel->mapTo(this, QPoint(0, 0)), valueLabel->size());
+    edit->setGeometry(labelRect);
+
     double min = s2v(knob->minimum());
     double max = s2v(knob->maximum());
     edit->setValidator(new QDoubleValidator(min, max, precision, edit));
@@ -853,9 +878,16 @@ void DetuneWidget::showEditor(QLabel* valueLabel, KnobWidget* knob, int precisio
 }
 
 void DetuneWidget::mouseDoubleClickEvent(QMouseEvent* event){
-    if ( harmonicValueLabel_->geometry().contains(event->pos()) ){
+    auto toLocal = [this](QWidget* w) -> QRect {
+        return QRect(w->mapTo(this, QPoint(0,0)), w->size());
+    };
+
+    QRect harmonic = toLocal(harmonicValueLabel_);
+    QRect detune   = toLocal(detuneValueLabel_);
+
+    if ( harmonic.contains(event->pos()) ){
         showEditor(harmonicValueLabel_, harmonicKnob_, harmonicPrecision_);
-    } else if ( detuneValueLabel_->geometry().contains(event->pos()) ){
+    } else if ( detune.contains(event->pos()) ){
         showEditor(detuneValueLabel_, detuneKnob_, detunePrecision_);
     }
 }

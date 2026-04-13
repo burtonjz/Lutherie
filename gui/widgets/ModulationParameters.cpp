@@ -87,7 +87,7 @@ ModulationControl* ModulationParameters::addModulationControl(ModulationModel* m
 
 void ModulationParameters::layoutControls(){
     // parameter widgets horizontally spaced
-    ctrlLayout_->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
+    ctrlLayout_->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
 
     int count = 0 ;
     for ( auto [p, ctrl] : modulationControls_ ){

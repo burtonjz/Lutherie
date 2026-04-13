@@ -25,6 +25,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QComboBox>
+#include <QToolButton>
 
 // base class
 class ParameterWidget : public QWidget {
@@ -38,6 +39,7 @@ public:
     virtual ParameterType getType() const = 0 ;
     virtual ParameterValue getValue() const = 0 ;
     virtual void setValue(const ParameterValue& value, bool block = false) = 0 ;
+    virtual int gridColumnSpan() const ;
 
 protected:
     void childEvent(QChildEvent* event) override ;
@@ -53,7 +55,7 @@ class DelayWidget : public ParameterWidget {
 private:
     QLabel* label_ ;
     KnobWidget* knob_ ;
-    QComboBox* unitCombo_ ;
+    QToolButton* unitToggle_ ;
     QLabel* valueLabel_ ;
     double sampleRate_ ;
     int minSamples_ ;
@@ -90,7 +92,6 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
-
 };
 
 class FilterTypeWidget : public ParameterWidget {
@@ -176,6 +177,7 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
+    int gridColumnSpan() const override ;
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override ;

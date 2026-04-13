@@ -88,10 +88,10 @@ ComponentParameters* GroupEditor::getComponentParameters(int componentId){
 void GroupEditor::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(container_);
     mainLayout->setContentsMargins(
-        Theme::COMPONENT_DETAIL_MARGINS,
+        Theme::PARAMETER_WIDGET_MARGINS,
         0,
-        Theme::COMPONENT_DETAIL_MARGINS,
-        Theme::COMPONENT_DETAIL_MARGINS
+        Theme::PARAMETER_WIDGET_MARGINS,
+        Theme::PARAMETER_WIDGET_MARGINS
     );
 
     // parameters
