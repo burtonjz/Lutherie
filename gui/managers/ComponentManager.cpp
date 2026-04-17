@@ -43,7 +43,6 @@ void ComponentManager::requestAddComponent(ComponentType type){
 
     j["action"] = "add_component" ;
     j["name"] = descriptor.name ;
-    j["type"] = static_cast<int>(type);
     ApiClient::instance()->sendMessage(j); 
 }
 
@@ -265,7 +264,9 @@ void ComponentManager::onApiDataReceived(const json& msg){
 
     if ( action == "add_component" && success ){
         int id = msg.at("componentId");
-        ComponentType type = static_cast<ComponentType>(msg.at("type"));
+        ComponentType type = ComponentRegistry::getComponentDescriptor(
+            msg.at("name").get<std::string>()
+        ).type ;
         addComponent(id, type);
         return ;
     }

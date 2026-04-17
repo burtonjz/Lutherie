@@ -482,7 +482,7 @@ StatusWidget::StatusWidget(QWidget* parent):
     toggleRow->addWidget(toggle_);
     toggleRow->addStretch();
     layout->addLayout(toggleRow);
-
+ 
     // connections
     connect(toggle_, &QAbstractButton::toggled, this, &ParameterWidget::valueChanged);
 }

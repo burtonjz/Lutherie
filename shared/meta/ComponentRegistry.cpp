@@ -197,3 +197,14 @@ const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ComponentTy
     SPDLOG_ERROR("Unknown ComponentType: {}", static_cast<int>(type));
     throw std::runtime_error("Unknown ComponentType");
 }
+
+const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(std::string componentName){
+    const auto& registry = ComponentRegistry::getAllComponentDescriptors();
+    for ( const auto& [typ, d] : registry ){
+        if ( d.name == componentName ){
+            return d;
+        }
+    }
+    SPDLOG_ERROR("Unknown ComponentName: {}", componentName);
+    throw std::runtime_error("Unknown Component Name");
+}

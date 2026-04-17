@@ -771,6 +771,7 @@ std::vector<ConnectionRequest> Engine::getComponentModulationConnections(Compone
 // ============================================================================
 json Engine::serialize() const {
     json output ;
+
     // capture component data (parameters, midi, modulation, signal)
     output["components"] = componentManager.serializeComponents();
 
@@ -780,10 +781,24 @@ json Engine::serialize() const {
     }
 
     // get root midi devices
+
+    // CASE 1: Midi Handler connected to peripheral midi device
     for ( auto m : midiState_.getHandlers() ){
         ComponentId id = m->getId() ;
+        SPDLOG_DEBUG("testing component id {}", id);
         if ( id != -1 ){
-            output["rootMidiHandlers"].push_back(m->getId()) ;
+            output["MidiHandlers"].push_back(m->getId()) ;
+        }
+    }
+
+    // CASE 2: Midi Listener connected to peripheral midi device (uses default handler)
+    for ( auto id : componentManager.getMidiListenerIds() ){
+        auto listener = componentManager.getMidiListener(id);
+        if ( ! listener ) continue ;
+        for ( auto h : listener->getHandlers() ){
+            if ( h == &midiDefaultHandler_ ){
+                output["MidiListeners"].push_back(listener->getId());
+            }
         }
     }
 

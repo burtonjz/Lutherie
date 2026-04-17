@@ -278,7 +278,7 @@ template <> struct ParameterTraits<ParameterType::PAN>{
 };
 
 template <> struct ParameterTraits<ParameterType::DETUNE>{
-    using ValueType = float ;
+    using ValueType = double ;
     static constexpr std::string_view name = "Detune" ;
     static constexpr float minimum = -4800.0f ;
     static constexpr float maximum = 4800.0f ;

@@ -336,7 +336,7 @@ json ApiHandler::addComponent(int sock, const json& request){
     std::string name ;
 
     try {
-        type = static_cast<ComponentType>(response["type"]);
+        type = ComponentRegistry::getComponentDescriptor(response["name"].get<std::string>()).type;
         name = response["name"];
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
@@ -1038,7 +1038,6 @@ bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
 bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap){
     json params ;
     ComponentId id ;
-    ComponentType type ;
     json componentRequest ;
     json componentResponse ;
     json parameterRequest ;
@@ -1049,10 +1048,8 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
         try {
             params = component.at("parameters");
             id = component.at("id");
-            type = static_cast<ComponentType>(component.at("type"));
             componentRequest["action"] = "add_component" ;
-            componentRequest["name"] = ComponentRegistry::getComponentDescriptor(type).name ;
-            componentRequest["type"] = static_cast<int>(type) ;
+            componentRequest["name"] = component.at("name") ;
             componentResponse = addComponent(sock, componentRequest);
             idMap[id] = componentResponse["componentId"];
 
@@ -1109,8 +1106,29 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     }
 
     // connections to hardware midi
-    if ( config.contains("rootMidiHandlers") && config.at("rootMidiHandlers").is_array() ){
-        for ( const auto& id : config.at("rootMidiHandlers") ){
+    if ( config.contains("MidiHandlers") && config.at("MidiHandlers").is_array() ){
+        for ( const auto& id : config.at("MidiHandlers") ){
+            if ( ! id.is_number_integer() ){
+                SPDLOG_ERROR("Cannot process root midi handler with improper format: {}", id.dump() );
+                success = false ;
+                continue ;
+            } 
+
+            ConnectionRequest req ;
+            req.inboundSocket = SocketType::MidiInbound ;
+            req.outboundSocket = SocketType::MidiOutbound ;
+            req.inboundID = id ;
+            
+            const auto& connectionResponse = parseConnectionRequest(sock, req);
+            if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
+                SPDLOG_ERROR("error requestion connection: {}", connectionResponse.dump());
+                success = false ;
+            }
+        }
+    }
+
+    if ( config.contains("MidiListeners") && config.at("MidiListeners").is_array() ){
+        for ( const auto& id : config.at("MidiListeners") ){
             if ( ! id.is_number_integer() ){
                 SPDLOG_ERROR("Cannot process root midi handler with improper format: {}", id.dump() );
                 success = false ;
@@ -1139,8 +1157,8 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                 ! component.at("id").is_number_integer() ||
                 ! component.contains("parameters") ||
                 ! component.at("parameters").is_object() ||
-                ! component.contains("type") ||
-                ! component.at("type").is_number_integer()
+                ! component.contains("name") ||
+                ! component.at("name").is_string()
             ){
                 SPDLOG_ERROR("component is not in expected format: {}", component.dump()) ;
                 success = false ;
@@ -1255,7 +1273,7 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
         }
         
         // Handle known arrays that contain bare IDs
-        std::vector<std::string> idArrayKeys = {"rootMidiHandlers", "midiListeners", "componentIds"};
+        std::vector<std::string> idArrayKeys = {"MidiHandlers", "midiListeners", "MidiListeners", "componentIds"};
         for ( const auto& key : idArrayKeys ) {
             if ( j.contains(key) && j[key].is_array() ) {
                 for (auto& element : j[key]) {
@@ -1287,7 +1305,11 @@ const CollectionDescriptor& ApiHandler::getCollectionDescriptor(ComponentType t,
     const ComponentDescriptor& descriptor = ComponentRegistry::getComponentDescriptor(t);
     int idx = descriptor.hasCollection(c);
     if ( idx == -1 ){
-        std::string msg = fmt::format("Cannot retrieve collection {} from Component Type {}.", CollectionType::toString(c),  static_cast<char>(t) );
+        std::string msg = fmt::format(
+            "Cannot retrieve collection {} from Component Type {}.", 
+            CollectionType::toString(c),  
+            ComponentRegistry::getComponentDescriptor(t).name
+        );
         SPDLOG_ERROR(msg);
         throw std::runtime_error(msg);
     }

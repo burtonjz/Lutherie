@@ -91,7 +91,7 @@ json ComponentManager::serializeComponent(BaseComponent* c) const {
     json output ;
 
     output["id"] = c->getId() ;
-    output["type"] = c->getType() ;
+    output["name"] = ComponentRegistry::getComponentDescriptor(c->getType()).name ;
 
     // parameters
     output["parameters"] = c->getParameters()->toJson();

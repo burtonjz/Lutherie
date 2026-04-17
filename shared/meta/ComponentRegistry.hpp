@@ -24,6 +24,7 @@
 namespace ComponentRegistry {
 
 const ComponentDescriptor& getComponentDescriptor(ComponentType type);
+const ComponentDescriptor& getComponentDescriptor(std::string componentName);
 
 const std::unordered_map<ComponentType, ComponentDescriptor>& getAllComponentDescriptors();
 

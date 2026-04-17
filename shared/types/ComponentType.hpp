@@ -44,8 +44,6 @@ enum class ComponentType {
     N_COMPONENTS
 };
 
-
-
 constexpr int N_COMPONENT_TYPES = static_cast<int>(ComponentType::N_COMPONENTS) - 1 ;
 
 // Define a converter from the enum to the actual type. 
