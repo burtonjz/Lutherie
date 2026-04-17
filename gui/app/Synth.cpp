@@ -148,20 +148,6 @@ Synth::Synth(QWidget* parent):
         groupManager_, &GroupManager::onRequestGroupRemove
     );
 
-    // group to graph
-    connect(
-        groupManager_, &GroupManager::groupCreated,
-        graph_, &GraphPanel::onComponentGroupCreated
-    );
-    connect(
-        groupManager_, &GroupManager::groupUpdated,
-        graph_, &GraphPanel::onComponentGroupUpdated
-    );
-    connect(
-        groupManager_, &GroupManager::groupRemoved,
-        graph_, &GraphPanel::onComponentGroupRemoved
-    );
-
     // group to main
     connect(
         groupManager_, &GroupManager::groupCreated,
@@ -174,6 +160,20 @@ Synth::Synth(QWidget* parent):
     connect(
         groupManager_, &GroupManager::groupRemoved,
         this, &Synth::onComponentGroupRemoved
+    );
+
+    // group to graph
+    connect(
+        groupManager_, &GroupManager::groupCreated,
+        graph_, &GraphPanel::onComponentGroupCreated
+    );
+    connect(
+        groupManager_, &GroupManager::groupUpdated,
+        graph_, &GraphPanel::onComponentGroupUpdated
+    );
+    connect(
+        groupManager_, &GroupManager::groupRemoved,
+        graph_, &GraphPanel::onComponentGroupRemoved
     );
 }
 
@@ -531,6 +531,7 @@ void Synth::onActionSaveAs(){
 
 void Synth::performSave(){
     saveData_["nodes"] = graph_->serializeNodes();
+
     QFile file(saveFilePath_);
     if (!file.open(QIODevice::WriteOnly)){
         QMessageBox::warning(this, "Save Failed",

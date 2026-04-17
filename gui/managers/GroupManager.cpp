@@ -82,7 +82,7 @@ void GroupManager::removeContent(int groupId){
     }
 }
 
-void GroupManager::onRequestGroupCreate(std::vector<int> componentIds){
+void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialize){
     int groupId = currentGroupId_++ ;
     auto model = new GroupModel(groupId, QString("Group %1").arg(groupId));
     for ( const auto id : componentIds ){
@@ -98,7 +98,7 @@ void GroupManager::onRequestGroupCreate(std::vector<int> componentIds){
     } 
 
     groups_[groupId] = model ;
-    emit groupCreated(groupId, model->getComponents());
+    emit groupCreated(groupId, model->getComponents(), deserialize);
 }
 
 void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentIds){

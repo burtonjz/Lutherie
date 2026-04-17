@@ -118,7 +118,7 @@ public slots:
     void onComponentAdded(int componentId, ComponentType type);
     void onComponentRemoved(int componentId);
 
-    void onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds);
+    void onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds, std::optional<json> deserialized = std::nullopt);
     void onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds);
     void onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds);
 
@@ -127,7 +127,7 @@ public slots:
     void ondragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
 
 signals:
-    void requestGroupCreate(std::vector<int> componentIds);
+    void requestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialized = std::nullopt );
     void requestGroupUpdate(int groupId, std::vector<int> componentIds);
     void requestGroupRemove(int groupId);
 

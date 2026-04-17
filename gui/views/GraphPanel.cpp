@@ -277,30 +277,26 @@ void GraphPanel::deserializeNodes(const json& nodes){
             } else {
                 qWarning() << "Invalid deviceId specified." ;
             }
-        } // else if ( nodeType == "GroupNode" ){
-        //     if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
-        //         continue ;
-        //     }
+        } else if ( nodeType == "GroupNode" ){
+            if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
+                continue ;
+            }
 
-        //     std::vector<int> ids ;
-        //     for ( const auto& id : n.at("componentIds") ){
-        //         if ( ! id.is_number() || ! componentManager_->getModel(id) ){
-        //             qWarning() << "component id is either malformed or invalid." ;
-        //             continue ;
-        //         }
-        //         ids.push_back(id);
-        //     }
+            std::vector<int> ids ;
+            for ( const auto& id : n.at("componentIds") ){
+                if ( ! id.is_number() ){
+                    qWarning() << "component id in array is malformed. Expected number format." ;
+                    continue ;
+                }
+                ids.push_back(id);
+            }
 
-        //     if ( ids.size() > 1 ){
-        //         int groupId = componentManager_->createGroup(ids, true); 
-        //         onComponentGroupCreated(groupId, ids);
-        //         auto g = getGroupNode(groupId);
-        //         g->deserialize(n);
-        //     } else {
-        //         qWarning() << "Group node does not contain more than 2 valid component ids.";
-        //         continue ;
-        //     }
-        // }
+            if ( ids.size() > 1 ){
+                emit requestGroupCreate(ids, n);
+            } else {
+                qWarning() << "Group node does not contain more than 2 valid component ids.";
+            }
+        }
     }
 }
 
@@ -761,7 +757,7 @@ void GraphPanel::onComponentRemoved(int componentId){
     n->deleteLater();
 }
 
-void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
+void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds, std::optional<json> deserialized){
     auto gNode =  new GroupNode(groupId, QString("Group %1").arg(groupId));
     nodes_.push_back(gNode);
     gNode->addToScene(scene_);
@@ -774,6 +770,10 @@ void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> co
     }
 
     connectionRenderer_->onComponentGroup(componentIds);
+
+    if ( deserialized.has_value() ){
+        gNode->deserialize(deserialized.value());
+    }
 }
 
 void GraphPanel::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
@@ -807,6 +807,7 @@ void GraphPanel::onComponentGroupUpdated(int groupId, std::unordered_set<int> co
 
     connectionRenderer_->onComponentGroup(componentIds);
 }
+
 
 void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     if ( auto c = dynamic_cast<ComponentNode*>(widget) ){

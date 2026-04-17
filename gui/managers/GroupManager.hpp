@@ -23,6 +23,9 @@
 #include <QObject>
 #include <unordered_set>
 #include <unordered_map>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json ;
 
 class GroupManager : public QObject {
     Q_OBJECT
@@ -49,12 +52,12 @@ public:
     void removeContent(int groupId);
 
 public slots:
-    void onRequestGroupCreate(std::vector<int> componentIds);
+    void onRequestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialize = std::nullopt);
     void onRequestGroupUpdate(int groupId, std::vector<int> componentIds);
     void onRequestGroupRemove(int groupId);
 
 signals:
-    void groupCreated(int groupId, const std::unordered_set<int>& componentIds);
+    void groupCreated(int groupId, const std::unordered_set<int>& componentIds, std::optional<json> deserialize = std::nullopt);
     void groupUpdated(int groupId, const std::unordered_set<int>& componentIds);
     void groupRemoved(int groupId, const std::unordered_set<int>& componentIds);
 
