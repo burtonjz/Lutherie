@@ -329,8 +329,6 @@ int Engine::audioCallback(
         std::fill_n(buffer, nBufferFrames, 0.0);
         return 1; // Non-zero signals stream should stop
     }
-    
-    engine->signalController.clearBuffer();
 
     float bufferDt = nBufferFrames / static_cast<float>(engine->getSampleRate());
     engine->midiController.tick(bufferDt);

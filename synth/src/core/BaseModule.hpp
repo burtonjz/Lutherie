@@ -94,6 +94,11 @@ public:
         return buffers_[output][bufferIndex_];
     }
 
+    double getLastSample(size_t output) const {
+        assert( output < nOutputs_ );
+        return buffers_[output][(bufferIndex_ + bufferSize_ - 1) % bufferSize_ ];
+    }
+
     virtual void clearBuffer(){
         for ( auto& buf : buffers_ ){
             std::fill(buf.get(), buf.get() + bufferSize_, 0.0);
@@ -157,7 +162,7 @@ protected:
         assert( idx < nInputs_ );
         double sum = 0.0 ;
         for ( const auto& conn : signalInputs_[idx] ){
-            sum += conn.module->getCurrentSample(conn.index);
+            sum += conn.module->getLastSample(conn.index);
         }
         return sum ;
     }

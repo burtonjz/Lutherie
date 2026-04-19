@@ -169,6 +169,10 @@ double BiquadFilter::modulate(double value, ModulationData* mData) const {
 }
 
 void BiquadFilter::calculateSample(){
+    if ( dirty_ ){
+        calculateCoefficients();
+        dirty_ = false ;
+    }
     double input = aggregateInputs(0);
 
     setBufferValue(0, getCurrentOutput(input, state1_, state2_));
@@ -176,10 +180,6 @@ void BiquadFilter::calculateSample(){
 
 void BiquadFilter::tick(){
     BaseModule::tick();
-    if ( dirty_ ){
-        calculateCoefficients();
-        dirty_ = false ;
-    }
 }
 
 void BiquadFilter::onParameterChanged([[maybe_unused]] ParameterType p){
