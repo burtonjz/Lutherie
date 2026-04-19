@@ -19,71 +19,74 @@
 #ifndef SPECTRUM_ANALYZER_WIDGET_HPP
 #define SPECTRUM_ANALYZER_WIDGET_HPP
 
+#include "interfaces/IAnalyzerWidget.hpp"
+
 #include <QWidget>
 #include <QUdpSocket>
 #include <vector>
 #include <QPainter>
 #include <QTimer>
 
-class SpectrumAnalyzerWidget : public QWidget {
+
+class SpectrumAnalyzerWidget : public QWidget, public IAnalyzerWidget {
     Q_OBJECT
 
 private:
-    // UDP socket for receiving FFT data
-    QUdpSocket *udpSocket_;
-    quint16 port_;
-    
-    // FFT data
-    std::vector<float> spectrumData_ ;
-    std::vector<float> smoothedData_ ;
-
-    size_t fftSize_;
     float smoothFactor_ ;
-    float sampleRate_;
+    float sampleRate_ ;
     
     // Display ranges
-    float minFreq_;
-    float maxFreq_;
-    float minDb_;
-    float maxDb_;
+    float minFreq_ ;
+    float maxFreq_ ;
+    float minDb_ ;
+    float maxDb_ ;
     
+    // FFT data
+    struct LayerData {
+        std::vector<float> smoothedData ;
+        QString name ;
+    };
+    std::unordered_map<int, LayerData> layerData_ ;
+
     // Update throttling
-    QTimer *updateTimer_;
-    bool dataReady_;
+    QTimer *updateTimer_ ;
+    bool dataReady_ ;
 
     QImage cachedFrame_ ;
 
 public:
     explicit SpectrumAnalyzerWidget(QWidget *parent = nullptr);
-    ~SpectrumAnalyzerWidget() override;
 
-    void setPort(quint16 port);
     void setFrequencyRange(float minHz, float maxHz);
     void setMagnitudeRange(float minDb, float maxDb);
     void setSampleRate(float sampleRate);
+
+    // IAnalyzerWidget
+    void addLayer(int componentId, const QString& label) override ;
+    void removeLayer(int componentId) override ;
+    void renameLayer(int componentId, const QString& label) override ;
+    void onData(int componentId, const float* data, size_t count) override ;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private slots:
-    void onReadyRead();
     void onUpdateTimeout();
 
 private:
-    // Helper methods
+    // draw/render
     void drawGrid(QPainter &painter);
     void drawSpectrum(QPainter &painter);
     void drawLabels(QPainter &painter);
     void renderToCache();
 
-    // Coordinate conversion
+    // coordinate manipulation
     float freqToX(float freq) const ;
     float xToFreq(float x) const ;
     float dbToY(float db) const ;
-    float binToFreq(size_t bin) const ;
-    size_t freqToBin(float freq) const ;
-    
+    float binToFreq(size_t bin, size_t count) const ;
+    size_t freqToBin(float freq, size_t count) const ;
 };
 
 #endif // SPECTRUM_ANALYZER_WIDGET_HPP

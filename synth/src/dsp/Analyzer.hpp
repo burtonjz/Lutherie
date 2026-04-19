@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2026 Jared Burton
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
+#ifndef ANALYZER_HPP_
+#define ANALYZER_HPP_
+
+#include "core/BaseComponent.hpp"
+#include "core/BaseModule.hpp"
+#include "config/Config.hpp"
+#include "dsp/AnalyticsEngine.hpp"
+
+#include <cstddef>
+#include <cstring>
+#include <memory>
+#include <algorithm>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json ;
+
+class Analyzer : public BaseComponent {
+protected:
+    double sampleRate_ ;
+    size_t bufferSize_ ;
+    std::unique_ptr<double[]> buffer_ ;
+    std::vector<std::pair<BaseModule*, size_t>> sources_ ;
+
+public:
+    Analyzer(ComponentId id, ComponentType typ);
+
+    virtual void process(const double* data, size_t size, ComponentId id) = 0 ;
+    
+    ~Analyzer();
+
+    void aggregateInputs();
+
+    void clearBuffer();
+
+    const double* data() const ;
+
+    std::size_t size() const ;
+
+    void connectInput(BaseModule* source, size_t index);
+    void disconnectInput(BaseModule* source, size_t index);
+
+    void flush();
+
+    const std::vector<std::pair<BaseModule*, size_t>>& getSources() const ;
+};
+
+
+#endif // ANALYZER_HPP_

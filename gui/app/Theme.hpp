@@ -77,9 +77,9 @@ public:
     static const QColor SWITCH_WIDGET_THUMB_COLOR_OFF ;
     static const QColor SWITCH_WIDGET_DISABLED_COLOR ;
 
-    static const QColor ANALYZER_BACKGROUND_COLOR ;
-    static const QColor ANALYZER_LINE_COLOR ;
-    static const QColor ANALYZER_GRID_COLOR ;
+    static const QColor SPECTRUM_BACKGROUND_COLOR ;
+    static const QColor SPECTRUM_LINE_COLOR ;
+    static const QColor SPECTRUM_GRID_COLOR ;
 
     static const QColor MODULATION_ACTIVE ;
     static const QColor MODULATION_INACTIVE ;
@@ -153,11 +153,15 @@ public:
     static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY = .75 ;
     static constexpr qreal PIANO_ROLL_KEY_LABEL_X_PAD          = 4 ;
 
-    static constexpr int ANALYZER_MARGIN_LEFT      = 60 ;
-    static constexpr int ANALYZER_MARGIN_RIGHT     = 20 ;
-    static constexpr int ANALYZER_MARGIN_TOP       = 20 ;
-    static constexpr int ANALYZER_MARGIN_BOTTOM    = 40 ;
-    static constexpr int ANALYZER_PIXEL_RESOLUTION = 2 ;
+    static constexpr int   SPECTRUM_MARGIN_LEFT      = 60 ;
+    static constexpr int   SPECTRUM_MARGIN_RIGHT     = 20 ;
+    static constexpr int   SPECTRUM_MARGIN_TOP       = 20 ;
+    static constexpr int   SPECTRUM_MARGIN_BOTTOM    = 40 ;
+    static constexpr int   SPECTRUM_PIXEL_RESOLUTION = 2 ;
+    static constexpr float SPECTRUM_MIN_FREQUENCY    = 10.0 ;
+    static constexpr float SPECTRUM_MAX_FREQUENCY    = 25000.0 ;
+    static constexpr float SPECTRUM_MIN_DECIBEL      = -100.0 ;
+    static constexpr float SPECTRUM_MAX_DECIBEL      = 5.0 ;
 
     static constexpr qreal SWITCH_WIDGET_OPACITY_ON       = 0.5 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_OFF      = 0.38 ;

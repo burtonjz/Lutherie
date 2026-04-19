@@ -17,9 +17,7 @@
 
 #include "dsp/AnalyticsEngine.hpp"
 #include "config/Config.hpp"
-#include <cmath>
 #include <cstring>
-#include "kissfft/kiss_fft.h"
 #include <spdlog/spdlog.h>
 
 AnalyticsEngine* AnalyticsEngine::instance(){
@@ -31,42 +29,37 @@ AnalyticsEngine* AnalyticsEngine::instance(){
 }
 
 AnalyticsEngine::AnalyticsEngine():
-    udpSocket_(INVALID_SOCKET),
-    bufferPosition_(0)
+    udpSocket_(INVALID_SOCKET)
 #ifdef _WIN32
     , wsaInitialized_(false)
 #endif
 {
-    Config::load();
-    sampleRate_ = Config::get<unsigned int>("audio.sample_rate").value_or(44100);
-    fftSize_ = Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value_or(1024);
-
-    fftBuffer_.resize(fftSize_);
-
-    fftConfig_ = kiss_fft_alloc(fftSize_, 0, nullptr, nullptr);
-    if ( !fftConfig_ ){
-        SPDLOG_ERROR("Failed to allocate KissFFT config");
-    }
 }
 
 AnalyticsEngine::~AnalyticsEngine(){
     stop();
-
-    if ( fftConfig_ ){
-        kiss_fft_free(fftConfig_);
-        fftConfig_ = nullptr ;
-    }
 }
 
 void AnalyticsEngine::start(){
     initSocket();
-    bufferPosition_ = 0 ;
-
     SPDLOG_INFO("AnalyticsEngine started on UDP port {}", udpSocket_);
 }
 
 void AnalyticsEngine::stop(){
     closeSocket();
+}
+
+void AnalyticsEngine::registerComponent(int componentId, std::function<void(const double*, size_t, int id)> func){
+    std::lock_guard<std::mutex> lock(contextsMutex_);
+    if ( contexts_.contains(componentId) ) return ;
+    
+    auto size = Config::get<unsigned int>("analysis.ring_buffer_size").value_or(480000);
+    contexts_.emplace(componentId, std::make_unique<AnalysisContext>(size * 4,std::move(func)));
+}
+
+void AnalyticsEngine::unregisterComponent(int componentId){
+    std::lock_guard<std::mutex> lock(contextsMutex_);
+    contexts_.erase(componentId);
 }
 
 void AnalyticsEngine::initSocket() {
@@ -90,7 +83,7 @@ void AnalyticsEngine::initSocket() {
     // Set up destination address (localhost)
     memset(&destAddr_, 0, sizeof(destAddr_));
     destAddr_.sin_family = AF_INET ;
-    destAddr_.sin_port = htons(Config::get<unsigned int>("analysis.spectrum_analyzer.port").value_or(54322));
+    destAddr_.sin_port = htons(Config::get<unsigned int>("analysis.port").value_or(54322));
     
 #ifdef _WIN32
     destAddr_.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
@@ -117,73 +110,37 @@ void AnalyticsEngine::closeSocket() {
 #endif
 }
 
-void AnalyticsEngine::analyzeBuffer(const double* data, size_t count) {
-    if ( count == 0 ) return ;
-    
-    for ( size_t i = 0; i < count; ++i ) {
-        fftBuffer_[bufferPosition_++] = data[i] ;
-    
-        if ( bufferPosition_ >= fftSize_ ) {
-            processFFT();
-            
-            // Overlap half of buffer for smoother updates
-            std::memmove(fftBuffer_.data(), 
-                        fftBuffer_.data() + fftSize_ / 2,
-                        (fftSize_ / 2) * sizeof(double));
-            bufferPosition_ = fftSize_ / 2 ;
+void AnalyticsEngine::push(const double* data, size_t count, int componentId){
+    std::lock_guard<std::mutex> lock(contextsMutex_);
+    auto it = contexts_.find(componentId);
+    if ( it == contexts_.end() ) return ;
+
+    it->second->buffer.push(data, count);
+}
+
+void AnalyticsEngine::processContexts(std::vector<double>& buffer){
+    std::lock_guard<std::mutex> lock(contextsMutex_);
+    for ( auto& [id, ctx] : contexts_ ){
+        size_t count = ctx->buffer.pop(buffer.data(), buffer.size());
+        if ( count > 0 ){
+            ctx->processFunc(buffer.data(), count, id);
         }
-    }
+    } 
 }
 
-void AnalyticsEngine::applyHannWindow(std::vector<double>& data) {
-    size_t N = data.size() ;
-    for ( size_t i = 0; i < N; ++i ) {
-        double window = 0.5 * (1.0 - cos(2.0 * M_PI * i / (N - 1)));
-        data[i] *= window ;
-    }
-}
-
-void AnalyticsEngine::processFFT() {
-    if ( !fftConfig_ ) return ;
-
-    std::vector<double> windowedData = fftBuffer_ ; // makes a copy
-    applyHannWindow(windowedData);
-    
-    std::vector<kiss_fft_cpx> fftInput(fftSize_);
-    std::vector<kiss_fft_cpx> fftOutput(fftSize_);
-    
-    for ( size_t i = 0; i < fftSize_ ; ++i ) {
-        fftInput[i].r = fftBuffer_[i] ;
-        fftInput[i].i = 0.0 ;
-    }
-    
-    kiss_fft(fftConfig_, fftInput.data(), fftOutput.data());
-    
-    // Calculate magnitudes (half size because 2nd half is mirrored)
-    std::vector<float> magnitudes(fftSize_ / 2);
-    for (size_t i = 0; i < fftSize_ / 2; ++i) {
-        kiss_fft_scalar real = fftOutput[i].r ;
-        kiss_fft_scalar imag = fftOutput[i].i ;
-        float magnitude = std::sqrt(real * real + imag * imag);
-        
-        // convert to db, floor out small values to avoid log(0), and normalize by N/2 for single side spectrum
-        magnitude = std::max(magnitude, 1e-10f) / (fftSize_ / 2.0); 
-        magnitudes[i] = 20.0 * std::log10(magnitude);
-    }
-    
-    sendFFTData(magnitudes);
-}
-
-void AnalyticsEngine::sendFFTData(const std::vector<float>& magnitudes) {
+void AnalyticsEngine::send(const std::vector<float>& output, int componentId) {
     if ( udpSocket_ == INVALID_SOCKET ){
         return ;
     }
 
-    // Simple binary format: [float, float, float, ...]
-    const char* data = reinterpret_cast<const char*>(magnitudes.data());
-    size_t dataSize = magnitudes.size() * sizeof(float);
-    
-    sendto(udpSocket_, data, static_cast<int>(dataSize), 0,
-        (struct sockaddr*)&destAddr_, sizeof(destAddr_));
+    // ComponentId as int32, then data as float: [float, float, float, ...]
+    size_t dataSize = sizeof(int32_t) + output.size() * sizeof(float);
+    std::vector<char> packet(dataSize);
 
+    int32_t id = static_cast<int32_t>(componentId);
+    std::memcpy(packet.data(), &id, sizeof(int32_t));
+    std::memcpy(packet.data() + sizeof(int32_t), output.data(), output.size() * sizeof(float));
+    
+    sendto(udpSocket_, packet.data(), static_cast<int>(dataSize), 0,
+        (struct sockaddr*)&destAddr_, sizeof(destAddr_));
 }

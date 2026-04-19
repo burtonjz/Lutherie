@@ -46,6 +46,7 @@ struct ComponentDescriptor {
     bool isModulator() const { return canModulate ; }
     bool isMidiHandler() const { return numMidiOutputs > 0 ; }
     bool isMidiListener() const { return numMidiInputs > 0 ; }
+    bool isAnalyzer() const { return numAudioInputs > 0 && numAudioOutputs == 0 ;}
 
     int hasCollection(CollectionType c) const {
         for ( size_t i = 0 ; i < collections.size() ; ++i ){

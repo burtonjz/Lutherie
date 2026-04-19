@@ -21,6 +21,7 @@
 #include "core/BaseComponent.hpp"
 #include "core/BaseModule.hpp"
 #include "core/BaseModulator.hpp"
+#include "dsp/Analyzer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 
@@ -48,6 +49,7 @@ private:
     std::unordered_set<ComponentId> midiListeners_ ;
     std::unordered_set<ComponentId> modulators_ ;
     std::unordered_set<ComponentId> modules_ ;
+    std::unordered_set<ComponentId> analyzers_ ;
 
 public:
     ComponentManager(MidiController* midiCtrl);
@@ -66,6 +68,9 @@ public:
             midiHandlers_.insert(id);
             midiController_->addHandler(getMidiHandler(id));
         } 
+        if ( descriptor.isAnalyzer() ){
+            analyzers_.insert(id);
+        }
 
         return id;
     }
@@ -84,13 +89,16 @@ public:
 
     BaseComponent* getRaw(ComponentId id) const ;
     BaseModule* getModule(ComponentId id) const ;
-    const std::unordered_set<ComponentId>& getModuleIds() const ;
     BaseModulator* getModulator(ComponentId id) const ;
-    const std::unordered_set<ComponentId>& getModulatorIds() const ;
     MidiEventHandler* getMidiHandler(ComponentId id) const ;
-    const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
     MidiEventListener* getMidiListener(ComponentId id) const ;
+    Analyzer* getAnalyzer(ComponentId id) const ;
+
+    const std::unordered_set<ComponentId>& getModuleIds() const ;
+    const std::unordered_set<ComponentId>& getModulatorIds() const ;
+    const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
     const std::unordered_set<ComponentId>& getMidiListenerIds() const ;
+    const std::unordered_set<ComponentId>& getAnalyzerIds() const ;
 
     void remove(ComponentId id);
 
@@ -100,6 +108,8 @@ public:
      * @brief runs parameter modulation all non-module components
      */
     void runParameterModulation();
+
+    void runAnalyzers();
 
     // saving / loading
     json serializeComponent(BaseComponent* c) const ;

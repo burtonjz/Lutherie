@@ -30,6 +30,7 @@
 #include "configs/MonophonicFilterConfig.hpp"
 #include "configs/DelayConfig.hpp"
 #include "configs/MultiplyConfig.hpp"
+#include "configs/SpectrumAnalyzerConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

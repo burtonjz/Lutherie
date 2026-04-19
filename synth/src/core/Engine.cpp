@@ -55,9 +55,7 @@ Engine::Engine():
     availableMidiPorts_(),
     selectedMidiPort_(-1),
     midiState_(),
-    midiDefaultHandler_(),
-    // analysis
-    analysisAudioOut_(48000 * 10)
+    midiDefaultHandler_()
 {
     ApiHandler::instance()->initialize(this);
 
@@ -298,19 +296,14 @@ void Engine::analysisLoop(){
     SPDLOG_INFO("Analysis thread started");
     
     Config::load();
-
     AnalyticsEngine::instance()->start();
 
-    size_t bufferSize = Config::get<int>("analysis.spectrum_analyzer.buffer_size").value_or(2048);
+
+    size_t bufferSize = Config::get<size_t>("analysis.buffer_size").value_or(4096);
     std::vector<double> buffer(bufferSize);
     
-    while (analysisRunning_ && engineRunning_){
-        size_t count = analysisAudioOut_.pop(buffer.data(), buffer.size());
-        
-        if (count > 0){
-            AnalyticsEngine::instance()->analyzeBuffer(buffer.data(), count);
-        } 
-        
+    while ( analysisRunning_ && engineRunning_ ){
+        AnalyticsEngine::instance()->processContexts(buffer);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
     
@@ -348,7 +341,8 @@ int Engine::audioCallback(
         buffer[i] = dsp::fastAtan(sample);
     }
     
-    engine->analysisAudioOut_.push(buffer, nBufferFrames);
+    engine->componentManager.runAnalyzers();
+    
     return 0;
 }
 
@@ -603,17 +597,22 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
 bool Engine::handleSignalConnection(ConnectionRequest request){
     BaseModule* inbound = nullptr ;
     BaseModule* outbound = nullptr ;
+    Analyzer* analyzer = nullptr ;
 
+    // inbound component can be module, analyzer, or peripheral
+    analyzer = componentManager.getAnalyzer(request.inboundID.value_or(-1));
     inbound = componentManager.getModule(request.inboundID.value_or(-1));
+    
+    // outbound can be module only
     outbound = componentManager.getModule(request.outboundID.value_or(-1));
 
-    // if the source is an external endpoint
+    // Case 1: if outbound is a peripheral
     if ( ! request.outboundID.has_value() ){
-        SPDLOG_WARN("receiving audio from an input device is not yet supported.");
+        SPDLOG_WARN("receiving audio from an peripheral source is not yet supported.");
         return false ;
     }
 
-    // if the destination is an external endpoint
+    // Case 2: if inbound is a peripheral
     if ( ! request.inboundID.has_value() ){
         if ( request.remove ){
             signalController.unregisterSink(outbound, request.outboundIdx.value());
@@ -622,7 +621,23 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
         signalController.registerSink(outbound, request.outboundIdx.value());
         return true ;
     }
-    
+
+    // Case 3: analyzer inbound
+    if ( analyzer ){
+        if ( outbound ){
+            if ( request.remove ){
+                analyzer->disconnectInput(outbound, request.outboundIdx.value());
+            } else {
+                analyzer->connectInput(outbound, request.outboundIdx.value());
+            }
+            return true ;
+        } else {
+            SPDLOG_WARN("analyzer component defined but outbound module invalid. Cannot connect");
+            return false ;
+        }
+    }
+
+    // Case 4: module to module
     if ( request.remove ){
         signalController.disconnect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
         return true ;
@@ -634,11 +649,51 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
 
 std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId id) const {
     SPDLOG_DEBUG("getting signal connections for component id = {}", id);
+
     BaseModule* module = componentManager.getModule(id);
+    Analyzer* analyzer = componentManager.getAnalyzer(id);
+    
     std::vector<ConnectionRequest> v ;
 
-    if ( !module ) return v ;
+    // if it's not a module, check if it's analyzer
+    if ( !module && !analyzer ){
+        SPDLOG_WARN("cannot get signal connections for component with id = {}. It is not an analyzer or module.", id);
+        return v ;
+    }
+
+    // Case 1: Analyzer
+    if ( analyzer ){
+        for ( const auto [m, idx] : analyzer->getSources() ){
+            ConnectionRequest req ;
+            req.outboundID = m->getId();
+            req.outboundIdx = idx ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+
+            req.inboundID = id ;
+            req.inboundIdx = 0 ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            
+            v.push_back(req);
+        }
+        return v ;
+    } 
     
+    // Case 2: Module
+
+    // check if module is connected to any analyzer
+    for ( const auto& [a, idx] : module->getAnalyzers() ){
+        if ( a ){
+            ConnectionRequest req ;
+            req.outboundID = id ;
+            req.outboundIdx = idx ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            req.inboundID = a->getId() ;
+            req.inboundIdx = 0 ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            v.push_back(req);
+        }
+    }
+
     // check if module is a sink
     for ( const auto& conn : signalController.getSinks()){
         if ( module == conn.module ){

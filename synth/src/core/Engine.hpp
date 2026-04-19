@@ -24,7 +24,6 @@
 #include <rtmidi/RtMidi.h>
 #include <rtaudio/RtAudio.h>
 
-#include "containers/LockFreeRingBuffer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "requests/ConnectionRequest.hpp"
@@ -136,9 +135,6 @@ private:
     
     MidiState midiState_;
     MidiEventHandler midiDefaultHandler_;
-    
-    // Analysis buffer
-    LockFreeRingBuffer<double> analysisAudioOut_;
     
     double sampleRate_ ;
 };

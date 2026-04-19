@@ -15,28 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_CONFIGS_MIDIFILTER_
-#define __HPP_CONFIGS_MIDIFILTER_
+#ifndef SPECTRUM_ANALYZER_CONFIG_HPP_
+#define SPECTRUM_ANALYZER_CONFIG_HPP_
 
 #include "types/ComponentType.hpp"
 #include <nlohmann/json.hpp>
 
+
 using json = nlohmann::json ;
 
 // forward declare class
-class MidiChord ;
+class SpectrumAnalyzer ;
 
 // define default configuration
-struct MidiChordConfig {
-    uint8_t max_value = 127 ;
-    uint8_t min_value = 0 ;
+struct SpectrumAnalyzerConfig {
+    bool enabled = true ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiChordConfig, max_value, min_value) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpectrumAnalyzerConfig, enabled) // macro to serialize/deserialize json <-> structs
 
-template <> struct ComponentTypeTraits<ComponentType::MidiChord>{ 
-    using type = MidiChord ;
-    using config = MidiChordConfig ;
+template <> struct ComponentTypeTraits<ComponentType::SpectrumAnalyzer>{ 
+    using type = SpectrumAnalyzer ;
+    using config = SpectrumAnalyzerConfig ;
 };
-
-#endif // __HPP_CONFIGS_MIDIFILTER_
+#endif // SPECTRUM_ANALYZER_CONFIG_HPP_

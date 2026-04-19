@@ -59,8 +59,17 @@ MidiEventListener* ComponentManager::getMidiListener(ComponentId id) const {
     return dynamic_cast<MidiEventListener*>(getRaw(id));
 }
 
+Analyzer* ComponentManager::getAnalyzer(ComponentId id) const {
+    if ( analyzers_.find(id) == analyzers_.end() ) return nullptr ;
+    return dynamic_cast<Analyzer*>(getRaw(id));
+}
+
 const std::unordered_set<ComponentId>& ComponentManager::getMidiListenerIds() const {
     return midiListeners_ ;
+}
+
+const std::unordered_set<ComponentId>& ComponentManager::getAnalyzerIds() const {
+    return analyzers_ ;
 }
 
 void ComponentManager::remove(ComponentId id){
@@ -84,6 +93,13 @@ void ComponentManager::runParameterModulation(){
         if ( !modules_.contains(it->first) ){
             it->second->updateParameters();
         }
+    }
+}
+
+void ComponentManager::runAnalyzers(){
+    for ( auto id : analyzers_ ){
+        auto a = getAnalyzer(id);
+        a->flush();
     }
 }
 

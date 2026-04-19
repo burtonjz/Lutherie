@@ -20,7 +20,6 @@
 
 #include <atomic>
 #include <vector>
-#include <thread>
 
 template<typename T>
 class LockFreeRingBuffer {

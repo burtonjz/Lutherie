@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,19 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef INTERFACE_ANALYZER_WIDGET_HPP_
+#define INTERFACE_ANALYZER_WIDGET_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Multiply.hpp"
-#include "components/SpectrumAnalyzer.hpp"
-#include "components/Delay.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
+#include <QString>
+class IAnalyzerWidget {
+public:
+    virtual ~IAnalyzerWidget() = default ;
+    virtual void addLayer(int componentId, const QString& label) = 0 ;
+    virtual void removeLayer(int componentId) = 0 ;
+    virtual void renameLayer(int componentId, const QString& label) = 0 ;
+    virtual void onData(int componentId, const float* data, size_t count) = 0 ;
+};
 
-#endif // __HPP_ALL_COMPONENTS_
+
+#endif // INTERFACE_ANALYZER_WIDGET_HPP_

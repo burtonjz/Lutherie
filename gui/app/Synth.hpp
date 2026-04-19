@@ -21,9 +21,9 @@
 #include "app/Setup.hpp"
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
+#include "managers/AnalysisManager.hpp"
 #include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
-#include "widgets/SpectrumAnalyzerWidget.hpp"
 
 #include <kddockwidgets/MainWindow.h>
 #include <QUiLoader>
@@ -46,8 +46,7 @@ private:
     GraphPanel* graph_ ;
     ComponentManager* componentManager_ ;
     GroupManager* groupManager_ ;
-    
-    SpectrumAnalyzerWidget* spectrumWidget_ ;
+    AnalysisManager* analysisManager_ ;
 
     // docks
     ControlPanel* parameterPanel_ ;
@@ -56,18 +55,19 @@ private:
     ControlPanel* modulationPanel_ ;
     KDDWQt::DockWidget* modulationDock_ ;
 
+    std::unordered_map<ComponentType, KDDWQt::DockWidget*> analyzerDocks_ ;
+
     // save/load 
     QString saveFilePath_ ;
     json saveData_ ;
 
-    // ========= ACTIONS =========
+    // ========= MENUS / ACTIONS =========
     // file menu
     QAction* actionLoad_ ;
     QAction* actionSave_ ;
     QAction* actionSaveAs_ ;
 
     // view menu
-    QAction* actionSpectrumAnalyzer_ ;
     QAction* actionShowParameterPanel_ ;
     QAction* actionShowModulationPanel_ ;
 
@@ -86,6 +86,7 @@ public:
 private:
     void configureMenu();
     void configureToolBar();
+    void configureDocks();
     QMenu* buildComponentMenu();
 
     void performSave();
@@ -112,7 +113,7 @@ private slots:
     void onActionSaveAs();
 
     // view menu actions
-    void onActionToggleSpectrumAnalyzer();
+    void onActionToggleAnalyzer(ComponentType typ);
     void onActionToggleParameterPanel();
     void onActionToggleModulationPanel();
 

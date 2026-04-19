@@ -21,7 +21,6 @@
 #include "api/ApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "config/Config.hpp"
-#include "widgets/SpectrumAnalyzerWidget.hpp"
 #include "graphics/ToastNotification.hpp"
 #include "app/Theme.hpp"
 
@@ -50,35 +49,24 @@ Synth::Synth(QWidget* parent):
     setup_(nullptr),
     componentManager_(new ComponentManager(this)),
     groupManager_(new GroupManager(this)),
+    analysisManager_(new AnalysisManager(this)),
     graph_(nullptr),
-    spectrumWidget_(nullptr),
     parameterPanel_(new ControlPanel(this)),
     parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
     modulationPanel_(new ControlPanel(this)),
-    modulationDock_(new KDDWQt::DockWidget("__modulationDock"))
+    modulationDock_(new KDDWQt::DockWidget("__modulationDock")),
+    analyzerDocks_()
 {
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
 
     graph_ = new GraphPanel(componentManager_, this);
 
-    // Docks
-    parameterDock_->setWidget(parameterPanel_);
-    parameterDock_->setTitle("Parameters");
-    addDockWidget(parameterDock_, KDDW::Location_OnRight);
-
-    modulationDock_->setWidget(modulationPanel_);
-    modulationDock_->setTitle("Modulation");
-    addDockWidget(modulationDock_, KDDW::Location_OnBottom, parameterDock_);
-
-    parameterDock_->close();
-    modulationDock_->close();
-    
-    // menus
+    configureDocks();
     configureMenu();
     configureToolBar();
 
-    // central widget
+    // central widget (graph_)
     auto* container = new QWidget(this);
     auto* layout = new QVBoxLayout(container);
     layout->setContentsMargins(0,0,0,0);
@@ -175,10 +163,20 @@ Synth::Synth(QWidget* parent):
         groupManager_, &GroupManager::groupRemoved,
         graph_, &GraphPanel::onComponentGroupRemoved
     );
+
+    // analysis
+    connect(
+        componentManager_, &ComponentManager::componentAdded,
+        analysisManager_, &AnalysisManager::onComponentAdded
+    );
+
+    connect(
+        componentManager_, &ComponentManager::componentRemoved,
+        analysisManager_, &AnalysisManager::onComponentRemoved
+    );
 }
 
 Synth::~Synth(){
-    if ( spectrumWidget_ ) spectrumWidget_->close();
 }
 
 void Synth::configureMenu(){
@@ -209,12 +207,18 @@ void Synth::configureMenu(){
     actionShowModulationPanel_ = new QAction("Modulation Panel", this);
     actionShowModulationPanel_->setShortcut(QKeySequence("Ctrl+M"));
 
-    actionSpectrumAnalyzer_ = new QAction("Spectrum Analyzer", this);
-    actionSpectrumAnalyzer_->setShortcut(QKeySequence("Ctrl+E"));
-
     menuView->addAction(actionShowParameterPanel_);
     menuView->addAction(actionShowModulationPanel_);
-    menuView->addAction(actionSpectrumAnalyzer_);
+
+    for ( const auto& [key, _]: analyzerDocks_ ){
+        QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(key).name);
+        QAction* action = menuView->addAction(name);
+        connect(
+            action, &QAction::triggered,
+            this, [this, key](){
+                onActionToggleAnalyzer(key);
+        });
+    }
 
     auto* menuTools = menuBar()->addMenu("Tools");
     auto* menuHelp = menuBar()->addMenu("Help");
@@ -239,10 +243,6 @@ void Synth::configureMenu(){
     connect(
         actionShowModulationPanel_, &QAction::triggered, 
         this, &Synth::onActionToggleModulationPanel
-    );
-    connect(
-        actionSpectrumAnalyzer_, &QAction::triggered, 
-        this, &Synth::onActionToggleSpectrumAnalyzer
     );
 }
 
@@ -295,6 +295,33 @@ void Synth::configureToolBar(){
     );
 }
 
+void Synth::configureDocks(){
+    parameterDock_->setWidget(parameterPanel_);
+    parameterDock_->setTitle("Parameters");
+    addDockWidget(parameterDock_, KDDW::Location_OnRight);
+    
+
+    modulationDock_->setWidget(modulationPanel_);
+    modulationDock_->setTitle("Modulation");
+    addDockWidget(modulationDock_, KDDW::Location_OnBottom, parameterDock_);
+
+    parameterDock_->close();
+    modulationDock_->close();
+
+    // Analyzer Docks
+    for ( auto key : analysisManager_->getAnalyzerTypes() ){
+        auto dock = new KDDWQt::DockWidget("__analyzerDock");
+
+        dock->setWidget(analysisManager_->getAnalyzerWidget(key));
+        QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(key).name);
+        dock->setTitle(name);
+        addDockWidget(dock, KDDW::Location_None);
+
+        dock->close();
+        analyzerDocks_[key] = dock ;
+    }
+}
+
 QMenu* Synth::buildComponentMenu(){
     QMenu* menu = new QMenu(this);
 
@@ -323,6 +350,7 @@ QMenu* Synth::buildComponentMenu(){
     QMenu* midiGen = menu->addMenu("MIDI Generators");
     QMenu* midiProc = menu->addMenu("MIDI Processors");
     QMenu* modulator = menu->addMenu("Modulators");
+    QMenu* analyzer = menu->addMenu("Analyzers");
     
     for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
         if ( desc.numAudioInputs == 0 && desc.numAudioOutputs > 0 ){
@@ -368,6 +396,15 @@ QMenu* Synth::buildComponentMenu(){
                 }
             );
         }
+        if ( desc.isAnalyzer() ){
+            QAction* action = analyzer->addAction(QString::fromStdString(desc.name));
+            connect(
+                action, &QAction::triggered,
+                this, [this, typ](){
+                    graph_->onComponentSelected(typ);
+                }
+            );
+        }
     }
 
     // completer connections
@@ -389,9 +426,7 @@ QMenu* Synth::buildComponentMenu(){
 }
 
 void Synth::closeEvent(QCloseEvent* event){
-    if ( spectrumWidget_ ) spectrumWidget_->close();
     if ( setup_ ) setup_->close() ;
-
     event->accept();
 }
 
@@ -548,17 +583,15 @@ void Synth::performSave(){
     return ;
 }
 
-void Synth::onActionToggleSpectrumAnalyzer(){
-    if ( !spectrumWidget_ ){
-        spectrumWidget_ = new SpectrumAnalyzerWidget();
-        int port = Config::get<int>("analysis.spectrum_analyzer.port").value_or(54322);
-        spectrumWidget_->setPort(port);
-        spectrumWidget_->setAttribute(Qt::WA_DeleteOnClose);
-    }
+void Synth::onActionToggleAnalyzer(ComponentType typ){
+    if ( !analyzerDocks_.contains(typ) ) return ;
 
-    spectrumWidget_->show();
-    spectrumWidget_->raise();
-    spectrumWidget_->activateWindow();
+    auto dock = analyzerDocks_.at(typ);
+    if ( dock->isOpen() ){
+        dock->close();
+    } else {
+        dock->open();
+    }
 }
 
 void Synth::onActionToggleParameterPanel(){
@@ -598,8 +631,10 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
 }
 
 void Synth::onComponentRemoved(int componentId){
-    // the docks are cleaned up off the "destroyed" signal of the content widgets
-    // so nothing needed here unless we introduce additional removal tasks
+    /* 
+    parameter/modulation dock children are cleaned up off the "destroyed" signal of the 
+    content widgets, so nothing needed here unless we introduce additional removal tasks
+    */
 }
 
 void Synth::onShowParameters(int componentId){
@@ -709,6 +744,9 @@ void Synth::onRequestComponentRename(int componentId, QString name){
     auto modContent = componentManager_->getModulationParameters(componentId);
     auto modSection = modulationPanel_->getSection(modContent);
     modSection->setTitle(name);
+
+    // update analyzer if relevant
+    analysisManager_->onComponentRename(componentId, name);
 }
 
 void Synth::onRequestGroupRename(int groupId, QString name){

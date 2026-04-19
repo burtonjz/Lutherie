@@ -30,9 +30,10 @@
         "max_depth": 2        
     },
     "analysis":{
+        "ring_buffer_size": 480000,
+        "buffer_size": 4096,
+        "port": 54322,
         "spectrum_analyzer" : {
-            "port": 54322,
-            "buffer_size": 4096,
             "smooth_factor": 0.7
         }
     }

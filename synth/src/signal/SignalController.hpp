@@ -68,15 +68,16 @@ public:
         double output = 0 ; 
         for (BaseModule*  mod : chain){
             mod->updateParameters();
-            mod->tick();
             mod->calculateSample();
-
+            
             // if an output index is a sink, add it to the final output
             for ( size_t i = 0; i < mod->getNumOutputs(); ++i ){
                 if ( sinks.count({mod,i}) ){
                     output += mod->getCurrentSample(i) ;
                 }
             }
+
+            mod->tick();
         }
 
         return output ;

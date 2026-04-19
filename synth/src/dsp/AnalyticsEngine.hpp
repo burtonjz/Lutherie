@@ -19,7 +19,11 @@
 #ifndef ANALYTICS_ENGINE_HPP_
 #define ANALYTICS_ENGINE_HPP_
 
+#include "containers/LockFreeRingBuffer.hpp"
+#include <functional>
+#include <memory>
 #include <vector>
+#include <unordered_map>
 #include <kissfft/kiss_fft.h>
 
 // Cross-platform socket includes
@@ -39,9 +43,25 @@
     typedef int SOCKET ;
 #endif
 
+struct AnalysisContext {
+    LockFreeRingBuffer<double> buffer ;
+    std::function<void(const double*, size_t, int)> processFunc ;
+
+    AnalysisContext(
+        size_t bufferSize,
+        std::function<void(const double*, size_t, int)> func
+    ) :
+        buffer(bufferSize),
+        processFunc(std::move(func))
+    {}
+};
+
 class AnalyticsEngine {
 private:
-    static AnalyticsEngine* instance_;
+    static AnalyticsEngine* instance_ ;
+
+    std::mutex contextsMutex_ ;
+    std::unordered_map<int, std::unique_ptr<AnalysisContext>> contexts_ ;
     
     // UDP SOCKET VARIABLES
 #ifdef _WIN32
@@ -49,16 +69,10 @@ private:
 #endif
     SOCKET udpSocket_ ;
     struct sockaddr_in destAddr_ ;
-    
-    std::vector<double> fftBuffer_ ;
-    size_t bufferPosition_ ;
-    
-    size_t fftSize_ ;
-    kiss_fft_cfg fftConfig_ ;
-    unsigned int sampleRate_ ;
 
 public:
     static AnalyticsEngine* instance();
+
     AnalyticsEngine(const AnalyticsEngine&) = delete ;
     AnalyticsEngine& operator=(const AnalyticsEngine&) = delete ;
     AnalyticsEngine(AnalyticsEngine&&) = delete ;
@@ -66,7 +80,14 @@ public:
 
     void start();
     void stop();
-    void analyzeBuffer(const double* data, size_t count);
+
+    void registerComponent(int componentId, std::function<void(const double*, size_t, int id)> func);
+    void unregisterComponent(int componentId);
+    
+    void push(const double* data, size_t count, int componentId);
+    void processContexts(std::vector<double>& buffer);
+
+    void send(const std::vector<float>& output, int componentId);
     
 private:
     AnalyticsEngine();
@@ -74,10 +95,7 @@ private:
     
     void initSocket();
     void closeSocket();
-    void processFFT();
-    void sendFFTData(const std::vector<float>& magnitudes);
-    void applyHannWindow(std::vector<double>& data);
-    
+ 
 };
 
 #endif // ANALYTICS_ENGINE_HPP_

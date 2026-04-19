@@ -83,9 +83,9 @@ const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(130, 135, 138);
 const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR  = QColor(38, 44, 48);
 
 // spectrum analyzer
-const QColor Theme::ANALYZER_BACKGROUND_COLOR = QColor(22, 26, 30);
-const QColor Theme::ANALYZER_GRID_COLOR       = QColor(38, 44, 48);
-const QColor Theme::ANALYZER_LINE_COLOR       = QColor(135, 175, 155);
+const QColor Theme::SPECTRUM_BACKGROUND_COLOR = QColor(22, 26, 30);
+const QColor Theme::SPECTRUM_GRID_COLOR       = QColor(38, 44, 48);
+const QColor Theme::SPECTRUM_LINE_COLOR       = QColor(135, 175, 155);
 
 const QColor Theme::MODULATION_ACTIVE   = QColor(185, 49, 79);  
 const QColor Theme::MODULATION_INACTIVE = QColor(15, 15, 15);

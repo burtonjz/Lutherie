@@ -23,12 +23,16 @@
 #include <cstring>
 #include <memory>
 #include <algorithm>
+#include <set>
 
 #include "core/BaseComponent.hpp"
 #include "config/Config.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;
+
+// forward declaration
+class Analyzer ;
 
 struct SignalConnection {
     BaseModule* module ; // connecting module
@@ -56,6 +60,8 @@ protected:
     std::vector<std::unordered_set<SignalConnection, ConnectionHash>> signalInputs_ ;
     std::vector<std::unordered_set<SignalConnection, ConnectionHash>> signalOutputs_ ;
     std::vector<std::unique_ptr<double[]>> buffers_ ;
+
+    std::set<std::pair<Analyzer*, size_t>> toAnalyzer_ ;
 
 public:
     BaseModule(size_t in, size_t out):
@@ -112,7 +118,7 @@ public:
     }
 
     void connectInput(BaseModule* source, size_t input, size_t sourceOutput){
-        assert( output < nInputs_ );
+        assert( input < nInputs_ );
         assert( sourceOutput < source->nOutputs_ );
         signalInputs_[input].insert({source, sourceOutput});
         source->signalOutputs_[sourceOutput].insert({this, input});
@@ -123,6 +129,10 @@ public:
         assert ( sourceOutput < source->nOutputs_ );
         signalInputs_[input].erase({source, sourceOutput});
         source->signalOutputs_[sourceOutput].erase({this, input});
+    }
+
+    const std::set<std::pair<Analyzer*, size_t>>& getAnalyzers() const {
+        return toAnalyzer_ ;
     }
 
     const std::unordered_set<SignalConnection, ConnectionHash>& getInputs(size_t inp) const {    
@@ -156,6 +166,15 @@ protected:
         assert( idx < nOutputs_ );
         buffers_[idx][bufferIndex_] = val ;
     }
+
+    void connectAnalyzer(Analyzer* a, size_t idx){
+        toAnalyzer_.insert({a, idx});
+    }
+
+    void disconnectAnalyzer(Analyzer* a, size_t idx){
+        toAnalyzer_.erase({a, idx});
+    }
+    friend class Analyzer ;
 };
 
 
