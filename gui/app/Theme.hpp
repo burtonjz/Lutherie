@@ -78,7 +78,7 @@ public:
     static const QColor SWITCH_WIDGET_DISABLED_COLOR ;
 
     static const QColor SPECTRUM_BACKGROUND_COLOR ;
-    static const QColor SPECTRUM_LINE_COLOR ;
+    static const std::array<QColor,6> SPECTRUM_LINE_COLORS ;
     static const QColor SPECTRUM_GRID_COLOR ;
 
     static const QColor MODULATION_ACTIVE ;
@@ -156,7 +156,7 @@ public:
     static constexpr int   SPECTRUM_MARGIN_LEFT      = 60 ;
     static constexpr int   SPECTRUM_MARGIN_RIGHT     = 20 ;
     static constexpr int   SPECTRUM_MARGIN_TOP       = 20 ;
-    static constexpr int   SPECTRUM_MARGIN_BOTTOM    = 40 ;
+    static constexpr int   SPECTRUM_MARGIN_BOTTOM    = 120 ;
     static constexpr int   SPECTRUM_PIXEL_RESOLUTION = 2 ;
     static constexpr float SPECTRUM_MIN_FREQUENCY    = 10.0 ;
     static constexpr float SPECTRUM_MAX_FREQUENCY    = 25000.0 ;

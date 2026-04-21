@@ -16,6 +16,7 @@
  */
 
 #include "dsp/Analyzer.hpp"
+#include "dsp/AnalyticsEngine.hpp"
 
  Analyzer::Analyzer(ComponentId id, ComponentType typ):
     BaseComponent(id, typ),

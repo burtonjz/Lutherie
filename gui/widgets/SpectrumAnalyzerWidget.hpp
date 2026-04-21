@@ -20,9 +20,9 @@
 #define SPECTRUM_ANALYZER_WIDGET_HPP
 
 #include "interfaces/IAnalyzerWidget.hpp"
+#include "widgets/GraphLayerControls.hpp"
 
 #include <QWidget>
-#include <QUdpSocket>
 #include <vector>
 #include <QPainter>
 #include <QTimer>
@@ -32,6 +32,9 @@ class SpectrumAnalyzerWidget : public QWidget, public IAnalyzerWidget {
     Q_OBJECT
 
 private:
+    GraphLayerControls* controls_ ;
+    std::unordered_map<int, std::vector<float>> layerData_ ;
+
     float smoothFactor_ ;
     float sampleRate_ ;
     
@@ -41,13 +44,6 @@ private:
     float minDb_ ;
     float maxDb_ ;
     
-    // FFT data
-    struct LayerData {
-        std::vector<float> smoothedData ;
-        QString name ;
-    };
-    std::unordered_map<int, LayerData> layerData_ ;
-
     // Update throttling
     QTimer *updateTimer_ ;
     bool dataReady_ ;
@@ -65,6 +61,7 @@ public:
     void addLayer(int componentId, const QString& label) override ;
     void removeLayer(int componentId) override ;
     void renameLayer(int componentId, const QString& label) override ;
+    void toggleLayer(int componentId, bool enabled) override ;
     void onData(int componentId, const float* data, size_t count) override ;
 
 protected:

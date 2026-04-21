@@ -25,6 +25,7 @@ public:
     virtual void addLayer(int componentId, const QString& label) = 0 ;
     virtual void removeLayer(int componentId) = 0 ;
     virtual void renameLayer(int componentId, const QString& label) = 0 ;
+    virtual void toggleLayer(int componentId, bool enabled) = 0 ;
     virtual void onData(int componentId, const float* data, size_t count) = 0 ;
 };
 

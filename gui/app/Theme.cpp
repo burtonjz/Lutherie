@@ -28,7 +28,7 @@ Grid: 38, 44, 48 // jet black
 Text: 245, 237, 240 // lavender blush
 Accent: 242, 129, 35 // vivid tangerine
 
-Audio: 135, 179, 141 // muted teal
+Audio: 135, 179, 141 // muted teal 
 Modulation: 185, 49, 79 // rosewood
 Midi: 132, 169, 192 // steel blue
 */
@@ -85,7 +85,14 @@ const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR  = QColor(38, 44, 48);
 // spectrum analyzer
 const QColor Theme::SPECTRUM_BACKGROUND_COLOR = QColor(22, 26, 30);
 const QColor Theme::SPECTRUM_GRID_COLOR       = QColor(38, 44, 48);
-const QColor Theme::SPECTRUM_LINE_COLOR       = QColor(135, 175, 155);
+const std::array<QColor,6> Theme::SPECTRUM_LINE_COLORS = {
+    QColor(135, 179, 141),
+    QColor(242, 129, 35),
+    QColor(132, 169, 192),
+    QColor(185, 49, 79),
+    QColor(73, 49, 107),
+    QColor(203, 203, 226)
+};
 
 const QColor Theme::MODULATION_ACTIVE   = QColor(185, 49, 79);  
 const QColor Theme::MODULATION_INACTIVE = QColor(15, 15, 15);

@@ -1,10 +1,15 @@
 # Lutherie TODO
 
 ## Bugs / Cleanup
-- Fix group serialization/deserialization
+- Spectrum Analyzer labels
+- Analysis Interface hide layer
+- Fix the issue with positioning of the graph panel when docking something
+- Create zoom out view of graph panel with drag to navigate
+- Create max zoom out of graph panel
+- allow group deletions?
+- when content deleted from control panel, update geometry so that min size doesn't get messed up
 - create specialized widget for midi filter (horizontal piano roll, highlight pass-through key ranges)
   - PianoRollWidget should be renamed to SequencerWidget, and the PianoRoll component should be broken out and given a horizontal/vertical flag.
-- Switch all json parameters to use names instead of enum positions for stability/backwards compatibility
 
 ## UI
 

@@ -25,11 +25,12 @@
 
 SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     QWidget(parent),
+    controls_(new GraphLayerControls(this)),
+    layerData_(),
     minFreq_(Theme::SPECTRUM_MIN_FREQUENCY),
     maxFreq_(Theme::SPECTRUM_MAX_FREQUENCY),
     minDb_(Theme::SPECTRUM_MIN_DECIBEL),
     maxDb_(Theme::SPECTRUM_MAX_DECIBEL),
-    layerData_(),
     updateTimer_(new QTimer(this)),
     dataReady_(false)
 {
@@ -38,6 +39,14 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
     smoothFactor_ = Config::get<float>("analysis.spectrum_analyzer.smooth_factor").value_or(0.7);
     updateTimer_->setInterval(33); // ~30 FPS
+
+    int footerY = height() - Theme::SPECTRUM_MARGIN_BOTTOM + 8 ;
+    controls_->setGeometry(
+        Theme::SPECTRUM_MARGIN_LEFT, 
+        footerY,
+        width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT,
+        Theme::SPECTRUM_MARGIN_BOTTOM - 12 
+    );
 
     connect(updateTimer_, &QTimer::timeout, this, &SpectrumAnalyzerWidget::onUpdateTimeout);
     updateTimer_->start();
@@ -61,33 +70,32 @@ void SpectrumAnalyzerWidget::setSampleRate(float sampleRate) {
 }
 
 void SpectrumAnalyzerWidget::addLayer(int componentId, const QString& label){
-    if ( layerData_.contains(componentId) ) return ;
-
-    layerData_[componentId] = {
-        .name = label 
-    };
+    if ( controls_->isLayerPresent(componentId) ) return ;
+    controls_->addLayer(componentId, label);
+    layerData_[componentId];
 }
 
 void SpectrumAnalyzerWidget::removeLayer(int componentId){
-    if ( !layerData_.contains(componentId) ) return ;
-
+    if ( !controls_->isLayerPresent(componentId) ) return ;
+    controls_->removeLayer(componentId);
     layerData_.erase(componentId);
 }
 
 void SpectrumAnalyzerWidget::renameLayer(int componentId, const QString& label){
-    if ( !layerData_.contains(componentId) ) return ;
-
-    layerData_.at(componentId).name = label ;
+    controls_->renameLayer(componentId, label);
 }
 
+void SpectrumAnalyzerWidget::toggleLayer(int componentId, bool enabled){
+    controls_->toggleLayer(componentId, enabled);
+}
 
 void SpectrumAnalyzerWidget::onData(int componentId, const float* data, size_t count){
-    if ( !layerData_.contains(componentId) ) return ;
+    if ( !controls_->isLayerPresent(componentId) ) return ;
 
     float min = *std::min_element(data, data + count);
     float max = *std::max_element(data, data + count);
 
-    auto& smoothedData = layerData_.at(componentId).smoothedData ;
+    auto& smoothedData = layerData_.at(componentId);
 
     if ( smoothedData.size() != count ){
         // no smoothing, this is first packet
@@ -124,7 +132,15 @@ void SpectrumAnalyzerWidget::paintEvent(QPaintEvent *event) {
 void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
     Q_UNUSED(event);
     cachedFrame_ = QImage();
+    int footerY = height() - Theme::SPECTRUM_MARGIN_BOTTOM + 28 ;
+    controls_->setGeometry(
+        Theme::SPECTRUM_MARGIN_LEFT, 
+        footerY,
+        width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT,
+        Theme::SPECTRUM_MARGIN_BOTTOM - 12 
+    );
     update();
+    
 }
 
 void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
@@ -151,13 +167,14 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
 
 void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
     for ( auto& [id, data] : layerData_ ){
-        if ( data.smoothedData.empty() ) continue ;
+        if ( data.empty() || !controls_->isLayerEnabled(id) ) continue ;
 
         // Create path for spectrum
         QPainterPath path ;
         bool firstPoint = true ;
         
         int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
+        int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
 
         int sampleInterval = Theme::SPECTRUM_PIXEL_RESOLUTION ;
         for ( int px = 0 ; px < plotWidth; px += sampleInterval ){
@@ -166,10 +183,10 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
             
             if ( freq < minFreq_ || freq > maxFreq_ ) continue ;
 
-            size_t bin = freqToBin(freq, data.smoothedData.size());
-            if ( bin >= data.smoothedData.size() ) continue ;
+            size_t bin = freqToBin(freq, data.size());
+            if ( bin >= data.size() ) continue ;
 
-            float db = std::max(minDb_, std::min(maxDb_, data.smoothedData[bin]));
+            float db = std::max(minDb_, std::min(maxDb_, data[bin]));
             float y = dbToY(db);
 
             if ( firstPoint ){
@@ -181,7 +198,7 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
         }
         
         // Draw the spectrum line
-        painter.setPen(QPen(Theme::SPECTRUM_LINE_COLOR, 2));
+        painter.setPen(QPen(controls_->layerColor(id), 2));
         painter.drawPath(path);
     }
 }
@@ -192,8 +209,8 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     font.setPointSize(9);
     painter.setFont(font);
     
-    int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT;
-    int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM;
+    int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
+    int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
     
     // Y-axis labels (dB)
     for (float db = minDb_; db <= maxDb_; db += 20.0) {
@@ -219,13 +236,13 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     for (const auto& [freq, label] : freqLabels) {
         if (freq >= minFreq_ && freq <= maxFreq_) {
             int x = static_cast<int>(freqToX(freq));
-            painter.drawText(x - 15, height() - 5, label);
+            painter.drawText(x - 8,  plotHeight + Theme::SPECTRUM_MARGIN_TOP + 20, label);
         }
     }
 }
 
 void SpectrumAnalyzerWidget::renderToCache() {
-    if ( cachedFrame_.size() != size()){
+    if ( cachedFrame_.size() != size() ){
         cachedFrame_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
     }
 
@@ -264,7 +281,7 @@ float SpectrumAnalyzerWidget::xToFreq(float x) const {
 }
 
 float SpectrumAnalyzerWidget::dbToY(float db) const {
-    int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM;
+    int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
     
     // Linear mapping (inverted - lower dB = higher on screen)
     float normalized = (db - minDb_) / (maxDb_ - minDb_) ;

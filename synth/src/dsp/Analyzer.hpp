@@ -21,13 +21,10 @@
 
 #include "core/BaseComponent.hpp"
 #include "core/BaseModule.hpp"
-#include "config/Config.hpp"
-#include "dsp/AnalyticsEngine.hpp"
 
 #include <cstddef>
 #include <cstring>
 #include <memory>
-#include <algorithm>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;

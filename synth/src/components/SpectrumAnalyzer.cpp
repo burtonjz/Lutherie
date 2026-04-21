@@ -16,6 +16,7 @@
  */
 
 #include "components/SpectrumAnalyzer.hpp"
+#include "dsp/AnalyticsEngine.hpp"
 
 #include <kissfft/kiss_fft.h>
 #include <spdlog/spdlog.h>
