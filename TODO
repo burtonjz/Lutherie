@@ -1,6 +1,7 @@
 # Lutherie TODO
 
 ## Bugs / Cleanup
+- Serialization/Deserialization analyzer connections?
 - Spectrum Analyzer labels
 - Analysis Interface hide layer
 - Fix the issue with positioning of the graph panel when docking something

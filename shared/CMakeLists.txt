@@ -17,8 +17,10 @@ add_library(shared STATIC ${SHARED_SRC})
 target_include_directories(shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SPDLOG_INCLUDE_DIRS})
 target_link_libraries(shared PUBLIC ${SPDLOG_LIBRARIES})
 
-add_custom_command(TARGET shared POST_BUILD
+add_custom_target(copy_config ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_CURRENT_SOURCE_DIR}/config/config.json
-    $<TARGET_FILE_DIR:shared>/config.json
+        ${CMAKE_CURRENT_SOURCE_DIR}/config/config.json
+        $<TARGET_FILE_DIR:shared>/config.json
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config/config.json
+    COMMENT "Copying config.json"
 )

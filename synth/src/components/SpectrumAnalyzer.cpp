@@ -23,7 +23,7 @@
 
 SpectrumAnalyzer::SpectrumAnalyzer(ComponentId id, [[maybe_unused]] SpectrumAnalyzerConfig cfg):
     Analyzer(id, ComponentType::SpectrumAnalyzer),
-    fftSize_(Config::get<unsigned int>("analysis.buffer_size").value_or(4096)),
+    fftSize_(Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value()),
     bufferPosition_(0)
 {
     fftBuffer_.resize(fftSize_);

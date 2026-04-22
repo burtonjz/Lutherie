@@ -31,6 +31,7 @@
 #include "configs/DelayConfig.hpp"
 #include "configs/MultiplyConfig.hpp"
 #include "configs/SpectrumAnalyzerConfig.hpp"
+#include "configs/OscilloscopeConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

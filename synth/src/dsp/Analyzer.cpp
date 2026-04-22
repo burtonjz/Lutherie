@@ -31,6 +31,7 @@
 
     AnalyticsEngine::instance()->registerComponent(
         getId(),
+        getType(),
         [this](const double* data, size_t size, ComponentId id){
             process(data, size, id);
         }

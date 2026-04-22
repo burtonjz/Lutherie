@@ -30,7 +30,8 @@
     X(MonophonicFilter) \
     X(Delay) \
     X(Multiply) \
-    X(SpectrumAnalyzer)
+    X(SpectrumAnalyzer) \
+    X(Oscilloscope)
 
 /**
  * @brief enumeration of modulation source classes

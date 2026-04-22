@@ -81,6 +81,10 @@ public:
     static const std::array<QColor,6> SPECTRUM_LINE_COLORS ;
     static const QColor SPECTRUM_GRID_COLOR ;
 
+    static const QColor OSCILLOSCOPE_BACKGROUND_COLOR ;
+    static const std::array<QColor,6> OSCILLOSCOPE_LINE_COLORS ;
+    static const QColor OSCILLOSCOPE_GRID_COLOR ;
+
     static const QColor MODULATION_ACTIVE ;
     static const QColor MODULATION_INACTIVE ;
 
@@ -162,6 +166,13 @@ public:
     static constexpr float SPECTRUM_MAX_FREQUENCY    = 25000.0 ;
     static constexpr float SPECTRUM_MIN_DECIBEL      = -100.0 ;
     static constexpr float SPECTRUM_MAX_DECIBEL      = 5.0 ;
+
+    static constexpr int   OSCILLOSCOPE_MARGIN_LEFT      = 60 ;
+    static constexpr int   OSCILLOSCOPE_MARGIN_RIGHT     = 20 ;
+    static constexpr int   OSCILLOSCOPE_MARGIN_TOP       = 20 ;
+    static constexpr int   OSCILLOSCOPE_MARGIN_BOTTOM    = 120 ;
+    static constexpr float OSCILLOSCOPE_MIN_AMPLITUDE    = -1.2 ;
+    static constexpr float OSCILLOSCOPE_MAX_AMPLITUDE    = 1.2 ;
 
     static constexpr qreal SWITCH_WIDGET_OPACITY_ON       = 0.5 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_OFF      = 0.38 ;

@@ -20,6 +20,7 @@
 #include "meta/ComponentRegistry.hpp"
 
 #include "widgets/SpectrumAnalyzerWidget.hpp"
+#include "widgets/OscilloscopeWidget.hpp"
 
 AnalysisManager::AnalysisManager(QObject* parent):
     QObject(parent),
@@ -33,6 +34,9 @@ AnalysisManager::AnalysisManager(QObject* parent):
     // create child widgets
     analyzerWidgets_[ComponentType::SpectrumAnalyzer] =
         new SpectrumAnalyzerWidget();
+
+    analyzerWidgets_[ComponentType::Oscilloscope] = 
+        new OscilloscopeWidget();
 
     // connections
     connect(

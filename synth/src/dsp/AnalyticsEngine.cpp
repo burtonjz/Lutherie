@@ -49,12 +49,25 @@ void AnalyticsEngine::stop(){
     closeSocket();
 }
 
-void AnalyticsEngine::registerComponent(int componentId, std::function<void(const double*, size_t, int id)> func){
+void AnalyticsEngine::registerComponent(int componentId, ComponentType typ, std::function<void(const double*, size_t, int id)> func){
     std::lock_guard<std::mutex> lock(contextsMutex_);
     if ( contexts_.contains(componentId) ) return ;
     
     auto size = Config::get<unsigned int>("analysis.ring_buffer_size").value_or(480000);
-    contexts_.emplace(componentId, std::make_unique<AnalysisContext>(size * 4,std::move(func)));
+    size_t scratchSize ;
+    switch(typ){
+    case ComponentType::SpectrumAnalyzer:
+        scratchSize = Config::get<int>("analysis.spectrum_analyzer.buffer_size").value();
+        break ;
+    case ComponentType::Oscilloscope:
+        scratchSize = Config::get<int>("analysis.oscilloscope.buffer_size").value();
+        break ;
+    default:
+        SPDLOG_WARN("unknown component type {} registered with analytics engine. Unknown buffer size");
+        scratchSize = 0 ;
+        break ;
+    }
+    contexts_.emplace(componentId, std::make_unique<AnalysisContext>(size,scratchSize,std::move(func)));
 }
 
 void AnalyticsEngine::unregisterComponent(int componentId){
@@ -118,12 +131,12 @@ void AnalyticsEngine::push(const double* data, size_t count, int componentId){
     it->second->buffer.push(data, count);
 }
 
-void AnalyticsEngine::processContexts(std::vector<double>& buffer){
+void AnalyticsEngine::processContexts(){
     std::lock_guard<std::mutex> lock(contextsMutex_);
     for ( auto& [id, ctx] : contexts_ ){
-        size_t count = ctx->buffer.pop(buffer.data(), buffer.size());
+        size_t count = ctx->buffer.pop(ctx->scratch.data(), ctx->scratch.size());
         if ( count > 0 ){
-            ctx->processFunc(buffer.data(), count, id);
+            ctx->processFunc(ctx->scratch.data(), count, id);
         }
     } 
 }

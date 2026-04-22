@@ -31,10 +31,18 @@
     },
     "analysis":{
         "ring_buffer_size": 480000,
-        "buffer_size": 4096,
         "port": 54322,
+        "oscilloscope" : {
+            "buffer_size": 3624,
+            "window_size": 1024,
+            "search_region": 2600,
+            "hysteresis_ratio": 0.1,
+            "silence_threshold": 0.01,
+            "timeout_frames": 30
+        },
         "spectrum_analyzer" : {
-            "smooth_factor": 0.7
+            "smooth_factor": 0.7,
+            "buffer_size": 4096
         }
     }
 }

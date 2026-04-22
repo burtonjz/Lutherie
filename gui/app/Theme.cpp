@@ -94,6 +94,10 @@ const std::array<QColor,6> Theme::SPECTRUM_LINE_COLORS = {
     QColor(203, 203, 226)
 };
 
+const QColor Theme::OSCILLOSCOPE_BACKGROUND_COLOR = SPECTRUM_BACKGROUND_COLOR ;
+const QColor Theme::OSCILLOSCOPE_GRID_COLOR       = SPECTRUM_GRID_COLOR ;
+const std::array<QColor,6> Theme::OSCILLOSCOPE_LINE_COLORS = SPECTRUM_LINE_COLORS ;
+
 const QColor Theme::MODULATION_ACTIVE   = QColor(185, 49, 79);  
 const QColor Theme::MODULATION_INACTIVE = QColor(15, 15, 15);
 

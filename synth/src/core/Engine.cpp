@@ -298,12 +298,8 @@ void Engine::analysisLoop(){
     Config::load();
     AnalyticsEngine::instance()->start();
 
-
-    size_t bufferSize = Config::get<size_t>("analysis.buffer_size").value_or(4096);
-    std::vector<double> buffer(bufferSize);
-    
     while ( analysisRunning_ && engineRunning_ ){
-        AnalyticsEngine::instance()->processContexts(buffer);
+        AnalyticsEngine::instance()->processContexts();
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
     

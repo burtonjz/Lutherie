@@ -20,6 +20,7 @@
 #define ANALYTICS_ENGINE_HPP_
 
 #include "containers/LockFreeRingBuffer.hpp"
+#include "types/ComponentType.hpp"
 #include <functional>
 #include <memory>
 #include <vector>
@@ -46,13 +47,16 @@
 struct AnalysisContext {
     LockFreeRingBuffer<double> buffer ;
     std::function<void(const double*, size_t, int)> processFunc ;
+    std::vector<double> scratch ;
 
     AnalysisContext(
         size_t bufferSize,
+        size_t scratchSize,
         std::function<void(const double*, size_t, int)> func
     ) :
         buffer(bufferSize),
-        processFunc(std::move(func))
+        processFunc(std::move(func)),
+        scratch(scratchSize)
     {}
 };
 
@@ -81,11 +85,11 @@ public:
     void start();
     void stop();
 
-    void registerComponent(int componentId, std::function<void(const double*, size_t, int id)> func);
+    void registerComponent(int componentId, ComponentType typ, std::function<void(const double*, size_t, int id)> func);
     void unregisterComponent(int componentId);
     
     void push(const double* data, size_t count, int componentId);
-    void processContexts(std::vector<double>& buffer);
+    void processContexts();
 
     void send(const std::vector<float>& output, int componentId);
     

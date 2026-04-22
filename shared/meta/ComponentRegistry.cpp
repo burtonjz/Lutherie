@@ -197,6 +197,21 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 0,
                 false
             }
+        },
+        {
+            ComponentType::Oscilloscope,
+            {
+                "Oscilloscope",
+                ComponentType::Oscilloscope,
+                {},
+                {},
+                {},
+                1,
+                0,
+                0,
+                0,
+                false
+            }
         }
     };
 

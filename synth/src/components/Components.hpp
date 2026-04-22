@@ -29,5 +29,6 @@
 #include "components/MidiFilter.hpp"
 #include "components/Sequencer.hpp"
 #include "components/BiquadFilter.hpp"
+#include "components/Oscilloscope.hpp"
 
 #endif // __HPP_ALL_COMPONENTS_
