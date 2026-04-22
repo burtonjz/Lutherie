@@ -22,6 +22,7 @@
 #include <QTimer>
 #include <QPainter>
 #include <QPainterPath>
+#include <QResizeEvent>
 
 OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     QWidget(parent),
@@ -36,7 +37,7 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     Config::load();
 
     sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
-    updateTimer_->setInterval(33); // ~30 FPS
+    updateTimer_->setInterval(16); 
 
     int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 8;
     controls_->setGeometry(
@@ -93,20 +94,37 @@ void OscilloscopeWidget::onData(int componentId, const float* data, size_t count
 void OscilloscopeWidget::onUpdateTimeout(){
     if ( dataReady_ ){
         renderToCache();
-        update();
         dataReady_ = false;
+    } 
+    
+    if ( !cachedFrame_.isNull() ){
+        // phosphor fade regardless of new data input
+        QPainter fade(&cachedFrame_);
+        fade.fillRect(cachedFrame_.rect(), QColor(0, 0, 0, 10));
     }
+    
+    update();
 }
 
 void OscilloscopeWidget::paintEvent(QPaintEvent* event){
+    Q_UNUSED(event);
     QPainter painter(this);
     if ( !cachedFrame_.isNull() ){
         painter.drawImage(0, 0, cachedFrame_);
     }
+    drawGrid(painter);
+    drawLabels(painter);
 }
 
 void OscilloscopeWidget::resizeEvent(QResizeEvent* event){
-    cachedFrame_ = QImage();
+    Q_UNUSED(event)
+    if ( !cachedFrame_.isNull() ){
+        cachedFrame_ = cachedFrame_.scaled(
+            event->size(), 
+            Qt::IgnoreAspectRatio,
+            Qt::SmoothTransformation
+        );
+    }
     int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 28;
     controls_->setGeometry(
         Theme::OSCILLOSCOPE_MARGIN_LEFT,
@@ -180,9 +198,10 @@ void OscilloscopeWidget::drawLabels(QPainter& painter){
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
 
     // Y-axis amplitude labels
-    for ( float amp : {-1.0f, -0.5f, 0.0f, 0.5f, 1.0f} ){
+    float dAmp = (Theme::OSCILLOSCOPE_MAX_AMPLITUDE - Theme::OSCILLOSCOPE_MIN_AMPLITUDE) / 5.0 ;
+    for ( float amp : Theme::OSCILLOSCOPE_AMPLITUDE_LABELS ){
         int y = static_cast<int>(amplitudeToY(amp));
-        QString label = QString::number(amp, 'f', 1);
+        QString label = QString::number(amp, 'f', 2);
         painter.drawText(5, y + 5, label);
     }
 
@@ -201,21 +220,13 @@ void OscilloscopeWidget::drawLabels(QPainter& painter){
 void OscilloscopeWidget::renderToCache(){
     if ( cachedFrame_.size() != size() ){
         cachedFrame_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
-        cachedFrame_.fill(Qt::black);
+        cachedFrame_.fill(Theme::OSCILLOSCOPE_BACKGROUND_COLOR);
     }
 
-    // phosphor fade instead of hard clear
-    // QPainter fade(&cachedFrame_);
-    // fade.fillRect(cachedFrame_.rect(), QColor(0, 0, 0, 40));
-    // fade.end();
-    cachedFrame_.fill(Qt::black);
-    
     QPainter painter(&cachedFrame_);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    drawGrid(painter);
     drawWaveform(painter);
-    drawLabels(painter);
 }
 
 float OscilloscopeWidget::sampleToX(size_t sampleIndex, size_t totalSamples) const {

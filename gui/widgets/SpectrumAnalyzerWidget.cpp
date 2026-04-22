@@ -114,24 +114,34 @@ void SpectrumAnalyzerWidget::onData(int componentId, const float* data, size_t c
 void SpectrumAnalyzerWidget::onUpdateTimeout() {
     if ( dataReady_ ) {
         renderToCache() ;
-        update(); 
         dataReady_ = false ;
+    } 
+    if ( !cachedFrame_.isNull() ){
+        QPainter fade(&cachedFrame_);
+        fade.fillRect(cachedFrame_.rect(), QColor(0,0,0,20));
     }
+    update(); 
 }
 
 void SpectrumAnalyzerWidget::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
-    
     QPainter painter(this);
-
     if ( !cachedFrame_.isNull() ){
         painter.drawImage(0,0, cachedFrame_);
     }
+    drawGrid(painter);
+    drawLabels(painter);
 }
 
 void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
     Q_UNUSED(event);
-    cachedFrame_ = QImage();
+    if ( !cachedFrame_.isNull() ){
+        cachedFrame_ = cachedFrame_.scaled(
+            event->size(), 
+            Qt::IgnoreAspectRatio,
+            Qt::SmoothTransformation
+        );
+    }
     int footerY = height() - Theme::SPECTRUM_MARGIN_BOTTOM + 28 ;
     controls_->setGeometry(
         Theme::SPECTRUM_MARGIN_LEFT, 
@@ -244,17 +254,13 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
 void SpectrumAnalyzerWidget::renderToCache() {
     if ( cachedFrame_.size() != size() ){
         cachedFrame_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+        cachedFrame_.fill(Theme::SPECTRUM_BACKGROUND_COLOR);
     }
 
-    cachedFrame_.fill(Theme::SPECTRUM_BACKGROUND_COLOR);
-    
     QPainter painter(&cachedFrame_);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    drawGrid(painter);
     drawSpectrum(painter);
-    drawLabels(painter);
-
 }
 
 float SpectrumAnalyzerWidget::freqToX(float freq) const {

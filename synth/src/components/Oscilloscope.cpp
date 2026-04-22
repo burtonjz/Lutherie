@@ -28,9 +28,7 @@ Oscilloscope::Oscilloscope(ComponentId id, [[maybe_unused]] OscilloscopeConfig c
     searchRegion_(Config::get<int>("analysis.oscilloscope.search_region").value()),
     captureSize_ (windowSize_ + searchRegion_),
     hysteresisRatio_(Config::get<double>("analysis.oscilloscope.hysteresis_ratio").value()),
-    silenceThreshold_(Config::get<double>("analysis.oscilloscope.silence_threshold").value()),
-    framesSinceLastTrigger_(0),
-    autoTimeoutFrames_(Config::get<int>("analysis.oscilloscope.timeout_frames").value())
+    silenceThreshold_(Config::get<double>("analysis.oscilloscope.silence_threshold").value())
 {
     captureBuffer_.resize(captureSize_);
 }
@@ -68,7 +66,7 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
 
             if ( (recentMax - recentMin) > silenceThreshold_ ){
                 bool armed = false ;
-                for ( size_t j = 0; j < searchRegion_; ++j ){
+                for ( size_t j = 1; j < searchRegion_; ++j ){
                     if ( !armed && captureBuffer_[j] < triggerLevel - hysteresis ){
                         armed = true ;
                     }
@@ -105,22 +103,12 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
 
             /*
             STEP 4: Send the window to the engine. If a trigger wasn't found, we will freeze up
-            the output until we do trigger, or, we will allow free-running frames to come through
-            if we aren't computing one consistently so displays don't freeze.
+            the output until we do trigger (the ui will fade this on its own)
             */
             if ( triggered ){
                 AnalyticsEngine::instance()->send(window, id);
-                framesSinceLastTrigger_ = 0 ;
-                bufferPosition_ = 0 ;
-            } else {
-                framesSinceLastTrigger_++ ;
-                if ( framesSinceLastTrigger_ >= autoTimeoutFrames_ ){
-                    // send free-running frame due to timeout failure
-                    AnalyticsEngine::instance()->send(window, id);
-                    framesSinceLastTrigger_ = 0 ;
-                    bufferPosition_ = 0 ;
-                }
-            }
+            } 
+            bufferPosition_ = 0 ;
         }
     }
 }

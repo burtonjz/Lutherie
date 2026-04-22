@@ -2,6 +2,7 @@
 
 ## Bugs / Cleanup
 - Serialization/Deserialization analyzer connections?
+- short cables shouldn't curl back on themselves and make the arrow look the wrong direction.
 - Spectrum Analyzer labels
 - Analysis Interface hide layer
 - Fix the issue with positioning of the graph panel when docking something

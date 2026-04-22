@@ -71,8 +71,7 @@ void AnalyticsEngine::registerComponent(int componentId, ComponentType typ, std:
 }
 
 void AnalyticsEngine::unregisterComponent(int componentId){
-    std::lock_guard<std::mutex> lock(contextsMutex_);
-    contexts_.erase(componentId);
+    pendingRemove_.insert(componentId);
 }
 
 void AnalyticsEngine::initSocket() {
@@ -139,6 +138,12 @@ void AnalyticsEngine::processContexts(){
             ctx->processFunc(ctx->scratch.data(), count, id);
         }
     } 
+
+    // resolve pending unregisterations
+    for ( int id : pendingRemove_ ){
+        contexts_.erase(id);
+    }
+    pendingRemove_.clear();
 }
 
 void AnalyticsEngine::send(const std::vector<float>& output, int componentId) {

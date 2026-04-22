@@ -31,8 +31,6 @@ private:
     size_t captureSize_ ;            // window + search
     double hysteresisRatio_ ;        // fraction of signal range (to ignore false triggers)
     double silenceThreshold_ ;       // min peak-to-peak to attempt trigger
-    size_t framesSinceLastTrigger_ ; // track how long since we've triggered
-    size_t autoTimeoutFrames_ ;      // how many frames have passed before we "give up" and show an updated output
     
 public:
     Oscilloscope(ComponentId, OscilloscopeConfig cfg);

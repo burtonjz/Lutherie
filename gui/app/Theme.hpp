@@ -171,8 +171,11 @@ public:
     static constexpr int   OSCILLOSCOPE_MARGIN_RIGHT     = 20 ;
     static constexpr int   OSCILLOSCOPE_MARGIN_TOP       = 20 ;
     static constexpr int   OSCILLOSCOPE_MARGIN_BOTTOM    = 120 ;
-    static constexpr float OSCILLOSCOPE_MIN_AMPLITUDE    = -1.2 ;
-    static constexpr float OSCILLOSCOPE_MAX_AMPLITUDE    = 1.2 ;
+    static constexpr float OSCILLOSCOPE_MIN_AMPLITUDE    = -.75 ;
+    static constexpr float OSCILLOSCOPE_MAX_AMPLITUDE    = .75 ;
+    static constexpr std::initializer_list<float> OSCILLOSCOPE_AMPLITUDE_LABELS = {
+        -0.75f, -0.5f, -0.25f, 0.0f, 0.25f, 0.5f, 0.75f 
+    };
 
     static constexpr qreal SWITCH_WIDGET_OPACITY_ON       = 0.5 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_OFF      = 0.38 ;

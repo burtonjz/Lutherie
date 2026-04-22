@@ -37,8 +37,7 @@
             "window_size": 1024,
             "search_region": 2600,
             "hysteresis_ratio": 0.1,
-            "silence_threshold": 0.01,
-            "timeout_frames": 30
+            "silence_threshold": 0.01
         },
         "spectrum_analyzer" : {
             "smooth_factor": 0.7,

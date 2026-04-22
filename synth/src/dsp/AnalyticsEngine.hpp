@@ -24,6 +24,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include <kissfft/kiss_fft.h>
 
@@ -66,6 +67,7 @@ private:
 
     std::mutex contextsMutex_ ;
     std::unordered_map<int, std::unique_ptr<AnalysisContext>> contexts_ ;
+    std::set<int> pendingRemove_ ;
     
     // UDP SOCKET VARIABLES
 #ifdef _WIN32
