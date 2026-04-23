@@ -496,37 +496,40 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
 void GraphPanel::onNodeRightClicked(GraphNode* node){
     QMenu menu ;
-    QMenu* editorMenu = new QMenu("Show Editor", &menu);
+    QMenu* showMenu = new QMenu("Show", &menu);
     QMenu* socketMenu = menu.addMenu("Sockets");
-
-    // editor menu
-    QAction* openEdit = new QAction("Editor", editorMenu);
+ 
+    // show menu
     if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        connect ( openEdit, &QAction::triggered, [this,c](){
-            emit requestShowParameters(c->getModel()->getId());
-        });
-        editorMenu->addAction(openEdit);
+        if ( c->getModel()->getDescriptor().controllableParameters.size() > 0 ){
+            QAction* openParams = showMenu->addAction("Parameter Controls");
+            connect ( openParams, &QAction::triggered, [this,c](){
+                emit requestShowParameters(c->getModel()->getId());
+            });
+        }
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
-        connect ( openEdit, &QAction::triggered, [this,g](){
+        QAction* openParams = showMenu->addAction("Parameter Controls");
+        connect ( openParams, &QAction::triggered, [this,g](){
             emit requestShowGroupParameters(g->getId());
         });
-        editorMenu->addAction(openEdit);
     }
     
-    QAction* openMod = new QAction("Modulation", editorMenu);
     if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        connect ( openMod, &QAction::triggered, [this,c](){
-            emit requestShowModulation(c->getModel()->getId());
-        });
-        editorMenu->addAction(openMod);
+        if ( c->getModel()->getDescriptor().modulatableParameters.size() > 0 ){
+            QAction* openMod = showMenu->addAction("Modulation Controls");
+            connect ( openMod, &QAction::triggered, [this,c](){
+                emit requestShowModulation(c->getModel()->getId());
+            });
+        }
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
+        QAction* openMod = showMenu->addAction("Modulation Controls");
         connect ( openMod, &QAction::triggered, [this,g](){
             emit requestShowGroupModulation(g->getId());
         });
-        editorMenu->addAction(openMod);
     }
-    if ( editorMenu->actions().size() > 0 ){
-        menu.addMenu(editorMenu);
+
+    if ( showMenu->actions().size() > 0 ){
+        menu.addMenu(showMenu);
     }
 
     // socket menu

@@ -3,7 +3,9 @@
 ## Bugs / Cleanup
 - Serialization/Deserialization analyzer connections?
 - short cables shouldn't curl back on themselves and make the arrow look the wrong direction.
-- Spectrum Analyzer labels
+- don't create parameters/modulation parameters entries in control panel if there aren't any controls
+- Ctrl+A to make component menu context menu for convenience
+- Spectrum Analyzer labels, have channels naturally add to specialized Analysis Widget. 
 - Analysis Interface hide layer
 - Fix the issue with positioning of the graph panel when docking something
 - Create zoom out view of graph panel with drag to navigate

@@ -107,7 +107,6 @@ ComponentModel* ComponentManager::getModel(int componentId) const {
 
 ComponentParameters* ComponentManager::getParameters(int componentId) const {
     if ( !parameters_.contains(componentId) ){
-        qWarning() << "No component editor found with id = " << componentId ;
         return nullptr ;
     } 
 
@@ -116,7 +115,6 @@ ComponentParameters* ComponentManager::getParameters(int componentId) const {
 
 ModulationParameters* ComponentManager::getModulationParameters(int componentId) const {
     if ( !modParameters_.contains(componentId) ){
-        qWarning() << "No modulation editor found with id = " << componentId ;
         return nullptr ;
     } 
 
@@ -127,28 +125,28 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     auto model = new ComponentModel(componentId, type);
     models_[componentId] = model ;
 
-    auto params = new ComponentParameters(model);
-    parameters_[componentId] = params ;
-
-    auto modParams = new ModulationParameters(model);
-    modParameters_[componentId] = modParams ;
-
-    // handle edit communications
-    connect(
-        parameters_[componentId], &ComponentParameters::parameterEdited,
-        this, &ComponentManager::onParameterEdited
-    );
-
-    connect(
-        modParams, &ModulationParameters::modulationDepthEdited,
-        this, &ComponentManager::onModulationDepthEdited
-    );
-
-    connect(
-        modParams, &ModulationParameters::modulationStrategyEdited,
-        this, &ComponentManager::onModulationStrategyEdited
-    );
+    if ( model->getDescriptor().controllableParameters.size() > 0 ){
+        auto params = new ComponentParameters(model);
+        parameters_[componentId] = params ;
+        connect(
+            params, &ComponentParameters::parameterEdited,
+            this, &ComponentManager::onParameterEdited
+        );
+    }
     
+    if ( model->getDescriptor().modulatableParameters.size() > 0 ){
+        auto modParams = new ModulationParameters(model);
+        modParameters_[componentId] = modParams ;
+        connect(
+            modParams, &ModulationParameters::modulationDepthEdited,
+            this, &ComponentManager::onModulationDepthEdited
+        );
+        connect(
+            modParams, &ModulationParameters::modulationStrategyEdited,
+            this, &ComponentManager::onModulationStrategyEdited
+        );
+    }
+
     // // handle collection widget if exists
     // auto cw = getCollectionWidget(editor->getComponentParameters());
     // if ( cw ){
@@ -169,12 +167,20 @@ void ComponentManager::removeComponent(int componentId){
         return ;
     }
 
-    models_[componentId]->deleteLater();
-    parameters_[componentId]->deleteLater();
-    modParameters_[componentId]->deleteLater();
-    models_.erase(componentId);
-    parameters_.erase(componentId);
-    modParameters_.erase(componentId);
+    if ( models_.contains(componentId) && models_.at(componentId) ){
+        models_.at(componentId)->deleteLater();
+        models_.erase(componentId);
+    }
+    
+    if ( parameters_.contains(componentId) && parameters_.at(componentId) ){
+        parameters_.at(componentId)->deleteLater();
+        parameters_.erase(componentId);
+    }
+    
+    if ( modParameters_.contains(componentId) && modParameters_.at(componentId) ){
+        modParameters_.at(componentId)->deleteLater();
+        modParameters_.erase(componentId);
+    }
 
     emit componentRemoved(componentId);
 }

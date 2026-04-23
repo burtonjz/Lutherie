@@ -611,23 +611,24 @@ void Synth::onActionToggleModulationPanel(){
 }
 
 void Synth::onComponentAdded(int componentId, ComponentType typ){
+    auto desc = ComponentRegistry::getComponentDescriptor(typ); 
+    QString name = QString::fromStdString(desc.name);
+
     auto params = componentManager_->getParameters(componentId);
-
+    if ( params ){
+        parameterPanel_->addContent(name, params);
+        connect(params, &QObject::destroyed, this, [this, params](){
+            parameterPanel_->removeContent(params);
+        });
+    }
+    
     auto modParams = componentManager_->getModulationParameters(componentId);
-
-    QString name = QString::fromStdString(params->getModel()->getDescriptor().name);
-
-    parameterPanel_->addContent(name, params);
-    if ( ! parameterDock_->isOpen() ) parameterDock_->open();
-    connect(params, &QObject::destroyed, this, [this, params](){
-        parameterPanel_->removeContent(params);
-    });
-
-    modulationPanel_->addContent(name, modParams);
-    if ( ! modulationDock_->isOpen() ) modulationDock_->open();
-    connect(modParams, &QObject::destroyed, this, [this, modParams](){
-        modulationPanel_->removeContent(modParams);
-    });
+    if ( modParams ){
+        modulationPanel_->addContent(name, modParams);
+        connect(modParams, &QObject::destroyed, this, [this, modParams](){
+            modulationPanel_->removeContent(modParams);
+        });
+    }
 }
 
 void Synth::onComponentRemoved(int componentId){
@@ -638,23 +639,38 @@ void Synth::onComponentRemoved(int componentId){
 }
 
 void Synth::onShowParameters(int componentId){
+    auto model = componentManager_->getModel(componentId);
+    if ( !model ) return ;
+    if ( model->getDescriptor().controllableParameters.size() == 0 ) return ;
+
     if ( parameterDock_->isHidden() ) parameterDock_->open() ;
     parameterPanel_->maximizeSection(componentManager_->getParameters(componentId));
 }
 
 void Synth::onShowModulation(int componentId){
+    auto model = componentManager_->getModel(componentId);
+    if ( !model ) return ;
+    if ( model->getDescriptor().modulatableParameters.size() == 0 ) return ;
+
     if ( modulationDock_->isHidden() ) modulationDock_->open() ;
     modulationPanel_->maximizeSection(componentManager_->getModulationParameters(componentId));
 }
 
 void Synth::onShowGroupParameters(int groupId){
+    auto params = groupManager_->getParameters(groupId);
+    if ( !params ) return ;
+
+
     if ( parameterDock_->isHidden() ) parameterDock_->open() ;
-    parameterPanel_->maximizeSection(groupManager_->getParameters(groupId));
+    parameterPanel_->maximizeSection(params);
 }
 
 void Synth::onShowGroupModulation(int groupId){
+    auto modParams = groupManager_->getModulationParameters(groupId);
+    if ( !modParams ) return ;
+
     if ( modulationDock_->isHidden() ) modulationDock_->open() ;
-    modulationPanel_->maximizeSection(groupManager_->getModulationParameters(groupId));
+    modulationPanel_->maximizeSection(modParams);
 }
 
 void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
@@ -668,28 +684,48 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
     QVBoxLayout* paramLayout = new QVBoxLayout(paramContent);
     paramLayout->setContentsMargins(0,0,0,0);
     paramLayout->setSpacing(1);
-    groupManager_->setParameters(groupId, paramContent);
-    parameterPanel_->addContent(name, paramContent);
-    connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
-        parameterPanel_->removeContent(paramContent);
-    });
-
+    
     QWidget* modContent = new QWidget();
     QVBoxLayout* modLayout = new QVBoxLayout(modContent);
     modLayout->setContentsMargins(0,0,0,0);
     modLayout->setSpacing(1);
-    groupManager_->setModulationParameters(groupId, modContent);
-    modulationPanel_->addContent(name, modContent);
-    connect(paramContent, &QObject::destroyed, this, [this, modContent](){
-        modulationPanel_->removeContent(modContent);
-    });
 
     // loop through parameters and move content to group container
+    bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
         auto params = componentManager_->getParameters(componentId);
+        if ( params ){
+            if ( !paramAdded ){
+                groupManager_->setParameters(groupId, paramContent);
+                parameterPanel_->addContent(name, paramContent);
+                connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
+                    parameterPanel_->removeContent(paramContent);
+                });
+                paramAdded = true ;
+            }
+            parameterPanel_->moveContent(params, paramContent);
+        }
+
         auto modParams = componentManager_->getModulationParameters(componentId);
-        parameterPanel_->moveContent(params, paramContent);
-        modulationPanel_->moveContent(modParams, modContent);
+        if ( modParams ){
+            if ( !modAdded ){
+                groupManager_->setModulationParameters(groupId, modContent);
+                modulationPanel_->addContent(name, modContent);
+                connect(modContent, &QObject::destroyed, this, [this, modContent](){
+                    modulationPanel_->removeContent(modContent);
+                });
+                modAdded = true ;
+            }
+            modulationPanel_->moveContent(modParams, modContent);
+        }
+    }
+
+    if ( !paramAdded ){ 
+        paramContent->deleteLater();
+    }
+
+    if ( !modAdded ){ 
+        modContent->deleteLater();
     }
 }
 
@@ -712,16 +748,64 @@ void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> compone
     auto m = groupManager_->getModel(groupId);
     if ( !m ) return ;
 
-    auto paramContent = groupManager_->getParameters(groupId);
+    // content widgets might not exist if no group elements had parameters
+    QWidget* paramContent = groupManager_->getParameters(groupId);
+    bool newParamContent = false ;
+    if ( !paramContent ){
+        newParamContent = true ;
+        paramContent = new QWidget();
+        QVBoxLayout* paramLayout = new QVBoxLayout(paramContent);
+        paramLayout->setContentsMargins(0,0,0,0);
+        paramLayout->setSpacing(1);
+    }
+
     auto modContent = groupManager_->getModulationParameters(groupId);
+    bool newModContent = false ;
+    if ( !modContent ){
+        newModContent = true ;
+        modContent = new QWidget();
+        QVBoxLayout* modLayout = new QVBoxLayout(modContent);
+        modLayout->setContentsMargins(0,0,0,0);
+        modLayout->setSpacing(1);
+    }
 
     // loop through parameters and move content to group container
+    bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
         auto params = componentManager_->getParameters(componentId);
+        if ( params ){
+            if ( newParamContent && !paramAdded ){
+                groupManager_->setParameters(groupId, paramContent);
+                parameterPanel_->addContent(m->getName(), paramContent);
+                connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
+                    parameterPanel_->removeContent(paramContent);
+                });
+                paramAdded = true ;
+            }
+            parameterPanel_->moveContent(params, paramContent);
+        }
+
         auto modParams = componentManager_->getModulationParameters(componentId);
-        parameterPanel_->moveContent(params, paramContent);
-        modulationPanel_->moveContent(modParams, modContent);
+        if ( modParams ){
+            if ( newModContent && !modAdded ){
+                groupManager_->setModulationParameters(groupId, modContent);
+                modulationPanel_->addContent(m->getName(), modContent);
+                connect(modContent, &QObject::destroyed, this, [this, modContent](){
+                    modulationPanel_->removeContent(modContent);
+                });
+                modAdded = true ;
+            }
+            modulationPanel_->moveContent(modParams, modContent);
+        }
     }
+
+    if ( newParamContent && !paramAdded ){
+        paramContent->deleteLater();
+    }
+
+    if ( newModContent && !modAdded ){
+        modContent->deleteLater();
+    } 
 }
 
 void Synth::onRequestComponentRename(int componentId, QString name){
@@ -738,13 +822,17 @@ void Synth::onRequestComponentRename(int componentId, QString name){
 
     // tell panels to update headers
     auto paramContent = componentManager_->getParameters(componentId);
-    auto paramSection = parameterPanel_->getSection(paramContent);
-    paramSection->setTitle(name);
+    if ( paramContent ){
+        auto paramSection = parameterPanel_->getSection(paramContent);
+        paramSection->setTitle(name);
+    }
     
     auto modContent = componentManager_->getModulationParameters(componentId);
-    auto modSection = modulationPanel_->getSection(modContent);
-    modSection->setTitle(name);
-
+    if ( modContent ){
+        auto modSection = modulationPanel_->getSection(modContent);
+        modSection->setTitle(name);
+    }
+    
     // update analyzer if relevant
     analysisManager_->onComponentRename(componentId, name);
 }
@@ -763,10 +851,15 @@ void Synth::onRequestGroupRename(int groupId, QString name){
 
     // tell panels to update headers
     auto paramContent = groupManager_->getParameters(groupId);
-    auto paramSection = parameterPanel_->getSection(paramContent);
-    paramSection->setTitle(name);
+    if ( paramContent ){
+        auto paramSection = parameterPanel_->getSection(paramContent);
+        paramSection->setTitle(name);
+    }
+    
     
     auto modContent = groupManager_->getModulationParameters(groupId);
-    auto modSection = modulationPanel_->getSection(modContent);
-    modSection->setTitle(name);
+    if ( modContent ){
+        auto modSection = modulationPanel_->getSection(modContent);
+        modSection->setTitle(name);
+    }
 }
