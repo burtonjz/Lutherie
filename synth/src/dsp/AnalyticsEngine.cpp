@@ -132,18 +132,19 @@ void AnalyticsEngine::push(const double* data, size_t count, int componentId){
 
 void AnalyticsEngine::processContexts(){
     std::lock_guard<std::mutex> lock(contextsMutex_);
-    for ( auto& [id, ctx] : contexts_ ){
-        size_t count = ctx->buffer.pop(ctx->scratch.data(), ctx->scratch.size());
-        if ( count > 0 ){
-            ctx->processFunc(ctx->scratch.data(), count, id);
-        }
-    } 
 
     // resolve pending unregisterations
     for ( int id : pendingRemove_ ){
         contexts_.erase(id);
     }
     pendingRemove_.clear();
+
+    for ( auto& [id, ctx] : contexts_ ){
+        size_t count = ctx->buffer.pop(ctx->scratch.data(), ctx->scratch.size());
+        if ( count > 0 ){
+            ctx->processFunc(ctx->scratch.data(), count, id);
+        }
+    } 
 }
 
 void AnalyticsEngine::send(const std::vector<float>& output, int componentId) {
