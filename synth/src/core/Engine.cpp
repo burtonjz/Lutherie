@@ -517,59 +517,6 @@ bool Engine::handleMidiConnection(ConnectionRequest request){
     return false ;
 }
 
-std::vector<ConnectionRequest> Engine::getComponentMidiConnections(ComponentId id) const {
-    SPDLOG_DEBUG("getting midi connections for component id = {}", id);
-    BaseComponent* c = componentManager.getRaw(id);
-    std::vector<ConnectionRequest> v ;
-    
-    if ( !c ) return v ;
-
-    MidiEventHandler* h = componentManager.getMidiHandler(id);
-    if ( h ){
-        // if it is a base handler, check if it is registered to midiState
-        auto handlers = midiState_.getHandlers();
-        if ( std::find(handlers.begin(), handlers.end(), h) != handlers.end() ){
-            ConnectionRequest req ;
-            req.inboundID = id ;
-            req.inboundSocket = SocketType::MidiInbound ;
-            req.outboundSocket = SocketType::MidiOutbound ;
-            v.push_back(req);
-        }
-
-        // also create a connection request for all listeners
-        for ( auto listener : h->getListeners() ){
-            if ( listener ){
-                ConnectionRequest req ;
-                req.inboundID = listener->getId();
-                req.inboundSocket = SocketType::MidiInbound ;
-                req.outboundID = id ;
-                req.outboundSocket = SocketType::MidiOutbound ;
-                v.push_back(req);
-            }
-        }
-    }
-
-    // if it's a listener, create a connection request for all handlers
-    MidiEventListener* listener = componentManager.getMidiListener(id);
-    if ( listener ){
-        for ( auto handler : listener->getHandlers() ){
-            if ( handler ){
-                ConnectionRequest req ;
-                req.inboundID = id ;
-                req.inboundSocket = SocketType::MidiInbound ;
-                ComponentId handlerId = handler->getId();
-                if ( handlerId != -1 ){
-                    req.outboundID =  handlerId ;
-                }
-                req.outboundSocket = SocketType::MidiOutbound ;
-                v.push_back(req);
-            }
-        }
-    }
-
-    return v ;
-}
-
 bool Engine::registerBaseMidiHandler(MidiEventHandler* handler){
     if (!handler){
         SPDLOG_WARN("specified midi handler is a null pointer. Unable to register.");
@@ -641,100 +588,57 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
     return true ;
 }
 
-std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId id) const {
-    SPDLOG_DEBUG("getting signal connections for component id = {}", id);
+std::vector<ConnectionRequest> Engine::getComponentConnections(ComponentId id) const {
+    std::vector<ConnectionRequest> requests ;
+    getComponentConnections(id, requests);
+    return requests ;
+}
 
-    BaseModule* module = componentManager.getModule(id);
-    Analyzer* analyzer = componentManager.getAnalyzer(id);
-    
-    std::vector<ConnectionRequest> v ;
+void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
+    componentManager.getComponentConnections(id, requests);
+    getPeripheralConnections(id, requests);
+};
 
-    // if it's not a module, check if it's analyzer
-    if ( !module && !analyzer ){
-        SPDLOG_WARN("cannot get signal connections for component with id = {}. It is not an analyzer or module.", id);
-        return v ;
-    }
-
-    // Case 1: Analyzer
-    if ( analyzer ){
-        for ( const auto [m, idx] : analyzer->getSources() ){
-            ConnectionRequest req ;
-            req.outboundID = m->getId();
-            req.outboundIdx = idx ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-
-            req.inboundID = id ;
-            req.inboundIdx = 0 ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            
-            v.push_back(req);
-        }
-        return v ;
-    } 
-    
-    // Case 2: Module
-
-    // check if module is connected to any analyzer
-    for ( const auto& [a, idx] : module->getAnalyzers() ){
-        if ( a ){
-            ConnectionRequest req ;
-            req.outboundID = id ;
-            req.outboundIdx = idx ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            req.inboundID = a->getId() ;
-            req.inboundIdx = 0 ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            v.push_back(req);
-        }
-    }
-
+void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
-    for ( const auto& conn : signalController.getSinks()){
-        if ( module == conn.module ){
-            ConnectionRequest req ;
-            req.outboundID = id ;
-            req.outboundIdx = conn.index ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            req.inboundIdx = 0 ; // TODO: support multi-channel sink
-            v.push_back(req);
+    BaseModule* m = componentManager.getModule(id);
+    if ( m ){
+        for ( const auto& conn : signalController.getSinks()){
+            if ( m == conn.module ){
+                ConnectionRequest req ;
+                req.outboundID = id ;
+                req.outboundIdx = conn.index ;
+                req.inboundSocket = SocketType::SignalInbound ;
+                req.outboundSocket = SocketType::SignalOutbound ;
+                req.inboundIdx = 0 ; // TODO: support multi-channel sink
+                requests.push_back(req);
+            }
         }
     }
-
-    // signal inputs
-    for ( size_t i = 0; i < module->getNumInputs(); ++i ){
-        for ( const auto& conn : module->getInputs(i) ){
-            if ( conn.module ){
+    
+    // midi peripherals are registered to midi state or to the default midi handler
+    MidiEventHandler* handler = componentManager.getMidiHandler(id);
+    MidiEventListener* listener = componentManager.getMidiListener(id);
+    if ( handler ){
+        auto handlers = midiState_.getHandlers();
+        if ( std::find(handlers.begin(), handlers.end(), handler) != handlers.end() ){
+            ConnectionRequest req ;
+            req.inboundID = id ;
+            req.inboundSocket = SocketType::MidiInbound ;
+            req.outboundSocket = SocketType::MidiOutbound ;
+            requests.push_back(req);
+        }
+    } else if ( listener ){
+        for ( auto h : listener->getHandlers() ){
+            if ( h == &midiDefaultHandler_ ){
                 ConnectionRequest req ;
                 req.inboundID = id ;
-                req.inboundIdx = i ;
-                req.inboundSocket = SocketType::SignalInbound ;
-                req.outboundID = conn.module->getId() ;
-                req.outboundIdx = conn.index ;
-                req.outboundSocket = SocketType::SignalOutbound ;
-                v.push_back(req);
-            }
-        }    
-    }
-    
-    // signal outputs
-    for ( size_t i = 0; i < module->getNumOutputs(); ++i ){
-        for ( const auto& conn : module->getOutputs(i) ){
-            if ( conn.module ){
-                ConnectionRequest req ;
-                req.inboundID = conn.module->getId() ;
-                req.inboundIdx = conn.index ;
-                req.inboundSocket = SocketType::SignalInbound ;
-                req.outboundID = id ;
-                req.outboundIdx = i ;
-                req.outboundSocket = SocketType::SignalOutbound ;
-                v.push_back(req);
+                req.inboundSocket = SocketType::MidiInbound ;
+                req.outboundSocket = SocketType::MidiOutbound ;
+                requests.push_back(req);
             }
         }
     }
-    
-
-    return v ;
 }
 
 bool Engine::handleModulationConnection(ConnectionRequest request){
@@ -773,48 +677,6 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
     return true ;
 }
 
-std::vector<ConnectionRequest> Engine::getComponentModulationConnections(ComponentId id) const {
-    SPDLOG_DEBUG("getting modulation connections for component id = {}", id);
-    std::vector<ConnectionRequest> v ;
-    BaseComponent* module = componentManager.getModule(id);
-    BaseModulator* modulator = componentManager.getModulator(id);
-
-    // get all inbound parameter modulators
-    if ( module ){
-        auto d = ComponentRegistry::getComponentDescriptor(module->getType());
-        for ( auto p : d.modulatableParameters ){
-            BaseModulator* paramModulator = module->getParameterModulator(p);
-            if ( paramModulator ){
-                ConnectionRequest req ;
-                req.inboundID = id ;
-                req.inboundSocket = SocketType::ModulationInbound ;
-                req.inboundParameter = p ;
-                req.outboundID = paramModulator->getId() ;
-                req.outboundSocket = SocketType::ModulationOutbound ;
-                v.push_back(req);
-            }
-        }
-    }
-
-    // if this component is also a modulator, add in what it is modulating
-    if ( modulator ){
-        for ( auto t : modulator->getModulationTargets() ){
-            if ( t.component ){
-                ConnectionRequest req ;
-                req.inboundID = t.component->getId() ;
-                req.inboundSocket = SocketType::ModulationInbound ;
-                req.inboundParameter = t.param ;
-                req.outboundID = id ;
-                req.outboundSocket = SocketType::ModulationOutbound ;
-                req.depthConnection = t.depth ;
-                v.push_back(req);
-            }
-        }
-    }
-
-    return v ;
-}
-
 // ============================================================================
 // SERIALIZATION
 // ============================================================================
@@ -824,31 +686,16 @@ json Engine::serialize() const {
     // capture component data (parameters, midi, modulation, signal)
     output["components"] = componentManager.serializeComponents();
 
-    // get audio sinks
-    for ( const auto& conn : signalController.getSinks() ){
-        output["AudioSinks"].push_back(conn);
+    // capture connections
+    std::vector<ConnectionRequest> connections ;
+    for ( auto id : componentManager.getComponentIds() ){
+        getComponentConnections(id, connections);
     }
+    std::set<ConnectionRequest> unique(connections.begin(), connections.end());
 
-    // get root midi devices
-
-    // CASE 1: Midi Handler connected to peripheral midi device
-    for ( auto m : midiState_.getHandlers() ){
-        ComponentId id = m->getId() ;
-        SPDLOG_DEBUG("testing component id {}", id);
-        if ( id != -1 ){
-            output["MidiHandlers"].push_back(m->getId()) ;
-        }
-    }
-
-    // CASE 2: Midi Listener connected to peripheral midi device (uses default handler)
-    for ( auto id : componentManager.getMidiListenerIds() ){
-        auto listener = componentManager.getMidiListener(id);
-        if ( ! listener ) continue ;
-        for ( auto h : listener->getHandlers() ){
-            if ( h == &midiDefaultHandler_ ){
-                output["MidiListeners"].push_back(listener->getId());
-            }
-        }
+    output["connections"];
+    for ( auto r : unique ){
+        output["connections"].push_back(r);
     }
 
     return output ;

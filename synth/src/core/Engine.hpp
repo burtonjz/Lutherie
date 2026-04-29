@@ -38,6 +38,54 @@ using json = nlohmann::json ;
 
 class Engine {
 public:
+    // publically available controllers
+    ComponentManager componentManager ;
+    ComponentFactory componentFactory ;
+    SignalController signalController ;
+    MidiController midiController ;
+
+private:
+    // Thread entry points
+    void midiLoop();
+    void audioLoop();
+    void analysisLoop();
+    
+    // Setup/teardown
+    void setup();
+    void destroy();
+    void stopAudio();
+    void stopMidi();
+    static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
+    
+    // Thread management
+    std::thread apiServerThread_ ;
+    std::thread midiThread_ ;
+    std::thread audioThread_ ;
+    std::thread analysisThread_ ;
+    
+    // Thread control flags (atomic for thread-safe access)
+    std::atomic<bool> apiServerRunning_ ;
+    std::atomic<bool> engineRunning_ ;
+    std::atomic<bool> midiRunning_ ;
+    std::atomic<bool> audioRunning_ ;
+    std::atomic<bool> analysisRunning_ ;
+    std::mutex stateMutex_ ;
+    
+    
+    RtAudio dac_ ;
+    std::map<int, std::string> availableAudioDevices_ ;
+    int selectedAudioOutput_ ;
+    
+    RtMidiIn midiIn_ ;
+    std::map<int, std::string> availableMidiPorts_ ;
+    int selectedMidiPort_ ;
+    
+    MidiState midiState_ ;
+    MidiEventHandler midiDefaultHandler_ ;
+    
+    double sampleRate_ ;
+
+public:
     // Constructor & Destructor
     Engine();
     ~Engine();
@@ -81,62 +129,19 @@ public:
     bool handleMidiConnection(ConnectionRequest connection);
     bool registerBaseMidiHandler(MidiEventHandler* handler);
     bool unregisterBaseMidiHandler(MidiEventHandler* handler);
-    std::vector<ConnectionRequest> getComponentMidiConnections(ComponentId id) const ;
+
+    std::vector<ConnectionRequest> getComponentConnections(ComponentId id) const ;
+    void getComponentConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
 
     bool handleSignalConnection(ConnectionRequest request);
-    std::vector<ConnectionRequest> getComponentSignalConnections(ComponentId id) const ;
-
     bool handleModulationConnection(ConnectionRequest request);
-    std::vector<ConnectionRequest> getComponentModulationConnections(ComponentId id) const ;
+    
 
     json serialize() const ;
 
-    // publically available controllers
-    ComponentManager componentManager;
-    ComponentFactory componentFactory;
-    SignalController signalController;
-    MidiController midiController;
-
 private:
-    // Thread entry points
-    void midiLoop();
-    void audioLoop();
-    void analysisLoop();
-    
-    // Setup/teardown
-    void setup();
-    void destroy();
-    void stopAudio();
-    void stopMidi();
-    static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
-    
-    // Thread management
-    std::thread apiServerThread_;
-    std::thread midiThread_;
-    std::thread audioThread_;
-    std::thread analysisThread_;
-    
-    // Thread control flags (atomic for thread-safe access)
-    std::atomic<bool> apiServerRunning_;
-    std::atomic<bool> engineRunning_;
-    std::atomic<bool> midiRunning_;
-    std::atomic<bool> audioRunning_;
-    std::atomic<bool> analysisRunning_;
-    std::mutex stateMutex_;
-    
-    
-    RtAudio dac_;
-    std::map<int, std::string> availableAudioDevices_;
-    int selectedAudioOutput_;
-    
-    RtMidiIn midiIn_;
-    std::map<int, std::string> availableMidiPorts_;
-    int selectedMidiPort_;
-    
-    MidiState midiState_;
-    MidiEventHandler midiDefaultHandler_;
-    
-    double sampleRate_ ;
+    void getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+
 };
 
 #endif // __ENGINE_HPP_

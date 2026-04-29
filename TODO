@@ -1,9 +1,7 @@
 # Lutherie TODO
 
 ## Bugs / Cleanup
-- Serialization/Deserialization analyzer connections?
 - short cables shouldn't curl back on themselves and make the arrow look the wrong direction.
-- don't create parameters/modulation parameters entries in control panel if there aren't any controls
 - Ctrl+A to make component menu context menu for convenience
 - Spectrum Analyzer labels, have channels naturally add to specialized Analysis Widget. 
 - Analysis Interface hide layer
@@ -13,7 +11,8 @@
 - allow group deletions?
 - when content deleted from control panel, update geometry so that min size doesn't get messed up
 - create specialized widget for midi filter (horizontal piano roll, highlight pass-through key ranges)
-  - PianoRollWidget should be renamed to SequencerWidget, and the PianoRoll component should be broken out and given a horizontal/vertical flag.
+  - PianoRollWidget should be renamed to SequencerWidget, and the PianoRoll component should be broken out and given a horizontal/vertical flag.8
+- Figure out whatever is happening with oscillator noise
 
 ## UI
 
@@ -39,6 +38,19 @@
 - create boolean control port signal/trigger system
   - hard sync ( phase cycle complete signal, phase reset trigger)
 
+### Buffer-level Components
+- New BufferSource extension of BaseComponent
+- New BufferProcessor extension of BaseComponent
+- New BufferConnection type
+  - Square Port + Dashed Line for visual representation
+- Relevant Components:
+  - File Reader (no input, buffer output)
+  - Recorder (read in and save an audio stream, buffer output)
+  - SpectralFilter ( buffer in, buffer out)
+  - Chopper ( buffer in, buffer out)
+  - BufferTrigger ( buffer in, midi in, stream out )
+  - BufferLooper ( buffer in, stream out )
+
 ### Macro Knobs
 - Macro Knob panel docked to edge of graph panel, moves with it
 - Modulation socket on each macro knob
@@ -63,7 +75,7 @@
 - Pitchbend Support
 - Panner
 - Inverter
-- Quantizer
+- Quantizer / Velocity Manipulation
 - Mixer (with pluggable mixing strategies, e.g. ring modulation)
 - Bitcrusher
 

@@ -307,26 +307,27 @@ json ApiHandler::loadPatch(int sock, const json& request){
     json response = request ;
     
     // create components
-    try {
-        response.at("components");
-        assert(response["components"].is_array() && "components is not a json array");
-    } catch ( const std::exception& e ){
-        return sendApiResponse(sock, response, "Error processing json request " + std::string(e.what()));
+    if ( 
+        !response.contains("components") ||
+        !response.at("components").is_array() 
+    ){
+        return sendApiResponse(sock, response, "components array not properly defined");
     }
 
-    std::unordered_map<int,int> idMap ;
+    std::unordered_map<int,int> idMap ; // old id, new id
     if ( ! loadCreateComponent(sock,response["components"], idMap) ){
         return sendApiResponse(sock, response, "Error creating components");
     }
 
-    // update response data with new component ids
     loadUpdateIds(response, idMap);
 
     // connect components
-    if ( ! loadConnectComponent(sock, response) ){
-        return sendApiResponse(sock, response, "Error connecting components");
+    if ( response.contains("connections") ){
+        if ( !loadConnectComponent(sock, response.at("connections")) ){
+            return sendApiResponse(sock, response, "Error connecting components");
+        }
     }
-
+    
     return sendApiResponse(sock, response);
 }
 
@@ -365,33 +366,11 @@ json ApiHandler::removeComponent(int sock, const json& request){
     // query each subsystem and remove connections, if exist
     bool allRemoved = true ;
 
-    auto connections = engine_->getComponentMidiConnections(id);
-    SPDLOG_DEBUG("removing midi connections from component with id {}", id);
+    auto connections = engine_->getComponentConnections(id);
     for ( auto c : connections ){
         c.remove = true ;
         json j = c ;
-        SPDLOG_DEBUG("removing midi connection: {}", j.dump());
-        auto cresponse = parseConnectionRequest(sock, j);
-        allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
-    }
-
-    connections = engine_->getComponentSignalConnections(id);
-    SPDLOG_DEBUG("removing audio connections from component with id {}", id);
-    for ( auto c : connections ){
-        c.remove = true ;
-        json j = c ;
-        SPDLOG_DEBUG("removing audio connection: {}", j.dump());
-        auto cresponse = parseConnectionRequest(sock, j);
-        allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
-    }
-
-    
-    connections = engine_->getComponentModulationConnections(id);
-    SPDLOG_DEBUG("removing modulation connections from component with id {}", id);
-    for ( auto c : connections ){
-        c.remove = true ;
-        json j = c ;
-        SPDLOG_DEBUG("removing modulation connection: {}", j.dump());
+        SPDLOG_DEBUG("removing connection: {}", j.dump());
         auto cresponse = parseConnectionRequest(sock, j);
         allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
     }
@@ -1073,184 +1052,24 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
     return success ;
 }
 
-bool ApiHandler::loadConnectComponent(int sock, const json& config){
+bool ApiHandler::loadConnectComponent(int sock, const json& connections){
     bool success = true ;
 
-    // connections to outbound audio device
-    if ( config.contains("AudioSinks") && config.at("AudioSinks").is_array() ){
-        for ( const auto& sink : config.at("AudioSinks") ){
-            if ( 
-                ! sink.contains("componentId") || 
-                ! sink.at("componentId").is_number_integer() ||
-                ! sink.contains("index") ||
-                ! sink.at("index").is_number_integer()
-            ){
-                SPDLOG_ERROR("Cannot process AudioSink in with improper format: {}", sink.dump());
-                success = false ;
-                continue ;
-            } 
+    if ( !connections.is_array() ) return false ;
 
-            ConnectionRequest req ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundSocket = SocketType::SignalOutbound ;        
-            req.outboundID = sink.at("componentId");
-            req.outboundIdx = sink.at("index");
-            req.inboundIdx = 0 ; // TODO: support multi-channel output
-            
-            const auto& connectionResponse = parseConnectionRequest(sock, req);
-            if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
-                SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
-                success = false ;
-            }
+    for ( auto c : connections ){
+        ConnectionRequest request ;
+        try {
+            request = c ;
+        } catch (std::exception& e){
+            SPDLOG_ERROR("Could not parse {} to ConnectionRequest.", c.dump());
+            success = false ;
         }
-    }
 
-    // connections to hardware midi
-    if ( config.contains("MidiHandlers") && config.at("MidiHandlers").is_array() ){
-        for ( const auto& id : config.at("MidiHandlers") ){
-            if ( ! id.is_number_integer() ){
-                SPDLOG_ERROR("Cannot process root midi handler with improper format: {}", id.dump() );
-                success = false ;
-                continue ;
-            } 
-
-            ConnectionRequest req ;
-            req.inboundSocket = SocketType::MidiInbound ;
-            req.outboundSocket = SocketType::MidiOutbound ;
-            req.inboundID = id ;
-            
-            const auto& connectionResponse = parseConnectionRequest(sock, req);
-            if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
-                SPDLOG_ERROR("error requestion connection: {}", connectionResponse.dump());
-                success = false ;
-            }
-        }
-    }
-
-    if ( config.contains("MidiListeners") && config.at("MidiListeners").is_array() ){
-        for ( const auto& id : config.at("MidiListeners") ){
-            if ( ! id.is_number_integer() ){
-                SPDLOG_ERROR("Cannot process root midi handler with improper format: {}", id.dump() );
-                success = false ;
-                continue ;
-            } 
-
-            ConnectionRequest req ;
-            req.inboundSocket = SocketType::MidiInbound ;
-            req.outboundSocket = SocketType::MidiOutbound ;
-            req.inboundID = id ;
-            
-            const auto& connectionResponse = parseConnectionRequest(sock, req);
-            if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
-                SPDLOG_ERROR("error requestion connection: {}", connectionResponse.dump());
-                success = false ;
-            }
-        }
-    }
-
-    // intercomponent connections
-    if ( config.contains("components") && config.at("components").is_array() ){
-        for ( const auto& component : config.at("components") ){
-            if (
-                ! component.is_object() ||
-                ! component.contains("id") ||
-                ! component.at("id").is_number_integer() ||
-                ! component.contains("parameters") ||
-                ! component.at("parameters").is_object() ||
-                ! component.contains("name") ||
-                ! component.at("name").is_string()
-            ){
-                SPDLOG_ERROR("component is not in expected format: {}", component.dump()) ;
-                success = false ;
-                continue ;
-            }
-
-            // audio connections
-            if ( component.contains("signalInputs") && component.at("signalInputs").is_array() ){
-                for ( size_t inboundIdx = 0 ; inboundIdx < component.at("signalInputs").size(); ++inboundIdx ){
-                    for ( const auto& outbound : component["signalInputs"][inboundIdx] ){
-                        if ( 
-                            ! outbound.contains("componentId") ||
-                            ! outbound.at("componentId").is_number_integer() ||
-                            ! outbound.contains("index") ||
-                            ! outbound.at("index").is_number_integer()
-                        ){
-                            SPDLOG_ERROR("Cannot process component signal connection with improper format: {}", outbound.dump());
-                            success = false ;
-                            continue ;
-                        } 
-
-                        ConnectionRequest req ;
-                        req.inboundID = component.at("id");
-                        req.inboundIdx = inboundIdx ;
-                        req.inboundSocket = SocketType::SignalInbound ;
-                        req.outboundID = outbound.at("componentId");
-                        req.outboundIdx = outbound.at("index");
-                        req.outboundSocket = SocketType::SignalOutbound ;
-
-                        const auto& connectionResponse = parseConnectionRequest(sock, req);
-                        if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
-                            SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
-                            success = false ;
-                        }
-                    }
-                }
-            }
-
-            // midi connections
-            if ( component.contains("midiListeners") && component.at("midiListeners").is_array() ){
-                for ( const auto& inboundId : component.at("midiListeners") ){
-                    if ( ! inboundId.is_number_integer() ){
-                        SPDLOG_ERROR("Cannot process improperly formatted midi listener entry: {}", inboundId.dump() );
-                        success = false ;
-                        continue ;
-                    } 
-                    ConnectionRequest req ;
-                    req.inboundID = inboundId ;
-                    req.inboundSocket = SocketType::MidiInbound ;
-                    req.outboundID = component.at("id") ;
-                    req.outboundSocket = SocketType::MidiOutbound ;
-                    
-                    const auto& connectionResponse = parseConnectionRequest(sock, req);
-                    if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
-                        SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
-                        success = false ;
-                    }
-                }
-            }
-
-            // modulation connections
-            for ( const auto& [p, data] : component.at("parameters").items() ){
-                if ( ! data.contains("modulatorId") ) continue ;
-                
-                if ( ! data.at("modulatorId").is_number_integer() ){
-                    SPDLOG_ERROR("Cannot process modulation connection with invalid modulatorId format: {}", data.at("modulatorId").dump());
-                    success = false ;
-                    continue ;
-                }
-
-                ParameterType param ;
-                try {
-                    param = parameterFromString(p);
-                } catch (std::exception& e ){
-                    SPDLOG_ERROR("Cannot process modulation connection with invalid parameter json: {}", p);
-                    success = false ;
-                    continue ;
-                }
-         
-                ConnectionRequest req ;
-                req.inboundID = component.at("id") ;
-                req.inboundSocket = SocketType::ModulationInbound ;
-                req.inboundParameter = param ;
-                req.outboundID = data.at("modulatorId");
-                req.outboundSocket = SocketType::ModulationOutbound ;
-                
-                const auto& connectionResponse = parseConnectionRequest(sock, req);
-                if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
-                    SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
-                    success = false ;
-                }
-            }
+        const auto& connectionResponse = parseConnectionRequest(sock, request);
+        if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
+            SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
+            success = false ;
         }
     }
 

@@ -30,6 +30,7 @@
 #include "types/ComponentType.hpp"
 
 #include "meta/ComponentRegistry.hpp"
+#include "requests/ConnectionRequest.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -41,10 +42,12 @@ using json = nlohmann::json ;
 class ComponentManager {
 private:
     MidiController* midiController_ ;
+
     int nextID_ = 0 ;
     std::unordered_map<ComponentId, std::unique_ptr<BaseComponent>> components_ ;
     
     // "views" of different component groups
+    std::unordered_set<ComponentId> allIds_ ;
     std::unordered_set<ComponentId> midiHandlers_ ;
     std::unordered_set<ComponentId> midiListeners_ ;
     std::unordered_set<ComponentId> modulators_ ;
@@ -61,6 +64,7 @@ public:
         components_.emplace(id, std::make_unique<ComponentType_t<T>>(id, cfg));
 
         auto descriptor = ComponentRegistry::getComponentDescriptor(T);
+        allIds_.insert(id);
         if ( descriptor.isModule() ) modules_.insert(id);
         if ( descriptor.isModulator() ) modulators_.insert(id);
         if ( descriptor.isMidiListener() ) midiListeners_.insert(id);
@@ -94,6 +98,7 @@ public:
     MidiEventListener* getMidiListener(ComponentId id) const ;
     Analyzer* getAnalyzer(ComponentId id) const ;
 
+    const std::unordered_set<ComponentId>& getComponentIds() const ;
     const std::unordered_set<ComponentId>& getModuleIds() const ;
     const std::unordered_set<ComponentId>& getModulatorIds() const ;
     const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
@@ -114,6 +119,12 @@ public:
     // saving / loading
     json serializeComponent(BaseComponent* c) const ;
     json serializeComponents() const ;
+    void getComponentConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+
+private:
+    void getComponentMidiConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentModulationConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
 };
 
 #endif // __COMPONENT_MANAGER_HPP_

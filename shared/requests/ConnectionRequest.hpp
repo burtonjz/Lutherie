@@ -71,6 +71,8 @@ struct ConnectionRequest {
 
         return t ;
     }
+
+    auto operator<=>(const ConnectionRequest&) const = default ;
 };
 
 inline void to_json(json& j, const ConnectionRequest& req){

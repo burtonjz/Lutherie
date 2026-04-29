@@ -32,6 +32,10 @@ BaseModule* ComponentManager::getModule(ComponentId id) const {
     return dynamic_cast<BaseModule*>(getRaw(id));
 }
 
+const std::unordered_set<ComponentId>& ComponentManager::getComponentIds() const {
+    return allIds_ ;
+}
+
 const std::unordered_set<ComponentId>& ComponentManager::getModuleIds() const {
     return modules_ ;
 }
@@ -73,19 +77,23 @@ const std::unordered_set<ComponentId>& ComponentManager::getAnalyzerIds() const 
 }
 
 void ComponentManager::remove(ComponentId id){
+    allIds_.erase(id);
     midiHandlers_.erase(id);
-    modules_.erase(id);
+    midiListeners_.erase(id);
     modulators_.erase(id);
-
+    modules_.erase(id);
+    analyzers_.erase(id);
     components_.erase(id);
 }
 
 void ComponentManager::reset(){
     nextID_ = 0 ;
-    components_.clear();
+    allIds_.clear();
     midiHandlers_.clear();
+    midiListeners_.clear();
     modulators_.clear();
     modules_.clear();
+    analyzers_.clear();
 }
 
 void ComponentManager::runParameterModulation(){
@@ -123,27 +131,6 @@ json ComponentManager::serializeComponent(BaseComponent* c) const {
         }
     }
 
-    // get input signal component ids
-    BaseModule* module = dynamic_cast<BaseModule*>(c);
-    if ( module ){
-        for ( size_t i = 0; i < module->getNumInputs(); ++i ){
-            for ( const auto& conn : module->getInputs(i) ){
-                output["signalInputs"][i].push_back(conn);
-            }
-        }
-    }
-
-    // get midi handler listeners
-    MidiEventHandler* handler = dynamic_cast<MidiEventHandler*>(c);
-    if ( handler ){
-        for ( auto listener : handler->getListeners() ){
-            auto listenerModule = dynamic_cast<BaseComponent*>(listener);
-            if ( listenerModule ){
-                output["midiListeners"].push_back(listenerModule->getId());
-            }
-        }
-    }
-    
     return output ;
 }
 
@@ -153,4 +140,176 @@ json ComponentManager::serializeComponents() const {
         output.push_back(serializeComponent(c.get()));
     }
     return output ;
+}
+
+void ComponentManager::getComponentConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
+    getComponentSignalConnections(id, requests);
+    getComponentMidiConnections(id, requests);
+    getComponentModulationConnections(id, requests);
+}
+
+void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
+    SPDLOG_DEBUG("getting signal connections for component id = {}", id);
+
+    BaseModule* module = getModule(id);
+    Analyzer* analyzer = getAnalyzer(id);
+
+    // if it's not a module, check if it's analyzer
+    if ( !module && !analyzer ){
+        SPDLOG_WARN("cannot get signal connections for component with id = {}. It is not an analyzer or module.", id);
+        return ;
+    }
+
+    // Case 1: Analyzer
+    if ( analyzer ){
+        for ( const auto [m, idx] : analyzer->getSources() ){
+            ConnectionRequest req ;
+            req.outboundID = m->getId();
+            req.outboundIdx = idx ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+
+            req.inboundID = id ;
+            req.inboundIdx = 0 ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            
+            requests.push_back(req);
+        }
+        return ;
+    } 
+    
+    // Case 2: Module
+
+    // check if module is connected to any analyzer
+    for ( const auto& [a, idx] : module->getAnalyzers() ){
+        if ( a ){
+            ConnectionRequest req ;
+            req.outboundID = id ;
+            req.outboundIdx = idx ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            req.inboundID = a->getId() ;
+            req.inboundIdx = 0 ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            requests.push_back(req);
+        }
+    }
+
+    // signal inputs
+    for ( size_t i = 0; i < module->getNumInputs(); ++i ){
+        for ( const auto& conn : module->getInputs(i) ){
+            if ( conn.module ){
+                ConnectionRequest req ;
+                req.inboundID = id ;
+                req.inboundIdx = i ;
+                req.inboundSocket = SocketType::SignalInbound ;
+                req.outboundID = conn.module->getId() ;
+                req.outboundIdx = conn.index ;
+                req.outboundSocket = SocketType::SignalOutbound ;
+                requests.push_back(req);
+            }
+        }    
+    }
+    
+    // signal outputs
+    for ( size_t i = 0; i < module->getNumOutputs(); ++i ){
+        for ( const auto& conn : module->getOutputs(i) ){
+            if ( conn.module ){
+                ConnectionRequest req ;
+                req.inboundID = conn.module->getId() ;
+                req.inboundIdx = conn.index ;
+                req.inboundSocket = SocketType::SignalInbound ;
+                req.outboundID = id ;
+                req.outboundIdx = i ;
+                req.outboundSocket = SocketType::SignalOutbound ;
+                requests.push_back(req);
+            }
+        }
+    }
+    
+
+    return ;
+}
+
+
+void ComponentManager::getComponentModulationConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
+    SPDLOG_DEBUG("getting modulation connections for component id = {}", id);
+    BaseComponent* module = getModule(id);
+    BaseModulator* modulator = getModulator(id);
+
+    // get all inbound parameter modulators
+    if ( module ){
+        auto d = ComponentRegistry::getComponentDescriptor(module->getType());
+        for ( auto p : d.modulatableParameters ){
+            BaseModulator* paramModulator = module->getParameterModulator(p);
+            if ( paramModulator ){
+                ConnectionRequest req ;
+                req.inboundID = id ;
+                req.inboundSocket = SocketType::ModulationInbound ;
+                req.inboundParameter = p ;
+                req.outboundID = paramModulator->getId() ;
+                req.outboundSocket = SocketType::ModulationOutbound ;
+                requests.push_back(req);
+            }
+        }
+    }
+
+    // if this component is also a modulator, add in what it is modulating
+    if ( modulator ){
+        for ( auto t : modulator->getModulationTargets() ){
+            if ( t.component ){
+                ConnectionRequest req ;
+                req.inboundID = t.component->getId() ;
+                req.inboundSocket = SocketType::ModulationInbound ;
+                req.inboundParameter = t.param ;
+                req.outboundID = id ;
+                req.outboundSocket = SocketType::ModulationOutbound ;
+                req.depthConnection = t.depth ;
+                requests.push_back(req);
+            }
+        }
+    }
+
+    return ;
+}
+
+
+void ComponentManager::getComponentMidiConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
+    SPDLOG_DEBUG("getting midi connections for component id = {}", id);
+    BaseComponent* c = getRaw(id);
+
+    if ( !c ) return ;
+
+    MidiEventHandler* h = getMidiHandler(id);
+    if ( h ){
+        // also create a connection request for all listeners
+        for ( auto listener : h->getListeners() ){
+            if ( listener ){
+                ConnectionRequest req ;
+                req.inboundID = listener->getId();
+                req.inboundSocket = SocketType::MidiInbound ;
+                req.outboundID = id ;
+                req.outboundSocket = SocketType::MidiOutbound ;
+                requests.push_back(req);
+            }
+        }
+    }
+
+    // if it's a listener, create a connection request for all handlers
+    MidiEventListener* listener = getMidiListener(id);
+    if ( listener ){
+        for ( auto handler : listener->getHandlers() ){
+            if ( handler ){
+                ConnectionRequest req ;
+                req.inboundID = id ;
+                req.inboundSocket = SocketType::MidiInbound ;
+                ComponentId handlerId = handler->getId();
+                if ( handlerId != -1 ){
+                    req.outboundID =  handlerId ;
+                }
+                req.outboundSocket = SocketType::MidiOutbound ;
+                requests.push_back(req);
+            }
+        }
+    }
+
+    return ;
 }
