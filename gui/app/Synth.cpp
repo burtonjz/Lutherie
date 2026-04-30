@@ -55,7 +55,8 @@ Synth::Synth(QWidget* parent):
     parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
     modulationPanel_(new ControlPanel(this)),
     modulationDock_(new KDDWQt::DockWidget("__modulationDock")),
-    analyzerDocks_()
+    analyzerDocks_(),
+    componentDetailDocks_()
 {
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
@@ -309,16 +310,17 @@ void Synth::configureDocks(){
     modulationDock_->close();
 
     // Analyzer Docks
-    for ( auto key : analysisManager_->getAnalyzerTypes() ){
-        auto dock = new KDDWQt::DockWidget("__analyzerDock");
+    for ( auto typ : analysisManager_->getAnalyzerTypes() ){
+        QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(typ).name);
 
-        dock->setWidget(analysisManager_->getAnalyzerWidget(key));
-        QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(key).name);
+        auto dock = new KDDWQt::DockWidget("__analyzerDock_" + name);
+        dock->setWidget(analysisManager_->getAnalyzerWidget(typ));
+        
         dock->setTitle(name);
         addDockWidget(dock, KDDW::Location_None);
 
         dock->close();
-        analyzerDocks_[key] = dock ;
+        analyzerDocks_[typ] = dock ;
     }
 }
 
@@ -423,6 +425,28 @@ QMenu* Synth::buildComponentMenu(){
 
     connect(menu, &QMenu::aboutToShow, search, &QLineEdit::clear);
     return menu ;
+}
+
+void Synth::createComponentDetailDock(int componentId, ComponentParameters* params){
+    if ( !params ) return ;
+    if ( componentDetailDocks_.contains(componentId) ){
+        qWarning() << "cannot create component detail dock: already exists for component" << componentId ;
+        return ;
+    }
+
+    auto dock = new KDDWQt::DockWidget("__componentDetailDock");
+    dock->setWidget(params);
+    dock->setTitle(params->getModel()->getName());
+    addDockWidget(dock, KDDW::Location_None);
+    componentDetailDocks_[componentId] = dock ;
+
+    connect( 
+        params, &QObject::destroyed,
+        dock, [this, componentId, dock](){
+            dock->deleteLater();
+            componentDetailDocks_.erase(componentId);
+        }
+    );
 }
 
 void Synth::closeEvent(QCloseEvent* event){
@@ -616,10 +640,14 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
 
     auto params = componentManager_->getParameters(componentId);
     if ( params ){
-        parameterPanel_->addContent(name, params);
-        connect(params, &QObject::destroyed, this, [this, params](){
-            parameterPanel_->removeContent(params);
-        });
+        if ( params->hasDetailedEditor() ){
+            createComponentDetailDock(componentId, params);
+        } else {
+            parameterPanel_->addContent(name, params);
+            connect(params, &QObject::destroyed, this, [this, params](){
+                parameterPanel_->removeContent(params);
+            });
+        }
     }
     
     auto modParams = componentManager_->getModulationParameters(componentId);
@@ -639,13 +667,22 @@ void Synth::onComponentRemoved(int componentId){
 }
 
 void Synth::onShowParameters(int componentId){
-    auto model = componentManager_->getModel(componentId);
-    if ( !model ) return ;
-    if ( model->getDescriptor().controllableParameters.size() == 0 ) return ;
+    // prioritize detailed view if exists
+    if ( componentDetailDocks_.contains(componentId) ){
+        auto dock = componentDetailDocks_.at(componentId);
+        if ( dock && dock->isHidden() ){
+            dock->open();
+        }
+        return ;
+    }
+
+    // otherwise, show generic parameters
+    auto params = componentManager_->getParameters(componentId);
+    if ( !params || !parameterPanel_->hasContent(params) ) return ;
 
     if ( parameterDock_->isHidden() ) parameterDock_->open() ;
-    parameterPanel_->maximizeSection(componentManager_->getParameters(componentId));
-}
+    parameterPanel_->maximizeSection(params);
+} 
 
 void Synth::onShowModulation(int componentId){
     auto model = componentManager_->getModel(componentId);
@@ -658,11 +695,21 @@ void Synth::onShowModulation(int componentId){
 
 void Synth::onShowGroupParameters(int groupId){
     auto params = groupManager_->getParameters(groupId);
-    if ( !params ) return ;
+    auto model = groupManager_->getModel(groupId);
+
+    if ( !params || !model ) return ;
 
 
     if ( parameterDock_->isHidden() ) parameterDock_->open() ;
     parameterPanel_->maximizeSection(params);
+
+    // if any member of the group has detailed view, open those as well
+    for ( auto id : model->getComponents() ){
+        if ( componentDetailDocks_.contains(id) ){
+            auto d = componentDetailDocks_.at(id);
+            if ( d && d->isHidden() ) d->open();
+        }
+    }
 }
 
 void Synth::onShowGroupModulation(int groupId){
@@ -694,7 +741,7 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
     bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
         auto params = componentManager_->getParameters(componentId);
-        if ( params ){
+        if ( params && ! params->hasDetailedEditor() ){
             if ( !paramAdded ){
                 groupManager_->setParameters(groupId, paramContent);
                 parameterPanel_->addContent(name, paramContent);
@@ -773,7 +820,7 @@ void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> compone
     bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
         auto params = componentManager_->getParameters(componentId);
-        if ( params ){
+        if ( params && ! params->hasDetailedEditor() ){
             if ( newParamContent && !paramAdded ){
                 groupManager_->setParameters(groupId, paramContent);
                 parameterPanel_->addContent(m->getName(), paramContent);
@@ -822,7 +869,7 @@ void Synth::onRequestComponentRename(int componentId, QString name){
 
     // tell panels to update headers
     auto paramContent = componentManager_->getParameters(componentId);
-    if ( paramContent ){
+    if ( paramContent && parameterPanel_->hasContent(paramContent) ){
         auto paramSection = parameterPanel_->getSection(paramContent);
         paramSection->setTitle(name);
     }
@@ -831,6 +878,12 @@ void Synth::onRequestComponentRename(int componentId, QString name){
     if ( modContent ){
         auto modSection = modulationPanel_->getSection(modContent);
         modSection->setTitle(name);
+    }
+    
+    // if the component has a detail view, update that dock
+    if ( componentDetailDocks_.contains(componentId) ){
+        auto dock = componentDetailDocks_.at(componentId);
+        if ( dock ) dock->setTitle(name);
     }
     
     // update analyzer if relevant

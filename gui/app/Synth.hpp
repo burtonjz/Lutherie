@@ -56,6 +56,7 @@ private:
     KDDWQt::DockWidget* modulationDock_ ;
 
     std::unordered_map<ComponentType, KDDWQt::DockWidget*> analyzerDocks_ ;
+    std::unordered_map<int, KDDWQt::DockWidget*> componentDetailDocks_ ;
 
     // save/load 
     QString saveFilePath_ ;
@@ -83,15 +84,17 @@ public:
     Synth(QWidget* parent = nullptr);
     ~Synth();
 
+protected:
+    void closeEvent(QCloseEvent* event) override ;
+
 private:
     void configureMenu();
     void configureToolBar();
     void configureDocks();
     QMenu* buildComponentMenu();
 
+    void createComponentDetailDock(int componentId, ComponentParameters* params);
     void performSave();
-
-    void closeEvent(QCloseEvent* event) override ;
 
 signals:
     void engineStatusChanged(bool status);

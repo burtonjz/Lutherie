@@ -30,7 +30,7 @@ class ComponentParameters : public QWidget {
 private:
     ComponentModel* model_ ;
     std::map<ParameterType, ParameterWidget*> parameterWidgets_ ; // general independent parameters
-    QWidget* specializedWidget_ ;
+    QWidget* detailedEditor_ ; // specialized controls designed to display in its own dock.
 
     QTimer* parameterChangedTimer_ ;
     std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
@@ -40,13 +40,12 @@ public:
     ~ComponentParameters() override = default ;
 
     ComponentModel* getModel() const ;
-    QWidget* getSpecializedWidget() const ;
-
-    bool hasSpecializedWidget() const ;
+    QWidget* getDetailedEditor() const ;
+    bool hasDetailedEditor() const ;
 
 protected:
     ParameterWidget* createParameterWidget(ParameterType p);
-    QWidget* createSpecializedWidget(ComponentType t);
+    QWidget* createDetailedEditor(ComponentType t);
 
 private:
     void layoutParameters();

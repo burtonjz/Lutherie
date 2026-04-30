@@ -4,7 +4,6 @@
 - short cables shouldn't curl back on themselves and make the arrow look the wrong direction.
 - Ctrl+A to make component menu context menu for convenience
 - Spectrum Analyzer labels, have channels naturally add to specialized Analysis Widget. 
-- Analysis Interface hide layer
 - Fix the issue with positioning of the graph panel when docking something
 - Create zoom out view of graph panel with drag to navigate
 - Create max zoom out of graph panel
@@ -13,6 +12,8 @@
 - create specialized widget for midi filter (horizontal piano roll, highlight pass-through key ranges)
   - PianoRollWidget should be renamed to SequencerWidget, and the PianoRoll component should be broken out and given a horizontal/vertical flag.8
 - Figure out whatever is happening with oscillator noise
+- KDDW dock widgets that aren't on the main window show "gui" in title bar if they are docked together
+- request rename when node gets its unique name (so that parameters/other panels update properly)
 
 ## UI
 
@@ -82,4 +83,4 @@
 ## One Day
 - Envelope with drawable curve
 - Custom wavetable drawing
-- Export synths to VST/LV2
+- Export synths to VST/LV2 (probably not lol)

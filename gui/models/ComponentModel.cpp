@@ -44,6 +44,8 @@ ComponentModel::ComponentModel(int id, ComponentType typ):
             this, &ComponentModel::modulationDepthChanged
         );
     }
+
+    name_ = QString::fromStdString(descriptor_.name);
 }
 
 ComponentModel::~ComponentModel(){
@@ -58,6 +60,10 @@ int ComponentModel::getId() const {
 
 ComponentType ComponentModel::getType() const {
     return type_ ;
+}
+
+const QString& ComponentModel::getName() const {
+    return name_ ;
 }
 
 void ComponentModel::setName(QString name){

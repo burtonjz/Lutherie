@@ -125,8 +125,9 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     auto model = new ComponentModel(componentId, type);
     models_[componentId] = model ;
 
+    ComponentParameters* params = nullptr ;
     if ( model->getDescriptor().controllableParameters.size() > 0 ){
-        auto params = new ComponentParameters(model);
+        params = new ComponentParameters(model);
         parameters_[componentId] = params ;
         connect(
             params, &ComponentParameters::parameterEdited,
@@ -134,8 +135,9 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
         );
     }
     
+    ModulationParameters* modParams = nullptr ;
     if ( model->getDescriptor().modulatableParameters.size() > 0 ){
-        auto modParams = new ModulationParameters(model);
+        modParams = new ModulationParameters(model);
         modParameters_[componentId] = modParams ;
         connect(
             modParams, &ModulationParameters::modulationDepthEdited,
@@ -147,14 +149,14 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
         );
     }
 
-    // // handle collection widget if exists
-    // auto cw = getCollectionWidget(editor->getComponentParameters());
-    // if ( cw ){
-    //     connect(
-    //         cw, &CollectionWidget::collectionEdited,
-    //         this, &ComponentManager::onCollectionEdited
-    //     );
-    // }
+    // handle collection widget if exists
+    auto cw = getCollectionWidget(params);
+    if ( cw ){
+        connect(
+            cw, &CollectionWidget::collectionEdited,
+            this, &ComponentManager::onCollectionEdited
+        );
+    }
 
     emit componentAdded(componentId, type);
 }
@@ -223,12 +225,12 @@ void ComponentManager::syncModel(const json& msg){
 
 CollectionWidget* ComponentManager::getCollectionWidget(ComponentParameters* params) const {
     if ( !params ) return nullptr ;
-    auto specialized = params->getSpecializedWidget();
-    if ( !specialized ) return nullptr ;
+    auto detailed = params->getDetailedEditor();
+    if ( !detailed ) return nullptr ;
 
-    CollectionWidget* cw = dynamic_cast<CollectionWidget*>(specialized);
+    CollectionWidget* cw = dynamic_cast<CollectionWidget*>(detailed);
     if ( !cw ){
-        cw = specialized->findChild<CollectionWidget*>();
+        cw = detailed->findChild<CollectionWidget*>();
     }
     
     return cw ;
@@ -255,10 +257,10 @@ bool ComponentManager::handleCollectionApiResponse(const json& msg){
         return true ;
     }
     
-    // auto cw = getCollectionWidget(it->second->getComponentParameters());
-    // if ( cw ){
-    //     cw->updateCollection(req);
-    // }
+    auto cw = getCollectionWidget(it->second);
+    if ( cw ){
+        cw->updateCollection(req);
+    }
     
     return true ;
 }

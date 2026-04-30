@@ -30,7 +30,7 @@ ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent)
     model_(model)
 {
     auto d = model_->getDescriptor();
-    specializedWidget_ = createSpecializedWidget(d.type);
+    detailedEditor_ = createDetailedEditor(d.type);
 
     for ( auto p: d.controllableParameters ){
         parameterWidgets_[p] = createParameterWidget(p);
@@ -53,12 +53,12 @@ ComponentModel* ComponentParameters::getModel() const {
     return model_ ;
 }
 
-QWidget* ComponentParameters::getSpecializedWidget() const {
-    return specializedWidget_ ; 
+QWidget* ComponentParameters::getDetailedEditor() const {
+    return detailedEditor_ ; 
 }
 
-bool ComponentParameters::hasSpecializedWidget() const {
-    return specializedWidget_ != nullptr ;
+bool ComponentParameters::hasDetailedEditor() const {
+    return detailedEditor_ != nullptr ;
 }
 
 ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
@@ -99,7 +99,7 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     return w ;
 }
 
-QWidget* ComponentParameters::createSpecializedWidget(ComponentType t){
+QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
     switch(t){
     case ComponentType::Sequencer:
     {
@@ -123,8 +123,8 @@ QWidget* ComponentParameters::createSpecializedWidget(ComponentType t){
 void ComponentParameters::layoutParameters(){
     auto layout = new QVBoxLayout(this);
 
-    if ( specializedWidget_ ){
-        layout->addWidget(specializedWidget_, 1);
+    if ( detailedEditor_ ){
+        layout->addWidget(detailedEditor_, 1);
     }
 
     QGridLayout* parameterLayout = new QGridLayout();

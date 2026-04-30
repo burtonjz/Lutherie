@@ -45,7 +45,10 @@ public:
 
     int getId() const ;
     ComponentType getType() const ;
+
+    const QString& getName() const ;
     void setName(QString name);
+    
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;
     const std::map<ParameterType, ModulationModel*>& getModulationModels() const ;
