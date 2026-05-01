@@ -27,16 +27,28 @@
 
 ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent):
     QWidget(parent),
-    model_(model)
+    model_(model),
+    mainLayout_(new QVBoxLayout(this)),
+    paramLayout_(new QGridLayout())
 {
     auto d = model_->getDescriptor();
     detailedEditor_ = createDetailedEditor(d.type);
 
+    int maxSpan = 1 ;
     for ( auto p: d.controllableParameters ){
-        parameterWidgets_[p] = createParameterWidget(p);
+        auto w = createParameterWidget(p);
+        parameterWidgets_[p] = w ;
+        maxSpan = std::max(maxSpan, w->gridColumnSpan());
     }
 
-    layoutParameters();
+    // layout 
+    setMinimumWidth((Theme::PARAMETER_WIDGET_WIDTH + Theme::PARAMETER_WIDGET_SPACING) * maxSpan);
+    paramLayout_->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    if ( detailedEditor_ ){
+        mainLayout_->addWidget(detailedEditor_, 1);
+    }
+    mainLayout_->addLayout(paramLayout_);
+    rebuildLayout();
 
     // handle parameter changes
     parameterChangedTimer_ = new QTimer(this);
@@ -120,41 +132,30 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
     }
 }
 
-void ComponentParameters::layoutParameters(){
-    auto layout = new QVBoxLayout(this);
-
-    if ( detailedEditor_ ){
-        layout->addWidget(detailedEditor_, 1);
+void ComponentParameters::resizeEvent(QResizeEvent* event){
+    QWidget::resizeEvent(event);
+    if ( hasDetailedEditor() ){
+        rebuildLayout();
+        updateGeometry();
     }
+}
 
-    QGridLayout* parameterLayout = new QGridLayout();
-    parameterLayout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
-
-    // fix column widths
-    const int COLS = Theme::PARAMETER_GRID_N_COLS ;
-    for ( int c = 0 ; c < COLS ; ++c ){
-        parameterLayout->setColumnMinimumWidth(c, Theme::PARAMETER_WIDGET_WIDTH);
-        parameterLayout->setColumnStretch(c, 0);
+void ComponentParameters::rebuildLayout(){
+    // clear out existing parameters
+    while ( paramLayout_->count() ){
+        paramLayout_->takeAt(0);   
     }
 
     // build placement list
     std::vector<ParameterWidget*> remaining ; 
-    for ( auto p : model_->getDescriptor().controllableParameters ){
-        remaining.push_back(parameterWidgets_[p]);
-    }
-
-    // fix widget width to span
-    for ( auto* widget : remaining ){
-        int span = widget->gridColumnSpan();
-        widget->setFixedWidth(
-            Theme::PARAMETER_WIDGET_WIDTH * span +
-            (span - 1) * Theme::PARAMETER_WIDGET_SPACING
-        );
+    for ( auto [_, w] : parameterWidgets_ ){
+        remaining.push_back(w);
     }
 
     // place widgets, look ahead to avoid gaps
     // TODO: this could be more robust, (e.g., find optimal placement)
     // but we might just let users position in future, so maybe not worth
+    const int COLS = computeColumnCount() ;
     int col = 0, row = 0;
     while ( !remaining.empty() ){
         int slotsLeft = COLS - col;
@@ -175,7 +176,7 @@ void ComponentParameters::layoutParameters(){
         remaining.erase(it);
         const int span = widget->gridColumnSpan();
 
-        parameterLayout->addWidget(widget, row, col, 1, span, Qt::AlignTop);
+        paramLayout_->addWidget(widget, row, col, 1, span, Qt::AlignTop);
         col += span ;
 
         if (col >= COLS){
@@ -184,10 +185,16 @@ void ComponentParameters::layoutParameters(){
         }
     }
 
-    parameterLayout->setRowStretch(parameterLayout->rowCount(), 1);
-    parameterLayout->setColumnStretch(COLS, 1);
-    layout->addLayout(parameterLayout);
-    adjustSize();
+    paramLayout_->setRowStretch(paramLayout_->rowCount(), 1);
+    paramLayout_->setColumnStretch(COLS, 1);
+}
+
+int ComponentParameters::computeColumnCount() const {
+    if ( hasDetailedEditor() ){
+        return std::max(1, static_cast<int>(width() / Theme::PARAMETER_WIDGET_WIDTH) );
+    } else {
+        return Theme::PARAMETER_GRID_N_COLS ;
+    }
 }
 
 void ComponentParameters::onValueChange(){

@@ -14,6 +14,9 @@
 - Figure out whatever is happening with oscillator noise
 - KDDW dock widgets that aren't on the main window show "gui" in title bar if they are docked together
 - request rename when node gets its unique name (so that parameters/other panels update properly)
+- Sequencer: 
+  - don't allow note adds while status is on. 
+  - When status is toggled off, send note-off commands for all active notes, and reset the timer (so when status turned on we start at beginning)
 
 ## UI
 
@@ -32,6 +35,8 @@
 - Shift+scroll for horizontal scrollbar
 - Prevent note creation while engine is running
 - On sequencer status toggle, send note-off for all active notes (or disallow toggling during run)
+- labels on individual notes (midi note + velocity)
+- adjust size of sequencer grid based on duration parameter
 
 ## Signal Flow
 

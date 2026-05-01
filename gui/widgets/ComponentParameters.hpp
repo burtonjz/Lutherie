@@ -23,6 +23,8 @@
 #include "widgets/ParameterWidget.hpp"
 
 #include <QWidget>
+#include <QVBoxLayout>
+#include <QGridLayout>
 
 class ComponentParameters : public QWidget {
     Q_OBJECT
@@ -35,6 +37,9 @@ private:
     QTimer* parameterChangedTimer_ ;
     std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
 
+    QVBoxLayout* mainLayout_ ;
+    QGridLayout* paramLayout_ ;
+
 public:
     explicit ComponentParameters(ComponentModel* model, QWidget* parent = nullptr);
     ~ComponentParameters() override = default ;
@@ -46,9 +51,11 @@ public:
 protected:
     ParameterWidget* createParameterWidget(ParameterType p);
     QWidget* createDetailedEditor(ComponentType t);
+    void resizeEvent(QResizeEvent* event) override ;
 
 private:
-    void layoutParameters();
+    void rebuildLayout();
+    int computeColumnCount() const ;
 
 signals:
     void parameterEdited(int componentId, ParameterType p, ParameterValue value);
