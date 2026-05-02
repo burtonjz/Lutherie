@@ -1,9 +1,7 @@
 # Lutherie TODO
 
 ## Bugs / Cleanup
-- short cables shouldn't curl back on themselves and make the arrow look the wrong direction.
 - Ctrl+A to make component menu context menu for convenience
-- Spectrum Analyzer labels, have channels naturally add to specialized Analysis Widget. 
 - Fix the issue with positioning of the graph panel when docking something
 - Create zoom out view of graph panel with drag to navigate
 - Create max zoom out of graph panel
@@ -17,6 +15,7 @@
 - Sequencer: 
   - don't allow note adds while status is on. 
   - When status is toggled off, send note-off commands for all active notes, and reset the timer (so when status turned on we start at beginning)
+- Analyzer Nodes automatically group and reflect "channel" numbers
 
 ## UI
 
@@ -52,10 +51,11 @@
 - Relevant Components:
   - File Reader (no input, buffer output)
   - Recorder (read in and save an audio stream, buffer output)
-  - SpectralFilter ( buffer in, buffer out)
-  - Chopper ( buffer in, buffer out)
-  - BufferTrigger ( buffer in, midi in, stream out )
-  - BufferLooper ( buffer in, stream out )
+  - Spectrogram (analysis)
+  - SpectralFilter (buffer in, buffer out)
+  - Chopper (buffer in, buffer out)
+  - BufferTrigger (buffer in, midi in, stream out)
+  - BufferLooper (buffer in, stream out)
 
 ### Macro Knobs
 - Macro Knob panel docked to edge of graph panel, moves with it

@@ -332,7 +332,13 @@ QPainterPath ConnectionCable::createAdaptiveBezierPath(const QPointF& start, con
     }
 
     // add arrows to path
-    drawCableArrow(path, 0.45);
+    size_t nArrows = path.length() / 100 ;
+    for (int i = 0; i < nArrows ; ++i ){
+        double perc = static_cast<double>(i) / nArrows ;
+        if ( perc > 0 && perc < 100 ){
+            drawCableArrow(path, perc);
+        }
+    }
 
     return path;
 }
