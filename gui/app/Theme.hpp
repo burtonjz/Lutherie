@@ -177,7 +177,7 @@ public:
         -0.75f, -0.5f, -0.25f, 0.0f, 0.25f, 0.5f, 0.75f 
     };
 
-    static constexpr qreal SWITCH_WIDGET_OPACITY_ON       = 0.5 ;
+    static constexpr qreal SWITCH_WIDGET_OPACITY_ON       = 0.8 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_OFF      = 0.38 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_DISABLED = 0.12 ;
     static constexpr int SWITCH_WIDGET_HEIGHT             = 16 ;

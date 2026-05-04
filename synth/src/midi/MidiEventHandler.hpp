@@ -87,6 +87,10 @@ public:
     void processEvents();
     void tick(float dt);
     virtual void onTick([[maybe_unused]] float dt); // for adding custom tick actions to child objects
+
+protected:
+    void reset();
+    virtual void onReset();
 };
 
 #endif // __MIDI_EVENT_HANDLER_HPP_

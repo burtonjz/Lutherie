@@ -76,7 +76,7 @@ const QColor Theme::PIANO_ROLL_GRID_PRIMARY        = QColor(65, 72, 78);
 const QColor Theme::PIANO_ROLL_GRID_SECONDARY      = QColor(42, 48, 52);
 
 // switch button
-const QColor Theme::SWITCH_WIDGET_ON_COLOR        = QColor(135, 175, 155);
+const QColor Theme::SWITCH_WIDGET_ON_COLOR        = QColor(213, 137, 54);
 const QColor Theme::SWITCH_WIDGET_OFF_COLOR       = QColor(45, 52, 56);
 const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON  = QColor(245, 237, 240);
 const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(130, 135, 138);

@@ -23,7 +23,7 @@
 #include "midi/MidiNote.hpp"
 
 struct MidiEvent {
-    enum class Type { NotePressed, NoteReleased, NoteOff};
+    enum class Type { NotePressed, NoteReleased, NoteOff };
     Type type ;
     ActiveNote anote ;
     bool rePressed = false ;
@@ -39,7 +39,7 @@ public:
     bool push(const MidiEvent& event){
         size_t head = head_.load(std::memory_order_relaxed);
         size_t next = ( head + 1 ) % 128 ;
-        if ( next == tail_.load(std::memory_order_acquire)) return false ;
+        if ( next == tail_.load(std::memory_order_acquire) ) return false ;
         buffer_[head] = event ;
         head_.store(next, std::memory_order_release);
         return true ;
@@ -47,7 +47,7 @@ public:
 
     bool pop( MidiEvent& outEvent ){
         size_t tail = tail_.load(std::memory_order_relaxed);
-        if ( tail == head_.load(std::memory_order_acquire)) return false ;
+        if ( tail == head_.load(std::memory_order_acquire) ) return false ;
         outEvent = buffer_[tail];
         tail_.store((tail + 1) % 128, std::memory_order_release);
         return true ;

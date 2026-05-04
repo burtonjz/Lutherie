@@ -26,7 +26,8 @@
 Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     BaseComponent(id, ComponentType::Sequencer),
     currentTime_(0),
-    lastQueriedBeat_(0)
+    lastQueriedBeat_(-1),
+    lastStatus_(true)
 {
     parameters_->add<ParameterType::STATUS>(true, false);
     parameters_->add<ParameterType::BPM>(cfg.bpm, false);
@@ -40,7 +41,16 @@ Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
 }
 
 void Sequencer::onTick(float dt){
-    if ( !parameters_->getParameter<ParameterType::STATUS>()->getValue() ) return ;
+    if ( !parameters_->getParameter<ParameterType::STATUS>()->getValue() ){
+        if ( lastStatus_ ){
+            SPDLOG_DEBUG("Status switched off. Resetting sequencer");
+            reset();
+        }
+        lastStatus_ = false ;
+        return ;
+    }
+
+    lastStatus_ = true ;
 
     int bpm = parameters_->getParameter<ParameterType::BPM>()->getValue() ;
     float maxBeats = parameters_->getParameter<ParameterType::DURATION>()->getValue();
@@ -113,4 +123,9 @@ void Sequencer::pushToQueue(uint8_t midiNote, uint8_t velocity, bool noteOn){
     } else {
         queue_.push({MidiEvent::Type::NoteReleased, anote});
     }
+}
+
+void Sequencer::onReset(){
+    currentTime_ = 0 ;
+    lastQueriedBeat_ = -1 ;
 }

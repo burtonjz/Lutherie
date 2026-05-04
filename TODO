@@ -1,7 +1,6 @@
 # Lutherie TODO
 
 ## Bugs / Cleanup
-- Ctrl+A to make component menu context menu for convenience
 - Fix the issue with positioning of the graph panel when docking something
 - Create zoom out view of graph panel with drag to navigate
 - Create max zoom out of graph panel
@@ -14,7 +13,6 @@
 - request rename when node gets its unique name (so that parameters/other panels update properly)
 - Sequencer: 
   - don't allow note adds while status is on. 
-  - When status is toggled off, send note-off commands for all active notes, and reset the timer (so when status turned on we start at beginning)
 - Analyzer Nodes automatically group and reflect "channel" numbers
 
 ## UI
@@ -28,6 +26,7 @@
 - Prevent modules from spawning on top of each other
 - Move add logic to toolbar menu with hotkeys for quick-add context menu
 - Component duplication — plain copy, and copy-with-connections
+- Ctrl+A to make component menu context menu for convenience
 
 ### Sequencer
 - Per-note velocity support

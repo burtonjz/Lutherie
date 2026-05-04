@@ -55,7 +55,9 @@ void MidiEventHandler::notifyPitchbend(uint16_t pitchbend) {
 }
 
 MidiEventHandler::MidiEventHandler():
-    BaseComponent()
+    BaseComponent(),
+    notes_(),
+    noteIndices_()
 {}
 
 void MidiEventHandler::addListener(MidiEventListener* listener){
@@ -178,7 +180,7 @@ void MidiEventHandler::processEvents(){
 void MidiEventHandler::tick(float dt){
     processEvents();
 
-    onTick(dt); // child class implementations
+    onTick(dt); 
 
     for ( uint8_t i = 0; i < activeCount_ ; ++i ){
         ActiveNote& note = notes_[noteIndices_[i]];
@@ -192,4 +194,24 @@ void MidiEventHandler::tick(float dt){
 }
 
 void MidiEventHandler::onTick([[maybe_unused]] float dt){
+}
+
+void MidiEventHandler::reset(){
+    processEvents();
+
+    onReset(); 
+    for ( uint8_t i = 0 ; i < activeCount_; ++i ){
+        ActiveNote& note = notes_[noteIndices_[i]];
+        note.note.setStatus(false);
+        queue_.push({MidiEvent::Type::NoteOff, note});
+        SPDLOG_DEBUG(
+            "sending note off to queue (note={})", 
+            static_cast<int>(note.note.getMidiNote()), note.note.getStatus()
+        );
+    }
+
+    processEvents();
+}
+
+void MidiEventHandler::onReset(){
 }
