@@ -49,7 +49,6 @@ void Sequencer::onTick(float dt){
         lastStatus_ = false ;
         return ;
     }
-
     lastStatus_ = true ;
 
     int bpm = parameters_->getParameter<ParameterType::BPM>()->getValue() ;
