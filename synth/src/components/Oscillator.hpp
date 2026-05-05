@@ -22,12 +22,16 @@
 #include "core/BaseModulator.hpp"
 #include "configs/OscillatorConfig.hpp"
 #include "types/Waveform.hpp"
+#include <random>
 
 class Oscillator : public BaseModule, public BaseModulator {
 private:
     double phase_ ;
     double increment_ ;
-    size_t noiseIndex_ = 0 ;    
+    // for noise
+    std::mt19937 generator_ ;
+    std::uniform_int_distribution<size_t> distribution_ ;
+
     
 public:
     /**

@@ -27,9 +27,14 @@ Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
     BaseComponent(id, ComponentType::Oscillator),
     BaseModule(0,1),
     phase_(0),
-    increment_(0)
+    increment_(0),
+    generator_(std::random_device{}())
 {
     Wavetable::generate();
+    distribution_ = std::uniform_int_distribution<size_t>(
+        0, 
+        Wavetable::getWavetable(Waveform::NOISE).second - 1
+    );
 
     parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_->add<ParameterType::AMPLITUDE>(1.0,true);
@@ -65,9 +70,8 @@ void Oscillator::calculateSample(){
 
     // calculate sample
     if (wf == Waveform::NOISE){
-        index_floor = noiseIndex_ % (w.second - 2);
-        sample = w.first[index_floor];
-        noiseIndex_++ ;
+        size_t idx = distribution_(generator_);
+        sample = w.first[idx];
     } else {
         wavetableIndex = phase_ * (w.second - 1);
         index_floor = static_cast<int>(wavetableIndex);
