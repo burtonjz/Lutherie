@@ -8,7 +8,6 @@
 - when content deleted from control panel, update geometry so that min size doesn't get messed up
 - create specialized widget for midi filter (horizontal piano roll, highlight pass-through key ranges)
   - PianoRollWidget should be renamed to SequencerWidget, and the PianoRoll component should be broken out and given a horizontal/vertical flag.8
-- Figure out whatever is happening with oscillator noise
 - KDDW dock widgets that aren't on the main window show "gui" in title bar if they are docked together
 - request rename when node gets its unique name (so that parameters/other panels update properly)
 - Sequencer: 

@@ -65,7 +65,7 @@ void Oscillator::calculateSample(){
 
     // calculate sample
     if (wf == Waveform::NOISE){
-        index_floor = noiseIndex_ & (w.second - 2);
+        index_floor = noiseIndex_ % (w.second - 2);
         sample = w.first[index_floor];
         noiseIndex_++ ;
     } else {
