@@ -83,6 +83,8 @@
 - Quantizer / Velocity Manipulation
 - Mixer (with pluggable mixing strategies, e.g. ring modulation)
 - Bitcrusher
+- MidiSwitch (based on modulatable control value, send to output 1 or 2)
+- AudioSwitch 
 
 ## One Day
 - Envelope with drawable curve

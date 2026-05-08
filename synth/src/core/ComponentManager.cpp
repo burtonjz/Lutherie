@@ -156,7 +156,7 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
 
     // if it's not a module, check if it's analyzer
     if ( !module && !analyzer ){
-        SPDLOG_WARN("cannot get signal connections for component with id = {}. It is not an analyzer or module.", id);
+        SPDLOG_DEBUG("cannot get signal connections for component with id = {}. It is not an analyzer or module.", id);
         return ;
     }
 

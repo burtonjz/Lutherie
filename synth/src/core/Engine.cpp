@@ -644,18 +644,19 @@ void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionReque
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
     BaseModule* m = componentManager.getModule(id);
-    if ( !m ) return ;
 
-    for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
-        for ( const auto& conn : signalController.getSinks(i)){
-            if ( m == conn.module ){
-                ConnectionRequest req ;
-                req.outboundID = id ;
-                req.outboundIdx = conn.index ;
-                req.inboundSocket = SocketType::SignalInbound ;
-                req.outboundSocket = SocketType::SignalOutbound ;
-                req.inboundIdx = i ;
-                requests.push_back(req);
+    if ( m ){
+        for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
+            for ( const auto& conn : signalController.getSinks(i)){
+                if ( m == conn.module ){
+                    ConnectionRequest req ;
+                    req.outboundID = id ;
+                    req.outboundIdx = conn.index ;
+                    req.inboundSocket = SocketType::SignalInbound ;
+                    req.outboundSocket = SocketType::SignalOutbound ;
+                    req.inboundIdx = i ;
+                    requests.push_back(req);
+                }
             }
         }
     }

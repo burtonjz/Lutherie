@@ -44,9 +44,10 @@ public:
     }
 
     void allocateOutputChannels(size_t numChannels){
+        SPDLOG_DEBUG("allocating {} peripheral output channels", numChannels);
         for ( size_t i = 0 ; i < numChannels ; ++i ){
             if ( !outboundNodes_.contains(i) ){
-                outboundNodes_[i] = {};
+                outboundNodes_[i];
             }
         }
     }
@@ -56,6 +57,9 @@ public:
     }
 
     const std::unordered_set<SignalConnection, ConnectionHash>& getSinks(size_t channel) const {
+        if ( !outboundNodes_.contains(channel) ){
+            SPDLOG_ERROR("channel {} requested but outbound nodes only has {} allocated", channel, outboundNodes_.size());
+        }
         assert(outboundNodes_.contains(channel));
         return outboundNodes_.at(channel);
     }

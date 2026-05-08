@@ -32,7 +32,9 @@ private:
 public:
     SignalController(ComponentManager* components):
         components_(components)
-    {}
+    {
+        setNumChannels(1); // prime output channels
+    }
 
     size_t getNumChannels() const {
         return numChannels_ ;
