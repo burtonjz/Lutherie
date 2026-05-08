@@ -63,10 +63,12 @@ private:
     */
     // engine management
     json getAudioDevices(int sock, const json& request);
-    json getMidiDevices(int sock, const json& request);
     json setAudioDevice(int sock, const json& request);
+    json getAudioConfig(int sock, const json& request);
+    json getMidiDevices(int sock, const json& request);
     json setMidiDevice(int sock, const json& request);
     json setState(int sock, const json& request);
+
     // api save/load
     json getConfiguration(int sock, const json& request);
     json loadPatch(int sock, const json& request);

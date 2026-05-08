@@ -490,6 +490,10 @@ void Synth::onApiDataReceived(const json& j){
 void Synth::onActionSetup(){
     if ( !setup_ ){
         setup_ = new Setup() ;
+         connect(
+            setup_, &Setup::audioChannelsUpdated,
+            graph_, &GraphPanel::onAudioChannelsUpdated
+        );
         setup_->show();
     } else {
         if (!setup_->isVisible()){
@@ -500,8 +504,12 @@ void Synth::onActionSetup(){
 
 void Synth::onActionStart(){
     if ( StateManager::instance()->isRunning() ) return ;
-    
     json j ;
+    
+    j["action"] = "get_audio_configuration" ;
+    ApiClient::instance()->sendMessage(j);
+    j.clear();
+
     j["action"] = "set_state" ;
     j["state"] = "run" ;
     ApiClient::instance()->sendMessage(j);
@@ -519,6 +527,10 @@ void Synth::onEngineStatusChange(bool status){
     StateManager::instance()->setRunning(status);
     actionStart_->setVisible(!status);
     actionStop_->setVisible(status);
+    actionSetup_->setDisabled(status);
+    if ( status && setup_ ){
+        setup_->close();
+    }
 }
 
 void Synth::onActionLoad(){

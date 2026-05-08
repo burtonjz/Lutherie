@@ -67,6 +67,7 @@ public:
 
     void createSockets(std::initializer_list<SocketSpec> specs );
     void createSockets(const std::vector<SocketSpec> specs );
+    void clearSockets();
 
     void hide();
     void show();

@@ -75,7 +75,7 @@ GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
     );
     connect(
         connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
-        this, &GraphPanel::ondragCableParameterNeeded
+        this, &GraphPanel::onDragCableParameterNeeded
     );
     connect(
         connectionManager_, &ConnectionManager::connectionAdded,
@@ -333,7 +333,6 @@ SocketWidget* GraphPanel::findSocket(SocketSpec spec) const {
     if ( !spec.componentId.has_value() ){ 
         if ( spec.type == SocketType::SignalInbound ){
             w = audioOut_ ;
-            spec.idx = 0 ;
         } else if ( spec.type == SocketType::MidiOutbound ){
             w = midiIn_ ;
         } 
@@ -718,6 +717,16 @@ void GraphPanel::onApiDataReceived(const json& msg){
                 deserializeNodes(msg.at("nodes"));
             }
         }
+        return ;
+    }
+
+    if ( action == "get_audio_configuration" ){
+        if ( msg.at("status") == "success" ){
+            if ( msg.contains("output_channels") ){
+                onAudioChannelsUpdated(msg.at("output_channels"));
+            }
+        }
+        return ;
     }
 }
 
@@ -892,7 +901,7 @@ void GraphPanel::onNodeZUpdate(){
     }
 }
 
-void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
+void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
     if ( ! socket ){
         qWarning() << "drag cable parameter requested for an invalid socket. Cancelling drag." ;
         connectionRenderer_->cancelDrag();
@@ -966,4 +975,28 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
     } else {
         connectionRenderer_->cancelDrag();
     }
+}
+
+void GraphPanel::onAudioChannelsUpdated(size_t numChannels){
+    auto sockets = audioOut_->getSockets();
+    if ( sockets.size() == numChannels ) return ;
+
+    std::vector<SocketSpec> specs ;
+
+    for ( size_t i = 0 ; i < numChannels ; ++i ){
+        specs.push_back({
+            .type = SocketType::SignalInbound, 
+            .name = "Audio In " + QString::number(i),
+            .idx  = i    
+        });
+    }
+    
+    // remove any connected cables and recreate sockets
+    for ( auto s : sockets ){
+        connectionRenderer_->requestRemoveSocketConnections(s);
+    }
+    audioOut_->clearSockets();
+    
+    audioOut_->createSockets(specs);
+    audioOut_->addToScene(scene_);
 }

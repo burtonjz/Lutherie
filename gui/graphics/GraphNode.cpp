@@ -110,6 +110,13 @@ void GraphNode::createSockets(std::vector<SocketSpec> specs){
     positionSockets(scenePos());
 }
 
+void GraphNode::clearSockets(){
+    for ( auto socket : sockets_ ){
+        socket->deleteLater();
+    }
+    sockets_.clear();
+}
+
 void GraphNode::hide(){
     QGraphicsItem::hide();
     for ( auto& s : getSockets() ){
