@@ -130,6 +130,15 @@ void ConnectionRenderer::requestRemoveSocketConnections(SocketWidget* s){
     }
 }
 
+void ConnectionRenderer::requestRemoveSocket(SocketWidget* s){
+    if ( socketIsRemovable(s, true) ){
+        emit canRemoveSocket(s);
+    } else {
+        qDebug() << "queuing socket for removal...";
+        socketsQueuedForRemoval_.insert(s);
+    }
+}
+
 const std::vector<ConnectionCable*> ConnectionRenderer::getNodeConnections(GraphNode* node) const {
     std::vector<ConnectionCable*> c ;
     for ( auto cable : cables_ ) {
@@ -150,6 +159,20 @@ void ConnectionRenderer::sendDragCableRequest(){
     ConnectionRequest request = dragCable_->toConnectionRequest();
     manager_->requestConnectionEvent(request);
     cancelDrag(); // destroy temporary cable
+}
+
+bool ConnectionRenderer::socketIsRemovable(SocketWidget* s, bool request){
+    bool hasConnection = false ;
+    for ( auto c: cables_ ){
+        if ( c->getFromSocket() == s || c->getToSocket() == s ){
+            hasConnection = true ;
+            if ( request ){
+                requestRemoveConnection(c);
+            }
+        }
+    }
+    
+    return !hasConnection ;
 }
 
 void ConnectionRenderer::onComponentGroup(const std::unordered_set<int>& componentIds){
@@ -242,12 +265,20 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
 void ConnectionRenderer::onConnectionRemoved(const ConnectionRequest& req){
     for ( auto c : cables_ ){
         if ( c->toConnectionRequest() == req ){
-            c->getInboundSocket()->setConnnection(true);
-            c->getOutboundSocket()->setConnnection(true);
+            c->getInboundSocket()->setConnnection(false);
+            c->getOutboundSocket()->setConnnection(false);
 
             scene_->removeItem(c);
             delete c ;
             cables_.erase(std::remove(cables_.begin(), cables_.end(), c), cables_.end());
+        }
+    }
+
+    for ( auto s : socketsQueuedForRemoval_ ){
+        qDebug() << "checking socket for removal..." ;
+        if ( socketIsRemovable(s, false) ){
+            qDebug() << "removing queued socket" ;
+            emit canRemoveSocket(s);
         }
     }
 }

@@ -100,7 +100,6 @@ void Setup::onApiDataReceived(const json& json){
 }
 
 void Setup::onSetupSubmit(){
-    qInfo() << "Setup submit button clicked." ;
     json j ;
     j["action"] = "set_audio_device" ;
     j["device_id"] = ui_->comboAudioDevice->currentData().toInt();

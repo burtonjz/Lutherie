@@ -124,6 +124,10 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         node, &GraphNode::socketUnhidden,
         connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
     );
+    connect(
+        connectionRenderer_, &ConnectionRenderer::canRemoveSocket,
+        node, &GraphNode::removeSocket
+    );
 
     // component node
     auto component = dynamic_cast<ComponentNode*>(node);
@@ -146,7 +150,7 @@ void GraphPanel::setNodeConnections(GraphNode* node){
 
 void GraphPanel::addAudioOutput(){
     audioOut_ = new PeripheralNode(AUDIO_OUT_DEVICE_ID, "Audio Output Device");
-    audioOut_->createSockets({{
+    audioOut_->insertSockets({{
         .type = SocketType::SignalInbound, 
         .name = "Audio In",
         .idx  = 0
@@ -163,7 +167,7 @@ void GraphPanel::addAudioOutput(){
 
 void GraphPanel::addMidiInput(){
     midiIn_ = new PeripheralNode(MIDI_IN_DEVICE_ID, "MIDI Input Device");
-    midiIn_->createSockets({{
+    midiIn_->insertSockets({{
         .type = SocketType::MidiOutbound, 
         .name = "MIDI Out"
     }});
@@ -979,11 +983,24 @@ void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
 
 void GraphPanel::onAudioChannelsUpdated(size_t numChannels){
     auto sockets = audioOut_->getSockets();
-    if ( sockets.size() == numChannels ) return ;
+    size_t oldSize = sockets.size();
+    if ( oldSize == numChannels ) return ;
 
+    // new output peripheral has less channels
+    if ( oldSize > numChannels ){
+        for ( auto s : sockets ){
+            if ( !s ) continue ;
+            auto spec = s->getSpec();
+            if ( spec.idx.has_value() && spec.idx.value() >= numChannels ){
+                connectionRenderer_->requestRemoveSocket(s);
+            }
+        }
+        return ;
+    }
+
+    // otherwise, there are more channels
     std::vector<SocketSpec> specs ;
-
-    for ( size_t i = 0 ; i < numChannels ; ++i ){
+    for ( size_t i = oldSize ; i < numChannels ; ++i ){
         specs.push_back({
             .type = SocketType::SignalInbound, 
             .name = "Audio In " + QString::number(i),
@@ -991,12 +1008,6 @@ void GraphPanel::onAudioChannelsUpdated(size_t numChannels){
         });
     }
     
-    // remove any connected cables and recreate sockets
-    for ( auto s : sockets ){
-        connectionRenderer_->requestRemoveSocketConnections(s);
-    }
-    audioOut_->clearSockets();
-    
-    audioOut_->createSockets(specs);
+    audioOut_->insertSockets(specs);
     audioOut_->addToScene(scene_);
 }

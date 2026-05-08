@@ -22,7 +22,6 @@
 #include <QPainter>
 #include <QString>
 #include <QStyleOptionGraphicsItem>
-#include <initializer_list>
 #include <vector>
 #include <nlohmann/json.hpp>
 
@@ -65,9 +64,7 @@ public:
 
     virtual void requestRename(const QString& name );
 
-    void createSockets(std::initializer_list<SocketSpec> specs );
-    void createSockets(const std::vector<SocketSpec> specs );
-    void clearSockets();
+    void insertSockets(const std::vector<SocketSpec> specs );
 
     void hide();
     void show();
@@ -92,12 +89,14 @@ protected:
 
 public slots:
     void onRename(QString name);
+    void removeSocket(SocketWidget* socket);
 
 signals:
     void positionChanged();
     void needsZUpdate();
     void socketHidden(SocketWidget* socket);
     void socketUnhidden(SocketWidget* socket);
+    
 
 };
 

@@ -1,6 +1,7 @@
 # Lutherie TODO
 
 ## Bugs / Cleanup
+- move setup button to menus, make it a tooltip popup instead of a dedicated window (or an undockable dock...)
 - Fix the issue with positioning of the graph panel when docking something
 - Create zoom out view of graph panel with drag to navigate
 - Create max zoom out of graph panel
