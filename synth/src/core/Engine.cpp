@@ -51,7 +51,6 @@ Engine::Engine():
     audioSet_(false),
     availableAudioDevices_(),
     selectedAudioOutput_(0),
-    numAudioChannels_(2),
     // midi
     midiSet_(false),
     midiIn_(),
@@ -254,7 +253,7 @@ void Engine::audioLoop(){
     }
     
     parameters.deviceId = deviceInfo.ID ;
-    parameters.nChannels = getAudioDeviceChannels();
+    parameters.nChannels = signalController.getNumChannels();
     
     parameters.firstChannel = 0 ;
     
@@ -344,11 +343,12 @@ int Engine::audioCallback(
 
     float bufferDt = nBufferFrames / static_cast<float>(engine->getSampleRate());
     engine->midiController.tick(bufferDt);
-    double sample;
     for (unsigned int i = 0; i < nBufferFrames; ++i){
         engine->componentManager.runParameterModulation();
-        sample = engine->signalController.processFrame();
-        buffer[i] = dsp::fastAtan(sample);
+        auto [output, outputSize] = engine->signalController.processFrame();
+        for ( unsigned int j = 0 ; j < outputSize ; ++j ){
+            *buffer++ = dsp::fastAtan(output[j]);
+        }
     }
     
     engine->componentManager.runAnalyzers();
@@ -448,12 +448,15 @@ bool Engine::setAudioDeviceId(uint32_t deviceId){
     selectedAudioOutput_ = deviceId ;
     audioSet_ = true ;
 
+    size_t numChannels ;
     if ( it->outputChannels == 0 || it->outputChannels > 8 ){
         SPDLOG_WARN("selected output audio device reported {} output channels, which is not in expected range. Defaulting to 2", it->outputChannels);
-        numAudioChannels_ = 2 ;
+        numChannels = 2 ;
     } else {
-        numAudioChannels_ = it->outputChannels ;
+        numChannels = it->outputChannels ;
     }
+
+    signalController.setNumChannels(numChannels);
 
     return true ;
 }
@@ -487,10 +490,6 @@ const std::map<int,std::string> Engine::getAvailableMidiDevices() const {
 
 const std::vector<RtAudio::DeviceInfo> Engine::getAvailableAudioDevices() const {
     return availableAudioDevices_ ;
-}
-
-uint32_t Engine::getAudioDeviceChannels() const {
-    return numAudioChannels_ ;
 }
 
 // ============================================================================
@@ -599,10 +598,10 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
     // Case 2: if inbound is a peripheral
     if ( ! request.inboundID.has_value() ){
         if ( request.remove ){
-            signalController.unregisterSink(outbound, request.outboundIdx.value());
+            signalController.unregisterSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
             return true ;
         }
-        signalController.registerSink(outbound, request.outboundIdx.value());
+        signalController.registerSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
         return true ;
     }
 
@@ -645,15 +644,17 @@ void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionReque
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
     BaseModule* m = componentManager.getModule(id);
-    if ( m ){
-        for ( const auto& conn : signalController.getSinks()){
+    if ( !m ) return ;
+
+    for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
+        for ( const auto& conn : signalController.getSinks(i)){
             if ( m == conn.module ){
                 ConnectionRequest req ;
                 req.outboundID = id ;
                 req.outboundIdx = conn.index ;
                 req.inboundSocket = SocketType::SignalInbound ;
                 req.outboundSocket = SocketType::SignalOutbound ;
-                req.inboundIdx = 0 ; // TODO: support multi-channel sink
+                req.inboundIdx = i ;
                 requests.push_back(req);
             }
         }

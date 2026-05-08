@@ -77,7 +77,6 @@ private:
     bool audioSet_ ;
     std::vector<RtAudio::DeviceInfo> availableAudioDevices_ ;
     uint32_t selectedAudioOutput_ ;
-    size_t numAudioChannels_ ;
     
     bool midiSet_ ;
     RtMidiIn midiIn_ ;
@@ -124,7 +123,6 @@ public:
     const std::vector<RtAudio::DeviceInfo> getAvailableAudioDevices() const ;
     uint32_t getAudioDeviceId() const ;
     bool setAudioDeviceId(uint32_t deviceId);
-    uint32_t getAudioDeviceChannels() const ;
 
     const std::map<int,std::string> getAvailableMidiDevices() const ;
     int getMidiDeviceId() const ;

@@ -281,7 +281,7 @@ json ApiHandler::getAudioConfig(int sock, const json& request){
     json response = request ;
 
     response["device_id"] = engine_->getAudioDeviceId();
-    response["output_channels"] = engine_->getAudioDeviceChannels();
+    response["output_channels"] = engine_->signalController.getNumChannels();
 
     return sendApiResponse(sock, response);
 }
