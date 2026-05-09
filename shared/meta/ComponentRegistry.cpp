@@ -212,6 +212,21 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 0,
                 false
             }
+        },
+        {
+            ComponentType::Panner,
+            {
+                "Panner",
+                ComponentType::Panner,
+                {ParameterType::PAN},
+                {ParameterType::PAN},
+                {},
+                1,
+                2,
+                0,
+                0,
+                false
+            }
         }
     };
 

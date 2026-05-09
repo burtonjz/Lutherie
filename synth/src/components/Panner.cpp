@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,21 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
-
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Multiply.hpp"
-#include "components/SpectrumAnalyzer.hpp"
-#include "components/Delay.hpp"
 #include "components/Panner.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
-#include "components/Oscilloscope.hpp"
+#include "params/ParameterMap.hpp"
 
-#endif // __HPP_ALL_COMPONENTS_
+Panner::Panner(ComponentId id, PannerConfig cfg):
+    BaseComponent(id, ComponentType::Panner),
+    BaseModule(1,2)
+{
+    parameters_->add<ParameterType::PAN>(cfg.pan,true);
+}
+
+void Panner::calculateSample(){
+    double input = aggregateInputs(0);
+    double pan = parameters_->getParameter<ParameterType::PAN>()->getInstantaneousValue();
+    double v = pan / 2.0 + 0.5 ;
+    
+    setBufferValue(0, v * input);
+    setBufferValue(1, ( 1 - v ) * input);
+}

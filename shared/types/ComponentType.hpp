@@ -31,7 +31,8 @@
     X(Delay) \
     X(Multiply) \
     X(SpectrumAnalyzer) \
-    X(Oscilloscope)
+    X(Oscilloscope) \
+    X(Panner)
 
 /**
  * @brief enumeration of modulation source classes

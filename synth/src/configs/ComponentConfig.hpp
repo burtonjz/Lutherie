@@ -32,6 +32,7 @@
 #include "configs/MultiplyConfig.hpp"
 #include "configs/SpectrumAnalyzerConfig.hpp"
 #include "configs/OscilloscopeConfig.hpp"
+#include "configs/PannerConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

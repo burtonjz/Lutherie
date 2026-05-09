@@ -15,21 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef PANNER_CONFIG_HPP_
+#define PANNER_CONFIG_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Multiply.hpp"
-#include "components/SpectrumAnalyzer.hpp"
-#include "components/Delay.hpp"
-#include "components/Panner.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
-#include "components/Oscilloscope.hpp"
+#include "types/ComponentType.hpp"
 
-#endif // __HPP_ALL_COMPONENTS_
+#include <nlohmann/json.hpp>
+using json = nlohmann::json ;
+
+// forward declare class
+class Panner ;
+
+// define default configuration
+struct PannerConfig {
+    double pan = 0 ;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PannerConfig, pan) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::Panner>{ 
+    using type = Panner ;
+    using config = PannerConfig ;
+};
+
+#endif // __HPP_CONFIGS_Panner_

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,21 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef PANNER_HPP_
+#define PANNER_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Multiply.hpp"
-#include "components/SpectrumAnalyzer.hpp"
-#include "components/Delay.hpp"
-#include "components/Panner.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
-#include "components/Oscilloscope.hpp"
+#include "core/BaseModule.hpp"
+#include "configs/PannerConfig.hpp"
 
-#endif // __HPP_ALL_COMPONENTS_
+class Panner : public BaseModule {
+
+public:
+    Panner(ComponentId id, PannerConfig cfg);
+
+    // overrides
+    void calculateSample() override ;
+};
+
+#endif // PANNER_HPP_
