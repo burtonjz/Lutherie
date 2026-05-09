@@ -73,11 +73,14 @@ private:
     
     
     RtAudio dac_ ;
-    std::map<int, std::string> availableAudioDevices_ ;
-    int selectedAudioOutput_ ;
+
+    bool audioSet_ ;
+    std::vector<RtAudio::DeviceInfo> availableAudioDevices_ ;
+    uint32_t selectedAudioOutput_ ;
     
+    bool midiSet_ ;
     RtMidiIn midiIn_ ;
-    std::map<int, std::string> availableMidiPorts_ ;
+    std::map<int, std::string> availableMidiDevices_ ;
     int selectedMidiPort_ ;
     
     MidiState midiState_ ;
@@ -95,6 +98,7 @@ public:
     void run();
     void stop();
     void shutdown();
+    bool isRunning() const ;
     
     // Static functions
     static void signalHandler(int signum);
@@ -110,19 +114,18 @@ public:
         void *userData
     );
     
-    // Getters
     RtAudio* getDac();
     RtMidiIn* getMidiIn();
     MidiController* getMidiController();
     MidiEventHandler* getDefaultMidiHandler();
     int getSampleRate() const ;
-    int getAudioDeviceId() const;
-    int getMidiDeviceId() const;
-    const std::map<int,std::string> getAvailableMidiDevices() const;
-    const std::map<int, std::string> getAvailableAudioDevices() const;
     
-    // Setters
-    bool setAudioDeviceId(int deviceId);
+    const std::vector<RtAudio::DeviceInfo> getAvailableAudioDevices() const ;
+    uint32_t getAudioDeviceId() const ;
+    bool setAudioDeviceId(uint32_t deviceId);
+
+    const std::map<int,std::string> getAvailableMidiDevices() const ;
+    int getMidiDeviceId() const ;
     bool setMidiDeviceId(int deviceId);
     
     // Connection Management

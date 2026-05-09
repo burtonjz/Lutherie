@@ -51,8 +51,9 @@ void ApiHandler::initialize(Engine* engine){
 
     // register api handler functions
     handlers_["get_audio_devices"] = [this](int sock, const json& request){ return getAudioDevices(sock, request); };
-    handlers_["get_midi_devices"] = [this](int sock, const json& request){ return getMidiDevices(sock, request); };
     handlers_["set_audio_device"] = [this](int sock, const json& request){ return setAudioDevice(sock, request); };
+    handlers_["get_audio_configuration"] = [this](int sock, const json& request){ return getAudioConfig(sock, request); };
+    handlers_["get_midi_devices"] = [this](int sock, const json& request){ return getMidiDevices(sock, request); };
     handlers_["set_midi_device"] = [this](int sock, const json& request){ return setMidiDevice(sock, request); };
     handlers_["set_state"] = [this](int sock, const json& request){ return setState(sock, request); };
     handlers_["get_configuration"] = [this](int sock, const json& request){ return getConfiguration(sock, request); };
@@ -229,13 +230,26 @@ void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
 
 json ApiHandler::getAudioDevices(int sock, const json& request){
     json response = request ;
-    response["data"] = engine_->getAvailableAudioDevices() ;
+    for ( const auto& dev : engine_->getAvailableAudioDevices() ){
+        json j = {
+            {"id", dev.ID},
+            {"name", dev.name}
+        };
+        response["data"].push_back(j);
+    }
+    SPDLOG_DEBUG(response.dump());
     return sendApiResponse(sock,response);
 }
 
 json ApiHandler::getMidiDevices(int sock, const json& request){
     json response = request ;
-    response["data"] = engine_->getAvailableMidiDevices() ;
+    for ( const auto& [id, name] : engine_->getAvailableMidiDevices() ){
+        json j = {
+            {"id", id},
+            {"name", name}
+        };
+        response["data"].push_back(j);
+    }
     return sendApiResponse(sock,response);
 }
 
@@ -245,16 +259,31 @@ json ApiHandler::setAudioDevice(int sock, const json& request){
     std::string err ;
     
     try {
-        deviceId = response["device_id"];
+        deviceId = response.at("device_id");
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( engine_->setAudioDeviceId(deviceId) ){
-        return sendApiResponse(sock,response);
+        auto output = sendApiResponse(sock,response);
+        if ( !engine_->isRunning() ){
+            json j ;
+            j["action"] = "get_audio_configuration" ;
+            getAudioConfig(sock, j);
+        }
+        return output ;
     } else {
         return sendApiResponse(sock, response, "failed to set audio device");
     }
+}
+
+json ApiHandler::getAudioConfig(int sock, const json& request){
+    json response = request ;
+
+    response["device_id"] = engine_->getAudioDeviceId();
+    response["output_channels"] = engine_->signalController.getNumChannels();
+
+    return sendApiResponse(sock, response);
 }
 
 json ApiHandler::setMidiDevice(int sock, const json& request){
@@ -262,7 +291,7 @@ json ApiHandler::setMidiDevice(int sock, const json& request){
     int deviceId ;
     
     try {
-        deviceId = response["device_id"];
+        deviceId = response.at("device_id");
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }

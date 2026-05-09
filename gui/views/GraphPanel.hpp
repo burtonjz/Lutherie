@@ -124,7 +124,9 @@ public slots:
 
     void onNodeZUpdate();
 
-    void ondragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
+    void onDragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
+
+    void onAudioChannelsUpdated(size_t numChannels);
 
 signals:
     void requestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialized = std::nullopt );

@@ -27,9 +27,11 @@
 // This class will store information regarding tracing a signal back to it's source
 // (either a generator module or eventually an audio input), and handle order of  operations of ticking
 // through modules
+
 class SignalChain {
 private:
-    std::unordered_set<SignalConnection, ConnectionHash> outputNodes_ ;
+    using OutboundNode = std::unordered_set<SignalConnection, ConnectionHash>;
+    std::map<size_t, OutboundNode> outboundNodes_ ; // key=channel
     std::vector<BaseModule*> topologicalOrder_ ;
     std::unordered_set<BaseModule*> visited_  ;
 
@@ -37,37 +39,51 @@ private:
 
 public:
     SignalChain():
-        outputNodes_()
+        outboundNodes_()
     {
+    }
+
+    void allocateOutputChannels(size_t numChannels){
+        SPDLOG_DEBUG("allocating {} peripheral output channels", numChannels);
+        for ( size_t i = 0 ; i < numChannels ; ++i ){
+            if ( !outboundNodes_.contains(i) ){
+                outboundNodes_[i];
+            }
+        }
     }
 
     std::vector<BaseModule*>& getModuleChain(){
         return topologicalOrder_ ;
     }
 
-    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks() const {
-        return outputNodes_ ;
+    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks(size_t channel) const {
+        if ( !outboundNodes_.contains(channel) ){
+            SPDLOG_ERROR("channel {} requested but outbound nodes only has {} allocated", channel, outboundNodes_.size());
+        }
+        assert(outboundNodes_.contains(channel));
+        return outboundNodes_.at(channel);
     }
 
-    void addSink(BaseModule* output, size_t index){
-        if (!output){
+    void addSink(BaseModule* outbound, size_t outboundIdx, size_t inboundIdx){
+        if (!outbound){
             SPDLOG_WARN("Not adding a nullptr as a sink.");
             return ;
         }
-        if ( index > output->getNumOutputs() ){
-            SPDLOG_WARN("output index out of bounds for module. Cannot add requested sink.");
+        if ( outboundIdx > outbound->getNumOutputs() ){
+            SPDLOG_WARN("outbound index out of bounds for module. Cannot add requested sink.");
             return ;
         }
-        outputNodes_.insert({output, index});
+        
+        outboundNodes_[inboundIdx].insert({outbound, outboundIdx});
     }
 
-    void removeSink(BaseModule* output, size_t index){
-        if ( !output || index > output->getNumOutputs() ){
-            SPDLOG_WARN("output index out of bounds for specified module. Cannot remove sink.");
+    void removeSink(BaseModule* outbound, size_t outboundIdx, size_t inboundIdx){
+        if ( !outbound || outboundIdx > outbound->getNumOutputs() ){
+            SPDLOG_WARN("outbound index out of bounds for specified module. Cannot remove sink.");
             return ; 
         }
 
-        outputNodes_.erase({output, index});
+        outboundNodes_[inboundIdx].erase({outbound, outboundIdx});
     }
 
     void calculateTopologicalOrder(){
@@ -75,13 +91,15 @@ public:
         topologicalOrder_.clear();
         
         // global post-order depth-first search
-        for ( const auto& conn : outputNodes_ ){
-            topologicalSort(conn.module, visited_, topologicalOrder_);
+        for ( const auto& [channel, connections]: outboundNodes_ ){
+            for ( const auto conn : connections ){
+                topologicalSort(conn.module, visited_, topologicalOrder_);
+            }
         }
     }
 
     void reset(){
-        outputNodes_.clear();
+        outboundNodes_.clear();
         visited_.clear();
         topologicalOrder_.clear();
     }

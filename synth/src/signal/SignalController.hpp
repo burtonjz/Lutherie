@@ -26,11 +26,25 @@ class SignalController {
 private:
     ComponentManager* components_ ;
     SignalChain signalChain_ ;
+    size_t numChannels_ ;
+    std::vector<double> outputs_ ;
 
 public:
     SignalController(ComponentManager* components):
         components_(components)
-    {}
+    {
+        setNumChannels(1); // prime output channels
+    }
+
+    size_t getNumChannels() const {
+        return numChannels_ ;
+    }
+
+    void setNumChannels(size_t numChannels){
+        numChannels_ = numChannels ;
+        signalChain_.allocateOutputChannels(numChannels);
+        outputs_.resize(numChannels);
+    }
 
     // signal chain functions
     void connect(BaseModule* from, size_t fromIndex, BaseModule* to, size_t toIndex){
@@ -47,40 +61,39 @@ public:
         signalChain_.calculateTopologicalOrder();
     }
 
-    void registerSink(BaseModule* output, size_t index){
-        signalChain_.addSink(output, index);
+    void registerSink(BaseModule* outbound, size_t outboundIdx, size_t inboundIdx){
+        signalChain_.addSink(outbound, outboundIdx, inboundIdx);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void unregisterSink(BaseModule* output, size_t index){
-        signalChain_.removeSink(output, index);
+    void unregisterSink(BaseModule* outbound, size_t outboundIdx, size_t inboundIdx){
+        signalChain_.removeSink(outbound, outboundIdx, inboundIdx);
         signalChain_.calculateTopologicalOrder();
     }
 
-    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks() const {
-        return signalChain_.getSinks() ;
+    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks(size_t channel) const {
+        return signalChain_.getSinks(channel) ;
     }
 
-    double processFrame(){
+    std::pair<double*, size_t> processFrame(){
         auto chain = signalChain_.getModuleChain();
-        auto sinks = signalChain_.getSinks();
 
-        double output = 0 ; 
+        // process modules in chain order
         for (BaseModule*  mod : chain){
             mod->updateParameters();
             mod->calculateSample();
-            
-            // if an output index is a sink, add it to the final output
-            for ( size_t i = 0; i < mod->getNumOutputs(); ++i ){
-                if ( sinks.count({mod,i}) ){
-                    output += mod->getCurrentSample(i) ;
-                }
-            }
-
             mod->tick();
         }
 
-        return output ;
+        // sum up sinks
+        for (size_t channel = 0 ; channel < numChannels_ ; ++channel ){
+            outputs_[channel] = 0.0 ;
+            for ( const auto& conn : signalChain_.getSinks(channel) ){
+                outputs_[channel] += conn.module->getLastSample(conn.index);
+            }
+        }
+
+        return {outputs_.data(), outputs_.size()} ;
     }
 
     void clearBuffer(){

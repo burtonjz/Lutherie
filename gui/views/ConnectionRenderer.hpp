@@ -37,6 +37,7 @@ private:
     SocketWidget* dragFromSocket_ ;
 
     std::vector<ConnectionCable*> cables_ ;
+    std::set<SocketWidget*> socketsQueuedForRemoval_ ;
 
 public:
     explicit ConnectionRenderer(
@@ -59,14 +60,17 @@ public:
     const std::vector<ConnectionCable*> getSocketConnections(SocketWidget* socket) const ;
     void requestRemoveConnection(ConnectionCable* cable);
     void requestRemoveSocketConnections(SocketWidget* s);
+    void requestRemoveSocket(SocketWidget* s);
 
     void onComponentGroup(const std::unordered_set<int>& componentIds);
 
 private:
     void sendDragCableRequest();
+    bool socketIsRemovable(SocketWidget* s, bool request = false );
 
 signals:
     void dragCableParameterNeeded(SocketWidget* socket);
+    void canRemoveSocket(SocketWidget* socket);
 
 public slots:
     void onNodePositionChanged(); 

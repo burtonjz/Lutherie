@@ -88,18 +88,7 @@ void GraphNode::requestRename(const QString& name){
     onRename(name);
 }
 
-void GraphNode::createSockets(std::initializer_list<SocketSpec> specs ){
-    for ( const auto& s : specs ){
-        SocketWidget* socket = new SocketWidget(s, this);
-        sockets_.push_back(socket);
-    }
-
-    layoutSockets();
-    reorderSockets();
-    positionSockets(scenePos());
-}
-
-void GraphNode::createSockets(std::vector<SocketSpec> specs){
+void GraphNode::insertSockets(std::vector<SocketSpec> specs){
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);
         sockets_.push_back(socket);
@@ -126,7 +115,11 @@ void GraphNode::show(){
 
 void GraphNode::addToScene(QGraphicsScene* scene){
     scene->addItem(this);
-    for ( auto* socket : sockets_ ) scene->addItem(socket);
+    for ( auto* socket : sockets_ ){
+        if ( !scene->items().contains(socket)){
+            scene->addItem(socket);
+        }
+    }
 }
 
 std::vector<SocketWidget*> GraphNode::getHiddenSockets() const {
@@ -384,4 +377,21 @@ void GraphNode::deserialize(const json& node){
 void GraphNode::onRename(QString name){
     name_ = name ;
     titleText_->setPlainText(name);
+}
+
+void GraphNode::removeSocket(SocketWidget* socket){
+    if ( !socket || socket->getParent() != this ) return ;
+    qDebug() << "GraphNode removing socket..." ;
+    
+    sockets_.erase(std::remove(
+        sockets_.begin(), sockets_.end(), socket), 
+        sockets_.end()
+    );
+
+    scene()->removeItem(socket);
+    delete socket ;
+
+    layoutSockets();
+    reorderSockets();
+    positionSockets(scenePos());
 }

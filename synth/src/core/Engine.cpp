@@ -48,11 +48,13 @@ Engine::Engine():
     analysisRunning_(false),
     // audio 
     dac_(),
+    audioSet_(false),
     availableAudioDevices_(),
     selectedAudioOutput_(0),
     // midi
+    midiSet_(false),
     midiIn_(),
-    availableMidiPorts_(),
+    availableMidiDevices_(),
     selectedMidiPort_(-1),
     midiState_(),
     midiDefaultHandler_()
@@ -81,14 +83,13 @@ void Engine::initialize(){
     // Get MIDI list
     int numPorts = midiIn_.getPortCount();
     for (int i = 0; i < numPorts; ++i){
-        availableMidiPorts_[i] = midiIn_.getPortName(i);
+        availableMidiDevices_[i] = midiIn_.getPortName(i);
     }
 
     // Get audio device list
     std::vector<unsigned int> devices = dac_.getDeviceIds();
     for (auto dev : devices){
-        auto info = dac_.getDeviceInfo(dev);
-        availableAudioDevices_[info.ID] = info.name;
+        availableAudioDevices_.push_back(dac_.getDeviceInfo(dev));
     }
 
     // Start API server thread
@@ -119,13 +120,10 @@ void Engine::run(){
     engineRunning_ = true;
     
     // start threads
-    midiRunning_ = true;
     midiThread_ = std::thread(&Engine::midiLoop, this);
     
-    audioRunning_ = true;
     audioThread_ = std::thread(&Engine::audioLoop, this);
     
-    analysisRunning_ = true;
     analysisThread_ = std::thread(&Engine::analysisLoop, this);
     
     SPDLOG_INFO("Engine running with 3 worker threads.");
@@ -192,12 +190,17 @@ void Engine::shutdown(){
     SPDLOG_INFO("Engine shutdown complete");
 }
 
+bool Engine::isRunning() const {
+    return engineRunning_ ;
+}
+
 // ============================================================================
 // THREAD LOOPS
 // ============================================================================
 
 void Engine::midiLoop(){
     SPDLOG_INFO("MIDI thread started");
+    midiRunning_ = true ;
     
     // Open MIDI port
     int deviceId = getMidiDeviceId();
@@ -223,38 +226,49 @@ void Engine::audioLoop(){
     unsigned int buffer = Config::get<unsigned int>("audio.buffer_size").value();
     unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value();
     
-    RtAudio::StreamParameters parameters;
+    RtAudio::StreamParameters parameters ;
     RtAudio::StreamOptions options ;
     options.flags = RTAUDIO_SCHEDULE_REALTIME ;
     options.priority = 50 ;
 
-    std::map<int,std::string> devices = getAvailableAudioDevices();
-    int deviceId = getAudioDeviceId();
-    RtAudio::DeviceInfo deviceInfo;
+    if ( !audioSet_ ){
+        SPDLOG_INFO("audio setup not ran. Set audio device to system default");
+        setAudioDeviceId(dac_.getDefaultInputDevice());
+    }
+
+    auto devices = getAvailableAudioDevices();
+    auto deviceId = getAudioDeviceId();
+    RtAudio::DeviceInfo deviceInfo ;
     void* userData = static_cast<void*>(this);
     
     // Select device
-    if (deviceId == 0 || devices.find(deviceId) == devices.end()){
+    auto it = std::find_if(devices.begin(), devices.end(), [deviceId](const RtAudio::DeviceInfo dev){
+        return dev.ID == deviceId ;
+    });
+
+    if (deviceId == 0 || it == devices.end()){
         deviceInfo = dac_.getDeviceInfo(dac_.getDefaultOutputDevice());
     } else {
         deviceInfo = dac_.getDeviceInfo(deviceId);
     }
     
-    parameters.deviceId = deviceInfo.ID;
-    parameters.nChannels = 1;
-    parameters.firstChannel = 0;
+    parameters.deviceId = deviceInfo.ID ;
+    parameters.nChannels = signalController.getNumChannels();
+    
+    parameters.firstChannel = 0 ;
     
     // Validate sample rate
     auto &sampleRates = deviceInfo.sampleRates;
     if (std::count(sampleRates.begin(), sampleRates.end(), sampleRate) == 0){
         SPDLOG_WARN("Configured sample rate of {} is not supported by device {}.", sampleRate, deviceInfo.name);
         SPDLOG_INFO("Setting to device preferred sample rate of {}.", deviceInfo.preferredSampleRate);
-        sampleRate = deviceInfo.preferredSampleRate;
+        sampleRate = deviceInfo.preferredSampleRate ;
         Config::set("audio.sample_rate", sampleRate);
     }
 
     sampleRate_ = sampleRate ;
     
+    audioRunning_ = true ;
     // Open audio stream
     if (dac_.openStream(
         &parameters,
@@ -294,6 +308,7 @@ void Engine::audioLoop(){
 
 void Engine::analysisLoop(){
     SPDLOG_INFO("Analysis thread started");
+    analysisRunning_ = true ;
     
     Config::load();
     AnalyticsEngine::instance()->start();
@@ -328,11 +343,12 @@ int Engine::audioCallback(
 
     float bufferDt = nBufferFrames / static_cast<float>(engine->getSampleRate());
     engine->midiController.tick(bufferDt);
-    double sample;
     for (unsigned int i = 0; i < nBufferFrames; ++i){
         engine->componentManager.runParameterModulation();
-        sample = engine->signalController.processFrame();
-        buffer[i] = dsp::fastAtan(sample);
+        auto [output, outputSize] = engine->signalController.processFrame();
+        for ( unsigned int j = 0 ; j < outputSize ; ++j ){
+            *buffer++ = dsp::fastAtan(output[j]);
+        }
     }
     
     engine->componentManager.runAnalyzers();
@@ -410,12 +426,19 @@ int Engine::getSampleRate() const {
     return sampleRate_ ;
 }
 
-int Engine::getAudioDeviceId() const {
-    return selectedAudioOutput_;
+uint32_t Engine::getAudioDeviceId() const {
+    return selectedAudioOutput_ ;
 }
 
-bool Engine::setAudioDeviceId(int deviceId){
-    auto it = availableAudioDevices_.find(deviceId);
+bool Engine::setAudioDeviceId(uint32_t deviceId){
+    if ( audioRunning_ ){
+        SPDLOG_ERROR("cannot set audio device while engine is running");
+        return false ;
+    }
+
+    auto it = std::find_if(availableAudioDevices_.begin(), availableAudioDevices_.end(), [deviceId](const RtAudio::DeviceInfo dev){
+        return dev.ID == deviceId ;
+    });
     if ( it == availableAudioDevices_.end() ){
         SPDLOG_ERROR("Cannot set audio device ID to {}. Invalid ID",  deviceId);
         return false ;
@@ -423,6 +446,18 @@ bool Engine::setAudioDeviceId(int deviceId){
 
     SPDLOG_INFO("audio device id set to {}.", deviceId);
     selectedAudioOutput_ = deviceId ;
+    audioSet_ = true ;
+
+    size_t numChannels ;
+    if ( it->outputChannels == 0 || it->outputChannels > 8 ){
+        SPDLOG_WARN("selected output audio device reported {} output channels, which is not in expected range. Defaulting to 2", it->outputChannels);
+        numChannels = 2 ;
+    } else {
+        numChannels = it->outputChannels ;
+    }
+
+    signalController.setNumChannels(numChannels);
+
     return true ;
 }
 
@@ -431,23 +466,30 @@ int Engine::getMidiDeviceId() const {
 }
 
 bool Engine::setMidiDeviceId(int deviceId){
-    auto it = availableMidiPorts_.find(deviceId);
-    if ( it == availableMidiPorts_.end() ){
+    if ( midiRunning_ ){
+        SPDLOG_ERROR("cannot set midi device while engine is running");
+        return false ;
+    }
+
+    auto it = availableMidiDevices_.find(deviceId);
+    if ( it == availableMidiDevices_.end() ){
         SPDLOG_ERROR("Cannot set midi device ID to {}. Invalid ID.", deviceId);
         return false ;
     }
 
     SPDLOG_INFO("midi device id set to {}.", deviceId);
     selectedMidiPort_ = deviceId ;
+    midiSet_ = true ;
+
     return true ;
 }
 
 const std::map<int,std::string> Engine::getAvailableMidiDevices() const {
-    return availableMidiPorts_;
+    return availableMidiDevices_ ;
 }
 
-const std::map<int, std::string> Engine::getAvailableAudioDevices() const {
-    return availableAudioDevices_;
+const std::vector<RtAudio::DeviceInfo> Engine::getAvailableAudioDevices() const {
+    return availableAudioDevices_ ;
 }
 
 // ============================================================================
@@ -556,10 +598,10 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
     // Case 2: if inbound is a peripheral
     if ( ! request.inboundID.has_value() ){
         if ( request.remove ){
-            signalController.unregisterSink(outbound, request.outboundIdx.value());
+            signalController.unregisterSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
             return true ;
         }
-        signalController.registerSink(outbound, request.outboundIdx.value());
+        signalController.registerSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
         return true ;
     }
 
@@ -602,16 +644,19 @@ void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionReque
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
     BaseModule* m = componentManager.getModule(id);
+
     if ( m ){
-        for ( const auto& conn : signalController.getSinks()){
-            if ( m == conn.module ){
-                ConnectionRequest req ;
-                req.outboundID = id ;
-                req.outboundIdx = conn.index ;
-                req.inboundSocket = SocketType::SignalInbound ;
-                req.outboundSocket = SocketType::SignalOutbound ;
-                req.inboundIdx = 0 ; // TODO: support multi-channel sink
-                requests.push_back(req);
+        for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
+            for ( const auto& conn : signalController.getSinks(i)){
+                if ( m == conn.module ){
+                    ConnectionRequest req ;
+                    req.outboundID = id ;
+                    req.outboundIdx = conn.index ;
+                    req.inboundSocket = SocketType::SignalInbound ;
+                    req.outboundSocket = SocketType::SignalOutbound ;
+                    req.inboundIdx = i ;
+                    requests.push_back(req);
+                }
             }
         }
     }

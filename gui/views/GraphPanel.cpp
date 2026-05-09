@@ -75,7 +75,7 @@ GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
     );
     connect(
         connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
-        this, &GraphPanel::ondragCableParameterNeeded
+        this, &GraphPanel::onDragCableParameterNeeded
     );
     connect(
         connectionManager_, &ConnectionManager::connectionAdded,
@@ -124,6 +124,10 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         node, &GraphNode::socketUnhidden,
         connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
     );
+    connect(
+        connectionRenderer_, &ConnectionRenderer::canRemoveSocket,
+        node, &GraphNode::removeSocket
+    );
 
     // component node
     auto component = dynamic_cast<ComponentNode*>(node);
@@ -146,7 +150,7 @@ void GraphPanel::setNodeConnections(GraphNode* node){
 
 void GraphPanel::addAudioOutput(){
     audioOut_ = new PeripheralNode(AUDIO_OUT_DEVICE_ID, "Audio Output Device");
-    audioOut_->createSockets({{
+    audioOut_->insertSockets({{
         .type = SocketType::SignalInbound, 
         .name = "Audio In",
         .idx  = 0
@@ -163,7 +167,7 @@ void GraphPanel::addAudioOutput(){
 
 void GraphPanel::addMidiInput(){
     midiIn_ = new PeripheralNode(MIDI_IN_DEVICE_ID, "MIDI Input Device");
-    midiIn_->createSockets({{
+    midiIn_->insertSockets({{
         .type = SocketType::MidiOutbound, 
         .name = "MIDI Out"
     }});
@@ -333,7 +337,6 @@ SocketWidget* GraphPanel::findSocket(SocketSpec spec) const {
     if ( !spec.componentId.has_value() ){ 
         if ( spec.type == SocketType::SignalInbound ){
             w = audioOut_ ;
-            spec.idx = 0 ;
         } else if ( spec.type == SocketType::MidiOutbound ){
             w = midiIn_ ;
         } 
@@ -718,6 +721,16 @@ void GraphPanel::onApiDataReceived(const json& msg){
                 deserializeNodes(msg.at("nodes"));
             }
         }
+        return ;
+    }
+
+    if ( action == "get_audio_configuration" ){
+        if ( msg.at("status") == "success" ){
+            if ( msg.contains("output_channels") ){
+                onAudioChannelsUpdated(msg.at("output_channels"));
+            }
+        }
+        return ;
     }
 }
 
@@ -892,7 +905,7 @@ void GraphPanel::onNodeZUpdate(){
     }
 }
 
-void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
+void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
     if ( ! socket ){
         qWarning() << "drag cable parameter requested for an invalid socket. Cancelling drag." ;
         connectionRenderer_->cancelDrag();
@@ -966,4 +979,35 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
     } else {
         connectionRenderer_->cancelDrag();
     }
+}
+
+void GraphPanel::onAudioChannelsUpdated(size_t numChannels){
+    auto sockets = audioOut_->getSockets();
+    size_t oldSize = sockets.size();
+    if ( oldSize == numChannels ) return ;
+
+    // new output peripheral has less channels
+    if ( oldSize > numChannels ){
+        for ( auto s : sockets ){
+            if ( !s ) continue ;
+            auto spec = s->getSpec();
+            if ( spec.idx.has_value() && spec.idx.value() >= numChannels ){
+                connectionRenderer_->requestRemoveSocket(s);
+            }
+        }
+        return ;
+    }
+
+    // otherwise, there are more channels
+    std::vector<SocketSpec> specs ;
+    for ( size_t i = oldSize ; i < numChannels ; ++i ){
+        specs.push_back({
+            .type = SocketType::SignalInbound, 
+            .name = "Audio In " + QString::number(i),
+            .idx  = i    
+        });
+    }
+    
+    audioOut_->insertSockets(specs);
+    audioOut_->addToScene(scene_);
 }

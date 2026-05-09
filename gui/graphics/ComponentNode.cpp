@@ -79,7 +79,7 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
         });
     }
 
-    createSockets(specs_);
+    insertSockets(specs_);
 
 }
 

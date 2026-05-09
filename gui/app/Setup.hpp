@@ -47,6 +47,7 @@ private slots:
 
 signals:
     void setupCompleted();
+    void audioChannelsUpdated(size_t numChannels);
 
 };
 

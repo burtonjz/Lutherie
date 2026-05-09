@@ -54,13 +54,13 @@ void Setup::populateSetupComboBox(QComboBox* box, const json& data){
 
     box->clear();
     for ( const auto& item : data ){
-        if ( ! item.is_array()  ){
-            qWarning() << "Expected array elements to be arrays" ;
+        if ( ! item.is_object() || ! item.contains("id") || ! item.contains("name") ){
+            qWarning() << "array object does not match expected form. Skipping item:" << item.dump() ;
             continue ;
         }
 
-        int deviceID = item.at(0);
-        QString deviceName = QString::fromStdString(item.at(1)) ;
+        int deviceID = item.at("id");
+        QString deviceName = QString::fromStdString(item.at("name")) ;
         QString displayText = QString("(%1) %2").arg(deviceID).arg(deviceName);
         box->addItem(displayText, deviceID);
     }
@@ -100,7 +100,6 @@ void Setup::onApiDataReceived(const json& json){
 }
 
 void Setup::onSetupSubmit(){
-    qInfo() << "Setup submit button clicked." ;
     json j ;
     j["action"] = "set_audio_device" ;
     j["device_id"] = ui_->comboAudioDevice->currentData().toInt();
