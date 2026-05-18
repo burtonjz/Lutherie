@@ -19,7 +19,7 @@
 #define __MODULE_POLYOSCILLATOR_HPP_
 
 #include "midi/MidiNote.hpp"
-#include "core/BaseModule.hpp"
+#include "core/AudioStreamComponent.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "containers/RTMap.hpp"
 #include "containers/FixedPool.hpp"
@@ -29,16 +29,16 @@
 #include <cstdint>
 
 
-class PolyOscillator : public BaseModule, public MidiEventListener {
+class PolyOscillator : public AudioStreamComponent, public MidiEventListener {
 private:
     RTMap<uint8_t, Oscillator*, 128> children_ ;
     FixedPool<Oscillator, 128> childPool_ ;
 
     // child modulation/parameter storage
-    std::array<BaseModulator*, N_PARAMETER_TYPES> modulators_ ;
+    std::array<ModulatorComponent*, N_PARAMETER_TYPES> modulators_ ;
     std::array<ModulationData, N_PARAMETER_TYPES> modulationData_ ;
 
-    std::array<BaseModulator*, N_PARAMETER_TYPES> depthModulators_ ;
+    std::array<ModulatorComponent*, N_PARAMETER_TYPES> depthModulators_ ;
     std::array<ModulationData, N_PARAMETER_TYPES> depthModulationData_ ;
     
     std::array<std::optional<double>, N_PARAMETER_TYPES> depthOverrides_ ;
@@ -60,16 +60,16 @@ public:
     void onKeyOff(ActiveNote anote) override ;
 
     // BaseComponent Overrides
-    BaseModulator* getParameterModulator(ParameterType p) const  override ;
-    BaseModulator* getParameterDepthModulator(ParameterType p) const override ;
+    ModulatorComponent* getParameterModulator(ParameterType p) const  override ;
+    ModulatorComponent* getParameterDepthModulator(ParameterType p) const override ;
     double getParameterDepth(ParameterType p) const override ;
     void setParameterDepth(ParameterType p, double depth) override ;
     ModulationStrategy getParameterModulationStrategy(ParameterType p) const override ;
     void setParameterModulationStrategy(ParameterType p, ModulationStrategy strat) override ;
     void updateParameters() override ;
-    void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
+    void onSetParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d = {} ) override ;
     void onRemoveParameterModulation(ParameterType p) override ;
-    void onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
+    void onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d = {} ) override ;
     void onRemoveParameterDepthModulation(ParameterType p) override ;
 
     void updateGain();

@@ -21,7 +21,7 @@
 #include "types/ParameterType.hpp"
 ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
     BaseComponent(id,ComponentType::ADSREnvelope),
-    BaseModulator()
+    ModulatorComponent()
 {
     parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
     parameters_->add<ParameterType::DECAY>(cfg.decay, true);

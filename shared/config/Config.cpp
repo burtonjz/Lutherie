@@ -18,8 +18,10 @@
 #include "Config.hpp"
 #include <fstream>
 #include "filesystem"
+#include <linux/limits.h>
 #include <string_view>
 #include <mutex>
+#include <unistd.h>
 
 #ifdef __APPLE__
     #include <mach-o/dyld.h>

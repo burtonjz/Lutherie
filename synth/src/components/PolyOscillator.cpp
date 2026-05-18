@@ -22,7 +22,7 @@
 #include "params/ParameterMap.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"
-#include "core/BaseModulator.hpp"
+#include "core/ModulatorComponent.hpp"
 #include "config/Config.hpp"
 
 #include <cmath>
@@ -31,7 +31,7 @@
 
 PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     BaseComponent(id, ComponentType::PolyOscillator),
-    BaseModule(0,1),
+    AudioStreamComponent(0,1),
     MidiEventListener(),
     children_(),
     modulators_{},
@@ -60,14 +60,14 @@ void PolyOscillator::calculateSample(){
 }
 
 void PolyOscillator::tick(){
-    BaseModule::tick();
+    AudioStreamComponent::tick();
     childPool_.forEachActive([&](Oscillator& obj){
         obj.tick();
     });
 }
 
 void PolyOscillator::clearBuffer(){
-    BaseModule::clearBuffer();
+    AudioStreamComponent::clearBuffer();
     // now clear children
     childPool_.forEachActive([](Oscillator& obj){
         obj.clearBuffer();
@@ -112,11 +112,11 @@ void PolyOscillator::onKeyOff(ActiveNote anote){
     }
 }
 
-BaseModulator* PolyOscillator::getParameterModulator(ParameterType p) const {
+ModulatorComponent* PolyOscillator::getParameterModulator(ParameterType p) const {
     return modulators_.at(static_cast<size_t>(p)) ;
 }
 
-BaseModulator* PolyOscillator::getParameterDepthModulator(ParameterType p) const {
+ModulatorComponent* PolyOscillator::getParameterDepthModulator(ParameterType p) const {
     return depthModulators_.at(static_cast<size_t>(p)) ;
 }
 
@@ -177,7 +177,7 @@ void PolyOscillator::updateParameters(){
     childPool_.forEachActive(&Oscillator::updateParameters);
 }
 
-void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
+void PolyOscillator::onSetParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d){
     if ( d.isEmpty() ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
@@ -198,7 +198,7 @@ void PolyOscillator::onRemoveParameterModulation(ParameterType p){
     childPool_.forEachActive(&Oscillator::removeParameterModulation, p);
 }
 
-void PolyOscillator::onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d){
+void PolyOscillator::onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d){
     if ( d.isEmpty() ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){

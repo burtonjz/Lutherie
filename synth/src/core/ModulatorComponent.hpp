@@ -44,7 +44,7 @@ inline bool operator<(const ModulationTarget& a, const ModulationTarget& b){
 /**
  * @brief base class for all Modulators.
 */
-class BaseModulator : public virtual BaseComponent {
+class ModulatorComponent : public virtual BaseComponent {
 protected:
     std::set<ModulationParameter> requiredParams_ ; 
     std::set<ModulationTarget> modulated_ ; 
@@ -58,9 +58,9 @@ protected:
     }
 
 public:
-    BaseModulator(){};
+    ModulatorComponent(){};
 
-    virtual ~BaseModulator() = default ;
+    virtual ~ModulatorComponent() = default ;
 
     virtual double modulate(double value, ModulationData* mData ) const = 0 ;
 
@@ -78,9 +78,9 @@ public:
 
     // allows recipricol tracking of modulation targets
     friend void BaseComponent::removeParameterModulation(ParameterType p);
-    friend void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d);
+    friend void BaseComponent::setParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d);
     friend void BaseComponent::removeParameterDepthModulation(ParameterType p);
-    friend void BaseComponent::setParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d);
+    friend void BaseComponent::setParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d);
 };
 
 #endif // __MODULATOR_HPP_

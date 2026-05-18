@@ -18,11 +18,11 @@
 #ifndef DELAY_HPP_
 #define DELAY_HPP_
 
-#include "core/BaseModule.hpp"
+#include "core/AudioStreamComponent.hpp"
 #include "containers/DelayBuffer.hpp"
 #include "configs/DelayConfig.hpp"
 
-class Delay : public BaseModule {
+class Delay : public AudioStreamComponent {
 private:
     DelayBuffer delay_ ;
 

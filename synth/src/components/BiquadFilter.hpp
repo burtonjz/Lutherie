@@ -17,12 +17,12 @@
 #ifndef __BIQUAD_FILTER_HPP_
 #define __BIQUAD_FILTER_HPP_
 
-#include "core/BaseModule.hpp"
-#include "core/BaseModulator.hpp"
+#include "core/AudioStreamComponent.hpp"
+#include "core/ModulatorComponent.hpp"
 
 #include "configs/BiquadFilterConfig.hpp"
 
-class BiquadFilter : public BaseModule, public BaseModulator {
+class BiquadFilter : public AudioStreamComponent, public ModulatorComponent {
 private:
     double state1_ ;
     double state2_ ;

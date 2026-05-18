@@ -29,8 +29,8 @@
 // forward declarations (needed to support modulation derived classes)
 class ParameterMap ; 
 class BaseComponent ;
-class BaseModulator ;
-class BaseModule ;
+class ModulatorComponent ;
+class AudioStreamComponent ;
 
 using json = nlohmann::json ;
 using ComponentId = int ;
@@ -40,7 +40,7 @@ protected:
     ComponentId id_ ;
     ComponentType type_ ;
     ParameterMap* parameters_ ; 
-    std::unordered_set<BaseModule*> modulationModules_ ; // used only for tracking, see SignalChain for context
+    std::unordered_set<AudioStreamComponent*> modulationModules_ ; // used only for tracking, see SignalChain for context
 
 public:
     BaseComponent(ComponentId id = -1, ComponentType type = ComponentType::Unknown);
@@ -50,19 +50,19 @@ public:
     ComponentId getId() const { return id_ ; }
     ComponentType getType() const { return type_ ; }
     ParameterMap* getParameters() { return parameters_ ;}
-    std::unordered_set<BaseModule*>& getModulationInputs() ;
+    std::unordered_set<AudioStreamComponent*>& getModulationInputs() ;
 
     /* depth/modulation are managed from component instead of parameterMap, to allow for
      parent/child component setups. Non-virtual functions in this section have
      default behaviors that should ALWAYS happen and custom functionality happens through
      protected NVI functions 
     */
-    void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {});
-    void setParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d = {});
+    void setParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d = {});
+    void setParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d = {});
     void removeParameterModulation(ParameterType p);
     void removeParameterDepthModulation(ParameterType p);
-    virtual BaseModulator* getParameterModulator(ParameterType p) const ;
-    virtual BaseModulator* getParameterDepthModulator(ParameterType p) const ;
+    virtual ModulatorComponent* getParameterModulator(ParameterType p) const ;
+    virtual ModulatorComponent* getParameterDepthModulator(ParameterType p) const ;
     virtual double getParameterDepth(ParameterType p) const ;
     virtual void setParameterDepth(ParameterType p, double depth);
     virtual ModulationStrategy getParameterModulationStrategy(ParameterType p) const ;
@@ -72,9 +72,9 @@ public:
     virtual void updateParameters();
 
 protected:
-    virtual void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d );
+    virtual void onSetParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d );
     virtual void onRemoveParameterModulation(ParameterType p);
-    virtual void onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d );
+    virtual void onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d );
     virtual void onRemoveParameterDepthModulation(ParameterType p);
     
 };

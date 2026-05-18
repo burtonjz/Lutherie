@@ -27,9 +27,9 @@ BaseComponent* ComponentManager::getRaw(ComponentId id) const {
     return it->second.get() ;
 }
 
-BaseModule* ComponentManager::getModule(ComponentId id) const {
+AudioStreamComponent* ComponentManager::getModule(ComponentId id) const {
     if ( modules_.find(id) == modules_.end() ) return nullptr ;
-    return dynamic_cast<BaseModule*>(getRaw(id));
+    return dynamic_cast<AudioStreamComponent*>(getRaw(id));
 }
 
 const std::unordered_set<ComponentId>& ComponentManager::getComponentIds() const {
@@ -40,9 +40,9 @@ const std::unordered_set<ComponentId>& ComponentManager::getModuleIds() const {
     return modules_ ;
 }
 
-BaseModulator* ComponentManager::getModulator(ComponentId id) const {
+ModulatorComponent* ComponentManager::getModulator(ComponentId id) const {
     if ( modulators_.find(id) == modulators_.end() ) return nullptr ;
-    return dynamic_cast<BaseModulator*>(getRaw(id));
+    return dynamic_cast<ModulatorComponent*>(getRaw(id));
 }
 
 const std::unordered_set<ComponentId>& ComponentManager::getModulatorIds() const{
@@ -151,7 +151,7 @@ void ComponentManager::getComponentConnections(ComponentId id, std::vector<Conne
 void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     SPDLOG_DEBUG("getting signal connections for component id = {}", id);
 
-    BaseModule* module = getModule(id);
+    AudioStreamComponent* module = getModule(id);
     Analyzer* analyzer = getAnalyzer(id);
 
     // if it's not a module, check if it's analyzer
@@ -233,13 +233,13 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
 void ComponentManager::getComponentModulationConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     SPDLOG_DEBUG("getting modulation connections for component id = {}", id);
     BaseComponent* module = getModule(id);
-    BaseModulator* modulator = getModulator(id);
+    ModulatorComponent* modulator = getModulator(id);
 
     // get all inbound parameter modulators
     if ( module ){
         auto d = ComponentRegistry::getComponentDescriptor(module->getType());
         for ( auto p : d.modulatableParameters ){
-            BaseModulator* paramModulator = module->getParameterModulator(p);
+            ModulatorComponent* paramModulator = module->getParameterModulator(p);
             if ( paramModulator ){
                 ConnectionRequest req ;
                 req.inboundID = id ;

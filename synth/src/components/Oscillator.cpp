@@ -25,7 +25,7 @@
 
 Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
     BaseComponent(id, ComponentType::Oscillator),
-    BaseModule(0,1),
+    AudioStreamComponent(0,1),
     phase_(0),
     increment_(0),
     generator_(std::random_device{}())
@@ -46,7 +46,7 @@ Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
 
 Oscillator::Oscillator(ParameterMap& parent, double frequency):
     BaseComponent(-1, ComponentType::Oscillator),
-    BaseModule(0,1),
+    AudioStreamComponent(0,1),
     phase_(0),
     increment_(0)
 {
@@ -90,7 +90,7 @@ double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] Modu
 }
 
 void Oscillator::tick(){
-    BaseModule::tick();
+    AudioStreamComponent::tick();
 
     auto frequency = parameters_->getParameter<ParameterType::FREQUENCY>()->getInstantaneousValue();
     auto detune = parameters_->getParameter<ParameterType::DETUNE>();

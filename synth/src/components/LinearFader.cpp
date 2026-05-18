@@ -26,7 +26,7 @@ const ComponentType LinearFader::staticType = ComponentType::LinearFader ;
 
 LinearFader::LinearFader(ComponentId id, LinearFaderConfig cfg):
     BaseComponent(id, ComponentType::LinearFader),
-    BaseModulator()
+    ModulatorComponent()
 {
     parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);

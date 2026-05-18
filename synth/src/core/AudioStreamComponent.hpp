@@ -35,7 +35,7 @@ using json = nlohmann::json ;
 class Analyzer ;
 
 struct SignalConnection {
-    BaseModule* module ; // connecting module
+    AudioStreamComponent* module ; // connecting module
     size_t index ; // buffer index 
 
     bool operator==(const SignalConnection& other) const {
@@ -44,11 +44,11 @@ struct SignalConnection {
 };
 struct ConnectionHash {
     std::size_t operator()(const SignalConnection& conn) const {
-        return std::hash<BaseModule*>()(conn.module) ^ (std::hash<size_t>()(conn.index) << 1);
+        return std::hash<AudioStreamComponent*>()(conn.module) ^ (std::hash<size_t>()(conn.index) << 1);
     }
 };
 
-class BaseModule : public virtual BaseComponent {
+class AudioStreamComponent : public virtual BaseComponent {
 protected:
     size_t bufferIndex_ ;
     size_t nInputs_ ;
@@ -64,7 +64,7 @@ protected:
     std::set<std::pair<Analyzer*, size_t>> toAnalyzer_ ;
 
 public:
-    BaseModule(size_t in, size_t out):
+    AudioStreamComponent(size_t in, size_t out):
         bufferIndex_(0),
         nInputs_(in),
         nOutputs_(out),
@@ -81,7 +81,7 @@ public:
         }
     }
     
-    virtual ~BaseModule() = default ;
+    virtual ~AudioStreamComponent() = default ;
 
     void setBufferIndex(size_t index){
         bufferIndex_ = index ;
@@ -122,14 +122,14 @@ public:
         return nOutputs_ ;
     }
 
-    void connectInput(BaseModule* source, size_t input, size_t sourceOutput){
+    void connectInput(AudioStreamComponent* source, size_t input, size_t sourceOutput){
         assert( input < nInputs_ );
         assert( sourceOutput < source->nOutputs_ );
         signalInputs_[input].insert({source, sourceOutput});
         source->signalOutputs_[sourceOutput].insert({this, input});
     }
 
-    void disconnectInput(BaseModule* source, size_t input, size_t sourceOutput){
+    void disconnectInput(AudioStreamComponent* source, size_t input, size_t sourceOutput){
         assert ( input < nInputs_ );
         assert ( sourceOutput < source->nOutputs_ );
         signalInputs_[input].erase({source, sourceOutput});

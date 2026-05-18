@@ -34,7 +34,7 @@
 template<ParameterType typ>
 class Parameter ;
 class ParameterBase ;
-class BaseModulator ;
+class ModulatorComponent ;
 
 using params = std::array<ParameterBase*, N_PARAMETER_TYPES> ;
 using collections = std::array<ParameterCollectionBase*, N_PARAMETER_TYPES> ;
@@ -109,7 +109,7 @@ class ParameterMap {
             bool modulatable,
             GET_PARAMETER_VALUE_TYPE(typ) minValue = GET_PARAMETER_TRAIT_MEMBER(typ, minimum), 
             GET_PARAMETER_VALUE_TYPE(typ) maxValue = GET_PARAMETER_TRAIT_MEMBER(typ, maximum),
-            BaseModulator* modulator = nullptr, ModulationData modData = {}
+            ModulatorComponent* modulator = nullptr, ModulationData modData = {}
         ){
             if ( getParameter(typ) ){
                 SPDLOG_ERROR("Parameter {} already in map.", GET_PARAMETER_TRAIT_MEMBER(typ, name));

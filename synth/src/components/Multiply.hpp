@@ -18,15 +18,15 @@
 #ifndef GAIN_COMPONENT_HPP_
 #define GAIN_COMPONENT_HPP_
 
-#include "core/BaseModule.hpp"
+#include "core/AudioStreamComponent.hpp"
 #include "configs/MultiplyConfig.hpp"
 #include "params/ParameterMap.hpp"
 
-class Multiply : public BaseModule {
+class Multiply : public AudioStreamComponent {
 public:
     Multiply(ComponentId id, MultiplyConfig cfg):
         BaseComponent(id,ComponentType::Multiply),
-        BaseModule(1,1)
+        AudioStreamComponent(1,1)
     {
         parameters_->add<ParameterType::SCALAR>(cfg.scalar, true);
     }

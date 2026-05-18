@@ -578,8 +578,8 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
 }
 
 bool Engine::handleSignalConnection(ConnectionRequest request){
-    BaseModule* inbound = nullptr ;
-    BaseModule* outbound = nullptr ;
+    AudioStreamComponent* inbound = nullptr ;
+    AudioStreamComponent* outbound = nullptr ;
     Analyzer* analyzer = nullptr ;
 
     // inbound component can be module, analyzer, or peripheral
@@ -643,7 +643,7 @@ void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionReque
 
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
-    BaseModule* m = componentManager.getModule(id);
+    AudioStreamComponent* m = componentManager.getModule(id);
 
     if ( m ){
         for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
@@ -692,7 +692,7 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
         return false ;
     }
 
-    BaseModulator* modulator = componentManager.getModulator(request.outboundID.value());
+    ModulatorComponent* modulator = componentManager.getModulator(request.outboundID.value());
     BaseComponent* component = componentManager.getRaw(request.inboundID.value());
 
     if (!modulator || !component ){
@@ -715,7 +715,7 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
     }
     
     // stateful modulators need to be in the signal processing graph
-    if ( dynamic_cast<BaseModule*>(modulator) ){
+    if ( dynamic_cast<AudioStreamComponent*>(modulator) ){
         signalController.updateProcessingGraph();
     }
 

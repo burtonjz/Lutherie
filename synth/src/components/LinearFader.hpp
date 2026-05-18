@@ -19,12 +19,12 @@
 #define __MODULATOR_LINEAR_FADER_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
+#include "core/ModulatorComponent.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "types/ComponentType.hpp"
 #include "configs/LinearFaderConfig.hpp"
 
-class LinearFader : public BaseModulator, public MidiEventHandler { 
+class LinearFader : public ModulatorComponent, public MidiEventHandler { 
 private:
     KeyMap pending_ ; // MidiModulator holds on to release notes until their release is complete, or the note is pressed again
      

@@ -18,7 +18,7 @@
 #ifndef __SIGNAL_CONTROLLER_HPP_
 #define __SIGNAL_CONTROLLER_HPP_
 
-#include "core/BaseModule.hpp"
+#include "core/AudioStreamComponent.hpp"
 #include "core/ComponentManager.hpp"
 #include "signal/SignalChain.hpp"
 
@@ -47,26 +47,26 @@ public:
     }
 
     // signal chain functions
-    void connect(BaseModule* from, size_t fromIndex, BaseModule* to, size_t toIndex){
+    void connect(AudioStreamComponent* from, size_t fromIndex, AudioStreamComponent* to, size_t toIndex){
         if (!from) return ;
         if (!to) return ;
         to->connectInput(from,fromIndex, toIndex);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void disconnect(BaseModule* from, size_t fromIndex, BaseModule* to, size_t toIndex){
+    void disconnect(AudioStreamComponent* from, size_t fromIndex, AudioStreamComponent* to, size_t toIndex){
         if (!from) return ;
         if (!to) return ;
         to->disconnectInput(from, fromIndex, toIndex);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void registerSink(BaseModule* outbound, size_t outboundIdx, size_t inboundIdx){
+    void registerSink(AudioStreamComponent* outbound, size_t outboundIdx, size_t inboundIdx){
         signalChain_.addSink(outbound, outboundIdx, inboundIdx);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void unregisterSink(BaseModule* outbound, size_t outboundIdx, size_t inboundIdx){
+    void unregisterSink(AudioStreamComponent* outbound, size_t outboundIdx, size_t inboundIdx){
         signalChain_.removeSink(outbound, outboundIdx, inboundIdx);
         signalChain_.calculateTopologicalOrder();
     }
@@ -79,7 +79,7 @@ public:
         auto chain = signalChain_.getModuleChain();
 
         // process modules in chain order
-        for (BaseModule*  mod : chain){
+        for (AudioStreamComponent*  mod : chain){
             mod->updateParameters();
             mod->calculateSample();
             mod->tick();

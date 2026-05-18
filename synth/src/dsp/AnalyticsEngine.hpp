@@ -23,6 +23,7 @@
 #include "types/ComponentType.hpp"
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <set>
 #include <unordered_map>

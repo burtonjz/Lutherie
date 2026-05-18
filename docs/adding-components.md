@@ -1,7 +1,7 @@
 # How to Add a New Component
 
 ## Prerequisites
-- Understand the three base classes: `BaseModule` (signal processing), `BaseModulator` (modulation source), `MidiEventHandler` (MIDI input)
+- Understand the three base classes: `AudioStreamComponent` (signal processing), `ModulatorComponent` (modulation source), `MidiEventHandler` (MIDI input)
 - Your component can inherit from any combination of these (they all inherit from `BaseComponent`)
 
 ---
@@ -33,8 +33,8 @@ MyComponent(ComponentId id, const MyComponentConfig& config):
 
 ## Step 4: Implement Base Class Requirements
 All Components must inherit from BaseComponent, but it is generally expected that your component will inherit this indirectly through at least one of the following classes:
-- `BaseModule` - for signal processing 
-- `BaseModulator` - for modulation sources 
+- `AudioStreamComponent` - for signal processing 
+- `ModulatorComponent` - for modulation sources 
 - `MidiEventHandler` - for MIDI input handling
 
 In addition, it may be necessary to inherit from:
@@ -82,7 +82,7 @@ void updateParameters() override {
 
 // when parameter modulation is set, we need to pass it down to
 // children if it is not a parent's referenced parameter
-void onSetParameterModulation(ParameterType p, BaseModulator* m) override {
+void onSetParameterModulation(ParameterType p, ModulatorComponent* m) override {
     if ( d.empty() && m ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
@@ -104,9 +104,9 @@ void onRemoveParameterModulation(ParameterType param) override {
     // Or, remove modulation from children if needed
 }
 
-// from BaseModule
+// from AudioStreamComponent
 void tick(){
-    BaseModule::tick(); // you must run the parent tick function
+    AudioStreamComponent::tick(); // you must run the parent tick function
 
     // perform any additional per-sample actions
 

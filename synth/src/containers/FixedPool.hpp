@@ -20,11 +20,11 @@
 #include <array>
 #include <bitset>
 #include <type_traits>
-#include "core/BaseModule.hpp"
+#include "core/AudioStreamComponent.hpp"
 
 template<typename T, size_t N>
 class FixedPool {
-    static_assert(std::is_base_of<BaseModule, T>::value, "FixedPool<T>: T must derive from Module");
+    static_assert(std::is_base_of<AudioStreamComponent, T>::value, "FixedPool<T>: T must derive from Module");
     static_assert(N <= 256, "FixedPool: N must fit in uint8_t for index storage");
     
 private:

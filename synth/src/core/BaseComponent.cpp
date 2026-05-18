@@ -16,8 +16,8 @@
  */
 
 #include "core/BaseComponent.hpp"
-#include "core/BaseModule.hpp"
-#include "core/BaseModulator.hpp" 
+#include "core/AudioStreamComponent.hpp"
+#include "core/ModulatorComponent.hpp" 
 #include "params/ParameterMap.hpp"
 #include <unordered_set>
 
@@ -31,15 +31,15 @@ BaseComponent::~BaseComponent(){
     delete parameters_ ;
 };
 
-std::unordered_set<BaseModule*>& BaseComponent::getModulationInputs(){
+std::unordered_set<AudioStreamComponent*>& BaseComponent::getModulationInputs(){
     return modulationModules_ ;
 }
 
-void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
+void BaseComponent::setParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d){
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), track it for signal chain
-    BaseModule* module = dynamic_cast<BaseModule*>(m);
+    AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(m);
     if ( module ){
         modulationModules_.insert(module);
     }
@@ -50,11 +50,11 @@ void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, Mo
     onSetParameterModulation(p,m,d);
 }
 
-void BaseComponent::setParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d){
+void BaseComponent::setParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d){
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), track it for signal chain
-    BaseModule* module = dynamic_cast<BaseModule*>(m);
+    AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(m);
     if ( module ){
         modulationModules_.insert(module);
     }
@@ -69,8 +69,8 @@ void BaseComponent::removeParameterModulation(ParameterType p){
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), remove tracking
-    BaseModulator* modulator = getParameterModulator(p);
-    if ( BaseModule* module = dynamic_cast<BaseModule*>(modulator) ){
+    ModulatorComponent* modulator = getParameterModulator(p);
+    if ( AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(modulator) ){
         modulationModules_.erase(module);
     }
 
@@ -86,8 +86,8 @@ void BaseComponent::removeParameterDepthModulation(ParameterType p){
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), remove tracking
-    BaseModulator* modulator = getParameterDepthModulator(p);
-    if ( BaseModule* module = dynamic_cast<BaseModule*>(modulator) ){
+    ModulatorComponent* modulator = getParameterDepthModulator(p);
+    if ( AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(modulator) ){
         modulationModules_.erase(module);
     }
 
@@ -99,11 +99,11 @@ void BaseComponent::removeParameterDepthModulation(ParameterType p){
     onRemoveParameterDepthModulation(p);
 }
 
-BaseModulator* BaseComponent::getParameterModulator(ParameterType p) const {
+ModulatorComponent* BaseComponent::getParameterModulator(ParameterType p) const {
     return parameters_->getParameter(p)->getModulator();
 }
 
-BaseModulator* BaseComponent::getParameterDepthModulator(ParameterType p) const {
+ModulatorComponent* BaseComponent::getParameterDepthModulator(ParameterType p) const {
     return parameters_->getParameter(p)->getDepth()->getModulator();
 }
 
@@ -149,7 +149,7 @@ void BaseComponent::updateParameters(){
     if (parameters_) parameters_->modulate() ;
 }
 
-void BaseComponent::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
+void BaseComponent::onSetParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d ){
     if ( d.isEmpty() && m ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
@@ -163,7 +163,7 @@ void BaseComponent::onRemoveParameterModulation(ParameterType p){
     parameters_->getParameter(p)->removeModulation();
 }
 
-void BaseComponent::onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d ){
+void BaseComponent::onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d ){
     if ( d.isEmpty() && m ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){

@@ -19,8 +19,8 @@
 #define __COMPONENT_MANAGER_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "core/BaseModule.hpp"
-#include "core/BaseModulator.hpp"
+#include "core/AudioStreamComponent.hpp"
+#include "core/ModulatorComponent.hpp"
 #include "dsp/Analyzer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
@@ -92,8 +92,8 @@ public:
     }
 
     BaseComponent* getRaw(ComponentId id) const ;
-    BaseModule* getModule(ComponentId id) const ;
-    BaseModulator* getModulator(ComponentId id) const ;
+    AudioStreamComponent* getModule(ComponentId id) const ;
+    ModulatorComponent* getModulator(ComponentId id) const ;
     MidiEventHandler* getMidiHandler(ComponentId id) const ;
     MidiEventListener* getMidiListener(ComponentId id) const ;
     Analyzer* getAnalyzer(ComponentId id) const ;

@@ -20,7 +20,7 @@
 
 #include "types/ParameterType.hpp"
 #include "params/ParameterListener.hpp"
-#include "core/BaseModulator.hpp"
+#include "core/ModulatorComponent.hpp"
 #include <spdlog/spdlog.h>
 #include <variant>
 #include <vector>
@@ -32,7 +32,7 @@ class ParameterBase {
 protected:
     ParameterType type_ ;
     bool modulatable_ ;
-    BaseModulator* modulator_ ;
+    ModulatorComponent* modulator_ ;
     ModulationStrategy modStrategy_ ;
     ModulationData modData_ ;
 
@@ -45,7 +45,7 @@ public:
     ParameterBase(
         ParameterType typ, 
         bool modulatable,
-        BaseModulator* modulator = nullptr,
+        ModulatorComponent* modulator = nullptr,
         ModulationData modData = {}
     ):
         type_(typ),
@@ -66,7 +66,7 @@ public:
         return modulatable_ ; 
     }
 
-    void setModulation(BaseModulator* modulator, ModulationData modData){
+    void setModulation(ModulatorComponent* modulator, ModulationData modData){
         if ( modulator){
             modData_ = modData ;
             modulator_ = modulator ;
@@ -81,7 +81,7 @@ public:
         modData_ = {} ;
     }
 
-    BaseModulator* getModulator() const { 
+    ModulatorComponent* getModulator() const { 
         return modulator_ ;
     }
     
@@ -155,7 +155,7 @@ class Parameter : public ParameterBase {
             ValueType defaultValue, bool modulatable, 
             ValueType minValue = ParameterTraits<typ>::minimum, 
             ValueType maxValue = ParameterTraits<typ>::maximum,
-            BaseModulator* modulator = nullptr, ModulationData modData = {}
+            ModulatorComponent* modulator = nullptr, ModulationData modData = {}
         ):
             ParameterBase(typ,modulatable,modulator,modData),
             minValue_(minValue),

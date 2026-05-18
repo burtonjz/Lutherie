@@ -19,12 +19,12 @@
 #define __MODULATOR_ADSR_ENVELOPE_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
+#include "core/ModulatorComponent.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "params/ParameterMap.hpp"
 #include "configs/ADSREnvelopeConfig.hpp"
 
-class ADSREnvelope : public BaseModulator, public MidiEventHandler {      
+class ADSREnvelope : public ModulatorComponent, public MidiEventHandler {      
 public:
     ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
     
