@@ -41,13 +41,16 @@ public:
 
     // Cable/Connection Colors
     static const QColor CABLE_SHADOW ;
-    static const QColor CABLE_AUDIO ;
+    static const QColor CABLE_SIGNAL ;
+    static const QColor CABLE_BUFFER ;
     static const QColor CABLE_MODULATION ;
     static const QColor CABLE_MIDI ;
     
     // Socket Colors
-    static const QColor SOCKET_AUDIO ;
-    static const QColor SOCKET_AUDIO_LIGHT ;
+    static const QColor SOCKET_SIGNAL ;
+    static const QColor SOCKET_SIGNAL_LIGHT ;
+    static const QColor SOCKET_BUFFER ;
+    static const QColor SOCKET_BUFFER_LIGHT ;
     static const QColor SOCKET_MIDI ;
     static const QColor SOCKET_MIDI_LIGHT ;
     static const QColor SOCKET_MODULATION ;

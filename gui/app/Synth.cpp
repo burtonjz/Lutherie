@@ -355,7 +355,7 @@ QMenu* Synth::buildComponentMenu(){
     QMenu* analyzer = menu->addMenu("Analyzers");
     
     for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
-        if ( desc.numAudioInputs == 0 && desc.numAudioOutputs > 0 ){
+        if ( desc.numSignalInputs == 0 && desc.numSignalOutputs > 0 ){
             QAction* action = sigGen->addAction(QString::fromStdString(desc.name));
             connect(
                 action, &QAction::triggered, 
@@ -363,7 +363,7 @@ QMenu* Synth::buildComponentMenu(){
                     graph_->onComponentSelected(typ);
                 }
             );
-        } else if ( desc.numAudioInputs > 0 && desc.numAudioOutputs > 0 ){
+        } else if ( desc.numSignalInputs > 0 && desc.numSignalOutputs > 0 ){
             QAction* action = sigProc->addAction(QString::fromStdString(desc.name));
             connect(
                 action, &QAction::triggered, 

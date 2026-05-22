@@ -18,10 +18,10 @@
 #ifndef PANNER_HPP_
 #define PANNER_HPP_
 
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
 #include "configs/PannerConfig.hpp"
 
-class Panner : public AudioStreamComponent {
+class Panner : public AudioSignalComponent {
 
 public:
     Panner(ComponentId id, PannerConfig cfg);

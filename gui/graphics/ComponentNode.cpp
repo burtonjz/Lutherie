@@ -37,7 +37,7 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
         });
     }
     
-    for (int i = 0; i < d.numAudioInputs; ++i){
+    for ( int i = 0; i < d.numSignalInputs; ++i ){
         specs_.push_back({
             .type        = SocketType::SignalInbound, 
             .name        = QString("Audio Input %1").arg(i+1), 
@@ -46,7 +46,16 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
         });
     }
 
-    for (int i = 0; i < d.numMidiInputs; ++i){
+    for ( int i = 0; i < d.numBufferInputs; ++i ){
+        specs_.push_back({
+            .type        = SocketType::BufferInbound, 
+            .name        = QString("Buffer Input %1").arg(i+1), 
+            .componentId = model_->getId(),
+            .idx         = i
+        });
+    }
+
+    for ( int i = 0; i < d.numMidiInputs; ++i ){
         specs_.push_back({
             .type = SocketType::MidiInbound, 
             .name = QString("MIDI Input %1").arg(i+1),
@@ -54,7 +63,7 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
         });
     }
 
-    for (int i = 0; i < d.numAudioOutputs; ++i){
+    for ( int i = 0; i < d.numSignalOutputs; ++i ){
         specs_.push_back({
             .type = SocketType::SignalOutbound, 
             .name = QString("Audio Output %1").arg(i+1), 
@@ -63,7 +72,16 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
         });
     }
 
-    for (int i = 0; i < d.numMidiOutputs; ++i){
+    for ( int i = 0; i < d.numBufferOutputs; ++i ){
+        specs_.push_back({
+            .type = SocketType::BufferOutbound, 
+            .name = QString("Buffer Output %1").arg(i+1), 
+            .componentId = model_->getId(),
+            .idx = i
+        });
+    }
+
+    for ( int i = 0; i < d.numMidiOutputs; ++i ){
         specs_.push_back({
             .type = SocketType::MidiOutbound, 
             .name = QString("MIDI Output %1").arg(i+1),
@@ -71,7 +89,7 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
         });
     }
 
-    if ( d.isModulator()){
+    if ( d.isModulator() ){
         specs_.push_back({
             .type = SocketType::ModulationOutbound, 
             .name = QString("Modulation Output"),
@@ -80,7 +98,6 @@ ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphi
     }
 
     insertSockets(specs_);
-
 }
 
 ComponentModel* ComponentNode::getModel() const {

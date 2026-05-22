@@ -138,7 +138,7 @@ public:
 
     bool handleSignalConnection(ConnectionRequest request);
     bool handleModulationConnection(ConnectionRequest request);
-    
+    bool handleBufferConnection(ConnectionRequest request);
 
     json serialize() const ;
 

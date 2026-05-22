@@ -27,17 +27,22 @@ BaseComponent* ComponentManager::getRaw(ComponentId id) const {
     return it->second.get() ;
 }
 
-AudioStreamComponent* ComponentManager::getModule(ComponentId id) const {
-    if ( modules_.find(id) == modules_.end() ) return nullptr ;
-    return dynamic_cast<AudioStreamComponent*>(getRaw(id));
+AudioSignalComponent* ComponentManager::getSignalComponent(ComponentId id) const {
+    if ( audioSignals_.find(id) == audioSignals_.end() ) return nullptr ;
+    return dynamic_cast<AudioSignalComponent*>(getRaw(id));
+}
+
+AudioBufferComponent* ComponentManager::getBufferComponent(ComponentId id) const {
+    if ( audioBuffers_.find(id) == audioBuffers_.end() ) return nullptr ;
+    return dynamic_cast<AudioBufferComponent*>(getRaw(id));
 }
 
 const std::unordered_set<ComponentId>& ComponentManager::getComponentIds() const {
     return allIds_ ;
 }
 
-const std::unordered_set<ComponentId>& ComponentManager::getModuleIds() const {
-    return modules_ ;
+const std::unordered_set<ComponentId>& ComponentManager::getSignalComponentIds() const {
+    return audioSignals_ ;
 }
 
 ModulatorComponent* ComponentManager::getModulator(ComponentId id) const {
@@ -81,7 +86,7 @@ void ComponentManager::remove(ComponentId id){
     midiHandlers_.erase(id);
     midiListeners_.erase(id);
     modulators_.erase(id);
-    modules_.erase(id);
+    audioSignals_.erase(id);
     analyzers_.erase(id);
     components_.erase(id);
 }
@@ -92,13 +97,13 @@ void ComponentManager::reset(){
     midiHandlers_.clear();
     midiListeners_.clear();
     modulators_.clear();
-    modules_.clear();
+    audioSignals_.clear();
     analyzers_.clear();
 }
 
 void ComponentManager::runParameterModulation(){
     for (auto it = components_.begin(); it != components_.end(); ++it){
-        if ( !modules_.contains(it->first) ){
+        if ( !audioSignals_.contains(it->first) ){
             it->second->updateParameters();
         }
     }
@@ -151,7 +156,7 @@ void ComponentManager::getComponentConnections(ComponentId id, std::vector<Conne
 void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     SPDLOG_DEBUG("getting signal connections for component id = {}", id);
 
-    AudioStreamComponent* module = getModule(id);
+    AudioSignalComponent* module = getSignalComponent(id);
     Analyzer* analyzer = getAnalyzer(id);
 
     // if it's not a module, check if it's analyzer
@@ -177,7 +182,7 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
         return ;
     } 
     
-    // Case 2: Module
+    // Case 2: signal component
 
     // check if module is connected to any analyzer
     for ( const auto& [a, idx] : module->getAnalyzers() ){
@@ -196,32 +201,30 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
     // signal inputs
     for ( size_t i = 0; i < module->getNumInputs(); ++i ){
         for ( const auto& conn : module->getInputs(i) ){
-            if ( conn.module ){
-                ConnectionRequest req ;
-                req.inboundID = id ;
-                req.inboundIdx = i ;
-                req.inboundSocket = SocketType::SignalInbound ;
-                req.outboundID = conn.module->getId() ;
-                req.outboundIdx = conn.index ;
-                req.outboundSocket = SocketType::SignalOutbound ;
-                requests.push_back(req);
-            }
+            if ( !conn.component ) continue ;
+            ConnectionRequest req ;
+            req.inboundID = id ;
+            req.inboundIdx = i ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            req.outboundID = conn.component->getId() ;
+            req.outboundIdx = conn.index ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            requests.push_back(req);
         }    
     }
     
     // signal outputs
     for ( size_t i = 0; i < module->getNumOutputs(); ++i ){
         for ( const auto& conn : module->getOutputs(i) ){
-            if ( conn.module ){
-                ConnectionRequest req ;
-                req.inboundID = conn.module->getId() ;
-                req.inboundIdx = conn.index ;
-                req.inboundSocket = SocketType::SignalInbound ;
-                req.outboundID = id ;
-                req.outboundIdx = i ;
-                req.outboundSocket = SocketType::SignalOutbound ;
-                requests.push_back(req);
-            }
+            if ( !conn.component ) continue ;
+            ConnectionRequest req ;
+            req.inboundID = conn.component->getId() ;
+            req.inboundIdx = conn.index ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            req.outboundID = id ;
+            req.outboundIdx = i ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            requests.push_back(req);
         }
     }
     
@@ -232,7 +235,7 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
 
 void ComponentManager::getComponentModulationConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     SPDLOG_DEBUG("getting modulation connections for component id = {}", id);
-    BaseComponent* module = getModule(id);
+    BaseComponent* module = getSignalComponent(id);
     ModulatorComponent* modulator = getModulator(id);
 
     // get all inbound parameter modulators
@@ -310,6 +313,37 @@ void ComponentManager::getComponentMidiConnections(ComponentId id, std::vector<C
             }
         }
     }
+}
 
-    return ;
+void ComponentManager::getComponentBufferConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
+    AudioBufferComponent* component = getBufferComponent(id);
+    if ( !component ) return ;
+
+    for ( size_t i = 0; i < component->getNumInputs(); ++i ){
+        for ( const auto& conn : component->getInputs(i) ){
+            if ( !conn.component ) continue ;
+            ConnectionRequest req ;
+            req.inboundID = component->getId();
+            req.inboundIdx = i ;
+            req.inboundSocket = SocketType::BufferInbound ;
+            req.outboundID = conn.component->getId();
+            req.outboundIdx = conn.index ; 
+            req.outboundSocket = SocketType::BufferOutbound ;
+            requests.push_back(req);
+        }
+    }
+
+    for ( size_t i = 0; i < component->getNumOutputs(); ++i ){
+        for ( const auto& conn : component->getOutputs(i) ){
+            if ( !conn.component ) continue ;
+            ConnectionRequest req ;
+            req.inboundID = conn.component->getId();
+            req.inboundIdx = conn.index ; 
+            req.inboundSocket = SocketType::BufferInbound ;
+            req.outboundID = component->getId();
+            req.outboundIdx = i ;
+            req.outboundSocket = SocketType::BufferOutbound ;
+            requests.push_back(req);
+        }
+    }
 }

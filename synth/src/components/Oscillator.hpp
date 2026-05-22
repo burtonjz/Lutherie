@@ -18,13 +18,13 @@
 #ifndef __MODULE_OSCILLATOR_HPP_
 #define __MODULE_OSCILLATOR_HPP_
 
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
 #include "core/ModulatorComponent.hpp"
 #include "configs/OscillatorConfig.hpp"
 #include "types/Waveform.hpp"
 #include <random>
 
-class Oscillator : public AudioStreamComponent, public ModulatorComponent {
+class Oscillator : public AudioSignalComponent, public ModulatorComponent {
 private:
     double phase_ ;
     double increment_ ;

@@ -109,6 +109,10 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
         return toType == SocketType::SignalOutbound ;
     case SocketType::SignalOutbound:
         return toType == SocketType::SignalInbound ;
+    case SocketType::BufferInbound:
+        return toType == SocketType::BufferOutbound ;
+    case SocketType::BufferOutbound:
+        return toType == SocketType::BufferInbound ;
     default:
         return false ;
     }
@@ -224,7 +228,10 @@ QColor ConnectionCable::getCableColor() const
             return Theme::CABLE_MODULATION ;
         case SocketType::SignalInbound:
         case SocketType::SignalOutbound:
-            return Theme::CABLE_AUDIO ;
+            return Theme::CABLE_SIGNAL ;
+        case SocketType::BufferInbound:
+        case SocketType::BufferOutbound:
+            return Theme::CABLE_BUFFER ;
         case SocketType::MidiInbound:
         case SocketType::MidiOutbound:
             return Theme::CABLE_MIDI ;
@@ -380,9 +387,11 @@ QPointF ConnectionCable::getSocketDirectionVector(SocketWidget* socket){
     switch(socket->getSpec().type){
         case SocketType::SignalInbound: // left
         case SocketType::MidiInbound: 
+        case SocketType::BufferInbound:
             return QPointF(-1.0, 0);
         case SocketType::SignalOutbound: // right
         case SocketType::MidiOutbound:
+        case SocketType::BufferOutbound:
             return QPointF(1.0, 0);
         case SocketType::ModulationInbound: // bottom
             return QPointF(0, 1.0);

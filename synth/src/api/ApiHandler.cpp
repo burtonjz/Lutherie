@@ -1035,7 +1035,8 @@ bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
         return engine_->handleMidiConnection(request);
     if ( request.inboundSocket == SocketType::SignalInbound && request.outboundSocket == SocketType::SignalOutbound )
         return engine_->handleSignalConnection(request);
-
+    if ( request.inboundSocket == SocketType::BufferInbound && request.outboundSocket == SocketType::BufferOutbound )
+        return engine_->handleBufferConnection(request);
     if ( request.inboundSocket == SocketType::ModulationInbound && request.outboundSocket == SocketType::ModulationOutbound )
         return engine_->handleModulationConnection(request);
 

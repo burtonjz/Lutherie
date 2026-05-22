@@ -16,7 +16,7 @@
  */
 
 #include "core/BaseComponent.hpp"
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
 #include "core/ModulatorComponent.hpp" 
 #include "params/ParameterMap.hpp"
 #include <unordered_set>
@@ -31,7 +31,7 @@ BaseComponent::~BaseComponent(){
     delete parameters_ ;
 };
 
-std::unordered_set<AudioStreamComponent*>& BaseComponent::getModulationInputs(){
+std::unordered_set<AudioSignalComponent*>& BaseComponent::getModulationInputs(){
     return modulationModules_ ;
 }
 
@@ -39,7 +39,7 @@ void BaseComponent::setParameterModulation(ParameterType p, ModulatorComponent* 
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), track it for signal chain
-    AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(m);
+    AudioSignalComponent* module = dynamic_cast<AudioSignalComponent*>(m);
     if ( module ){
         modulationModules_.insert(module);
     }
@@ -54,7 +54,7 @@ void BaseComponent::setParameterDepthModulation(ParameterType p, ModulatorCompon
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), track it for signal chain
-    AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(m);
+    AudioSignalComponent* module = dynamic_cast<AudioSignalComponent*>(m);
     if ( module ){
         modulationModules_.insert(module);
     }
@@ -70,7 +70,7 @@ void BaseComponent::removeParameterModulation(ParameterType p){
 
     // if the modulator is stateful (also a module), remove tracking
     ModulatorComponent* modulator = getParameterModulator(p);
-    if ( AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(modulator) ){
+    if ( AudioSignalComponent* module = dynamic_cast<AudioSignalComponent*>(modulator) ){
         modulationModules_.erase(module);
     }
 
@@ -87,7 +87,7 @@ void BaseComponent::removeParameterDepthModulation(ParameterType p){
 
     // if the modulator is stateful (also a module), remove tracking
     ModulatorComponent* modulator = getParameterDepthModulator(p);
-    if ( AudioStreamComponent* module = dynamic_cast<AudioStreamComponent*>(modulator) ){
+    if ( AudioSignalComponent* module = dynamic_cast<AudioSignalComponent*>(modulator) ){
         modulationModules_.erase(module);
     }
 

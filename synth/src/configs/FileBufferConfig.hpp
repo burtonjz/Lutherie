@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,22 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef FILE_BUFFER_CONFIG_HPP_
+#define FILE_BUFFER_CONFIG_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Multiply.hpp"
-#include "components/SpectrumAnalyzer.hpp"
-#include "components/FileBuffer.hpp"
-#include "components/Delay.hpp"
-#include "components/Panner.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
-#include "components/Oscilloscope.hpp"
+#include "types/ComponentType.hpp"
+#include <nlohmann/json.hpp>
 
-#endif // __HPP_ALL_COMPONENTS_
+using json = nlohmann::json ;
+
+// forward declare class
+class FileBuffer ;
+
+// define default configuration
+struct FileBufferConfig {
+    bool enabled = true ;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FileBufferConfig, enabled) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::FileBuffer>{ 
+    using type = FileBuffer ;
+    using config = FileBufferConfig ;
+};
+
+#endif // FILE_BUFFER_CONFIG_HPP_

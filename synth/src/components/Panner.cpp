@@ -20,7 +20,7 @@
 
 Panner::Panner(ComponentId id, PannerConfig cfg):
     BaseComponent(id, ComponentType::Panner),
-    AudioStreamComponent(1,2)
+    AudioSignalComponent(1,2)
 {
     parameters_->add<ParameterType::PAN>(cfg.pan,true);
 }

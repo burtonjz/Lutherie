@@ -75,7 +75,10 @@ QColor SocketWidget::getSocketColor(bool isHovered) const {
             return isHovered ? Theme::SOCKET_MODULATION_LIGHT : Theme::SOCKET_MODULATION ;
         case SocketType::SignalInbound:
         case SocketType::SignalOutbound:
-            return isHovered ? Theme::SOCKET_AUDIO_LIGHT : Theme::SOCKET_AUDIO ;
+            return isHovered ? Theme::SOCKET_SIGNAL_LIGHT : Theme::SOCKET_SIGNAL ;
+        case SocketType::BufferInbound:
+        case SocketType::BufferOutbound:
+            return isHovered ? Theme::SOCKET_BUFFER_LIGHT : Theme::SOCKET_BUFFER ;
         case SocketType::MidiInbound:
         case SocketType::MidiOutbound:
             return isHovered ? Theme::SOCKET_MIDI_LIGHT : Theme::SOCKET_MIDI ;
@@ -96,6 +99,7 @@ void SocketWidget::setHovered(bool hovered){
 bool SocketWidget::isOutbound() const {
     return spec_.type == SocketType::ModulationOutbound || 
            spec_.type == SocketType::SignalOutbound ||
+           spec_.type == SocketType::BufferOutbound ||
            spec_.type == SocketType::MidiOutbound
     ;
 }
