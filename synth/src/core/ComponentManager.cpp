@@ -167,7 +167,7 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
 
     // Case 1: Analyzer
     if ( analyzer ){
-        for ( const auto [m, idx] : analyzer->getSources() ){
+        for ( const auto& [m, idx] : analyzer->getSources() ){
             ConnectionRequest req ;
             req.outboundID = m->getId();
             req.outboundIdx = idx ;
