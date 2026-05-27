@@ -19,9 +19,10 @@
 #define FILE_BUFFER_HPP_
 
 #include "core/AudioBufferComponent.hpp"
+#include "core/FileComponent.hpp"
 #include "configs/FileBufferConfig.hpp"
 
-class FileBuffer : public AudioBufferComponent {
+class FileBuffer : public AudioBufferComponent, public FileComponent {
 private:
     
 

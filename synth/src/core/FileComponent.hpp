@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Jared Burton
+ * Copyright (C) 2025 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,10 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "components/FileBuffer.hpp"
+ #ifndef FILE_COMPONENT_HPP_
+ #define FILE_COMPONENT_HPP_
 
-FileBuffer::FileBuffer(ComponentId id,[[maybe_unused]] FileBufferConfig cfg):
-    BaseComponent(id, ComponentType::FileBuffer),
-    AudioBufferComponent(0,1)
-{
-}
+#include <filesystem>
+
+class FileComponent {
+protected:
+    std::filesystem::path filePath_ ;
+    
+public:
+    FileComponent():
+        filePath_("")
+    {}
+
+    const std::filesystem::path& getPath() const {
+        return filePath_ ;
+    }
+
+    void setPath(std::string fPath){
+        filePath_ = fPath ;
+    }
+};
+
+ #endif // FILE_COMPONENT_HPP_
