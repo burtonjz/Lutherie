@@ -43,6 +43,7 @@ struct ComponentDescriptor {
     size_t numMidiOutputs   = 0 ;
     
     bool canModulate = false ;
+    bool hasFile = false ;
 
     bool isSignalComponent() const { return numSignalInputs > 0 || numSignalOutputs > 0 ; }
     bool isBufferComponent() const { return numBufferInputs > 0 || numBufferOutputs > 0 ; }

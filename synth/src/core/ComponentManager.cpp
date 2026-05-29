@@ -73,12 +73,21 @@ Analyzer* ComponentManager::getAnalyzer(ComponentId id) const {
     return dynamic_cast<Analyzer*>(getRaw(id));
 }
 
+FileComponent* ComponentManager::getFileComponent(ComponentId id) const {
+    if ( fileComponents_.find(id) == fileComponents_.end() ) return nullptr ;
+    return dynamic_cast<FileComponent*>(getRaw(id));
+}
+
 const std::unordered_set<ComponentId>& ComponentManager::getMidiListenerIds() const {
     return midiListeners_ ;
 }
 
 const std::unordered_set<ComponentId>& ComponentManager::getAnalyzerIds() const {
     return analyzers_ ;
+}
+
+const std::unordered_set<ComponentId>& ComponentManager::getFileComponentIds() const {
+    return fileComponents_ ;
 }
 
 void ComponentManager::remove(ComponentId id){

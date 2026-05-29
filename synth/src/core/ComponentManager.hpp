@@ -22,6 +22,8 @@
 #include "core/AudioSignalComponent.hpp"
 #include "core/AudioBufferComponent.hpp"
 #include "core/ModulatorComponent.hpp"
+#include "core/FileComponent.hpp"
+
 #include "dsp/Analyzer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
@@ -55,6 +57,7 @@ private:
     std::unordered_set<ComponentId> audioSignals_ ;
     std::unordered_set<ComponentId> audioBuffers_ ;
     std::unordered_set<ComponentId> analyzers_ ;
+    std::unordered_set<ComponentId> fileComponents_ ;
 
 public:
     ComponentManager(MidiController* midiCtrl);
@@ -66,14 +69,6 @@ public:
         components_.emplace(id, std::make_unique<ComponentType_t<T>>(id, cfg));
 
         auto descriptor = ComponentRegistry::getComponentDescriptor(T);
-        SPDLOG_DEBUG("signal={}, buffer={}, modulator={}, midiListener={}, midiHandler={}, analyzer={}",  
-            descriptor.isSignalComponent(),
-            descriptor.isBufferComponent(),
-            descriptor.isModulator(),
-            descriptor.isMidiListener(),
-            descriptor.isMidiHandler(),
-            descriptor.isAnalyzer()
-        );
         allIds_.insert(id);
         if ( descriptor.isSignalComponent() ) audioSignals_.insert(id);
         if ( descriptor.isBufferComponent() ) audioBuffers_.insert(id);
@@ -85,6 +80,9 @@ public:
         } 
         if ( descriptor.isAnalyzer() ){
             analyzers_.insert(id);
+        }
+        if ( descriptor.hasFile ){
+            fileComponents_.insert(id);
         }
 
         return id;
@@ -109,6 +107,7 @@ public:
     MidiEventHandler* getMidiHandler(ComponentId id) const ;
     MidiEventListener* getMidiListener(ComponentId id) const ;
     Analyzer* getAnalyzer(ComponentId id) const ;
+    FileComponent* getFileComponent(ComponentId id) const ;
 
     const std::unordered_set<ComponentId>& getComponentIds() const ;
     const std::unordered_set<ComponentId>& getSignalComponentIds() const ;
@@ -116,6 +115,7 @@ public:
     const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
     const std::unordered_set<ComponentId>& getMidiListenerIds() const ;
     const std::unordered_set<ComponentId>& getAnalyzerIds() const ;
+    const std::unordered_set<ComponentId>& getFileComponentIds() const ;
 
     void remove(ComponentId id);
 
