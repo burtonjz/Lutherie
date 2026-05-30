@@ -57,6 +57,12 @@ struct ConnectionRequest {
             t = t && inboundIdx.has_value();
             t = t && outboundIdx.has_value();
             break ;
+        case SocketType::BufferInbound:
+            t = t && outboundSocket == SocketType::BufferOutbound ;
+            // must have audio port indices defined
+            t = t && inboundIdx.has_value();
+            t = t && outboundIdx.has_value();
+            break ;
         case SocketType::MidiInbound:
             t = t && outboundSocket == SocketType::MidiOutbound ;
             break ;
@@ -92,8 +98,8 @@ inline void to_json(json& j, const ConnectionRequest& req){
     
     j["inbound"] = json::object();
     j["outbound"] = json::object();
-    j["inbound"]["socketType"] = req.inboundSocket ;
-    j["outbound"]["socketType"] = req.outboundSocket ;
+    j["inbound"]["socketType"] = socketType2String(req.inboundSocket);
+    j["outbound"]["socketType"] = socketType2String(req.outboundSocket);
     if ( req.inboundID.has_value() ) j["inbound"]["componentId"] = req.inboundID.value();
     if ( req.inboundIdx.has_value() ) j["inbound"]["index"] = req.inboundIdx.value();
     if ( req.outboundID.has_value() ) j["outbound"]["componentId"] = req.outboundID.value();
@@ -105,8 +111,8 @@ inline void from_json(const json& j, ConnectionRequest& req){
     const auto& inbound = j.at("inbound");
     const auto& outbound = j.at("outbound");
     
-    req.inboundSocket = static_cast<SocketType>(inbound.at("socketType"));
-    req.outboundSocket = static_cast<SocketType>(outbound.at("socketType"));
+    req.inboundSocket = socketTypeFromString(inbound.at("socketType"));
+    req.outboundSocket = socketTypeFromString(outbound.at("socketType"));
     if ( inbound.contains("componentId") ) 
         req.inboundID = inbound.at("componentId");
     if ( inbound.contains("index") ) 

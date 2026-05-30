@@ -35,20 +35,20 @@ using json = nlohmann::json ;
 class Analyzer ;
 
 struct SignalConnection {
-    AudioStreamComponent* module ; // connecting module
+    AudioSignalComponent* component ; // connecting module
     size_t index ; // buffer index 
 
     bool operator==(const SignalConnection& other) const {
-        return module == other.module && index == other.index ;
+        return component == other.component && index == other.index ;
     }
 };
 struct ConnectionHash {
     std::size_t operator()(const SignalConnection& conn) const {
-        return std::hash<AudioStreamComponent*>()(conn.module) ^ (std::hash<size_t>()(conn.index) << 1);
+        return std::hash<AudioSignalComponent*>()(conn.component) ^ (std::hash<size_t>()(conn.index) << 1);
     }
 };
 
-class AudioStreamComponent : public virtual BaseComponent {
+class AudioSignalComponent : public virtual BaseComponent {
 protected:
     size_t bufferIndex_ ;
     size_t nInputs_ ;
@@ -64,7 +64,7 @@ protected:
     std::set<std::pair<Analyzer*, size_t>> toAnalyzer_ ;
 
 public:
-    AudioStreamComponent(size_t in, size_t out):
+    AudioSignalComponent(size_t in, size_t out):
         bufferIndex_(0),
         nInputs_(in),
         nOutputs_(out),
@@ -81,7 +81,7 @@ public:
         }
     }
     
-    virtual ~AudioStreamComponent() = default ;
+    virtual ~AudioSignalComponent() = default ;
 
     void setBufferIndex(size_t index){
         bufferIndex_ = index ;
@@ -122,14 +122,14 @@ public:
         return nOutputs_ ;
     }
 
-    void connectInput(AudioStreamComponent* source, size_t input, size_t sourceOutput){
+    void connectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput){
         assert( input < nInputs_ );
         assert( sourceOutput < source->nOutputs_ );
         signalInputs_[input].insert({source, sourceOutput});
         source->signalOutputs_[sourceOutput].insert({this, input});
     }
 
-    void disconnectInput(AudioStreamComponent* source, size_t input, size_t sourceOutput){
+    void disconnectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput){
         assert ( input < nInputs_ );
         assert ( sourceOutput < source->nOutputs_ );
         signalInputs_[input].erase({source, sourceOutput});
@@ -162,7 +162,7 @@ protected:
         assert( idx < nInputs_ );
         double sum = 0.0 ;
         for ( const auto& conn : signalInputs_[idx] ){
-            sum += conn.module->getLastSample(conn.index);
+            sum += conn.component->getLastSample(conn.index);
         }
         return sum ;
     }
@@ -184,7 +184,7 @@ protected:
 
 
 inline void to_json(json& j, const SignalConnection& conn){
-    j["componentId"] = conn.module->getId() ;
+    j["componentId"] = conn.component->getId() ;
     j["index"] = conn.index ;
 };
 

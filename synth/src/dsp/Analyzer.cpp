@@ -17,7 +17,7 @@
 
 #include "dsp/Analyzer.hpp"
 #include "dsp/AnalyticsEngine.hpp"
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
 
  Analyzer::Analyzer(ComponentId id, ComponentType typ):
     BaseComponent(id, typ),
@@ -65,7 +65,7 @@ std::size_t Analyzer::size() const {
     return bufferSize_ ;
 }
 
-void Analyzer::connectInput(AudioStreamComponent* source, size_t index){
+void Analyzer::connectInput(AudioSignalComponent* source, size_t index){
     if ( !source ) return ;
 
     auto s = std::make_pair(source, index);
@@ -77,7 +77,7 @@ void Analyzer::connectInput(AudioStreamComponent* source, size_t index){
     source->connectAnalyzer(this, index);
 }
 
-void Analyzer::disconnectInput(AudioStreamComponent* source, size_t index){
+void Analyzer::disconnectInput(AudioSignalComponent* source, size_t index){
     if ( !source ) return ;
 
     auto s = std::make_pair(source, index);
@@ -95,6 +95,6 @@ void Analyzer::flush(){
     AnalyticsEngine::instance()->push(data(), size(), getId());
 }
 
-const std::vector<std::pair<AudioStreamComponent*, size_t>>& Analyzer::getSources() const {    
+const std::vector<std::pair<AudioSignalComponent*, size_t>>& Analyzer::getSources() const {    
     return sources_ ;
 }

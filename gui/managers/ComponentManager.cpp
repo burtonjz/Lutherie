@@ -96,6 +96,15 @@ void ComponentManager::requestModelSync(int componentId){
     ApiClient::instance()->sendMessage(obj);
 }
 
+void ComponentManager::requestSetFile(int componentId, std::string path){
+    json obj ;
+    obj["action"] = "set_file_path" ;
+    obj["componentId"] = componentId ;
+    obj["path"] = path ;
+
+    ApiClient::instance()->sendMessage(obj);
+}
+
 ComponentModel* ComponentManager::getModel(int componentId) const {
     if ( !models_.contains(componentId) ){
         qWarning() << "No component model found with id = " << componentId ;
@@ -126,17 +135,21 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     models_[componentId] = model ;
 
     ComponentParameters* params = nullptr ;
-    if ( model->getDescriptor().controllableParameters.size() > 0 ){
+    if ( model->getDescriptor().shouldShowBasicParameters() ){
         params = new ComponentParameters(model);
         parameters_[componentId] = params ;
         connect(
             params, &ComponentParameters::parameterEdited,
             this, &ComponentManager::onParameterEdited
         );
+        connect(
+            params, &ComponentParameters::fileSelected,
+            this, &ComponentManager::onFileSelected
+        );
     }
     
     ModulationParameters* modParams = nullptr ;
-    if ( model->getDescriptor().modulatableParameters.size() > 0 ){
+    if ( model->getDescriptor().shouldShowModulationParameters() ){
         modParams = new ModulationParameters(model);
         modParameters_[componentId] = modParams ;
         connect(
@@ -221,6 +234,16 @@ void ComponentManager::syncModel(const json& msg){
             setParameterValue(id, parameterFromString(p), obj.at("currentValue") );
         }
     }
+}
+
+void ComponentManager::setFile(int componentId, std::string path){
+    auto model = getModel(componentId);
+    if ( !model ){
+        qWarning() << "Cannot find model with id = " << componentId ;
+        return ;
+    }
+
+    model->setFile(path);
 }
 
 CollectionWidget* ComponentManager::getCollectionWidget(ComponentParameters* params) const {
@@ -369,6 +392,10 @@ void ComponentManager::onModulationDepthEdited(int componentId, ParameterType p,
 
 void ComponentManager::onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy){
     requestModulationStrategyUpdate(componentId, p, strategy);
+}
+
+void ComponentManager::onFileSelected(int componentId, std::string path){
+    requestSetFile(componentId, path);
 }
 
 void ComponentManager::onConnectionAdded(const ConnectionRequest& req){

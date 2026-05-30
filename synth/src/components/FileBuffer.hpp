@@ -15,19 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PANNER_HPP_
-#define PANNER_HPP_
+#ifndef FILE_BUFFER_HPP_
+#define FILE_BUFFER_HPP_
 
-#include "core/AudioSignalComponent.hpp"
-#include "configs/PannerConfig.hpp"
+#include "core/AudioBufferComponent.hpp"
+#include "core/FileComponent.hpp"
+#include "configs/FileBufferConfig.hpp"
 
-class Panner : public AudioSignalComponent {
-
+class FileBuffer : public AudioBufferComponent, public FileComponent {
 public:
-    Panner(ComponentId id, PannerConfig cfg);
+    FileBuffer(ComponentId id, FileBufferConfig cfg);
 
-    // overrides
-    void calculateSample() override ;
+    void onSetPath() override ;
+
+private:
+    void loadWavBuffer();
+    void resample(std::vector<double>& buffer, int srcRate, int dstRate);
+
 };
 
-#endif // PANNER_HPP_
+#endif // FILE_BUFFER_HPP_

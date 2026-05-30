@@ -31,22 +31,29 @@
 struct ComponentDescriptor {
     std::string name ;
     ComponentType type ;
-    std::vector<ParameterType> modulatableParameters ;
-    std::vector<ParameterType> controllableParameters ;
-    std::vector<CollectionDescriptor> collections ;
+    std::vector<ParameterType> modulatableParameters = {};
+    std::vector<ParameterType> controllableParameters = {};
+    std::vector<CollectionDescriptor> collections = {};
 
-    size_t numAudioInputs  ;
-    size_t numAudioOutputs ;
-    size_t numMidiInputs ;
-    size_t numMidiOutputs ;
+    size_t numSignalInputs  = 0 ;
+    size_t numSignalOutputs = 0 ;
+    size_t numBufferInputs  = 0 ;
+    size_t numBufferOutputs = 0 ;
+    size_t numMidiInputs    = 0 ;
+    size_t numMidiOutputs   = 0 ;
+    
+    bool canModulate = false ;
+    bool hasFile = false ;
 
-    bool canModulate ;
-
-    bool isModule() const { return numAudioOutputs > 0 ; }
+    bool isSignalComponent() const { return numSignalInputs > 0 || numSignalOutputs > 0 ; }
+    bool isBufferComponent() const { return numBufferInputs > 0 || numBufferOutputs > 0 ; }
     bool isModulator() const { return canModulate ; }
     bool isMidiHandler() const { return numMidiOutputs > 0 ; }
     bool isMidiListener() const { return numMidiInputs > 0 ; }
-    bool isAnalyzer() const { return numAudioInputs > 0 && numAudioOutputs == 0 ;}
+    bool isAnalyzer() const { 
+        return numSignalInputs > 0 && numSignalOutputs == 0 
+            && numBufferInputs == 0 && numBufferOutputs == 0 ;
+    }
 
     int hasCollection(CollectionType c) const {
         for ( size_t i = 0 ; i < collections.size() ; ++i ){
@@ -70,6 +77,14 @@ struct ComponentDescriptor {
         }
 
         return getCollection(i);
+    }
+
+    bool shouldShowBasicParameters() const {
+        return controllableParameters.size() > 0 || hasFile ;
+    }
+
+    bool shouldShowModulationParameters() const {
+        return modulatableParameters.size() > 0 ;
     }
 };
 

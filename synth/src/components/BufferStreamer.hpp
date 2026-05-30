@@ -15,19 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PANNER_HPP_
-#define PANNER_HPP_
+#ifndef BUFFER_STREAMER_HPP_
+#define BUFFER_STREAMER_HPP_
 
+#include "core/AudioBufferComponent.hpp"
 #include "core/AudioSignalComponent.hpp"
-#include "configs/PannerConfig.hpp"
+#include "configs/BufferStreamerConfig.hpp"
 
-class Panner : public AudioSignalComponent {
+class BufferStreamer : public AudioBufferComponent, public AudioSignalComponent {
+private:
+    size_t bufferPos_ ;
 
 public:
-    Panner(ComponentId id, PannerConfig cfg);
+    BufferStreamer(ComponentId id, BufferStreamerConfig cfg);
 
-    // overrides
     void calculateSample() override ;
+    void onParameterChanged([[maybe_unused]] ParameterType p) override ;
 };
 
-#endif // PANNER_HPP_
+#endif // BUFFER_STREAMER_HPP_

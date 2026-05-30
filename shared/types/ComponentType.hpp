@@ -32,7 +32,9 @@
     X(Multiply) \
     X(SpectrumAnalyzer) \
     X(Oscilloscope) \
-    X(Panner)
+    X(Panner) \
+    X(FileBuffer) \
+    X(BufferStreamer)
 
 /**
  * @brief enumeration of modulation source classes

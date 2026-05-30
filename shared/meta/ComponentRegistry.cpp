@@ -28,204 +28,166 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
         {
             ComponentType::Oscillator,
             {
-                "Oscillator",
-                ComponentType::Oscillator,
-                {ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, // modulatable params
-                {ParameterType::WAVEFORM, ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, //control params
-                {},
-                0,
-                1,
-                0, 
-                0,
-                true
+                .name = "Oscillator",
+                .type = ComponentType::Oscillator,
+                .modulatableParameters = {ParameterType::AMPLITUDE, ParameterType::FREQUENCY},
+                .controllableParameters = {ParameterType::WAVEFORM, ParameterType::AMPLITUDE, ParameterType::FREQUENCY},
+                .numSignalOutputs = 1,
+                .canModulate = true
             }
         },
         {
             ComponentType::PolyOscillator, 
             {
-                "Polyphonic Oscillator",
-                ComponentType::PolyOscillator,
-                {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::PHASE}, // modulatable params
-                {ParameterType::DETUNE, ParameterType::WAVEFORM}, //control params
-                {},
-                0, 
-                1, 
-                1,
-                0, 
-                false
+                .name = "Polyphonic Oscillator",
+                .type = ComponentType::PolyOscillator,
+                .modulatableParameters = {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::PHASE}, // modulatable params
+                .controllableParameters = {ParameterType::DETUNE, ParameterType::WAVEFORM}, //control params
+                .numSignalOutputs = 1, 
+                .numMidiInputs = 1,
+                .canModulate = false
             }
         },
         {
             ComponentType::LinearFader,
             {
-                "Linear Fader",
-                ComponentType::LinearFader,
-                {ParameterType::ATTACK, ParameterType::RELEASE},
-                {ParameterType::ATTACK, ParameterType::RELEASE},
-                {},
-                0,
-                0,
-                1,
-                1,
-                true
+                .name = "Linear Fader",
+                .type = ComponentType::LinearFader,
+                .modulatableParameters = {ParameterType::ATTACK, ParameterType::RELEASE},
+                .controllableParameters = {ParameterType::ATTACK, ParameterType::RELEASE},
+                .numMidiInputs = 1,
+                .numMidiOutputs = 1,
+                .canModulate = true
             }
         },
         {
             ComponentType::ADSREnvelope,
             {
-                "ADSR Envelope",
-                ComponentType::ADSREnvelope,
-                {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
-                {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE, ParameterType::TRIGGER},
-                {},
-                0,
-                0,
-                1,
-                1,
-                true
+                .name = "ADSR Envelope",
+                .type = ComponentType::ADSREnvelope,
+                .modulatableParameters = {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
+                .controllableParameters = {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE, ParameterType::TRIGGER},
+                .numMidiInputs = 1,
+                .numMidiOutputs = 1,
+                .canModulate = true
             }
         },
         {
             ComponentType::MidiFilter,
             {
-                "Midi Filter",
-                ComponentType::MidiFilter,
-                {},
-                {},
-                {
+                .name = "Midi Filter",
+                .type = ComponentType::MidiFilter,
+                .collections = {
                     CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE,CollectionType::GENERIC, 2)
                 },
-                0,
-                0,
-                1,
-                1,
-                false
+                .numMidiInputs = 1,
+                .numMidiOutputs = 1,
+                .canModulate = false
             }
         },
         {
             ComponentType::BiquadFilter,
             {
-                "Biquad Filter",
-                ComponentType::BiquadFilter,
-                {ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
-                {ParameterType::FILTER_TYPE, ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
-                {},
-                1,
-                1,
-                0,
-                0,
-                true
+                .name = "Biquad Filter",
+                .type = ComponentType::BiquadFilter,
+                .modulatableParameters = {ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
+                .controllableParameters = {ParameterType::FILTER_TYPE, ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
+                .numSignalInputs = 1,
+                .numSignalOutputs = 1,
+                .canModulate = true
             }
         },
         {
             ComponentType::Sequencer,
             {
-                "Sequencer",
-                ComponentType::Sequencer,
-                {ParameterType::AMPLITUDE},
-                {ParameterType::STATUS, ParameterType::BPM, ParameterType::DURATION},
-                {
+                .name = "Sequencer",
+                .type = ComponentType::Sequencer,
+                .modulatableParameters = {ParameterType::AMPLITUDE},
+                .controllableParameters = {ParameterType::STATUS, ParameterType::BPM, ParameterType::DURATION},
+                .collections{
                     CollectionDescriptor::Synchronized(
                         {ParameterType::MIDI_VALUE, ParameterType::VELOCITY, ParameterType::START_POSITION, ParameterType::DURATION}, 
                         CollectionType::SEQUENCER
                     )
                 },
-                0,
-                0,
-                0,
-                1,
-                false
+                .numMidiOutputs = 1,
             }
         },
         {
             ComponentType::MonophonicFilter,
             {
-                "Monophonic Filter",
-                ComponentType::MonophonicFilter,
-                {},
-                {},
-                {},
-                0,
-                0,
-                1,
-                1,
-                false
+                .name = "Monophonic Filter",
+                .type = ComponentType::MonophonicFilter,
+                .numMidiInputs = 1,
+                .numMidiOutputs = 1,
             }
-            
         },
         {
             ComponentType::Delay,
             {
-                "Delay",
-                ComponentType::Delay,
-                {ParameterType::DELAY, ParameterType::GAIN},
-                {ParameterType::DELAY, ParameterType::GAIN},
-                {},
-                1,
-                1,
-                0,
-                0,
-                false
+                .name = "Delay",
+                .type = ComponentType::Delay,
+                .modulatableParameters = {ParameterType::DELAY, ParameterType::GAIN},
+                .controllableParameters = {ParameterType::DELAY, ParameterType::GAIN},
+                .numSignalInputs = 1,
+                .numSignalOutputs = 1,
             }
         },
         {
             ComponentType::Multiply,
             {
-                "Multiply",
-                ComponentType::Multiply,
-                {ParameterType::SCALAR},
-                {ParameterType::SCALAR},
-                {},
-                1,
-                1,
-                0,
-                0,
-                false
+                .name = "Multiply",
+                .type = ComponentType::Multiply,
+                .modulatableParameters = {ParameterType::SCALAR},
+                .controllableParameters = {ParameterType::SCALAR},
+                .numSignalInputs = 1,
+                .numSignalOutputs = 1,
             }
         },
         {
             ComponentType::SpectrumAnalyzer,
             {
-                "Spectrum Analyzer",
-                ComponentType::SpectrumAnalyzer,
-                {},
-                {},
-                {},
-                1,
-                0,
-                0,
-                0,
-                false
+                .name = "Spectrum Analyzer",
+                .type = ComponentType::SpectrumAnalyzer,
+                .numSignalInputs = 1,
             }
         },
         {
             ComponentType::Oscilloscope,
             {
-                "Oscilloscope",
-                ComponentType::Oscilloscope,
-                {},
-                {},
-                {},
-                1,
-                0,
-                0,
-                0,
-                false
+                .name = "Oscilloscope",
+                .type = ComponentType::Oscilloscope,
+                .numSignalInputs = 1,
             }
         },
         {
             ComponentType::Panner,
             {
-                "Panner",
-                ComponentType::Panner,
-                {ParameterType::PAN},
-                {ParameterType::PAN},
-                {},
-                1,
-                2,
-                0,
-                0,
-                false
+                .name = "Panner",
+                .type = ComponentType::Panner,
+                .modulatableParameters = {ParameterType::PAN},
+                .controllableParameters = {ParameterType::PAN},
+                .numSignalInputs = 1,
+                .numSignalOutputs = 2,
+            }
+        },
+        {
+            ComponentType::FileBuffer,
+            {
+                .name = "File Buffer",
+                .type = ComponentType::FileBuffer,
+                .numBufferOutputs = 2,
+                .hasFile = true 
+            }
+        },
+        {
+            ComponentType::BufferStreamer,
+            {
+                .name = "Buffer Streamer",
+                .type = ComponentType::BufferStreamer,
+                .controllableParameters = {ParameterType::STATUS},
+                .numSignalOutputs = 1,
+                .numBufferInputs = 1
             }
         }
     };

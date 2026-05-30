@@ -49,7 +49,8 @@ public:
     void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
     void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
     void requestModelSync(int componentId);
-    
+    void requestSetFile(int componentId, std::string path);
+
     ComponentModel* getModel(int componentId) const ;
     ComponentParameters* getParameters(int componentId) const ;
     ModulationParameters* getModulationParameters(int componentId) const ;
@@ -60,6 +61,7 @@ private:
     void removeComponent(int componentId);
     void setParameterValue(int componentId, ParameterType p, const json& parameterValue);
     void syncModel(const json& msg);
+    void setFile(int componentId, std::string path);
 
     CollectionWidget* getCollectionWidget(ComponentParameters* params) const ;
     bool handleCollectionApiResponse(const json& msg);
@@ -70,6 +72,7 @@ public slots:
     void onCollectionEdited(CollectionRequest req );
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);
     void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
+    void onFileSelected(int componentId, std::string path);
 
     // for updating modulation menus
     void onConnectionAdded(const ConnectionRequest& req);

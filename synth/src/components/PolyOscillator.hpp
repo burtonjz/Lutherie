@@ -19,7 +19,7 @@
 #define __MODULE_POLYOSCILLATOR_HPP_
 
 #include "midi/MidiNote.hpp"
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "containers/RTMap.hpp"
 #include "containers/FixedPool.hpp"
@@ -29,7 +29,7 @@
 #include <cstdint>
 
 
-class PolyOscillator : public AudioStreamComponent, public MidiEventListener {
+class PolyOscillator : public AudioSignalComponent, public MidiEventListener {
 private:
     RTMap<uint8_t, Oscillator*, 128> children_ ;
     FixedPool<Oscillator, 128> childPool_ ;

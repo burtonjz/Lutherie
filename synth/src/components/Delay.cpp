@@ -21,7 +21,7 @@
 
 Delay::Delay(ComponentId id, DelayConfig cfg):
     BaseComponent(id, ComponentType::Delay),
-    AudioStreamComponent(1,1),
+    AudioSignalComponent(1,1),
     delay_(cfg.max_delay_sec * Config::get<int>("audio.sample_rate").value())
 {
     parameters_->add<ParameterType::DELAY>(cfg.delay,true,0,cfg.max_delay_sec * sampleRate_);

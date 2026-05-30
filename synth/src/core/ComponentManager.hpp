@@ -19,8 +19,11 @@
 #define __COMPONENT_MANAGER_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
+#include "core/AudioBufferComponent.hpp"
 #include "core/ModulatorComponent.hpp"
+#include "core/FileComponent.hpp"
+
 #include "dsp/Analyzer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
@@ -51,8 +54,10 @@ private:
     std::unordered_set<ComponentId> midiHandlers_ ;
     std::unordered_set<ComponentId> midiListeners_ ;
     std::unordered_set<ComponentId> modulators_ ;
-    std::unordered_set<ComponentId> modules_ ;
+    std::unordered_set<ComponentId> audioSignals_ ;
+    std::unordered_set<ComponentId> audioBuffers_ ;
     std::unordered_set<ComponentId> analyzers_ ;
+    std::unordered_set<ComponentId> fileComponents_ ;
 
 public:
     ComponentManager(MidiController* midiCtrl);
@@ -65,7 +70,8 @@ public:
 
         auto descriptor = ComponentRegistry::getComponentDescriptor(T);
         allIds_.insert(id);
-        if ( descriptor.isModule() ) modules_.insert(id);
+        if ( descriptor.isSignalComponent() ) audioSignals_.insert(id);
+        if ( descriptor.isBufferComponent() ) audioBuffers_.insert(id);
         if ( descriptor.isModulator() ) modulators_.insert(id);
         if ( descriptor.isMidiListener() ) midiListeners_.insert(id);
         if ( descriptor.isMidiHandler() ){
@@ -74,6 +80,9 @@ public:
         } 
         if ( descriptor.isAnalyzer() ){
             analyzers_.insert(id);
+        }
+        if ( descriptor.hasFile ){
+            fileComponents_.insert(id);
         }
 
         return id;
@@ -92,18 +101,21 @@ public:
     }
 
     BaseComponent* getRaw(ComponentId id) const ;
-    AudioStreamComponent* getModule(ComponentId id) const ;
+    AudioSignalComponent* getSignalComponent(ComponentId id) const ;
+    AudioBufferComponent* getBufferComponent(ComponentId id) const ;
     ModulatorComponent* getModulator(ComponentId id) const ;
     MidiEventHandler* getMidiHandler(ComponentId id) const ;
     MidiEventListener* getMidiListener(ComponentId id) const ;
     Analyzer* getAnalyzer(ComponentId id) const ;
+    FileComponent* getFileComponent(ComponentId id) const ;
 
     const std::unordered_set<ComponentId>& getComponentIds() const ;
-    const std::unordered_set<ComponentId>& getModuleIds() const ;
+    const std::unordered_set<ComponentId>& getSignalComponentIds() const ;
     const std::unordered_set<ComponentId>& getModulatorIds() const ;
     const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
     const std::unordered_set<ComponentId>& getMidiListenerIds() const ;
     const std::unordered_set<ComponentId>& getAnalyzerIds() const ;
+    const std::unordered_set<ComponentId>& getFileComponentIds() const ;
 
     void remove(ComponentId id);
 
@@ -125,6 +137,7 @@ private:
     void getComponentMidiConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
     void getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
     void getComponentModulationConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentBufferConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
 };
 
 #endif // __COMPONENT_MANAGER_HPP_

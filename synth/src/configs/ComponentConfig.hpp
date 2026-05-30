@@ -33,6 +33,8 @@
 #include "configs/SpectrumAnalyzerConfig.hpp"
 #include "configs/OscilloscopeConfig.hpp"
 #include "configs/PannerConfig.hpp"
+#include "configs/FileBufferConfig.hpp"
+#include "configs/BufferStreamerConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

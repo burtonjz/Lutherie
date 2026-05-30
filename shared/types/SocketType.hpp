@@ -28,6 +28,8 @@ enum class SocketType {
     SignalOutbound,
     MidiInbound,
     MidiOutbound,
+    BufferInbound,
+    BufferOutbound,
     N_SOCKET_TYPES
 };
 
@@ -39,7 +41,9 @@ constexpr std::array<std::string_view, N_SOCKET_TYPES> socketStrings({
     "Signal Inbound",
     "Signal Outbound",
     "MIDI Inbound",
-    "MIDI Outbound"
+    "MIDI Outbound",
+    "Buffer Inbound",
+    "Buffer Outbound"
 });
 
 const std::string socketType2String(SocketType s);

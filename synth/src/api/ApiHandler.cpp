@@ -17,6 +17,7 @@
 
 #include "api/ApiHandler.hpp"
 #include "core/BaseComponent.hpp"
+#include "core/FileComponent.hpp"
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
@@ -84,6 +85,8 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["set_modulation_strategy"] = [this](int sock, const json& request){ return setModulationStrategy(sock, request); };
     handlers_["get_modulation_depth"] = [this](int sock, const json& request){ return getModulationDepth(sock, request); };
     handlers_["set_modulation_depth"] = [this](int sock, const json& request){ return setModulationDepth(sock, request); };
+    handlers_["get_file_path"] = [this](int sock, const json& request){ return getFilePath(sock, request); };
+    handlers_["set_file_path"] = [this](int sock, const json& request){ return setFilePath(sock, request); };
 }
 
 void ApiHandler::start(){
@@ -1030,12 +1033,56 @@ json ApiHandler::setModulationDepth(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
+json ApiHandler::getFilePath(int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+    std::string path ;
+
+    try {
+        id = response.at("componentId");
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    FileComponent* c = engine_->componentManager.getFileComponent(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "File component not found");
+    }
+
+    path = c->getPath();
+    response["path"] = path ;
+
+    return sendApiResponse(sock, response);
+}
+
+json ApiHandler::setFilePath(int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+    std::string path ;
+
+    try {
+        id = response.at("componentId");
+        path = response.at("path");
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    FileComponent* c = engine_->componentManager.getFileComponent(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "File component not found");
+    }
+
+    c->setPath(path);
+    return sendApiResponse(sock, response);
+}
+
 bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )
         return engine_->handleMidiConnection(request);
     if ( request.inboundSocket == SocketType::SignalInbound && request.outboundSocket == SocketType::SignalOutbound )
         return engine_->handleSignalConnection(request);
-
+    if ( request.inboundSocket == SocketType::BufferInbound && request.outboundSocket == SocketType::BufferOutbound )
+        return engine_->handleBufferConnection(request);
     if ( request.inboundSocket == SocketType::ModulationInbound && request.outboundSocket == SocketType::ModulationOutbound )
         return engine_->handleModulationConnection(request);
 

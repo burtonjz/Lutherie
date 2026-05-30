@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Jared Burton
+ * Copyright (C) 2025 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,19 +15,31 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PANNER_HPP_
-#define PANNER_HPP_
+ #ifndef FILE_COMPONENT_HPP_
+ #define FILE_COMPONENT_HPP_
 
-#include "core/AudioSignalComponent.hpp"
-#include "configs/PannerConfig.hpp"
+#include <filesystem>
 
-class Panner : public AudioSignalComponent {
-
+class FileComponent {
+protected:
+    std::filesystem::path filePath_ ;
+    
 public:
-    Panner(ComponentId id, PannerConfig cfg);
+    FileComponent():
+        filePath_("")
+    {}
 
-    // overrides
-    void calculateSample() override ;
+    const std::filesystem::path& getPath() const {
+        return filePath_ ;
+    }
+
+    void setPath(std::string fPath){
+        filePath_ = fPath ;
+        onSetPath();
+    }
+
+    virtual void onSetPath(){
+    }
 };
 
-#endif // PANNER_HPP_
+ #endif // FILE_COMPONENT_HPP_

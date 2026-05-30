@@ -34,7 +34,7 @@ protected:
     double sampleRate_ ;
     size_t bufferSize_ ;
     std::unique_ptr<double[]> buffer_ ;
-    std::vector<std::pair<AudioStreamComponent*, size_t>> sources_ ;
+    std::vector<std::pair<AudioSignalComponent*, size_t>> sources_ ;
 
 public:
     Analyzer(ComponentId id, ComponentType typ);
@@ -51,12 +51,12 @@ public:
 
     std::size_t size() const ;
 
-    void connectInput(AudioStreamComponent* source, size_t index);
-    void disconnectInput(AudioStreamComponent* source, size_t index);
+    void connectInput(AudioSignalComponent* source, size_t index);
+    void disconnectInput(AudioSignalComponent* source, size_t index);
 
     void flush();
 
-    const std::vector<std::pair<AudioStreamComponent*, size_t>>& getSources() const ;
+    const std::vector<std::pair<AudioSignalComponent*, size_t>>& getSources() const ;
 };
 
 

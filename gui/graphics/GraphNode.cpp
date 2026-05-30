@@ -178,10 +178,12 @@ void GraphNode::layoutSockets(){
         switch(socket->getSpec().type){
         case SocketType::MidiInbound:
         case SocketType::SignalInbound:
+        case SocketType::BufferInbound:
             leftSockets_.push_back(socket);
             break ;
         case SocketType::MidiOutbound:
         case SocketType::SignalOutbound:
+        case SocketType::BufferOutbound:
             rightSockets_.push_back(socket);
             break ;
         case SocketType::ModulationInbound:

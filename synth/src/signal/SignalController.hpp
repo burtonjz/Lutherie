@@ -18,7 +18,7 @@
 #ifndef __SIGNAL_CONTROLLER_HPP_
 #define __SIGNAL_CONTROLLER_HPP_
 
-#include "core/AudioStreamComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
 #include "core/ComponentManager.hpp"
 #include "signal/SignalChain.hpp"
 
@@ -47,26 +47,26 @@ public:
     }
 
     // signal chain functions
-    void connect(AudioStreamComponent* from, size_t fromIndex, AudioStreamComponent* to, size_t toIndex){
+    void connect(AudioSignalComponent* from, size_t fromIndex, AudioSignalComponent* to, size_t toIndex){
         if (!from) return ;
         if (!to) return ;
         to->connectInput(from,fromIndex, toIndex);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void disconnect(AudioStreamComponent* from, size_t fromIndex, AudioStreamComponent* to, size_t toIndex){
+    void disconnect(AudioSignalComponent* from, size_t fromIndex, AudioSignalComponent* to, size_t toIndex){
         if (!from) return ;
         if (!to) return ;
         to->disconnectInput(from, fromIndex, toIndex);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void registerSink(AudioStreamComponent* outbound, size_t outboundIdx, size_t inboundIdx){
+    void registerSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx){
         signalChain_.addSink(outbound, outboundIdx, inboundIdx);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void unregisterSink(AudioStreamComponent* outbound, size_t outboundIdx, size_t inboundIdx){
+    void unregisterSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx){
         signalChain_.removeSink(outbound, outboundIdx, inboundIdx);
         signalChain_.calculateTopologicalOrder();
     }
@@ -76,10 +76,10 @@ public:
     }
 
     std::pair<double*, size_t> processFrame(){
-        auto chain = signalChain_.getModuleChain();
+        auto chain = signalChain_.getSignalComponentChain();
 
         // process modules in chain order
-        for (AudioStreamComponent*  mod : chain){
+        for (AudioSignalComponent*  mod : chain){
             mod->updateParameters();
             mod->calculateSample();
             mod->tick();
@@ -89,7 +89,7 @@ public:
         for (size_t channel = 0 ; channel < numChannels_ ; ++channel ){
             outputs_[channel] = 0.0 ;
             for ( const auto& conn : signalChain_.getSinks(channel) ){
-                outputs_[channel] += conn.module->getLastSample(conn.index);
+                outputs_[channel] += conn.component->getLastSample(conn.index);
             }
         }
 
@@ -97,8 +97,8 @@ public:
     }
 
     void clearBuffer(){
-        for ( auto id : components_->getModuleIds() ){
-            auto m = components_->getModule(id);
+        for ( auto id : components_->getSignalComponentIds() ){
+            auto m = components_->getSignalComponent(id);
             if ( m->isGenerative()){
                 m->clearBuffer();
             }

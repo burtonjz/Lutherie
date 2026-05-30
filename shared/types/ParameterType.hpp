@@ -71,7 +71,7 @@ To add a ParameterType, the following is required:
     X(DURATION) \
     X(SCALE_NOTE) \
     X(SCALE_TYPE) \
-    X(TRIGGER) 
+    X(TRIGGER)
 
 /**
  * @brief types of parameters that might exist within any given module
@@ -537,6 +537,7 @@ template <> struct ParameterTraits<ParameterType::TRIGGER>{
     static constexpr size_t uiPrecision = 0 ; // num decimals
 };
   
+
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime
 

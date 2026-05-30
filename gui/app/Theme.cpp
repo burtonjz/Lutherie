@@ -51,15 +51,19 @@ const QColor Theme::COMPONENT_TEXT             = QColor(245, 237, 240);
 
 // Cable colors - warmer and more saturated
 const QColor Theme::CABLE_SHADOW     = QColor(0, 0, 0, 60);
-const QColor Theme::CABLE_AUDIO      = QColor(135, 179, 141);  
+const QColor Theme::CABLE_SIGNAL    = QColor(135, 179, 141);  
+const QColor Theme::CABLE_BUFFER     = QColor(128, 27, 211);
 const QColor Theme::CABLE_MODULATION = QColor(185, 49, 79); 
 const QColor Theme::CABLE_MIDI       = QColor(132, 169, 192); 
 
+
 // Socket colors - match cables
-const QColor Theme::SOCKET_AUDIO            = QColor(135, 179, 141);
-const QColor Theme::SOCKET_MODULATION       = QColor(185, 49, 79);
-const QColor Theme::SOCKET_MIDI             = QColor(132, 169, 192);
-const QColor Theme::SOCKET_AUDIO_LIGHT      = Theme::SOCKET_AUDIO.lighter(140);
+const QColor Theme::SOCKET_SIGNAL           = Theme::CABLE_SIGNAL ;
+const QColor Theme::SOCKET_BUFFER           = Theme::CABLE_BUFFER ;
+const QColor Theme::SOCKET_MODULATION       = Theme::CABLE_MODULATION ;
+const QColor Theme::SOCKET_MIDI             = Theme::CABLE_MIDI ;
+const QColor Theme::SOCKET_SIGNAL_LIGHT      = Theme::SOCKET_SIGNAL.lighter(140);
+const QColor Theme::SOCKET_BUFFER_LIGHT      = Theme::SOCKET_BUFFER.lighter(140);
 const QColor Theme::SOCKET_MODULATION_LIGHT = Theme::SOCKET_MODULATION.lighter(140);
 const QColor Theme::SOCKET_MIDI_LIGHT       = Theme::SOCKET_MIDI.lighter(140);
 
@@ -168,7 +172,22 @@ void Theme::applyDarkTheme() {
         QPushButton {
             padding: 5px 15px;
             border-radius: 3px;
+            border: 1px solid %5;
         }
+        QPushButton:hover {
+            border-color: %1;
+            background-color: %1;
+            color: %2;
+        }
+        QPushButton:pressed {
+            background-color: %1;
+            color: %2;
+        }
+        QPushButton:disabled {
+            border-color: %5;
+            color: %4;
+        }
+
         QLineEdit, QDoubleSpinBox, QSpinBox, QComboBox {
             padding: 3px;
             border-radius: 3px;

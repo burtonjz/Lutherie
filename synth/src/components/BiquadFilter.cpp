@@ -7,7 +7,7 @@
 
 BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     BaseComponent(id, ComponentType::BiquadFilter),
-    AudioStreamComponent(1,1),
+    AudioSignalComponent(1,1),
     ModulatorComponent(),
     state1_(0.0),
     state2_(0.0),
@@ -179,7 +179,7 @@ void BiquadFilter::calculateSample(){
 }
 
 void BiquadFilter::tick(){
-    AudioStreamComponent::tick();
+    AudioSignalComponent::tick();
 }
 
 void BiquadFilter::onParameterChanged([[maybe_unused]] ParameterType p){

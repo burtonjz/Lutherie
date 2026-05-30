@@ -25,6 +25,8 @@
 #include "components/MonophonicFilter.hpp"
 #include "components/Multiply.hpp"
 #include "components/SpectrumAnalyzer.hpp"
+#include "components/FileBuffer.hpp"
+#include "components/BufferStreamer.hpp"
 #include "components/Delay.hpp"
 #include "components/Panner.hpp"
 #include "components/MidiFilter.hpp"

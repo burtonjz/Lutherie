@@ -72,6 +72,7 @@ private:
     // api save/load
     json getConfiguration(int sock, const json& request);
     json loadPatch(int sock, const json& request);
+
     // component management
     json addComponent(int sock, const json& request);
     json removeComponent(int sock, const json& request);
@@ -87,6 +88,7 @@ private:
     json getParameterValueRange(int sock, const json& request);
     json setParameterValueRange(int sock, const json& request);
     json resetParameter(int sock, const json& request);    
+
     // collection management
     json parseCollectionRequest(int sock, const json& request);
     json addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
@@ -95,11 +97,16 @@ private:
     json setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+
     // modulation management
     json getModulationStrategy(int sock, const json& request);
     json setModulationStrategy(int sock, const json& request);
     json getModulationDepth(int sock, const json& request);
     json setModulationDepth(int sock, const json& request);
+    
+    // file management
+    json getFilePath(int sock, const json& request);
+    json setFilePath(int sock, const json& request);
     
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);

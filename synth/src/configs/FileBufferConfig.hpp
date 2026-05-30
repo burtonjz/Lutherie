@@ -15,19 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PANNER_HPP_
-#define PANNER_HPP_
+#ifndef FILE_BUFFER_CONFIG_HPP_
+#define FILE_BUFFER_CONFIG_HPP_
 
-#include "core/AudioSignalComponent.hpp"
-#include "configs/PannerConfig.hpp"
+#include "types/ComponentType.hpp"
+#include <nlohmann/json.hpp>
 
-class Panner : public AudioSignalComponent {
+using json = nlohmann::json ;
 
-public:
-    Panner(ComponentId id, PannerConfig cfg);
+// forward declare class
+class FileBuffer ;
 
-    // overrides
-    void calculateSample() override ;
+// define default configuration
+struct FileBufferConfig {
+    bool enabled = true ;
 };
 
-#endif // PANNER_HPP_
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FileBufferConfig, enabled) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::FileBuffer>{ 
+    using type = FileBuffer ;
+    using config = FileBufferConfig ;
+};
+
+#endif // FILE_BUFFER_CONFIG_HPP_

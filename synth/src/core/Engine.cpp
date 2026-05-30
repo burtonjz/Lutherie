@@ -578,16 +578,16 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
 }
 
 bool Engine::handleSignalConnection(ConnectionRequest request){
-    AudioStreamComponent* inbound = nullptr ;
-    AudioStreamComponent* outbound = nullptr ;
+    AudioSignalComponent* inbound = nullptr ;
+    AudioSignalComponent* outbound = nullptr ;
     Analyzer* analyzer = nullptr ;
 
     // inbound component can be module, analyzer, or peripheral
     analyzer = componentManager.getAnalyzer(request.inboundID.value_or(-1));
-    inbound = componentManager.getModule(request.inboundID.value_or(-1));
+    inbound = componentManager.getSignalComponent(request.inboundID.value_or(-1));
     
     // outbound can be module only
-    outbound = componentManager.getModule(request.outboundID.value_or(-1));
+    outbound = componentManager.getSignalComponent(request.outboundID.value_or(-1));
 
     // Case 1: if outbound is a peripheral
     if ( ! request.outboundID.has_value() ){
@@ -630,6 +630,37 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
     return true ;
 }
 
+bool Engine::handleBufferConnection(ConnectionRequest request){
+    AudioBufferComponent* inbound = nullptr ;
+    AudioBufferComponent* outbound = nullptr ;
+    
+    inbound = componentManager.getBufferComponent(request.inboundID.value_or(-1));
+    outbound = componentManager.getBufferComponent(request.outboundID.value_or(-1));
+    
+    if ( !inbound ){
+        SPDLOG_WARN("Inbound component with id {} is not valid.");
+        return false ;
+    }
+
+    if ( !outbound ){
+        SPDLOG_WARN("Outbound component with id {} is not valid.");
+        return false ;
+    }
+
+    if ( !request.inboundIdx.has_value() ){
+        SPDLOG_WARN("inbound index not properly set, this is not a valid request");
+        return false ;
+    }
+
+    if ( !request.outboundIdx.has_value() ){
+        SPDLOG_WARN("outbound index not properly set, this is not a valid request");
+        return false ;
+    }
+
+    inbound->connectInput(outbound, request.inboundIdx.value(), request.outboundIdx.value());
+    return true ;
+}
+
 std::vector<ConnectionRequest> Engine::getComponentConnections(ComponentId id) const {
     std::vector<ConnectionRequest> requests ;
     getComponentConnections(id, requests);
@@ -643,12 +674,12 @@ void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionReque
 
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
-    AudioStreamComponent* m = componentManager.getModule(id);
+    AudioSignalComponent* m = componentManager.getSignalComponent(id);
 
     if ( m ){
         for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
             for ( const auto& conn : signalController.getSinks(i)){
-                if ( m == conn.module ){
+                if ( m == conn.component ){
                     ConnectionRequest req ;
                     req.outboundID = id ;
                     req.outboundIdx = conn.index ;
@@ -715,7 +746,7 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
     }
     
     // stateful modulators need to be in the signal processing graph
-    if ( dynamic_cast<AudioStreamComponent*>(modulator) ){
+    if ( dynamic_cast<AudioSignalComponent*>(modulator) ){
         signalController.updateProcessingGraph();
     }
 

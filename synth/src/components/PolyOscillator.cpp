@@ -31,7 +31,7 @@
 
 PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     BaseComponent(id, ComponentType::PolyOscillator),
-    AudioStreamComponent(0,1),
+    AudioSignalComponent(0,1),
     MidiEventListener(),
     children_(),
     modulators_{},
@@ -60,14 +60,14 @@ void PolyOscillator::calculateSample(){
 }
 
 void PolyOscillator::tick(){
-    AudioStreamComponent::tick();
+    AudioSignalComponent::tick();
     childPool_.forEachActive([&](Oscillator& obj){
         obj.tick();
     });
 }
 
 void PolyOscillator::clearBuffer(){
-    AudioStreamComponent::clearBuffer();
+    AudioSignalComponent::clearBuffer();
     // now clear children
     childPool_.forEachActive([](Oscillator& obj){
         obj.clearBuffer();
