@@ -1,4 +1,4 @@
-# Syndesium
+# Lutherie 
 
 A fully modular synthesizer application that lets you build any synthesizer you want through a flexible, connection-based architecture.
 
