@@ -542,7 +542,7 @@ void Synth::onActionLoad(){
     );
 
     if (filePath.isEmpty()) {
-        return; 
+        return ; 
     }
     
     QFile file(filePath);

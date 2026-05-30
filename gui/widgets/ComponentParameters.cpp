@@ -34,6 +34,16 @@ ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent)
     auto d = model_->getDescriptor();
     detailedEditor_ = createDetailedEditor(d.type);
 
+    if ( d.hasFile ){
+        fileSelector_ = new FileSelectorWidget(this);
+        connect(
+            fileSelector_, &FileSelectorWidget::fileSelected,
+            this, [this](std::string path){
+                emit fileSelected(model_->getId(), path);
+            }
+        );
+    }
+
     int maxSpan = 1 ;
     for ( auto p: d.controllableParameters ){
         auto w = createParameterWidget(p);
@@ -47,6 +57,10 @@ ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent)
     if ( detailedEditor_ ){
         mainLayout_->addWidget(detailedEditor_, 1);
     }
+    if ( fileSelector_ ){
+        mainLayout_->addWidget(fileSelector_, 1);
+    }
+
     mainLayout_->addLayout(paramLayout_);
     rebuildLayout();
 

@@ -21,6 +21,7 @@
 #include "models/ComponentModel.hpp"
 
 #include "widgets/ParameterWidget.hpp"
+#include "widgets/FileSelectorWidget.hpp"
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -33,6 +34,7 @@ private:
     ComponentModel* model_ ;
     std::map<ParameterType, ParameterWidget*> parameterWidgets_ ; // general independent parameters
     QWidget* detailedEditor_ ; // specialized controls designed to display in its own dock.
+    FileSelectorWidget* fileSelector_ ; // only for file components (see descriptor)
 
     QTimer* parameterChangedTimer_ ;
     std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
@@ -59,6 +61,7 @@ private:
 
 signals:
     void parameterEdited(int componentId, ParameterType p, ParameterValue value);
+    void fileSelected(int componentId, std::string path);
     
 public slots:
     void onValueChange();

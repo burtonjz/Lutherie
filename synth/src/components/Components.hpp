@@ -19,18 +19,18 @@
 #define __HPP_ALL_COMPONENTS_
 
 #include "components/PolyOscillator.hpp"
-#include "components/Oscilloscope.hpp"
-#include "components/FileBuffer.hpp"
-#include "components/Oscillator.hpp"
-#include "components/BiquadFilter.hpp"
-#include "components/SpectrumAnalyzer.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/Multiply.hpp"
-#include "components/Sequencer.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Panner.hpp"
 #include "components/LinearFader.hpp"
+#include "components/Oscillator.hpp"
+#include "components/ADSREnvelope.hpp"
+#include "components/MonophonicFilter.hpp"
+#include "components/Multiply.hpp"
+#include "components/SpectrumAnalyzer.hpp"
+#include "components/FileBuffer.hpp"
 #include "components/Delay.hpp"
+#include "components/Panner.hpp"
 #include "components/MidiFilter.hpp"
+#include "components/Sequencer.hpp"
+#include "components/BiquadFilter.hpp"
+#include "components/Oscilloscope.hpp"
 
 #endif // __HPP_ALL_COMPONENTS_

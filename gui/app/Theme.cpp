@@ -172,7 +172,22 @@ void Theme::applyDarkTheme() {
         QPushButton {
             padding: 5px 15px;
             border-radius: 3px;
+            border: 1px solid %5;
         }
+        QPushButton:hover {
+            border-color: %1;
+            background-color: %1;
+            color: %2;
+        }
+        QPushButton:pressed {
+            background-color: %1;
+            color: %2;
+        }
+        QPushButton:disabled {
+            border-color: %5;
+            color: %4;
+        }
+
         QLineEdit, QDoubleSpinBox, QSpinBox, QComboBox {
             padding: 3px;
             border-radius: 3px;

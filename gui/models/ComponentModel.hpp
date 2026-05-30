@@ -38,6 +38,7 @@ private:
     std::map<ParameterType, ParameterValue> parameters_ ;
     std::map<ParameterType, ModulationModel*> modulations_ ;
     QString name_ ;
+    std::optional<std::string> file_ ;
 
 public:
     ComponentModel(int id, ComponentType typ);
@@ -48,6 +49,9 @@ public:
 
     const QString& getName() const ;
     void setName(QString name);
+
+    std::string getFile() const ;
+    void setFile(std::string name);
     
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;

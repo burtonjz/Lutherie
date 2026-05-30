@@ -78,6 +78,14 @@ struct ComponentDescriptor {
 
         return getCollection(i);
     }
+
+    bool shouldShowBasicParameters() const {
+        return controllableParameters.size() > 0 || hasFile ;
+    }
+
+    bool shouldShowModulationParameters() const {
+        return modulatableParameters.size() > 0 ;
+    }
 };
 
 #endif // __SHARED_COMPONENT_DESCRIPTOR_HPP_

@@ -70,6 +70,15 @@ void ComponentModel::setName(QString name){
     name_ = name ;
 }
 
+std::string ComponentModel::getFile() const {
+    if ( file_.has_value() ) return file_.value() ;
+    return "" ;
+}
+
+void ComponentModel::setFile(std::string name){
+    file_ = name ;
+}
+
 const ComponentDescriptor& ComponentModel::getDescriptor() const {
     return descriptor_ ;
 }

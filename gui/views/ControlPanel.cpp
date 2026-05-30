@@ -16,6 +16,7 @@
  */
 
 #include "views/ControlPanel.hpp"
+#include "widgets/FileSelectorWidget.hpp"
 
 ControlPanel::ControlPanel(QWidget* parent):
     QScrollArea(parent),
@@ -97,6 +98,10 @@ void ControlPanel::maximizeSection(QWidget* content){
     auto section = getSection(content);
     if ( ! section ) return ;
     section->setCollapsed(false);
+    auto w = section->findChild<FileSelectorWidget*>();
+    if ( w ){
+        qDebug() << "section has a file selector with address " << w << ". File selector visibility: " << w->isVisible();
+    }
 }
 
 void ControlPanel::minimizeSection(QWidget* content){
