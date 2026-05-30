@@ -16,7 +16,6 @@
  */
 
 #include "views/ControlPanel.hpp"
-#include "widgets/FileSelectorWidget.hpp"
 
 ControlPanel::ControlPanel(QWidget* parent):
     QScrollArea(parent),

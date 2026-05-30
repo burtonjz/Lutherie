@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,31 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
- #ifndef FILE_COMPONENT_HPP_
- #define FILE_COMPONENT_HPP_
+#ifndef BUFFER_STREAMER_CONFIG_HPP_
+#define BUFFER_STREAMER_CONFIG_HPP_
 
-#include <filesystem>
+#include "types/ComponentType.hpp"
+#include <nlohmann/json.hpp>
 
-class FileComponent {
-protected:
-    std::filesystem::path filePath_ ;
-    
-public:
-    FileComponent():
-        filePath_("")
-    {}
+using json = nlohmann::json ;
 
-    const std::filesystem::path& getPath() const {
-        return filePath_ ;
-    }
+// forward declare class
+class BufferStreamer ;
 
-    void setPath(std::string fPath){
-        filePath_ = fPath ;
-        onSetPath();
-    }
-
-    virtual void onSetPath(){
-    }
+// define default configuration
+struct BufferStreamerConfig {
+    bool enabled = true ;
 };
 
- #endif // FILE_COMPONENT_HPP_
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BufferStreamerConfig, enabled) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::BufferStreamer>{ 
+    using type = BufferStreamer ;
+    using config = BufferStreamerConfig ;
+};
+
+#endif // BUFFER_STREAMER_CONFIG_HPP_

@@ -23,11 +23,14 @@
 #include "configs/FileBufferConfig.hpp"
 
 class FileBuffer : public AudioBufferComponent, public FileComponent {
-private:
-    
-
 public:
     FileBuffer(ComponentId id, FileBufferConfig cfg);
+
+    void onSetPath() override ;
+
+private:
+    void loadWavBuffer();
+    void resample(std::vector<double>& buffer, int srcRate, int dstRate);
 
 };
 

@@ -16,6 +16,8 @@ This project uses:
 - RtAudio (MIT-style)
 - KissFFT (BSD 3-Clause)
 - spdlog (MIT-style)
+- libsndfile (LGPL v2.1)
+- libsamplerate (BSD 2-Clause)
  
 See [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) for complete license information.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,31 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
- #ifndef FILE_COMPONENT_HPP_
- #define FILE_COMPONENT_HPP_
+#ifndef BUFFER_STREAMER_HPP_
+#define BUFFER_STREAMER_HPP_
 
-#include <filesystem>
+#include "core/AudioBufferComponent.hpp"
+#include "core/AudioSignalComponent.hpp"
+#include "configs/BufferStreamerConfig.hpp"
 
-class FileComponent {
-protected:
-    std::filesystem::path filePath_ ;
-    
+class BufferStreamer : public AudioBufferComponent, public AudioSignalComponent {
+private:
+    size_t bufferPos_ ;
+
 public:
-    FileComponent():
-        filePath_("")
-    {}
+    BufferStreamer(ComponentId id, BufferStreamerConfig cfg);
 
-    const std::filesystem::path& getPath() const {
-        return filePath_ ;
-    }
-
-    void setPath(std::string fPath){
-        filePath_ = fPath ;
-        onSetPath();
-    }
-
-    virtual void onSetPath(){
-    }
+    void calculateSample() override ;
+    void onParameterChanged([[maybe_unused]] ParameterType p) override ;
 };
 
- #endif // FILE_COMPONENT_HPP_
+#endif // BUFFER_STREAMER_HPP_

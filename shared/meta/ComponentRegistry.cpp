@@ -176,8 +176,18 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "File Buffer",
                 .type = ComponentType::FileBuffer,
-                .numBufferOutputs = 1,
+                .numBufferOutputs = 2,
                 .hasFile = true 
+            }
+        },
+        {
+            ComponentType::BufferStreamer,
+            {
+                .name = "Buffer Streamer",
+                .type = ComponentType::BufferStreamer,
+                .controllableParameters = {ParameterType::STATUS},
+                .numSignalOutputs = 1,
+                .numBufferInputs = 1
             }
         }
     };

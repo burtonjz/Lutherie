@@ -18,6 +18,8 @@ pkg_check_modules(RTAUDIO REQUIRED rtaudio)
 pkg_check_modules(RTMIDI REQUIRED rtmidi)
 pkg_check_modules(KISSFFT REQUIRED kissfft-float)
 pkg_check_modules(SPDLOG REQUIRED spdlog)
+pkg_check_modules(SNDFILE REQUIRED sndfile)
+pkg_check_modules(SAMPLERATE REQUIRED samplerate)
 
 # Generate configs/ComponentConfig.hpp
 file(GLOB CONFIG_FILES "${SRC_DIR}/configs/*Config.hpp")
@@ -88,6 +90,8 @@ target_link_libraries(synth PRIVATE
     ${RTMIDI_LIBRARIES}
     ${KISSFFT_LIBRARIES}
     ${SPDLOG_LIBRARIES}
+    ${SNDFILE_LIBRARIES}
+    ${SAMPLERATE_LIBRARIES}
     m
 )
 
