@@ -212,6 +212,8 @@ public:
     static constexpr double KNOB_WIDGET_START_ANGLE      = 225.0 ;
     static constexpr double KNOB_WIDGET_SWEEP_ANGLE      = 270.0 ; 
 
+    static constexpr int FILE_SELECTOR_LABEL_WIDTH = 150 ;
+
     /*
     =======================================================
     =============== STYLE SHEET DEFINITIONS ===============

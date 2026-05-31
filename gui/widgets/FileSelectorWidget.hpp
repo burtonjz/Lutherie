@@ -18,9 +18,11 @@
 #ifndef FILE_SELECTOR_WIDGET_HPP_
 #define FILE_SELECTOR_WIDGET_HPP_
 
+#include "widgets/PathLabel.hpp"
+#include "app/Theme.hpp"
+
 #include <QWidget>
 #include <QPushButton>
-#include <QLabel>
 #include <QFileDialog>
 #include <QHBoxLayout>
 
@@ -29,14 +31,14 @@ class FileSelectorWidget : public QWidget {
 
 private:
     QPushButton* button_ ;
-    QLabel* label_ ;
+    PathLabel* label_ ;
     QHBoxLayout* layout_ ;
     
 public:
     explicit FileSelectorWidget(QWidget* parent = nullptr):
         QWidget(parent),
         button_(new QPushButton()),
-        label_(new QLabel()),
+        label_(new PathLabel()),
         layout_(new QHBoxLayout(this))
     {
         connect(button_, &QPushButton::clicked, [this](){
@@ -44,7 +46,7 @@ public:
                 this,
                 tr("Select Component File"),
                 QDir::homePath(),
-                tr("Audio Files (*.wav);;All Files (*)")
+                tr("Audio Files (*.wav, *.aiff, *.mp3);;All Files (*)")
             );
             if (filePath.isEmpty()) {
                 return ; 
@@ -54,7 +56,7 @@ public:
         });
 
         button_->setText("Select File...");
-        label_->setMinimumWidth(150);
+        label_->setFixedWidth(Theme::FILE_SELECTOR_LABEL_WIDTH);
         layout_->addWidget(button_);
         layout_->addWidget(label_);
         layout_->addStretch();
@@ -66,7 +68,7 @@ public:
     }
 
     void setPath(QString path){
-        label_->setText(path);
+        label_->setPath(path);
     }
 
 signals:
