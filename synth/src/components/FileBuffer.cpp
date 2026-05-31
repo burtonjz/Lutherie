@@ -56,12 +56,14 @@ void FileBuffer::loadWavBuffer(){
             buffers_[1][frame] = interleaved[frame];
         } else {
             buffers_[0][frame] = interleaved[frame * sfinfo.channels];
-            buffers_[0][frame] = interleaved[frame * sfinfo.channels + 1];
+            buffers_[1][frame] = interleaved[frame * sfinfo.channels + 1];
         }
     }
 
     // resample (if necessary)
+    int i = 0 ;
     for ( auto& ch : buffers_ ){
+        SPDLOG_DEBUG("resampling audio for channel {}. Rate {} -> {}", i++, sfinfo.samplerate, sampleRate_);
         resample(ch, sfinfo.samplerate, sampleRate_);
     }
 }

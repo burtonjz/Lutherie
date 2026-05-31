@@ -68,6 +68,8 @@ public:
         assert( sourceOutput < source->nOutputs_ );
         inboundConnections_[input].insert({source, sourceOutput});
         source->outboundConnections_[sourceOutput].insert({this, input});
+        SPDLOG_DEBUG("input from source {} outbound channel {} connected to inbound channel {}. Current number of inputs: {}", 
+            fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
     }
 
     void disconnectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
@@ -75,6 +77,8 @@ public:
         assert ( sourceOutput < source->nOutputs_ );
         inboundConnections_[input].erase({source, sourceOutput});
         source->outboundConnections_[sourceOutput].erase({this, input});
+        SPDLOG_DEBUG("input from source {} outbound channel {} disconnected from inbound channel {}. Current number of inputs: {}", 
+            fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
     }
 
     const std::vector<double>& getBuffer(size_t idx) const {

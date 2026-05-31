@@ -35,8 +35,8 @@ private:
 public:
     explicit FileSelectorWidget(QWidget* parent = nullptr):
         QWidget(parent),
-        button_(new QPushButton(this)),
-        label_(new QLabel(this)),
+        button_(new QPushButton()),
+        label_(new QLabel()),
         layout_(new QHBoxLayout(this))
     {
         connect(button_, &QPushButton::clicked, [this](){

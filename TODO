@@ -15,6 +15,11 @@
   - don't allow note adds while status is on. 
 - Analyzer Nodes automatically group and reflect "channel" numbers
 
+## Misc Improvements
+- move file buffer resampling to separate thread? Some kind of indicator when file is loaded?
+- Buffer streamer turn off when end of all input streams is reached
+- disable status toggle on buffer streamer if incoming streams are not armed
+
 ## UI
 
 ### Layout

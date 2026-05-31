@@ -29,13 +29,15 @@ ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent)
     QWidget(parent),
     model_(model),
     mainLayout_(new QVBoxLayout(this)),
-    paramLayout_(new QGridLayout())
+    paramLayout_(new QGridLayout()),
+    detailedEditor_(nullptr),
+    fileSelector_(nullptr)
 {
     auto d = model_->getDescriptor();
     detailedEditor_ = createDetailedEditor(d.type);
 
     if ( d.hasFile ){
-        fileSelector_ = new FileSelectorWidget(this);
+        fileSelector_ = new FileSelectorWidget();
         connect(
             fileSelector_, &FileSelectorWidget::fileSelected,
             this, [this](std::string path){
@@ -129,8 +131,8 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
     switch(t){
     case ComponentType::Sequencer:
     {
-        auto* scroll = new QScrollArea(this) ;
-        PianoRollWidget* pianoRoll = new PianoRollWidget(model_, this);
+        auto* scroll = new QScrollArea() ;
+        PianoRollWidget* pianoRoll = new PianoRollWidget(model_);
         scroll->setWidget(pianoRoll);
         scroll->setWidgetResizable(true);
         scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

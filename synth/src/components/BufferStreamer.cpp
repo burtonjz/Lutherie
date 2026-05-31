@@ -24,7 +24,7 @@ BufferStreamer::BufferStreamer(ComponentId id, [[maybe_unused]] BufferStreamerCo
     AudioSignalComponent(0,1),
     bufferPos_(0)
 {
-    parameters_->add<ParameterType::STATUS>(false, false);
+    parameters_->add<ParameterType::STATUS>(true, false);
     parameters_->getParameter(ParameterType::STATUS)->addListener(this);
 }
 

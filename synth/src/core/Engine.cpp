@@ -657,6 +657,11 @@ bool Engine::handleBufferConnection(ConnectionRequest request){
         return false ;
     }
 
+    if ( request.remove ){
+        inbound->disconnectInput(outbound, request.inboundIdx.value(), request.outboundIdx.value());
+        return true ;
+    }
+
     inbound->connectInput(outbound, request.inboundIdx.value(), request.outboundIdx.value());
     return true ;
 }

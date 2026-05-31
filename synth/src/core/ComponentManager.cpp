@@ -160,6 +160,7 @@ void ComponentManager::getComponentConnections(ComponentId id, std::vector<Conne
     getComponentSignalConnections(id, requests);
     getComponentMidiConnections(id, requests);
     getComponentModulationConnections(id, requests);
+    getComponentBufferConnections(id, requests);
 }
 
 void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
