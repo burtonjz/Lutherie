@@ -73,22 +73,27 @@ void Chopper::onParameterChanged(ParameterType p){
     const auto& inp = getInputs(0);
     if ( inp.size() == 0 ) return ;
         
-    int start    = parameters_->getParameter<ParameterType::START_POSITION>()->getValue();
-    int duration = parameters_->getParameter<ParameterType::DURATION>()->getValue();
-
     BufferConnection conn = *inp.begin();
     const auto& buf = conn.component->getBuffer(conn.index);    
 
-    // make sure duration is valid
-    if ( start + duration > int(buf.size() - 1) ){
-        duration = buf.size() - 1 - start ;
+    // guard against empty inbound buffer
+    if ( buf.empty() ){
+        buffers_[0].clear();
+        return ;
+    }
+
+    int start    = parameters_->getParameter<ParameterType::START_POSITION>()->getValue();
+    int duration = parameters_->getParameter<ParameterType::DURATION>()->getValue();
+
+    // clamp duration
+    int maxDuration = int(buf.size()) - start ;
+    if ( duration <= 0 || duration > maxDuration ){
+        duration = maxDuration ;
         parameters_->getParameter<ParameterType::DURATION>()->setValue(duration, false);
     }
 
-    buffers_[0].reserve(start + duration);
-    std::copy(
+    buffers_[0].assign(
         buf.begin() + start,
-        buf.begin() + start + duration,
-        buffers_[0].begin()
+        buf.begin() + start + duration
     );
 }
