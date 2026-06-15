@@ -55,7 +55,6 @@ void Chopper::onInputUpdated(){
         start->setValue(0, false);
         duration->setMaximum(0);
         duration->setValue(0);
-        buffers_[0].clear();
     }
 
     triggerComponentSync();
@@ -79,6 +78,7 @@ void Chopper::onParameterChanged(ParameterType p){
     // guard against empty inbound buffer
     if ( buf.empty() ){
         buffers_[0].clear();
+        notifyOutputs();
         return ;
     }
 
@@ -96,4 +96,5 @@ void Chopper::onParameterChanged(ParameterType p){
         buf.begin() + start,
         buf.begin() + start + duration
     );
+    notifyOutputs();
 }

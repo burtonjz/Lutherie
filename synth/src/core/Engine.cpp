@@ -664,7 +664,7 @@ bool Engine::handleBufferConnection(ConnectionRequest request){
 
     if ( !ComponentRegistry::getComponentDescriptor(inbound->getType()).allowMultipleBufferConnections ){
         if ( inbound->getInputs(request.inboundIdx.value()).size() > 0 ){
-            SPDLOG_DEBUG("This component does not support more than one buffer input per socket. Cancelling connection.");
+            SPDLOG_WARN("This component does not support more than one buffer input per socket. Cancelling connection.");
             return false ;
         }
     }
