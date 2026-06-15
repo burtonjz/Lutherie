@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __API_HANDLER_HPP_
-#define __API_HANDLER_HPP_
+#ifndef CONTROL_API_HANDLER_HPP_
+#define CONTROL_API_HANDLER_HPP_
 
 #include <nlohmann/json.hpp>
 #include <functional>
@@ -33,21 +33,21 @@ using json = nlohmann::json ;
 // forward declarations
 class Engine ;
 
-class ApiHandler {
+class ControlApiHandler {
 private:
     using HandlerFunc = std::function<json(int sock, const json& request)>;
     Engine* engine_ ;
     std::unordered_map<std::string, HandlerFunc> handlers_ ;
     std::unordered_set<int> clientSockets_ ;
 
-    ApiHandler();
+    ControlApiHandler();
 
 public:
-    static ApiHandler* instance() ;
-    ApiHandler(const ApiHandler&) = delete ;
-    ApiHandler& operator=(const ApiHandler&) = delete ;
-    ApiHandler(ApiHandler&&) = delete ;
-    ApiHandler& operator=(ApiHandler&&) = delete ;
+    static ControlApiHandler* instance() ;
+    ControlApiHandler(const ControlApiHandler&) = delete ;
+    ControlApiHandler& operator=(const ControlApiHandler&) = delete ;
+    ControlApiHandler(ControlApiHandler&&) = delete ;
+    ControlApiHandler& operator=(ControlApiHandler&&) = delete ;
 
     void initialize(Engine* engine);
 
@@ -122,4 +122,4 @@ private:
 };
 
 
-#endif // __API_HANDLER_HPP_
+#endif // CONTROL_API_HANDLER_HPP_

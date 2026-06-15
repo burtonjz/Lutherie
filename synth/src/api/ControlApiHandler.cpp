@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "api/ApiHandler.hpp"
+#include "api/ControlApiHandler.hpp"
 #include "core/BaseComponent.hpp"
 #include "core/FileComponent.hpp"
 #include "core/Engine.hpp"
@@ -36,18 +36,18 @@
 #include <unordered_map>
 #include <spdlog/spdlog.h>
 
-ApiHandler::ApiHandler()
+ControlApiHandler::ControlApiHandler()
 {}
 
-ApiHandler* ApiHandler::instance(){
-    static ApiHandler* s_instance = nullptr ;
+ControlApiHandler* ControlApiHandler::instance(){
+    static ControlApiHandler* s_instance = nullptr ;
     if ( !s_instance ){
-        s_instance = new ApiHandler();
+        s_instance = new ControlApiHandler();
     }
     return s_instance ;
 }
 
-void ApiHandler::initialize(Engine* engine){
+void ControlApiHandler::initialize(Engine* engine){
     engine_ = engine ;
 
     // register api handler functions
@@ -89,8 +89,8 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["set_file_path"] = [this](int sock, const json& request){ return setFilePath(sock, request); };
 }
 
-void ApiHandler::start(){
-    int serverPort = Config::get<int>("server.port").value() ;
+void ControlApiHandler::start(){
+    int serverPort = Config::get<int>("server.control_port").value() ;
 
     // Create socket
     int serverSock = socket(AF_INET, SOCK_STREAM, 0);
@@ -145,7 +145,7 @@ void ApiHandler::start(){
 
             // Handle client in a separate thread
             std::thread([sock](){
-                ApiHandler::instance()->onClientConnection(sock);
+                ControlApiHandler::instance()->onClientConnection(sock);
             }).detach();  
         } else {
             // no pending connection; sleep briefly to avoid busy-wait
@@ -157,7 +157,7 @@ void ApiHandler::start(){
     close(serverSock);
 }
 
-void ApiHandler::onClientConnection(int sock){
+void ControlApiHandler::onClientConnection(int sock){
     char buffer[1024] = {0};
     std::string partialData ;
     clientSockets_.insert(sock);
@@ -195,7 +195,7 @@ void ApiHandler::onClientConnection(int sock){
     close(sock);
 }
 
-json ApiHandler::sendApiResponse(int sock, json& response, const std::string& err){
+json ControlApiHandler::sendApiResponse(int sock, json& response, const std::string& err){
     if ( err == "" ){
         response["status"] = "success" ;
     } else {
@@ -210,7 +210,7 @@ json ApiHandler::sendApiResponse(int sock, json& response, const std::string& er
 }
 
 
-void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
+void ControlApiHandler::handleClientMessage(int sock, std::string jsonStr){
     json request;
     std::string action ;
 
@@ -233,11 +233,11 @@ void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
     it->second(sock, request);
 }
 
-const std::unordered_set<int>& ApiHandler::getOpenClientSockets() const {
+const std::unordered_set<int>& ControlApiHandler::getOpenClientSockets() const {
     return clientSockets_ ;
 }
 
-json ApiHandler::getAudioDevices(int sock, const json& request){
+json ControlApiHandler::getAudioDevices(int sock, const json& request){
     json response = request ;
     for ( const auto& dev : engine_->getAvailableAudioDevices() ){
         json j = {
@@ -250,7 +250,7 @@ json ApiHandler::getAudioDevices(int sock, const json& request){
     return sendApiResponse(sock,response);
 }
 
-json ApiHandler::getMidiDevices(int sock, const json& request){
+json ControlApiHandler::getMidiDevices(int sock, const json& request){
     json response = request ;
     for ( const auto& [id, name] : engine_->getAvailableMidiDevices() ){
         json j = {
@@ -262,7 +262,7 @@ json ApiHandler::getMidiDevices(int sock, const json& request){
     return sendApiResponse(sock,response);
 }
 
-json ApiHandler::setAudioDevice(int sock, const json& request){
+json ControlApiHandler::setAudioDevice(int sock, const json& request){
     json response = request ;
     int deviceId ;
     std::string err ;
@@ -286,7 +286,7 @@ json ApiHandler::setAudioDevice(int sock, const json& request){
     }
 }
 
-json ApiHandler::getAudioConfig(int sock, const json& request){
+json ControlApiHandler::getAudioConfig(int sock, const json& request){
     json response = request ;
 
     response["device_id"] = engine_->getAudioDeviceId();
@@ -295,7 +295,7 @@ json ApiHandler::getAudioConfig(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setMidiDevice(int sock, const json& request){
+json ControlApiHandler::setMidiDevice(int sock, const json& request){
     json response = request ;
     int deviceId ;
     
@@ -312,7 +312,7 @@ json ApiHandler::setMidiDevice(int sock, const json& request){
     }
 }
 
-json ApiHandler::setState(int sock, const json& request){
+json ControlApiHandler::setState(int sock, const json& request){
     json response = request ;
     std::string state ;
 
@@ -335,13 +335,13 @@ json ApiHandler::setState(int sock, const json& request){
     return sendApiResponse(sock,response, "Unrecognized engine state requested: " + state);
 }
 
-json ApiHandler::getConfiguration(int sock, const json& request){
+json ControlApiHandler::getConfiguration(int sock, const json& request){
     json response = request ;
     response["data"] = engine_->serialize();
     return sendApiResponse(sock,response);
 }
 
-json ApiHandler::loadPatch(int sock, const json& request){
+json ControlApiHandler::loadPatch(int sock, const json& request){
     json response = request ;
     
     // create components
@@ -369,7 +369,7 @@ json ApiHandler::loadPatch(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::addComponent(int sock, const json& request){
+json ControlApiHandler::addComponent(int sock, const json& request){
     json response = request ;
     ComponentType type ;
     std::string name ;
@@ -386,7 +386,7 @@ json ApiHandler::addComponent(int sock, const json& request){
     return sendApiResponse(sock,response);
 }
 
-json ApiHandler::removeComponent(int sock, const json& request){
+json ControlApiHandler::removeComponent(int sock, const json& request){
     json response = request ;
     ComponentId id ;
 
@@ -421,7 +421,7 @@ json ApiHandler::removeComponent(int sock, const json& request){
     return sendApiResponse(sock, response);    
 }
 
-json ApiHandler::syncComponent(int sock, const json& request){
+json ControlApiHandler::syncComponent(int sock, const json& request){
     json response = request ;
 
     int componentId ;
@@ -441,7 +441,7 @@ json ApiHandler::syncComponent(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::parseConnectionRequest(int sock, const json& request){
+json ControlApiHandler::parseConnectionRequest(int sock, const json& request){
     json response = request ;
     ConnectionRequest req ;
 
@@ -462,7 +462,7 @@ json ApiHandler::parseConnectionRequest(int sock, const json& request){
     }
 }
 
-json ApiHandler::getParameter(int sock, const json& request){
+json ControlApiHandler::getParameter(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -483,7 +483,7 @@ json ApiHandler::getParameter(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setParameter(int sock, const json& request){
+json ControlApiHandler::setParameter(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -510,7 +510,7 @@ json ApiHandler::setParameter(int sock, const json& request){
     }
 }
 
-json ApiHandler::getParameterDefault(int sock, const json& request){
+json ControlApiHandler::getParameterDefault(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -531,7 +531,7 @@ json ApiHandler::getParameterDefault(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setParameterDefault(int sock, const json& request){
+json ControlApiHandler::setParameterDefault(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -556,7 +556,7 @@ json ApiHandler::setParameterDefault(int sock, const json& request){
     }
 }
 
-json ApiHandler::getParameterValueRange(int sock, const json& request){
+json ControlApiHandler::getParameterValueRange(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -579,7 +579,7 @@ json ApiHandler::getParameterValueRange(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setParameterValueRange(int sock, const json& request){
+json ControlApiHandler::setParameterValueRange(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -609,7 +609,7 @@ json ApiHandler::setParameterValueRange(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::resetParameter(int sock, const json& request){
+json ControlApiHandler::resetParameter(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -632,7 +632,7 @@ json ApiHandler::resetParameter(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::parseCollectionRequest(int sock, const json& request){
+json ControlApiHandler::parseCollectionRequest(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     CollectionType collectionType ;
@@ -677,7 +677,7 @@ json ApiHandler::parseCollectionRequest(int sock, const json& request){
     }
 }
 
-json ApiHandler::addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+json ControlApiHandler::addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -713,7 +713,7 @@ json ApiHandler::addCollectionValue(int sock, BaseComponent* c, const Collection
 
 }
 
-json ApiHandler::removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -744,7 +744,7 @@ json ApiHandler::removeCollectionValue(int sock, BaseComponent* c, const Collect
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+json ControlApiHandler::getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -776,7 +776,7 @@ json ApiHandler::getCollectionValue(int sock, BaseComponent* c, const Collection
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -808,7 +808,7 @@ json ApiHandler::setCollectionValue(int sock, BaseComponent* c, const Collection
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -839,7 +839,7 @@ json ApiHandler::resetCollection(int sock, BaseComponent* c, const CollectionDes
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+json ControlApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
     json min ;
     json max ;
     try {
@@ -872,7 +872,7 @@ json ApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const Colle
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getModulationStrategy(int sock, const json& request){
+json ControlApiHandler::getModulationStrategy(int sock, const json& request){
     ComponentId id ;
     ParameterType p ;
     ModulationStrategy s ;
@@ -917,7 +917,7 @@ json ApiHandler::getModulationStrategy(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setModulationStrategy(int sock, const json& request){
+json ControlApiHandler::setModulationStrategy(int sock, const json& request){
     ComponentId id ;
     ParameterType p ;
     ModulationStrategy s ;
@@ -955,7 +955,7 @@ json ApiHandler::setModulationStrategy(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getModulationDepth(int sock, const json& request){
+json ControlApiHandler::getModulationDepth(int sock, const json& request){
     ComponentId id ;
     ParameterType p ;
     double depth ;
@@ -1001,7 +1001,7 @@ json ApiHandler::getModulationDepth(int sock, const json& request){
 }
 
 
-json ApiHandler::setModulationDepth(int sock, const json& request){
+json ControlApiHandler::setModulationDepth(int sock, const json& request){
     ComponentId id ;
     ParameterType p ;
     double depth ;
@@ -1039,7 +1039,7 @@ json ApiHandler::setModulationDepth(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getFilePath(int sock, const json& request){
+json ControlApiHandler::getFilePath(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     std::string path ;
@@ -1061,7 +1061,7 @@ json ApiHandler::getFilePath(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setFilePath(int sock, const json& request){
+json ControlApiHandler::setFilePath(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     std::string path ;
@@ -1082,7 +1082,7 @@ json ApiHandler::setFilePath(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
+bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )
         return engine_->handleMidiConnection(request);
     if ( request.inboundSocket == SocketType::SignalInbound && request.outboundSocket == SocketType::SignalOutbound )
@@ -1096,7 +1096,7 @@ bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
     return false ;
 }
 
-bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap){
+bool ControlApiHandler::loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap){
     json params ;
     ComponentId id ;
     json componentRequest ;
@@ -1134,7 +1134,7 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
     return success ;
 }
 
-bool ApiHandler::loadConnectComponent(int sock, const json& connections){
+bool ControlApiHandler::loadConnectComponent(int sock, const json& connections){
     bool success = true ;
 
     if ( !connections.is_array() ) return false ;
@@ -1159,7 +1159,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& connections){
 
 }
 
-void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap){
+void ControlApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap){
     if ( j.is_object() ) {
         // Update known ID fields in objects
         std::vector<std::string> idKeys = {"id", "ComponentId", "componentId", "modulatorId"};
@@ -1202,7 +1202,7 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
     }
 }
 
-const CollectionDescriptor& ApiHandler::getCollectionDescriptor(ComponentType t, CollectionType c) const {
+const CollectionDescriptor& ControlApiHandler::getCollectionDescriptor(ComponentType t, CollectionType c) const {
     const ComponentDescriptor& descriptor = ComponentRegistry::getComponentDescriptor(t);
     int idx = descriptor.hasCollection(c);
     if ( idx == -1 ){

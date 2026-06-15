@@ -39,7 +39,7 @@ ApiClient::ApiClient(QObject *parent)
 void ApiClient::connectToBackend(){
     Config::load();
     QString serverAddress = QString::fromStdString(Config::get<std::string>("server.address").value()) ;
-    int serverPort = Config::get<int>("server.port").value() ;
+    int serverPort = Config::get<int>("server.control_port").value() ;
     qDebug() << "connecting to " << serverAddress << "port" << serverPort ;
     socket->connectToHost(serverAddress, serverPort );
 }

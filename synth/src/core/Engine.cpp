@@ -5,7 +5,7 @@
 #include "core/Engine.hpp"
 #include "dsp/AnalyticsEngine.hpp"
 #include "config/Config.hpp"
-#include "api/ApiHandler.hpp"
+#include "api/ControlApiHandler.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiEventListener.hpp"
@@ -59,7 +59,7 @@ Engine::Engine():
     midiState_(),
     midiDefaultHandler_()
 {
-    ApiHandler::instance()->initialize(this);
+    ControlApiHandler::instance()->initialize(this);
 
     registerBaseMidiHandler(&midiDefaultHandler_);
     midiController.addHandler(&midiDefaultHandler_);
@@ -95,7 +95,7 @@ void Engine::initialize(){
     // Start API server thread
     apiServerRunning_ = true;
     apiServerThread_ = std::thread([&](){
-        ApiHandler::instance()->start();
+        ControlApiHandler::instance()->start();
     });
 
     SPDLOG_INFO("Engine initialized. API server running.");
