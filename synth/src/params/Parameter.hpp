@@ -206,9 +206,9 @@ class Parameter : public ParameterBase {
             return value_ ;
         }
 
-        bool setValue(ValueType value){
+        bool setValue(ValueType value, bool notify = true){
             value_ = limitToRange(value);
-            setInstantaneousValue(value_);
+            setInstantaneousValue(value_, notify);
             return true ;
         }
 
@@ -286,11 +286,11 @@ class Parameter : public ParameterBase {
         }
 
     private:
-        void setInstantaneousValue(ValueType v){
+        void setInstantaneousValue(ValueType v, bool notify = true){
             v = limitToRange(v);
             if ( v != instantaneousValue_ ){
                 instantaneousValue_ = v ;
-                notifyListeners();
+                if ( notify ) notifyListeners();
             }
         }
 };

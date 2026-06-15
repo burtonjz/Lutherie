@@ -189,6 +189,17 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 .numSignalOutputs = 1,
                 .numBufferInputs = 1
             }
+        },
+        {
+            ComponentType::Chopper,
+            {
+                .name = "Buffer Chopper",
+                .type = ComponentType::Chopper,
+                .controllableParameters = { ParameterType::START_POSITION , ParameterType::DURATION },
+                .numBufferInputs = 1,
+                .numBufferOutputs = 1,
+                .allowMultipleBufferConnections = false,
+            }
         }
     };
 

@@ -35,6 +35,7 @@
 #include "configs/PannerConfig.hpp"
 #include "configs/FileBufferConfig.hpp"
 #include "configs/BufferStreamerConfig.hpp"
+#include "configs/ChopperConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

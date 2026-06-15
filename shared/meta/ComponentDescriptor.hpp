@@ -44,6 +44,7 @@ struct ComponentDescriptor {
     
     bool canModulate = false ;
     bool hasFile = false ;
+    bool allowMultipleBufferConnections = true ;
 
     bool isSignalComponent() const { return numSignalInputs > 0 || numSignalOutputs > 0 ; }
     bool isBufferComponent() const { return numBufferInputs > 0 || numBufferOutputs > 0 ; }

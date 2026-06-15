@@ -34,7 +34,8 @@
     X(Oscilloscope) \
     X(Panner) \
     X(FileBuffer) \
-    X(BufferStreamer)
+    X(BufferStreamer) \
+    X(Chopper)
 
 /**
  * @brief enumeration of modulation source classes

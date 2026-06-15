@@ -66,19 +66,23 @@ public:
     void connectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
         assert( input < nInputs_ );
         assert( sourceOutput < source->nOutputs_ );
+
         inboundConnections_[input].insert({source, sourceOutput});
         source->outboundConnections_[sourceOutput].insert({this, input});
         SPDLOG_DEBUG("input from source {} outbound channel {} connected to inbound channel {}. Current number of inputs: {}", 
             fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
+        onInputConnect();
     }
 
     void disconnectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
         assert ( input < nInputs_ );
         assert ( sourceOutput < source->nOutputs_ );
+
         inboundConnections_[input].erase({source, sourceOutput});
         source->outboundConnections_[sourceOutput].erase({this, input});
         SPDLOG_DEBUG("input from source {} outbound channel {} disconnected from inbound channel {}. Current number of inputs: {}", 
             fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
+        onInputDisconnect();
     }
 
     const std::vector<double>& getBuffer(size_t idx) const {
@@ -107,6 +111,20 @@ public:
     const std::unordered_set<BufferConnection, BufferHash>& getOutputs(size_t out) const {
         assert( out < nOutputs_ );
         return outboundConnections_[out] ;
+    }
+
+protected:
+    virtual void onInputConnect(){};
+    virtual void onInputDisconnect(){};
+    virtual void onInputUpdated(){};
+
+    void notifyOutputs(){
+        for ( size_t i = 0 ; i < nOutputs_ ; ++i ){
+            for ( const auto& conn : getOutputs(i) ){
+                conn.component->onInputUpdated();
+            }
+        }
+        
     }
 };
 
