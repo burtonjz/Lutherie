@@ -23,7 +23,7 @@ See [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) for complete license in
 
 ## Overview
 
-Syndesium is a standalone modular synthesis environment where you can create, connect, and configure components to design custom synthesizers.
+Lutherie is a standalone modular synthesis environment where you can create, connect, and configure components to design custom synthesizers.
 
 ![User Interface](assets/images/readme-gui.png)
 
@@ -60,8 +60,8 @@ The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designe
 ## Installation
 
 ```bash
-git clone https://github.com/burtonjz/Syndesium.git
-cd Syndesium
+git clone https://github.com/burtonjz/Lutherie.git
+cd Lutherie
 
 cmake -S . -B build
 cd build
@@ -78,18 +78,17 @@ make
 ./build/gui/gui
 ```
 
-1. **Launch Application**: Start Syndesium
+1. **Launch Application**: Start Lutherie
 2. **Configure Hardware output/input**: Select your audio output device and midi input device through the setup menu.
-3. **Create Modules**: Add audio sources
-4. **Create Modulators**: Add modulation sources
-5. **Create Midi Components**: Add midi manipulation components
-6. **Draw Connections**: Click and drag to connect module outputs to parameter inputs
-7. **Play**: Hit play to start the audio loop, and use your MIDI controller or computer keyboard to play your custom synthesizer
+3. **Create Components**: Add audio, modulation, midi, and/or buffer components
+4. **Draw Connections**: Click and drag to connect module outputs to parameter inputs
+5. **Edit Configuration**: Open up panels to adjust parameters and modulation controls
+6. **Play**: Hit play to start the audio loop, and use your MIDI controller or computer keyboard to play your custom synthesizer!
 
 ## Project Structure
 
 ```
-Syndesium/
+Lutherie/
 ├── gui/          # Qt6 frontend application
 ├── synth/        # backend synthesis engine
 ├── shared/       # shared definitions and configurations
@@ -109,4 +108,7 @@ Built with:
 - [RtMidi](https://github.com/thestk/rtmidi) - Cross-platform MIDI I/O
 - [KissFFT](https://github.com/mborgerding/kissfft) - Fast Fourier Transform Library
 - [spdlog](https://github.com/gabime/spdlog) - logging
+- [libsndfile](https://github.com/libsndfile/libsndfile) - read/write audio files
+- [libsamplerate](https://github.com/libsndfile/libsamplerate) - resampling
+  
 ---
