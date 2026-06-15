@@ -19,7 +19,9 @@
 #include "core/AudioSignalComponent.hpp"
 #include "core/ModulatorComponent.hpp" 
 #include "params/ParameterMap.hpp"
+#include "api/ApiHandler.hpp"
 #include <unordered_set>
+
 
 BaseComponent::BaseComponent(ComponentId id, ComponentType type):
     id_(id),
@@ -175,4 +177,15 @@ void BaseComponent::onSetParameterDepthModulation(ParameterType p, ModulatorComp
 
 void BaseComponent::onRemoveParameterDepthModulation(ParameterType p){
     parameters_->getParameter(p)->getDepth()->removeModulation();
+}
+
+void BaseComponent::triggerComponentSync() const {
+    // notify clients
+    auto* api = ApiHandler::instance();
+    json j ;
+    j["action"] = "sync_component" ;
+    j["componentId"] = getId();
+    for ( const auto& sock : api->getOpenClientSockets() ){
+        ApiHandler::instance()->handleClientMessage(sock,j.dump());
+    }
 }

@@ -160,6 +160,7 @@ void ApiHandler::start(){
 void ApiHandler::onClientConnection(int sock){
     char buffer[1024] = {0};
     std::string partialData ;
+    clientSockets_.insert(sock);
 
     while (!Engine::stop_flag){
         ssize_t bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0) ;
@@ -190,6 +191,7 @@ void ApiHandler::onClientConnection(int sock){
         }
     }
 
+    clientSockets_.erase(sock);
     close(sock);
 }
 
@@ -229,6 +231,10 @@ void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
     }
     
     it->second(sock, request);
+}
+
+const std::unordered_set<int>& ApiHandler::getOpenClientSockets() const {
+    return clientSockets_ ;
 }
 
 json ApiHandler::getAudioDevices(int sock, const json& request){

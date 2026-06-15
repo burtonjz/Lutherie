@@ -38,6 +38,7 @@ private:
     using HandlerFunc = std::function<json(int sock, const json& request)>;
     Engine* engine_ ;
     std::unordered_map<std::string, HandlerFunc> handlers_ ;
+    std::unordered_set<int> clientSockets_ ;
 
     ApiHandler();
 
@@ -54,6 +55,8 @@ public:
     void onClientConnection(int clientSock);
     void handleClientMessage(int clientSock, std::string jsonStr);
     json sendApiResponse(int clientSock, json& response, const std::string& err = "");
+
+    const std::unordered_set<int>& getOpenClientSockets() const ;
 
 private:
     /*

@@ -55,9 +55,10 @@ void Chopper::onInputUpdated(){
         start->setValue(0, false);
         duration->setMaximum(0);
         duration->setValue(0);
-
         buffers_[0].clear();
     }
+
+    triggerComponentSync();
 }
 
 void Chopper::onParameterChanged(ParameterType p){
@@ -84,6 +85,7 @@ void Chopper::onParameterChanged(ParameterType p){
         parameters_->getParameter<ParameterType::DURATION>()->setValue(duration, false);
     }
 
+    buffers_[0].reserve(start + duration);
     std::copy(
         buf.begin() + start,
         buf.begin() + start + duration,

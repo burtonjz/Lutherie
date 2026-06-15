@@ -76,6 +76,7 @@ protected:
     virtual void onRemoveParameterModulation(ParameterType p);
     virtual void onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d );
     virtual void onRemoveParameterDepthModulation(ParameterType p);
+    void triggerComponentSync() const ;
     
 };
 
