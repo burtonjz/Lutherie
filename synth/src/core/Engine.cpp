@@ -127,9 +127,7 @@ void Engine::run(){
     
     // start threads
     midiThread_ = std::thread(&Engine::midiLoop, this);
-    
     audioThread_ = std::thread(&Engine::audioLoop, this);
-    
     analysisThread_ = std::thread(&Engine::analysisLoop, this);
     
     SPDLOG_INFO("Engine running with 3 worker threads.");
@@ -185,12 +183,18 @@ void Engine::shutdown(){
     }
     
     // Stop API server
-    stop_flag = true;
-    controlApiRunning_ = false;
+    stop_flag = true ;
+    controlApiRunning_ = false ;
+    dataApiRunning_ = false ;
     
     if (controlApiThread_.joinable()){
-        SPDLOG_INFO("Waiting for API server thread...");
+        SPDLOG_INFO("Waiting for Control API thread...");
         controlApiThread_.join();
+    }
+
+    if (dataApiThread_.joinable()){
+        SPDLOG_INFO("Waiting for Data API thread...");
+        dataApiThread_.join();
     }
     
     SPDLOG_INFO("Engine shutdown complete");
