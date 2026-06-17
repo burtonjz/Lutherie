@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 #include "app/Theme.hpp"
 #include "app/Synth.hpp"
 
@@ -69,11 +69,11 @@ int main(int argc, char *argv[]){
     Theme::applyDarkTheme();
     qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss.zzz}] %{type}: %{message}");
     
-    ApiClient::instance() ; // initialize ApiClient singleton
+    ControlApiClient::instance() ; // initialize ControlApiClient singleton
 
     Synth* synth = new Synth() ;
 
-    ApiClient::instance()->connectToBackend();
+    ControlApiClient::instance()->connectToBackend();
     synth->showMaximized();
 
     return app.exec() ;

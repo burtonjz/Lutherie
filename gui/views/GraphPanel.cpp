@@ -16,7 +16,7 @@
  */
 
 #include "views/GraphPanel.hpp"
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 #include "app/Theme.hpp"
 #include "graphics/GroupNode.hpp"
 #include "managers/ConnectionManager.hpp"
@@ -62,7 +62,7 @@ GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
 
     // connections
     connect(
-        ApiClient::instance(), &ApiClient::dataReceived, 
+        ControlApiClient::instance(), &ControlApiClient::dataReceived, 
         this, &GraphPanel::onApiDataReceived
     );
     connect(

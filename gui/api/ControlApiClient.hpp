@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef APICLIENT_HPP
-#define APICLIENT_HPP
+#ifndef CONTROL_API_CLIENT_HPP_
+#define CONTROL_API_CLIENT_HPP_
 
 #include <QObject>
 #include <QTcpSocket>
@@ -25,22 +25,22 @@
 
 using json = nlohmann::json ;
 
-class ApiClient : public QObject
-{
+class ControlApiClient : public QObject {
     Q_OBJECT
+    
 private:
     QTcpSocket *socket ;
     QByteArray buffer ;
 
-    explicit ApiClient(QObject* parent = nullptr);
-    ~ApiClient() = default ;
+    explicit ControlApiClient(QObject* parent = nullptr);
+    ~ControlApiClient() = default ;
     
 public:
-    static ApiClient* instance() ;
-    ApiClient(const ApiClient&) = delete ;
-    ApiClient& operator=(const ApiClient&) = delete ;
-    ApiClient(ApiClient&&) = delete ;
-    ApiClient& operator=(ApiClient&&) = delete ;
+    static ControlApiClient* instance() ;
+    ControlApiClient(const ControlApiClient&) = delete ;
+    ControlApiClient& operator=(const ControlApiClient&) = delete ;
+    ControlApiClient(ControlApiClient&&) = delete ;
+    ControlApiClient& operator=(ControlApiClient&&) = delete ;
 
     void connectToBackend();
     void sendMessage(const json& j);
@@ -59,4 +59,4 @@ private slots:
 
 };
 
-#endif // APICLIENT_HPP
+#endif // CONTROL_API_CLIENT_HPP_

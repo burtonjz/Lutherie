@@ -17,7 +17,7 @@
 
 #include "managers/ComponentManager.hpp"
 #include "meta/ComponentRegistry.hpp"
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 
 ComponentManager::ComponentManager(QObject* parent):
     QObject(parent),
@@ -26,7 +26,7 @@ ComponentManager::ComponentManager(QObject* parent):
     modParameters_()
 {
     connect(
-        ApiClient::instance(), &ApiClient::dataReceived, 
+        ControlApiClient::instance(), &ControlApiClient::dataReceived, 
         this, &ComponentManager::onApiDataReceived
     );
 }
@@ -43,14 +43,14 @@ void ComponentManager::requestAddComponent(ComponentType type){
 
     j["action"] = "add_component" ;
     j["name"] = descriptor.name ;
-    ApiClient::instance()->sendMessage(j); 
+    ControlApiClient::instance()->sendMessage(j); 
 }
 
 void ComponentManager::requestRemoveComponent(int componentId){    
     json j ;
     j["action"] = "remove_component" ;
     j["componentId"] = componentId ;
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
 }
 
 void ComponentManager::requestParameterUpdate(int componentId, ParameterType p, ParameterValue v){
@@ -60,12 +60,12 @@ void ComponentManager::requestParameterUpdate(int componentId, ParameterType p, 
     j["parameter"] = static_cast<int>(p);
     j["value"] = ParameterValueToJson(v) ;
     
-    ApiClient::instance()->sendMessage(j); 
+    ControlApiClient::instance()->sendMessage(j); 
 }
 
 void ComponentManager::requestCollectionUpdate(CollectionRequest req){
     json obj = req ;
-    ApiClient::instance()->sendMessage(obj); 
+    ControlApiClient::instance()->sendMessage(obj); 
 }
 
 void ComponentManager::requestModulationDepthUpdate(int componentId, ParameterType p, double depth){
@@ -75,7 +75,7 @@ void ComponentManager::requestModulationDepthUpdate(int componentId, ParameterTy
     obj["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p, name);
     obj["depth"] = depth ;
 
-    ApiClient::instance()->sendMessage(obj);
+    ControlApiClient::instance()->sendMessage(obj);
 }
 
 void ComponentManager::requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy){
@@ -85,7 +85,7 @@ void ComponentManager::requestModulationStrategyUpdate(int componentId, Paramete
     obj["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p, name);
     obj["strategy"] = static_cast<int>(strategy) ;
 
-    ApiClient::instance()->sendMessage(obj);
+    ControlApiClient::instance()->sendMessage(obj);
 }
 
 void ComponentManager::requestModelSync(int componentId){
@@ -93,7 +93,7 @@ void ComponentManager::requestModelSync(int componentId){
     obj["action"] = "sync_component" ;
     obj["componentId"] = componentId ;
     
-    ApiClient::instance()->sendMessage(obj);
+    ControlApiClient::instance()->sendMessage(obj);
 }
 
 void ComponentManager::requestSetFile(int componentId, std::string path){
@@ -102,7 +102,7 @@ void ComponentManager::requestSetFile(int componentId, std::string path){
     obj["componentId"] = componentId ;
     obj["path"] = path ;
 
-    ApiClient::instance()->sendMessage(obj);
+    ControlApiClient::instance()->sendMessage(obj);
 }
 
 ComponentModel* ComponentManager::getModel(int componentId) const {

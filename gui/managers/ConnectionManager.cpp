@@ -17,7 +17,7 @@
 
 #include "managers/ConnectionManager.hpp"
 #include "requests/ConnectionRequest.hpp"
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 
 #include <QGraphicsItem>
 #include <QDebug>
@@ -26,7 +26,7 @@
 ConnectionManager::ConnectionManager(QObject* parent): 
     QObject(parent)
 {
-    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &ConnectionManager::onApiDataReceived);
+    connect(ControlApiClient::instance(), &ControlApiClient::dataReceived, this, &ConnectionManager::onApiDataReceived);
 }
 
 void ConnectionManager::loadConnection(const ConnectionRequest& req){
@@ -107,7 +107,7 @@ void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){
 
 void ConnectionManager::sendConnectionApiRequest(ConnectionRequest req){
     auto obj = req ;
-    ApiClient::instance()->sendMessage(obj);
+    ControlApiClient::instance()->sendMessage(obj);
 }
 
 bool ConnectionManager::connectionExists(ConnectionRequest request) const {

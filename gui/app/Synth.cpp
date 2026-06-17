@@ -18,7 +18,7 @@
 #include "app/Synth.hpp"
 #include "managers/StateManager.hpp"
 #include "views/GraphPanel.hpp"
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "config/Config.hpp"
 #include "graphics/ToastNotification.hpp"
@@ -83,11 +83,11 @@ Synth::Synth(QWidget* parent):
 
     // api client
     connect(
-        ApiClient::instance(), &ApiClient::connected, 
+        ControlApiClient::instance(), &ControlApiClient::connected, 
         this, &Synth::onApiConnected
     );
     connect(
-        ApiClient::instance(), &ApiClient::dataReceived, 
+        ControlApiClient::instance(), &ControlApiClient::dataReceived, 
         this, &Synth::onApiDataReceived
     );
 
@@ -507,12 +507,12 @@ void Synth::onActionStart(){
     json j ;
     
     j["action"] = "get_audio_configuration" ;
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
     j.clear();
 
     j["action"] = "set_state" ;
     j["state"] = "run" ;
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
 }
 
 void Synth::onActionStop(){
@@ -520,7 +520,7 @@ void Synth::onActionStop(){
     json j ;
     j["action"] = "set_state" ;
     j["state"] = "stop" ;
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
 }
 
 void Synth::onEngineStatusChange(bool status){
@@ -568,7 +568,7 @@ void Synth::onActionLoad(){
     
     // send API request
     saveData_["action"] = "load_patch" ;
-    ApiClient::instance()->sendMessage(saveData_);
+    ControlApiClient::instance()->sendMessage(saveData_);
 }
 
 void Synth::onActionSave(){
@@ -577,7 +577,7 @@ void Synth::onActionSave(){
     } else {
         json j ;
         j["action"] = "get_configuration" ;
-        ApiClient::instance()->sendMessage(j);
+        ControlApiClient::instance()->sendMessage(j);
     }
 }
 
@@ -596,7 +596,7 @@ void Synth::onActionSaveAs(){
         saveFilePath_ = filePath ;
         json j ;
         j["action"] = "get_configuration" ;
-        ApiClient::instance()->sendMessage(j);
+        ControlApiClient::instance()->sendMessage(j);
     }
 }
 

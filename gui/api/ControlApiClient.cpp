@@ -15,28 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 #include "config/Config.hpp"
 
 #include <string>
 
-ApiClient* ApiClient::instance(){
-    static ApiClient* s_instance = nullptr ;
+ControlApiClient* ControlApiClient::instance(){
+    static ControlApiClient* s_instance = nullptr ;
     if ( !s_instance ){
-        s_instance = new ApiClient();
+        s_instance = new ControlApiClient();
     }
     return s_instance ;
 }
 
-ApiClient::ApiClient(QObject *parent)
+ControlApiClient::ControlApiClient(QObject *parent)
     : QObject{parent}, socket(new QTcpSocket(this)){
-    connect(socket, &QTcpSocket::readyRead, this, &ApiClient::onReadyRead);
-    connect(socket, &QTcpSocket::connected, this, &ApiClient::connected);
-    connect(socket, &QTcpSocket::disconnected, this, &ApiClient::disconnected);
-    connect(socket, &QTcpSocket::errorOccurred, this, &ApiClient::onErrorOccurred);
+    connect(socket, &QTcpSocket::readyRead, this, &ControlApiClient::onReadyRead);
+    connect(socket, &QTcpSocket::connected, this, &ControlApiClient::connected);
+    connect(socket, &QTcpSocket::disconnected, this, &ControlApiClient::disconnected);
+    connect(socket, &QTcpSocket::errorOccurred, this, &ControlApiClient::onErrorOccurred);
 }
 
-void ApiClient::connectToBackend(){
+void ControlApiClient::connectToBackend(){
     Config::load();
     QString serverAddress = QString::fromStdString(Config::get<std::string>("server.address").value()) ;
     int serverPort = Config::get<int>("server.control_port").value() ;
@@ -44,7 +44,7 @@ void ApiClient::connectToBackend(){
     socket->connectToHost(serverAddress, serverPort );
 }
 
-void ApiClient::sendMessage(const json& j){
+void ControlApiClient::sendMessage(const json& j){
     QByteArray msg = QByteArray::fromStdString(j.dump()) + "\n" ;
     qInfo() << "Sending Message:" << msg ;
     if ( socket->state() == QAbstractSocket::ConnectedState ){
@@ -54,7 +54,7 @@ void ApiClient::sendMessage(const json& j){
 
 // slot functions
 
-void ApiClient::onReadyRead() {
+void ControlApiClient::onReadyRead() {
     buffer.append(socket->readAll());
 
     while (true) {
@@ -74,15 +74,15 @@ void ApiClient::onReadyRead() {
     }
 }
 
-void ApiClient::onConnected() {
+void ControlApiClient::onConnected() {
     emit connected();
 }
 
-void ApiClient::onDisconnected() {
+void ControlApiClient::onDisconnected() {
     emit disconnected();
 }
 
-void ApiClient::onErrorOccurred(QAbstractSocket::SocketError socketError) {
+void ControlApiClient::onErrorOccurred(QAbstractSocket::SocketError socketError) {
     Q_UNUSED(socketError);
     emit errorOccurred(socket->errorString());
 }

@@ -17,7 +17,7 @@
 
 #include "app/Setup.hpp"
 #include "managers/StateManager.hpp"
-#include "api/ApiClient.hpp"
+#include "api/ControlApiClient.hpp"
 #include "ui_Setup.h"
 
 Setup::Setup(QWidget* parent): 
@@ -25,14 +25,14 @@ Setup::Setup(QWidget* parent):
     ui_(new Ui::AudioMidiSetupWidget)
 {
     // create API connections
-    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Setup::onApiDataReceived);
+    connect(ControlApiClient::instance(), &ControlApiClient::dataReceived, this, &Setup::onApiDataReceived);
 
     // ask backend for relevant data
     json j ;
     j["action"] = "get_audio_devices" ;
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
     j["action"] = "get_midi_devices" ;
-    ApiClient::instance()->sendMessage(j); 
+    ControlApiClient::instance()->sendMessage(j); 
 
     ui_->setupUi(this);
 
@@ -103,11 +103,11 @@ void Setup::onSetupSubmit(){
     json j ;
     j["action"] = "set_audio_device" ;
     j["device_id"] = ui_->comboAudioDevice->currentData().toInt();
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
 
     j["action"] = "set_midi_device" ;
     j["device_id"] = ui_->comboMidiDevice->currentData().toInt();
-    ApiClient::instance()->sendMessage(j);
+    ControlApiClient::instance()->sendMessage(j);
 }
 
 void Setup::onSetupCompleted(){
