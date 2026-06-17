@@ -58,13 +58,15 @@ private:
     static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
     
     // Thread management
-    std::thread apiServerThread_ ;
+    std::thread controlApiThread_ ;
+    std::thread dataApiThread_ ;
     std::thread midiThread_ ;
     std::thread audioThread_ ;
     std::thread analysisThread_ ;
     
     // Thread control flags (atomic for thread-safe access)
-    std::atomic<bool> apiServerRunning_ ;
+    std::atomic<bool> controlApiRunning_ ;
+    std::atomic<bool> dataApiRunning_ ;
     std::atomic<bool> engineRunning_ ;
     std::atomic<bool> midiRunning_ ;
     std::atomic<bool> audioRunning_ ;

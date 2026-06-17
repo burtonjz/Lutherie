@@ -6,6 +6,7 @@
 #include "dsp/AnalyticsEngine.hpp"
 #include "config/Config.hpp"
 #include "api/ControlApiHandler.hpp"
+#include "api/DataApiHandler.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiEventListener.hpp"
@@ -41,7 +42,8 @@ Engine::Engine():
     signalController(&componentManager), 
     midiController(&midiState_),
     // thread state flags
-    apiServerRunning_(false),
+    controlApiRunning_(false),
+    dataApiRunning_(false),
     engineRunning_(false),
     midiRunning_(false),
     audioRunning_(false),
@@ -60,6 +62,7 @@ Engine::Engine():
     midiDefaultHandler_()
 {
     ControlApiHandler::instance()->initialize(this);
+    DataApiHandler::instance()->initialize(this);
 
     registerBaseMidiHandler(&midiDefaultHandler_);
     midiController.addHandler(&midiDefaultHandler_);
@@ -92,15 +95,18 @@ void Engine::initialize(){
         availableAudioDevices_.push_back(dac_.getDeviceInfo(dev));
     }
 
-    // Start API server thread
-    apiServerRunning_ = true;
-    apiServerThread_ = std::thread([&](){
+    // Start API threads
+    controlApiRunning_ = true ;
+    controlApiThread_ = std::thread([&](){
         ControlApiHandler::instance()->start();
     });
 
-    SPDLOG_INFO("Engine initialized. API server running.");
+    dataApiRunning_ = true ;
+    dataApiThread_ = std::thread([&](){
+        DataApiHandler::instance()->start();
+    });    
 
-    while ( !stop_flag && apiServerRunning_ ){
+    while ( !stop_flag && controlApiRunning_ ){
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
@@ -180,11 +186,11 @@ void Engine::shutdown(){
     
     // Stop API server
     stop_flag = true;
-    apiServerRunning_ = false;
+    controlApiRunning_ = false;
     
-    if (apiServerThread_.joinable()){
+    if (controlApiThread_.joinable()){
         SPDLOG_INFO("Waiting for API server thread...");
-        apiServerThread_.join();
+        controlApiThread_.join();
     }
     
     SPDLOG_INFO("Engine shutdown complete");

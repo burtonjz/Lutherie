@@ -43,7 +43,7 @@ private:
     ControlApiHandler();
 
 public:
-    static ControlApiHandler* instance() ;
+    static ControlApiHandler* instance();
     ControlApiHandler(const ControlApiHandler&) = delete ;
     ControlApiHandler& operator=(const ControlApiHandler&) = delete ;
     ControlApiHandler(ControlApiHandler&&) = delete ;

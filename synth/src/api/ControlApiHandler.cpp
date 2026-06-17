@@ -124,7 +124,7 @@ void ControlApiHandler::start(){
         return;
     }
 
-    SPDLOG_INFO("Server listening on port {}... ",serverPort);
+    SPDLOG_INFO("Control API running on port {}... ",serverPort);
 
     // Accept incoming client connections in a loop
     while (!Engine::stop_flag) {
