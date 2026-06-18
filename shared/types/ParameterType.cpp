@@ -25,7 +25,7 @@ json ParameterValueToJson(const ParameterValue& v){
     }, v);
 }
 
-ParameterType parameterFromString(std::string str) {
+ParameterType stringToParameter(std::string str) {
     static const std::unordered_map<std::string_view, ParameterType> str2Type = {
         #define X(NAME) {ParameterTraits<ParameterType::NAME>::name, ParameterType::NAME},
         PARAMETER_TYPE_LIST

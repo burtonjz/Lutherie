@@ -57,7 +57,7 @@ void ComponentManager::requestParameterUpdate(int componentId, ParameterType p, 
     json j ;
     j["action"] = "set_parameter" ;
     j["componentId"] = componentId ;
-    j["parameter"] = static_cast<int>(p);
+    j["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p,name);
     j["value"] = ParameterValueToJson(v) ;
     
     ControlApiClient::instance()->sendMessage(j); 
@@ -231,7 +231,7 @@ void ComponentManager::syncModel(const json& msg){
     if ( data.contains("parameters") ){
         for ( const auto& [p, obj] : data.at("parameters").items() ){
             if ( ! obj.contains("currentValue") ) continue ;
-            setParameterValue(id, parameterFromString(p), obj.at("currentValue") );
+            setParameterValue(id, stringToParameter(p), obj.at("currentValue") );
         }
     }
 }
@@ -337,7 +337,7 @@ void ComponentManager::onApiDataReceived(const json& msg){
             return ;
         }
 
-        ParameterType p = parameterFromString(msg.at("parameter"));
+        ParameterType p = stringToParameter(msg.at("parameter"));
         ModulationModel* m = it->second->getModulationModel(p);
         if ( !m ){
             qWarning() << "Could not find Modulation Model for Parameter " 
@@ -359,7 +359,7 @@ void ComponentManager::onApiDataReceived(const json& msg){
             return ;
         }
 
-        ParameterType p = parameterFromString(msg.at("parameter"));
+        ParameterType p = stringToParameter(msg.at("parameter"));
         ModulationModel* m = model->getModulationModel(p);
         if ( !m ){
             qWarning() << "Could not find Modulation Model for Parameter " 

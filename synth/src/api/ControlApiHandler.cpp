@@ -469,7 +469,7 @@ json ControlApiHandler::getParameter(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param =  stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
@@ -490,7 +490,7 @@ json ControlApiHandler::setParameter(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param = stringToParameter(response["parameter"]);
         response.at("value"); // verify present
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
@@ -517,7 +517,7 @@ json ControlApiHandler::getParameterDefault(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param = stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
@@ -538,7 +538,7 @@ json ControlApiHandler::setParameterDefault(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param = stringToParameter(response["parameter"]);
         response.at("value"); // verify present
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
@@ -563,7 +563,7 @@ json ControlApiHandler::getParameterValueRange(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param = stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
@@ -586,7 +586,7 @@ json ControlApiHandler::setParameterValueRange(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param = stringToParameter(response["parameter"]);
         response.at("minimum"); 
         response.at("maximum"); 
     } catch (const std::exception& e){
@@ -616,7 +616,7 @@ json ControlApiHandler::resetParameter(int sock, const json& request){
 
     try {
         id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
+        param = stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
@@ -880,7 +880,7 @@ json ControlApiHandler::getModulationStrategy(int sock, const json& request){
 
     try {
         id = request["componentId"];
-        p = parameterFromString(request["parameter"]);
+        p = stringToParameter(request["parameter"]);
     } catch (const std::exception& e){
         json response = request ;
         return sendApiResponse(sock, response, 
@@ -925,7 +925,7 @@ json ControlApiHandler::setModulationStrategy(int sock, const json& request){
 
     try {
         id = request["componentId"];
-        p = parameterFromString(request["parameter"]);
+        p = stringToParameter(request["parameter"]);
         s = static_cast<ModulationStrategy>(request["strategy"]);
     } catch (const std::exception& e){
         json response = request ;
@@ -963,7 +963,7 @@ json ControlApiHandler::getModulationDepth(int sock, const json& request){
 
     try {
         id = request["componentId"];
-        p = parameterFromString(request["parameter"]);
+        p = stringToParameter(request["parameter"]);
     } catch (const std::exception& e){
         json response = request ;
         return sendApiResponse(sock, response, 
@@ -1009,7 +1009,7 @@ json ControlApiHandler::setModulationDepth(int sock, const json& request){
 
     try {
         id = request["componentId"];
-        p = parameterFromString(request["parameter"]);
+        p = stringToParameter(request["parameter"]);
         depth = request["depth"];
     } catch (const std::exception& e){
         json response = request ;
@@ -1102,7 +1102,6 @@ bool ControlApiHandler::loadCreateComponent(int sock, const json& components, st
     json componentRequest ;
     json componentResponse ;
     json parameterRequest ;
-    ParameterType parameterType ;
 
     bool success = true ;
     for ( const auto& component : components ){
@@ -1118,10 +1117,9 @@ bool ControlApiHandler::loadCreateComponent(int sock, const json& components, st
                 if ( ! data.contains("currentValue") ){
                     continue ; // just has modulation
                 }
-                parameterType = static_cast<ParameterType>(parameterFromString(p));
                 parameterRequest["action"] = "set_component_parameter" ;
                 parameterRequest["componentId"] = idMap[id] ;
-                parameterRequest["parameter"] = static_cast<int>(parameterType);
+                parameterRequest["parameter"] = p ;
                 parameterRequest["value"] = data.at("currentValue") ;
                 setParameter(sock, parameterRequest);
             }

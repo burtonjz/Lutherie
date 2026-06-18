@@ -104,7 +104,7 @@ inline void to_json(json& j, const ConnectionRequest& req){
     if ( req.inboundIdx.has_value() ) j["inbound"]["index"] = req.inboundIdx.value();
     if ( req.outboundID.has_value() ) j["outbound"]["componentId"] = req.outboundID.value();
     if ( req.outboundIdx.has_value() ) j["outbound"]["index"] = req.outboundIdx.value();
-    if ( req.inboundParameter.has_value() ) j["inbound"]["parameter"] = req.inboundParameter.value();
+    if ( req.inboundParameter.has_value() ) j["inbound"]["parameter"] = GET_PARAMETER_TRAIT_MEMBER(req.inboundParameter.value(), name);
 }
 
 inline void from_json(const json& j, ConnectionRequest& req){
@@ -122,7 +122,7 @@ inline void from_json(const json& j, ConnectionRequest& req){
     if ( outbound.contains("index") ) 
         req.outboundIdx = outbound.at("index");
     if ( inbound.contains("parameter") ) 
-        req.inboundParameter = static_cast<ParameterType>(inbound.at("parameter"));
+        req.inboundParameter = stringToParameter(inbound.at("parameter"));
 
     if ( j.at("action") == "create_connection" ){
         req.remove = false ;

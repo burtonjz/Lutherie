@@ -87,7 +87,7 @@ enum class ParameterType: uint8_t {
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 
-ParameterType parameterFromString(std::string str);
+ParameterType stringToParameter(std::string str);
 
 /* 
 every ParameterType will store a default modulation strategy

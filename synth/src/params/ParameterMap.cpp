@@ -266,7 +266,7 @@ json ParameterMap::toJson() const {
 
 void ParameterMap::fromJson(const json& j){
     for (const auto& [name, value] : j.items() ){
-        ParameterType p = parameterFromString(name);
+        ParameterType p = stringToParameter(name);
         addParameterDispatch(p, value);
     }
 }

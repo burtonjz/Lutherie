@@ -970,10 +970,10 @@ void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
         ParameterType p ;
         if ( str.find("depth") != std::string::npos ){
             str.erase(str.find(" depth"), 6);
-            p = parameterFromString(str);
+            p = stringToParameter(str);
             connectionRenderer_->setDragCableParameter(p, true);
         } else {
-            p = parameterFromString(str);
+            p = stringToParameter(str);
             connectionRenderer_->setDragCableParameter(p);
         }
     } else {
