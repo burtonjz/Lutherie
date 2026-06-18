@@ -16,6 +16,7 @@
  */
 
 #include "api/ControlApiHandler.hpp"
+#include "api/DataApiHandler.hpp"
 #include "core/BaseComponent.hpp"
 #include "core/FileComponent.hpp"
 #include "core/Engine.hpp"
@@ -87,6 +88,7 @@ void ControlApiHandler::initialize(Engine* engine){
     handlers_["set_modulation_depth"] = [this](int sock, const json& request){ return setModulationDepth(sock, request); };
     handlers_["get_file_path"] = [this](int sock, const json& request){ return getFilePath(sock, request); };
     handlers_["set_file_path"] = [this](int sock, const json& request){ return setFilePath(sock, request); };
+    handlers_["get_buffer_data"] = [this](int sock, const json& request){ return getBufferData(sock, request); };
 }
 
 void ControlApiHandler::start(){
@@ -1080,6 +1082,40 @@ json ControlApiHandler::setFilePath(int sock, const json& request){
 
     c->setPath(path);
     return sendApiResponse(sock, response);
+}
+
+json ControlApiHandler::getBufferData(int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+    size_t channel ;
+
+    try {
+        id = response.at("componentId");
+        channel = response.at("channel");
+    } catch ( const std::exception& e ){
+        return sendApiResponse(sock, response, "Error parsing json request: " + std::string(e.what()));
+    }
+
+    AudioBufferComponent* c = engine_->componentManager.getBufferComponent(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Buffer component not found");
+    }
+
+    if ( channel >= c->getNumOutputs() ){
+        return sendApiResponse(sock, response, "Invalid channel number for buffer component");
+    }
+
+    const auto& buffer = c->getBuffer(channel);
+
+    DataDescriptor header {
+        .componentId = static_cast<uint32_t>(id),
+        .channel = static_cast<uint32_t>(channel),
+        .size = static_cast<uint64_t>(buffer.size() * sizeof(double))
+    };
+
+    DataApiHandler::instance()->sendApiData(header, c->getBuffer(channel));
+    return sendApiResponse(sock, response);
+
 }
 
 bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){

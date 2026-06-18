@@ -110,6 +110,9 @@ private:
     // file management
     json getFilePath(int sock, const json& request);
     json setFilePath(int sock, const json& request);
+
+    // data api
+    json getBufferData(int sock, const json& request);
     
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);

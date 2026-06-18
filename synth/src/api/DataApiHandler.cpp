@@ -146,9 +146,18 @@ void DataApiHandler::sendApiData(DataDescriptor header, const std::vector<double
 
     for ( const auto& sock : clientSockets_ ){
         if ( !sendAll(sock, buffer.data(), buffer.size()) ){
-            SPDLOG_WARN("failure sending buffer data of size {} to socket {}", buffer.size(), sock);
+            SPDLOG_WARN("failure sending buffer data of size {} to socket {}", 
+                buffer.size(), 
+                sock
+            );
         }
     }
+
+    SPDLOG_DEBUG("Data API sent buffer of size {} for component {} channel {}", 
+        buffer.size(), 
+        header.componentId, 
+        header.channel
+    );
 }
 
 bool DataApiHandler::sendAll(int sock, const uint8_t* data, size_t len){
