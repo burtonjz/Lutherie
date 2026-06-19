@@ -42,6 +42,7 @@ struct SignalConnection {
         return component == other.component && index == other.index ;
     }
 };
+
 struct ConnectionHash {
     std::size_t operator()(const SignalConnection& conn) const {
         return std::hash<AudioSignalComponent*>()(conn.component) ^ (std::hash<size_t>()(conn.index) << 1);

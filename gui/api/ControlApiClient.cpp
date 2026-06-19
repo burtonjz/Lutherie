@@ -28,12 +28,14 @@ ControlApiClient* ControlApiClient::instance(){
     return s_instance ;
 }
 
-ControlApiClient::ControlApiClient(QObject *parent)
-    : QObject{parent}, socket(new QTcpSocket(this)){
-    connect(socket, &QTcpSocket::readyRead, this, &ControlApiClient::onReadyRead);
-    connect(socket, &QTcpSocket::connected, this, &ControlApiClient::connected);
-    connect(socket, &QTcpSocket::disconnected, this, &ControlApiClient::disconnected);
-    connect(socket, &QTcpSocket::errorOccurred, this, &ControlApiClient::onErrorOccurred);
+ControlApiClient::ControlApiClient(QObject *parent): 
+    QObject{parent}, 
+    socket_(new QTcpSocket(this))
+{
+    connect(socket_, &QTcpSocket::readyRead, this, &ControlApiClient::onReadyRead);
+    connect(socket_, &QTcpSocket::connected, this, &ControlApiClient::connected);
+    connect(socket_, &QTcpSocket::disconnected, this, &ControlApiClient::disconnected);
+    connect(socket_, &QTcpSocket::errorOccurred, this, &ControlApiClient::onErrorOccurred);
 }
 
 void ControlApiClient::connectToBackend(){
@@ -41,28 +43,28 @@ void ControlApiClient::connectToBackend(){
     QString serverAddress = QString::fromStdString(Config::get<std::string>("server.address").value()) ;
     int serverPort = Config::get<int>("server.control_port").value() ;
     qDebug() << "connecting to " << serverAddress << "port" << serverPort ;
-    socket->connectToHost(serverAddress, serverPort );
+    socket_->connectToHost(serverAddress, serverPort );
 }
 
 void ControlApiClient::sendMessage(const json& j){
     QByteArray msg = QByteArray::fromStdString(j.dump()) + "\n" ;
     qInfo() << "Sending Message:" << msg ;
-    if ( socket->state() == QAbstractSocket::ConnectedState ){
-        socket->write(msg);
+    if ( socket_->state() == QAbstractSocket::ConnectedState ){
+        socket_->write(msg);
     }
 }
 
 // slot functions
 
 void ControlApiClient::onReadyRead() {
-    buffer.append(socket->readAll());
+    buffer_.append(socket_->readAll());
 
     while (true) {
-        int idxEnd = buffer.indexOf('\n');
+        int idxEnd = buffer_.indexOf('\n');
         if ( idxEnd == -1 ) break ;
 
-        QByteArray line = buffer.left(idxEnd);
-        buffer.remove(0, idxEnd + 1);
+        QByteArray line = buffer_.left(idxEnd);
+        buffer_.remove(0, idxEnd + 1);
 
         try {
             json j = json::parse(line.constData(), line.constData() + line.size());
@@ -84,5 +86,5 @@ void ControlApiClient::onDisconnected() {
 
 void ControlApiClient::onErrorOccurred(QAbstractSocket::SocketError socketError) {
     Q_UNUSED(socketError);
-    emit errorOccurred(socket->errorString());
+    emit errorOccurred(socket_->errorString());
 }

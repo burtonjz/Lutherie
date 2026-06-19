@@ -19,11 +19,34 @@
 #define DATA_DESCRIPTOR_HPP_
 
 #include <cstdint>
+#include <string>
 
 struct DataDescriptor {
     uint32_t componentId ;
     uint32_t channel ;
     uint64_t size ;
+
+    std::string toString() const {
+        return std::to_string(componentId) 
+            + std::to_string(channel);
+    }
+
+    size_t hash() const {
+        return std::hash<std::string>()(toString());
+    }
+
+    bool operator==(const DataDescriptor& other) const {
+        return componentId == other.componentId && 
+            channel == other.channel ;
+    }
 };
+
+struct DataDescriptorHash {
+    std::size_t operator()(const DataDescriptor& desc) const {
+        return desc.hash() ;
+    }
+};
+
+static_assert(sizeof(DataDescriptor) == 16);
 
 #endif // DATA_DESCRIPTOR_HPP_

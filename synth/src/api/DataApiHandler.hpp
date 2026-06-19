@@ -46,7 +46,7 @@ public:
     void sendApiData(DataDescriptor header, const std::vector<double>& data);
 
 private:
-    bool sendAll(int sock, const uint8_t* data, size_t len);
+    bool sendAll(int sock, const uint8_t* data, std::size_t len);
 };
 
 #endif // DATA_API_HANDLER_HPP_

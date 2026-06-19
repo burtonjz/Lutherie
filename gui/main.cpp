@@ -16,6 +16,7 @@
  */
 
 #include "api/ControlApiClient.hpp"
+#include "api/DataApiClient.hpp"
 #include "app/Theme.hpp"
 #include "app/Synth.hpp"
 
@@ -69,11 +70,15 @@ int main(int argc, char *argv[]){
     Theme::applyDarkTheme();
     qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss.zzz}] %{type}: %{message}");
     
-    ControlApiClient::instance() ; // initialize ControlApiClient singleton
+    // initiate TCP clients
+    ControlApiClient::instance() ; 
+    DataApiClient::instance();
 
     Synth* synth = new Synth() ;
 
     ControlApiClient::instance()->connectToBackend();
+    DataApiClient::instance()->connectToBackend();
+    
     synth->showMaximized();
 
     return app.exec() ;

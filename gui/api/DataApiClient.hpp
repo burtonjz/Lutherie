@@ -15,40 +15,41 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef CONTROL_API_CLIENT_HPP_
-#define CONTROL_API_CLIENT_HPP_
+#ifndef DATA_API_CLIENT_HPP_
+#define DATA_API_CLIENT_HPP_
+
+#include "requests/DataDescriptor.hpp"
 
 #include <QObject>
 #include <QTcpSocket>
 #include <QAbstractSocket>
-#include <nlohmann/json.hpp>
+#include <vector>
+#include <unordered_map>
 
-using json = nlohmann::json ;
-
-class ControlApiClient : public QObject {
+class DataApiClient : public QObject {
     Q_OBJECT
     
 private:
     QTcpSocket* socket_ ;
-    QByteArray buffer_ ;
+    QByteArray readBuffer_ ;
+    std::unordered_map<DataDescriptor, std::vector<double>, DataDescriptorHash> buffers_ ;
 
-    explicit ControlApiClient(QObject* parent = nullptr);
-    ~ControlApiClient() = default ;
+    explicit DataApiClient(QObject* parent = nullptr);
+    ~DataApiClient() = default ;
     
 public:
-    static ControlApiClient* instance() ;
-    ControlApiClient(const ControlApiClient&) = delete ;
-    ControlApiClient& operator=(const ControlApiClient&) = delete ;
-    ControlApiClient(ControlApiClient&&) = delete ;
-    ControlApiClient& operator=(ControlApiClient&&) = delete ;
+    static DataApiClient* instance() ;
+    DataApiClient(const DataApiClient&) = delete ;
+    DataApiClient& operator=(const DataApiClient&) = delete ;
+    DataApiClient(DataApiClient&&) = delete ;
+    DataApiClient& operator=(DataApiClient&&) = delete ;
 
     void connectToBackend();
-    void sendMessage(const json& j);
 
 signals:
     void connected();
     void disconnected();
-    void dataReceived(const json& j);
+    void dataReceived(DataDescriptor header, const std::vector<double>& buffer);
     void errorOccurred(const QString &error);
 
 private slots:
@@ -59,4 +60,4 @@ private slots:
 
 };
 
-#endif // CONTROL_API_CLIENT_HPP_
+#endif // DATA_API_CLIENT_HPP_
