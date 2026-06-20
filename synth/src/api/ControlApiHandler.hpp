@@ -35,7 +35,7 @@ class Engine ;
 
 class ControlApiHandler {
 private:
-    using HandlerFunc = std::function<json(int sock, const json& request)>;
+    using HandlerFunc = std::function<json(const json& request)>;
     Engine* engine_ ;
     std::unordered_map<std::string, HandlerFunc> handlers_ ;
     std::unordered_set<int> clientSockets_ ;
@@ -53,8 +53,8 @@ public:
 
     void start();
     void onClientConnection(int clientSock);
-    void handleClientMessage(int clientSock, std::string jsonStr);
-    json sendApiResponse(int clientSock, json& response, const std::string& err = "");
+    void handleClientMessage(std::string jsonStr);
+    json sendApiResponse(json& response, const std::string& err = "");
 
     const std::unordered_set<int>& getOpenClientSockets() const ;
 
@@ -65,58 +65,58 @@ private:
     ---------------------------------------------------------
     */
     // engine management
-    json getAudioDevices(int sock, const json& request);
-    json setAudioDevice(int sock, const json& request);
-    json getAudioConfig(int sock, const json& request);
-    json getMidiDevices(int sock, const json& request);
-    json setMidiDevice(int sock, const json& request);
-    json setState(int sock, const json& request);
+    json getAudioDevices(const json& request);
+    json setAudioDevice(const json& request);
+    json getAudioConfig(const json& request);
+    json getMidiDevices(const json& request);
+    json setMidiDevice(const json& request);
+    json setState(const json& request);
 
     // api save/load
-    json getConfiguration(int sock, const json& request);
-    json loadPatch(int sock, const json& request);
+    json getConfiguration(const json& request);
+    json loadPatch(const json& request);
 
     // component management
-    json addComponent(int sock, const json& request);
-    json removeComponent(int sock, const json& request);
-    json parseConnectionRequest(int sock, const json& request);
+    json addComponent(const json& request);
+    json removeComponent(const json& request);
+    json parseConnectionRequest(const json& request);
     bool routeConnectionRequest(ConnectionRequest request);
-    json syncComponent(int sock, const json& request);
+    json syncComponent(const json& request);
     
     // parameter management
-    json getParameter(int sock, const json& request);
-    json setParameter(int sock, const json& request);
-    json getParameterDefault(int sock, const json& request);
-    json setParameterDefault(int sock, const json& request);
-    json getParameterValueRange(int sock, const json& request);
-    json setParameterValueRange(int sock, const json& request);
-    json resetParameter(int sock, const json& request);    
+    json getParameter(const json& request);
+    json setParameter(const json& request);
+    json getParameterDefault(const json& request);
+    json setParameterDefault(const json& request);
+    json getParameterValueRange(const json& request);
+    json setParameterValueRange(const json& request);
+    json resetParameter(const json& request);    
 
     // collection management
-    json parseCollectionRequest(int sock, const json& request);
-    json addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
-    json removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
-    json getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
-    json setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
-    json resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
-    json getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json parseCollectionRequest(const json& request);
+    json addCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json removeCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json getCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json setCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json resetCollection(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json getCollectionValueRange(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
 
     // modulation management
-    json getModulationStrategy(int sock, const json& request);
-    json setModulationStrategy(int sock, const json& request);
-    json getModulationDepth(int sock, const json& request);
-    json setModulationDepth(int sock, const json& request);
+    json getModulationStrategy(const json& request);
+    json setModulationStrategy(const json& request);
+    json getModulationDepth(const json& request);
+    json setModulationDepth(const json& request);
     
     // file management
-    json getFilePath(int sock, const json& request);
-    json setFilePath(int sock, const json& request);
+    json getFilePath(const json& request);
+    json setFilePath(const json& request);
 
     // data api
-    json getBufferData(int sock, const json& request);
+    json getBufferData(const json& request);
     
     // load functions
-    bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);
-    bool loadConnectComponent(int sock, const json& config);
+    bool loadCreateComponent(const json& components, std::unordered_map<int,int>& idMap);
+    bool loadConnectComponent(const json& config);
     void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);
 
     // collection helpers

@@ -101,7 +101,7 @@ signals:
 
 private slots:
     void onApiConnected();
-    void onApiDataReceived(const json& json);
+    void onControlMessageReceived(const json& json);
 
     void onEngineStatusChange(bool status);
 

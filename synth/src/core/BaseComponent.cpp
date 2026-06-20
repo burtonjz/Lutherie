@@ -181,11 +181,8 @@ void BaseComponent::onRemoveParameterDepthModulation(ParameterType p){
 
 void BaseComponent::triggerComponentSync() const {
     // notify clients
-    auto* api = ControlApiHandler::instance();
     json j ;
     j["action"] = "sync_component" ;
     j["componentId"] = getId();
-    for ( const auto& sock : api->getOpenClientSockets() ){
-        ControlApiHandler::instance()->handleClientMessage(sock,j.dump());
-    }
+    ControlApiHandler::instance()->handleClientMessage(j.dump());
 }

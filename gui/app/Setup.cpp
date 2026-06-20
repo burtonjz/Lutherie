@@ -25,7 +25,7 @@ Setup::Setup(QWidget* parent):
     ui_(new Ui::AudioMidiSetupWidget)
 {
     // create API connections
-    connect(ControlApiClient::instance(), &ControlApiClient::dataReceived, this, &Setup::onApiDataReceived);
+    connect(ControlApiClient::instance(), &ControlApiClient::dataReceived, this, &Setup::onControlMessageReceived);
 
     // ask backend for relevant data
     json j ;
@@ -67,7 +67,7 @@ void Setup::populateSetupComboBox(QComboBox* box, const json& data){
 }
 
 
-void Setup::onApiDataReceived(const json& json){
+void Setup::onControlMessageReceived(const json& json){
     QString action = QString::fromStdString(json["action"]);
 
     if ( action == "get_audio_devices" ){

@@ -108,7 +108,7 @@ private:
     bool isNodeNameAvailable(const QString& name, GraphNode* target = nullptr) const ;
 
 private slots:
-    void onApiDataReceived(const json& json);
+    void onControlMessageReceived(const json& json);
     
 public slots:
     // from parent

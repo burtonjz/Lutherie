@@ -79,6 +79,25 @@ void ComponentModel::setFile(std::string name){
     file_ = name ;
 }
 
+bool ComponentModel::hasBuffer() const {
+    return buffers_.has_value();
+}   
+
+const std::vector<double>& ComponentModel::getBuffer(size_t channel) const {
+    if ( !hasBuffer() || !buffers_.value().contains(channel) ){
+        throw std::runtime_error("buffer/channel not present in component model");
+    }
+    return buffers_->at(channel);
+}
+
+void ComponentModel::setBuffer(size_t channel, const std::vector<double>& buffer){
+    if ( !buffers_.has_value() ){
+        buffers_.emplace();
+    }
+    buffers_->emplace(channel, buffer);
+}
+
+
 const ComponentDescriptor& ComponentModel::getDescriptor() const {
     return descriptor_ ;
 }

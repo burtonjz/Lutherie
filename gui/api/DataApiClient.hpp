@@ -45,7 +45,7 @@ public:
     DataApiClient& operator=(DataApiClient&&) = delete ;
 
     void connectToBackend();
-
+    
 signals:
     void connected();
     void disconnected();
@@ -57,6 +57,9 @@ private slots:
     void onConnected();
     void onDisconnected();
     void onErrorOccurred(QAbstractSocket::SocketError socketError);
+
+public slots:
+    void onComponentRemoved(int componentId);
 
 };
 

@@ -88,7 +88,7 @@ Synth::Synth(QWidget* parent):
     );
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
-        this, &Synth::onApiDataReceived
+        this, &Synth::onControlMessageReceived
     );
 
     // component manager
@@ -457,7 +457,7 @@ void Synth::closeEvent(QCloseEvent* event){
 void Synth::onApiConnected(){
 }
 
-void Synth::onApiDataReceived(const json& j){
+void Synth::onControlMessageReceived(const json& j){
     QString action = QString::fromStdString(j["action"]);
 
     if ( action == "set_state" ){

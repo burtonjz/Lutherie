@@ -63,7 +63,7 @@ GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
     // connections
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
-        this, &GraphPanel::onApiDataReceived
+        this, &GraphPanel::onControlMessageReceived
     );
     connect(
         componentManager_, &ComponentManager::componentAdded,
@@ -712,7 +712,7 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
 
 }
 
-void GraphPanel::onApiDataReceived(const json& msg){
+void GraphPanel::onControlMessageReceived(const json& msg){
     QString action = QString::fromStdString(msg["action"]) ;
 
     if ( action == "load_patch" ){

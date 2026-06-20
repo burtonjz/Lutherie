@@ -25,6 +25,7 @@
 #include "widgets/ComponentParameters.hpp"
 #include "widgets/ModulationParameters.hpp"
 #include "requests/ConnectionRequest.hpp"
+#include "requests/DataDescriptor.hpp"
 
 #include <kddockwidgets/MainWindow.h>
 #include <QObject>
@@ -67,7 +68,8 @@ private:
     bool handleCollectionApiResponse(const json& msg);
 
 public slots:
-    void onApiDataReceived(const json& msg);
+    void onControlMessageReceived(const json& msg);
+    void onDataMessageReceived(DataDescriptor header, const std::vector<double>& buffer);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onCollectionEdited(CollectionRequest req );
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);

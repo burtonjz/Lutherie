@@ -39,6 +39,7 @@ private:
     std::map<ParameterType, ModulationModel*> modulations_ ;
     QString name_ ;
     std::optional<std::string> file_ ;
+    std::optional<std::unordered_map<size_t, const std::vector<double>&>> buffers_ ;
 
 public:
     ComponentModel(int id, ComponentType typ);
@@ -52,6 +53,10 @@ public:
 
     std::string getFile() const ;
     void setFile(std::string name);
+
+    bool hasBuffer() const ;
+    const std::vector<double>& getBuffer(size_t channel) const ;
+    void setBuffer(size_t channel, const std::vector<double>& buffer);
     
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;

@@ -41,7 +41,7 @@ private:
     Ui::AudioMidiSetupWidget* ui_ ;
 
 private slots:
-    void onApiDataReceived(const json& json);
+    void onControlMessageReceived(const json& json);
     void onSetupSubmit();
     void onSetupCompleted();
 

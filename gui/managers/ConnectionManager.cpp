@@ -26,7 +26,7 @@
 ConnectionManager::ConnectionManager(QObject* parent): 
     QObject(parent)
 {
-    connect(ControlApiClient::instance(), &ControlApiClient::dataReceived, this, &ConnectionManager::onApiDataReceived);
+    connect(ControlApiClient::instance(), &ControlApiClient::dataReceived, this, &ConnectionManager::onControlMessageReceived);
 }
 
 void ConnectionManager::loadConnection(const ConnectionRequest& req){
@@ -118,7 +118,7 @@ bool ConnectionManager::connectionExists(ConnectionRequest request) const {
     return it != connections_.end() ;
 }
 
-void ConnectionManager::onApiDataReceived(const json& msg){
+void ConnectionManager::onControlMessageReceived(const json& msg){
     QString action = QString::fromStdString(msg.at("action")) ;
     bool success = msg.at("status") == "success" ;
 

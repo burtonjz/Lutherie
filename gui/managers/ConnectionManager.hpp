@@ -46,7 +46,7 @@ private:
     bool connectionExists(ConnectionRequest req) const ;
 
 private slots:
-    void onApiDataReceived(const json& json);
+    void onControlMessageReceived(const json& json);
 
 signals:
     void connectionAdded(const ConnectionRequest& req);

@@ -52,43 +52,43 @@ void ControlApiHandler::initialize(Engine* engine){
     engine_ = engine ;
 
     // register api handler functions
-    handlers_["get_audio_devices"] = [this](int sock, const json& request){ return getAudioDevices(sock, request); };
-    handlers_["set_audio_device"] = [this](int sock, const json& request){ return setAudioDevice(sock, request); };
-    handlers_["get_audio_configuration"] = [this](int sock, const json& request){ return getAudioConfig(sock, request); };
-    handlers_["get_midi_devices"] = [this](int sock, const json& request){ return getMidiDevices(sock, request); };
-    handlers_["set_midi_device"] = [this](int sock, const json& request){ return setMidiDevice(sock, request); };
-    handlers_["set_state"] = [this](int sock, const json& request){ return setState(sock, request); };
-    handlers_["get_configuration"] = [this](int sock, const json& request){ return getConfiguration(sock, request); };
-    handlers_["load_patch"] = [this](int sock, const json& request){ return loadPatch(sock, request); };
-    handlers_["add_component"] = [this](int sock, const json& request){ return addComponent(sock, request); };
-    handlers_["remove_component"] = [this](int sock, const json& request){ return removeComponent(sock, request); };
-    handlers_["create_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
-    handlers_["remove_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
-    handlers_["create_depth_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
-    handlers_["remove_depth_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
-    handlers_["sync_component"] = [this](int sock, const json& request){ return syncComponent(sock, request); };
-    handlers_["get_parameter"] = [this](int sock, const json& request){ return getParameter(sock, request); };
-    handlers_["set_parameter"] = [this](int sock, const json& request){ return setParameter(sock, request); };
-    handlers_["get_parameter_default"] = [this](int sock, const json& request){ return getParameterDefault(sock, request); };
-    handlers_["set_parameter_default"] = [this](int sock, const json& request){ return setParameterDefault(sock, request); };
-    handlers_["get_parameter_range"] = [this](int sock, const json& request){ return getParameterValueRange(sock, request); };
-    handlers_["set_parameter_range"] = [this](int sock, const json& request){ return setParameterValueRange(sock, request); };
-    handlers_["reset_parameter"] = [this](int sock, const json& request){ return resetParameter(sock, request); };
-    handlers_["add_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["remove_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["get_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["get_collection_values"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["set_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["reset_collection"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["get_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["set_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    handlers_["get_modulation_strategy"] = [this](int sock, const json& request){ return getModulationStrategy(sock, request); };
-    handlers_["set_modulation_strategy"] = [this](int sock, const json& request){ return setModulationStrategy(sock, request); };
-    handlers_["get_modulation_depth"] = [this](int sock, const json& request){ return getModulationDepth(sock, request); };
-    handlers_["set_modulation_depth"] = [this](int sock, const json& request){ return setModulationDepth(sock, request); };
-    handlers_["get_file_path"] = [this](int sock, const json& request){ return getFilePath(sock, request); };
-    handlers_["set_file_path"] = [this](int sock, const json& request){ return setFilePath(sock, request); };
-    handlers_["get_buffer_data"] = [this](int sock, const json& request){ return getBufferData(sock, request); };
+    handlers_["get_audio_devices"] = [this](const json& request){ return getAudioDevices(request); };
+    handlers_["set_audio_device"] = [this](const json& request){ return setAudioDevice(request); };
+    handlers_["get_audio_configuration"] = [this](const json& request){ return getAudioConfig(request); };
+    handlers_["get_midi_devices"] = [this](const json& request){ return getMidiDevices(request); };
+    handlers_["set_midi_device"] = [this](const json& request){ return setMidiDevice(request); };
+    handlers_["set_state"] = [this](const json& request){ return setState(request); };
+    handlers_["get_configuration"] = [this](const json& request){ return getConfiguration(request); };
+    handlers_["load_patch"] = [this](const json& request){ return loadPatch(request); };
+    handlers_["add_component"] = [this](const json& request){ return addComponent(request); };
+    handlers_["remove_component"] = [this](const json& request){ return removeComponent(request); };
+    handlers_["create_connection"] = [this](const json& request){ return parseConnectionRequest(request); };
+    handlers_["remove_connection"] = [this](const json& request){ return parseConnectionRequest(request); };
+    handlers_["create_depth_connection"] = [this](const json& request){ return parseConnectionRequest(request); };
+    handlers_["remove_depth_connection"] = [this](const json& request){ return parseConnectionRequest(request); };
+    handlers_["sync_component"] = [this](const json& request){ return syncComponent(request); };
+    handlers_["get_parameter"] = [this](const json& request){ return getParameter(request); };
+    handlers_["set_parameter"] = [this](const json& request){ return setParameter(request); };
+    handlers_["get_parameter_default"] = [this](const json& request){ return getParameterDefault(request); };
+    handlers_["set_parameter_default"] = [this](const json& request){ return setParameterDefault(request); };
+    handlers_["get_parameter_range"] = [this](const json& request){ return getParameterValueRange(request); };
+    handlers_["set_parameter_range"] = [this](const json& request){ return setParameterValueRange(request); };
+    handlers_["reset_parameter"] = [this](const json& request){ return resetParameter(request); };
+    handlers_["add_collection_value"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["remove_collection_value"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["get_collection_value"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["get_collection_values"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["set_collection_value"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["reset_collection"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["get_collection_range"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["set_collection_range"] = [this](const json& request){ return parseCollectionRequest(request); };
+    handlers_["get_modulation_strategy"] = [this](const json& request){ return getModulationStrategy(request); };
+    handlers_["set_modulation_strategy"] = [this](const json& request){ return setModulationStrategy(request); };
+    handlers_["get_modulation_depth"] = [this](const json& request){ return getModulationDepth(request); };
+    handlers_["set_modulation_depth"] = [this](const json& request){ return setModulationDepth(request); };
+    handlers_["get_file_path"] = [this](const json& request){ return getFilePath(request); };
+    handlers_["set_file_path"] = [this](const json& request){ return setFilePath(request); };
+    handlers_["get_buffer_data"] = [this](const json& request){ return getBufferData(request); };
 }
 
 void ControlApiHandler::start(){
@@ -178,7 +178,7 @@ void ControlApiHandler::onClientConnection(int sock){
                 partialData.erase(0, pos + 1); 
 
                 // handle the parsed json string
-                handleClientMessage(sock, jsonStr);
+                handleClientMessage(jsonStr);
             }
         } else if (bytesReceived == 0){
             break ;
@@ -197,7 +197,7 @@ void ControlApiHandler::onClientConnection(int sock){
     close(sock);
 }
 
-json ControlApiHandler::sendApiResponse(int sock, json& response, const std::string& err){
+json ControlApiHandler::sendApiResponse(json& response, const std::string& err){
     if ( err == "" ){
         response["status"] = "success" ;
     } else {
@@ -207,12 +207,14 @@ json ControlApiHandler::sendApiResponse(int sock, json& response, const std::str
     }
     std::string r = response.dump() + '\n' ;
     SPDLOG_INFO("sending API response: {}", r.c_str());
-    send(sock, r.c_str(), r.size(), 0);
+    for ( const auto& sock : clientSockets_ ){
+        send(sock, r.c_str(), r.size(), 0);
+    }
     return response ;
 }
 
 
-void ControlApiHandler::handleClientMessage(int sock, std::string jsonStr){
+void ControlApiHandler::handleClientMessage(std::string jsonStr){
     json request;
     std::string action ;
 
@@ -222,24 +224,24 @@ void ControlApiHandler::handleClientMessage(int sock, std::string jsonStr){
         request = json::parse(jsonStr);
         action = request["action"];
     } catch (const std::exception& e){
-        sendApiResponse(sock,request, "Error parsing json request: " + std::string(e.what()));
+        sendApiResponse(request, "Error parsing json request: " + std::string(e.what()));
         return ;
     }
     
     auto it = handlers_.find(action);
     if ( it == handlers_.end() ){
-        sendApiResponse(sock, request, "unknown action requested: " + action );
+        sendApiResponse(request, "unknown action requested: " + action );
         return ;
     }
     
-    it->second(sock, request);
+    it->second(request);
 }
 
 const std::unordered_set<int>& ControlApiHandler::getOpenClientSockets() const {
     return clientSockets_ ;
 }
 
-json ControlApiHandler::getAudioDevices(int sock, const json& request){
+json ControlApiHandler::getAudioDevices(const json& request){
     json response = request ;
     for ( const auto& dev : engine_->getAvailableAudioDevices() ){
         json j = {
@@ -249,10 +251,10 @@ json ControlApiHandler::getAudioDevices(int sock, const json& request){
         response["data"].push_back(j);
     }
     SPDLOG_DEBUG(response.dump());
-    return sendApiResponse(sock,response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getMidiDevices(int sock, const json& request){
+json ControlApiHandler::getMidiDevices(const json& request){
     json response = request ;
     for ( const auto& [id, name] : engine_->getAvailableMidiDevices() ){
         json j = {
@@ -261,10 +263,10 @@ json ControlApiHandler::getMidiDevices(int sock, const json& request){
         };
         response["data"].push_back(j);
     }
-    return sendApiResponse(sock,response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setAudioDevice(int sock, const json& request){
+json ControlApiHandler::setAudioDevice(const json& request){
     json response = request ;
     int deviceId ;
     std::string err ;
@@ -272,78 +274,78 @@ json ControlApiHandler::setAudioDevice(int sock, const json& request){
     try {
         deviceId = response.at("device_id");
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( engine_->setAudioDeviceId(deviceId) ){
-        auto output = sendApiResponse(sock,response);
+        auto output = sendApiResponse(response);
         if ( !engine_->isRunning() ){
             json j ;
             j["action"] = "get_audio_configuration" ;
-            getAudioConfig(sock, j);
+            getAudioConfig(j);
         }
         return output ;
     } else {
-        return sendApiResponse(sock, response, "failed to set audio device");
+        return sendApiResponse(response, "failed to set audio device");
     }
 }
 
-json ControlApiHandler::getAudioConfig(int sock, const json& request){
+json ControlApiHandler::getAudioConfig(const json& request){
     json response = request ;
 
     response["device_id"] = engine_->getAudioDeviceId();
     response["output_channels"] = engine_->signalController.getNumChannels();
 
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setMidiDevice(int sock, const json& request){
+json ControlApiHandler::setMidiDevice(const json& request){
     json response = request ;
     int deviceId ;
     
     try {
         deviceId = response.at("device_id");
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( engine_->setMidiDeviceId(deviceId) ){
-        return sendApiResponse(sock,response);
+        return sendApiResponse(response);
     } else {
-        return sendApiResponse(sock, response, "failed to set midi device");
+        return sendApiResponse(response, "failed to set midi device");
     }
 }
 
-json ControlApiHandler::setState(int sock, const json& request){
+json ControlApiHandler::setState(const json& request){
     json response = request ;
     std::string state ;
 
     try {
         state = response["state"];
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( state == "run" ){
         engine_->run();
-        return sendApiResponse(sock,response);
+        return sendApiResponse(response);
     }
 
     if ( state == "stop" ){
         engine_->stop();
-        return sendApiResponse(sock,response);
+        return sendApiResponse(response);
     }
 
-    return sendApiResponse(sock,response, "Unrecognized engine state requested: " + state);
+    return sendApiResponse(response, "Unrecognized engine state requested: " + state);
 }
 
-json ControlApiHandler::getConfiguration(int sock, const json& request){
+json ControlApiHandler::getConfiguration(const json& request){
     json response = request ;
     response["data"] = engine_->serialize();
-    return sendApiResponse(sock,response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::loadPatch(int sock, const json& request){
+json ControlApiHandler::loadPatch(const json& request){
     json response = request ;
     
     // create components
@@ -351,27 +353,27 @@ json ControlApiHandler::loadPatch(int sock, const json& request){
         !response.contains("components") ||
         !response.at("components").is_array() 
     ){
-        return sendApiResponse(sock, response, "components array not properly defined");
+        return sendApiResponse(response, "components array not properly defined");
     }
 
     std::unordered_map<int,int> idMap ; // old id, new id
-    if ( ! loadCreateComponent(sock,response["components"], idMap) ){
-        return sendApiResponse(sock, response, "Error creating components");
+    if ( ! loadCreateComponent(response["components"], idMap) ){
+        return sendApiResponse(response, "Error creating components");
     }
 
     loadUpdateIds(response, idMap);
 
     // connect components
     if ( response.contains("connections") ){
-        if ( !loadConnectComponent(sock, response.at("connections")) ){
-            return sendApiResponse(sock, response, "Error connecting components");
+        if ( !loadConnectComponent(response.at("connections")) ){
+            return sendApiResponse(response, "Error connecting components");
         }
     }
     
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::addComponent(int sock, const json& request){
+json ControlApiHandler::addComponent(const json& request){
     json response = request ;
     ComponentType type ;
     std::string name ;
@@ -380,27 +382,27 @@ json ControlApiHandler::addComponent(int sock, const json& request){
         type = ComponentRegistry::getComponentDescriptor(response["name"].get<std::string>()).type;
         name = response["name"];
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     ComponentId id = engine_->componentFactory.createFromJson(type, name, getDefaultConfig(type));
     response["componentId"] = id;
-    return sendApiResponse(sock,response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::removeComponent(int sock, const json& request){
+json ControlApiHandler::removeComponent(const json& request){
     json response = request ;
     ComponentId id ;
 
     try {
         id = response["componentId"];
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
     
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "component not found.");
+        return sendApiResponse(response, "component not found.");
     }
 
     // query each subsystem and remove connections, if exist
@@ -411,60 +413,60 @@ json ControlApiHandler::removeComponent(int sock, const json& request){
         c.remove = true ;
         json j = c ;
         SPDLOG_DEBUG("removing connection: {}", j.dump());
-        auto cresponse = parseConnectionRequest(sock, j);
+        auto cresponse = parseConnectionRequest(j);
         allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
     }
 
     if ( !allRemoved ){
-        return sendApiResponse(sock, response, "at least one component connection could not be removed.");
+        return sendApiResponse(response, "at least one component connection could not be removed.");
     }
 
     engine_->componentManager.remove(id);
-    return sendApiResponse(sock, response);    
+    return sendApiResponse(response);    
 }
 
-json ControlApiHandler::syncComponent(int sock, const json& request){
+json ControlApiHandler::syncComponent(const json& request){
     json response = request ;
 
     int componentId ;
     try {
         componentId = response.at("componentId");
     } catch ( const std::exception& e ){
-        return sendApiResponse(sock, response, "required parameters were not provided.");
+        return sendApiResponse(response, "required parameters were not provided.");
     }
 
     auto c = engine_->componentManager.getRaw(componentId);
 
     if ( !c ){
-        return sendApiResponse(sock, response, "could not find component with specified ID");
+        return sendApiResponse(response, "could not find component with specified ID");
     }
 
     response["data"] = engine_->componentManager.serializeComponent(c);
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::parseConnectionRequest(int sock, const json& request){
+json ControlApiHandler::parseConnectionRequest(const json& request){
     json response = request ;
     ConnectionRequest req ;
 
     try {
         req = response.get<ConnectionRequest>() ;
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( ! req.valid() ){
-        return sendApiResponse(sock, response, "Invalid connection request.");
+        return sendApiResponse(response, "Invalid connection request.");
     }
 
     if ( routeConnectionRequest(req)){
-        return sendApiResponse(sock,response);
+        return sendApiResponse(response);
     } else {
-        return sendApiResponse(sock,response, "failed to handle requested connection event");
+        return sendApiResponse(response, "failed to handle requested connection event");
     }
 }
 
-json ControlApiHandler::getParameter(int sock, const json& request){
+json ControlApiHandler::getParameter(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -473,19 +475,19 @@ json ControlApiHandler::getParameter(int sock, const json& request){
         id = response["componentId"];
         param =  stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     response["value"] = c->getParameters()->getValueDispatch(param);
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setParameter(int sock, const json& request){
+json ControlApiHandler::setParameter(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -495,24 +497,24 @@ json ControlApiHandler::setParameter(int sock, const json& request){
         param = stringToParameter(response["parameter"]);
         response.at("value"); // verify present
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     bool setSuccess = c->getParameters()->setValueDispatch(param, response["value"]);
     response["value"] = c->getParameters()->getValueDispatch(param); // feed the value back to the client (due to limiting or other behaviors)
     if ( setSuccess ){
-        return sendApiResponse(sock,response);
+        return sendApiResponse(response);
     } else {
-        return sendApiResponse(sock,response, "Error setting component parameter." );
+        return sendApiResponse(response, "Error setting component parameter." );
     }
 }
 
-json ControlApiHandler::getParameterDefault(int sock, const json& request){
+json ControlApiHandler::getParameterDefault(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -521,19 +523,19 @@ json ControlApiHandler::getParameterDefault(int sock, const json& request){
         id = response["componentId"];
         param = stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     response["value"] = c->getParameters()->getDefaultDispatch(param);
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setParameterDefault(int sock, const json& request){
+json ControlApiHandler::setParameterDefault(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -543,22 +545,22 @@ json ControlApiHandler::setParameterDefault(int sock, const json& request){
         param = stringToParameter(response["parameter"]);
         response.at("value"); // verify present
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     if ( c->getParameters()->setDefaultDispatch(param, response["value"]) ){
-        return sendApiResponse(sock,response);
+        return sendApiResponse(response);
     } else {
-        return sendApiResponse(sock,response, "Error setting component default." );
+        return sendApiResponse(response, "Error setting component default." );
     }
 }
 
-json ControlApiHandler::getParameterValueRange(int sock, const json& request){
+json ControlApiHandler::getParameterValueRange(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -567,21 +569,21 @@ json ControlApiHandler::getParameterValueRange(int sock, const json& request){
         id = response["componentId"];
         param = stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     response["minimum"] = c->getParameters()->getMinDispatch(param);
     response["maximum"] = c->getParameters()->getMaxDispatch(param);
 
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setParameterValueRange(int sock, const json& request){
+json ControlApiHandler::setParameterValueRange(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -592,26 +594,26 @@ json ControlApiHandler::setParameterValueRange(int sock, const json& request){
         response.at("minimum"); 
         response.at("maximum"); 
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     if ( !c->getParameters()->setMinDispatch(param, response["minimum"]) ){
-        return sendApiResponse(sock,response, "Error setting parameter minimum");
+        return sendApiResponse(response, "Error setting parameter minimum");
     }
 
     if ( !c->getParameters()->setMaxDispatch(param, response["maximum"]) ){
-        return sendApiResponse(sock,response, "Error setting parameter minimum");
+        return sendApiResponse(response, "Error setting parameter minimum");
     }
 
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::resetParameter(int sock, const json& request){
+json ControlApiHandler::resetParameter(const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
@@ -620,21 +622,21 @@ json ControlApiHandler::resetParameter(int sock, const json& request){
         id = response["componentId"];
         param = stringToParameter(response["parameter"]);
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     response["minimum"] = c->getParameters()->getMinDispatch(param);
     response["maximum"] = c->getParameters()->getMaxDispatch(param);
 
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::parseCollectionRequest(int sock, const json& request){
+json ControlApiHandler::parseCollectionRequest(const json& request){
     json response = request ;
     ComponentId id ;
     CollectionType collectionType ;
@@ -643,12 +645,12 @@ json ControlApiHandler::parseCollectionRequest(int sock, const json& request){
         id = response["componentId"];
         collectionType = CollectionType(response["collection"]);
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     auto c = engine_->componentManager.getRaw(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Component not found");
+        return sendApiResponse(response, "Component not found");
     }
 
     const CollectionDescriptor* cd = nullptr ;
@@ -657,29 +659,29 @@ json ControlApiHandler::parseCollectionRequest(int sock, const json& request){
         cd = &getCollectionDescriptor(c->getType(), collectionType);
         req = response ;
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error getting collection: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error getting collection: " + std::string(e.what()) );
     }
 
     if ( !cd || !cd->isValid() ){
-        return sendApiResponse(sock, response, "collection descriptor is malformed.");
+        return sendApiResponse(response, "collection descriptor is malformed.");
     }
 
     if ( !req.valid(*cd) ){
-        return sendApiResponse(sock, response, "Invalid collection request structure");
+        return sendApiResponse(response, "Invalid collection request structure");
     }
 
     switch(req.action){
-    case CollectionAction::ADD:       return addCollectionValue(sock, c, *cd, req);
-    case CollectionAction::REMOVE:    return removeCollectionValue(sock, c, *cd, req);
-    case CollectionAction::GET:       return getCollectionValue(sock, c, *cd, req);
-    case CollectionAction::GET_RANGE: return getCollectionValueRange(sock, c, *cd, req);
-    case CollectionAction::SET:       return setCollectionValue(sock, c, *cd, req);
-    case CollectionAction::RESET:     return resetCollection(sock, c, *cd, req);
-    default:                          return sendApiResponse(sock, response, "Unknown collection action");
+    case CollectionAction::ADD:       return addCollectionValue(c, *cd, req);
+    case CollectionAction::REMOVE:    return removeCollectionValue(c, *cd, req);
+    case CollectionAction::GET:       return getCollectionValue(c, *cd, req);
+    case CollectionAction::GET_RANGE: return getCollectionValueRange(c, *cd, req);
+    case CollectionAction::SET:       return setCollectionValue(c, *cd, req);
+    case CollectionAction::RESET:     return resetCollection(c, *cd, req);
+    default:                          return sendApiResponse(response, "Unknown collection action");
     }
 }
 
-json ControlApiHandler::addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+json ControlApiHandler::addCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -702,20 +704,20 @@ json ControlApiHandler::addCollectionValue(int sock, BaseComponent* c, const Col
         default: 
         {
             json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
+            sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
     } catch (const std::exception& e){
         json response = request ;
-        sendApiResponse(sock, response, "failed to add collection value:" + std::string(e.what()));
+        sendApiResponse(response, "failed to add collection value:" + std::string(e.what()));
     }
 
     json response = request ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 
 }
 
-json ControlApiHandler::removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::removeCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -734,19 +736,19 @@ json ControlApiHandler::removeCollectionValue(int sock, BaseComponent* c, const 
         default: 
         {
             json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
+            sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
     } catch (const std::exception& e){
         json response = request ;
-        sendApiResponse(sock, response, "failed to remove collection value:" + std::string(e.what()));
+        sendApiResponse(response, "failed to remove collection value:" + std::string(e.what()));
     }
 
     json response = request ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+json ControlApiHandler::getCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -766,19 +768,19 @@ json ControlApiHandler::getCollectionValue(int sock, BaseComponent* c, const Col
         default: 
         {
             json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
+            sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
     } catch (const std::exception& e){
         json response = request ;
-        sendApiResponse(sock, response, "failed to get collection value:" + std::string(e.what()));
+        sendApiResponse(response, "failed to get collection value:" + std::string(e.what()));
     }
 
     json response = request ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::setCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -798,19 +800,19 @@ json ControlApiHandler::setCollectionValue(int sock, BaseComponent* c, const Col
         default: 
         {
             json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
+            sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
     } catch (const std::exception& e){
         json response = request ;
-        sendApiResponse(sock, response, "failed to set collection values:" + std::string(e.what()));
+        sendApiResponse(response, "failed to set collection values:" + std::string(e.what()));
     }
 
     json response = request ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::resetCollection(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
@@ -829,19 +831,19 @@ json ControlApiHandler::resetCollection(int sock, BaseComponent* c, const Collec
         default: 
         {
             json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
+            sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
     } catch (const std::exception& e){
         json response = request ;
-        sendApiResponse(sock, response, "failed to reset collection:" + std::string(e.what()));
+        sendApiResponse(response, "failed to reset collection:" + std::string(e.what()));
     }
 
     json response = request ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+json ControlApiHandler::getCollectionValueRange(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
     json min ;
     json max ;
     try {
@@ -862,19 +864,19 @@ json ControlApiHandler::getCollectionValueRange(int sock, BaseComponent* c, cons
         default: 
         {
             json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
+            sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
     } catch (const std::exception& e){
         json response = request ;
-        sendApiResponse(sock, response, "failed to get collection range:" + std::string(e.what()));
+        sendApiResponse(response, "failed to get collection range:" + std::string(e.what()));
     }
 
     json response = request ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getModulationStrategy(int sock, const json& request){
+json ControlApiHandler::getModulationStrategy(const json& request){
     ComponentId id ;
     ParameterType p ;
     ModulationStrategy s ;
@@ -885,7 +887,7 @@ json ControlApiHandler::getModulationStrategy(int sock, const json& request){
         p = stringToParameter(request["parameter"]);
     } catch (const std::exception& e){
         json response = request ;
-        return sendApiResponse(sock, response, 
+        return sendApiResponse(response, 
             "failed to parse request to update modulation strategy:" + std::string(e.what())
         );
     }
@@ -893,7 +895,7 @@ json ControlApiHandler::getModulationStrategy(int sock, const json& request){
     auto component = engine_->componentManager.getRaw(id);
     if (!component){
         json response = request ;
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "could not find component"
         );
     }
@@ -902,7 +904,7 @@ json ControlApiHandler::getModulationStrategy(int sock, const json& request){
         component->getType()).modulatableParameters ;
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
@@ -910,16 +912,16 @@ json ControlApiHandler::getModulationStrategy(int sock, const json& request){
     try {
         s = component->getParameterModulationStrategy(p);
     } catch ( const std::exception& e ){
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "Failed to get strategy from specified parameter: " + std::string(e.what())
         );
     }
     
     response["strategy"] = s ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setModulationStrategy(int sock, const json& request){
+json ControlApiHandler::setModulationStrategy(const json& request){
     ComponentId id ;
     ParameterType p ;
     ModulationStrategy s ;
@@ -931,7 +933,7 @@ json ControlApiHandler::setModulationStrategy(int sock, const json& request){
         s = static_cast<ModulationStrategy>(request["strategy"]);
     } catch (const std::exception& e){
         json response = request ;
-        return sendApiResponse(sock, response, 
+        return sendApiResponse(response, 
             "failed to parse request to update modulation strategy:" + std::string(e.what())
         );
     }
@@ -939,7 +941,7 @@ json ControlApiHandler::setModulationStrategy(int sock, const json& request){
     auto component = engine_->componentManager.getRaw(id);
     if (!component){
         json response = request ;
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "could not find component"
         );
     }
@@ -948,16 +950,16 @@ json ControlApiHandler::setModulationStrategy(int sock, const json& request){
         component->getType()).modulatableParameters ;
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
 
     component->setParameterModulationStrategy(p, s);
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getModulationDepth(int sock, const json& request){
+json ControlApiHandler::getModulationDepth(const json& request){
     ComponentId id ;
     ParameterType p ;
     double depth ;
@@ -968,7 +970,7 @@ json ControlApiHandler::getModulationDepth(int sock, const json& request){
         p = stringToParameter(request["parameter"]);
     } catch (const std::exception& e){
         json response = request ;
-        return sendApiResponse(sock, response, 
+        return sendApiResponse(response, 
             "failed to parse request to update modulation strategy:" + std::string(e.what())
         );
     }
@@ -976,7 +978,7 @@ json ControlApiHandler::getModulationDepth(int sock, const json& request){
     auto component = engine_->componentManager.getRaw(id);
     if (!component){
         json response = request ;
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "could not find component"
         );
     }
@@ -985,7 +987,7 @@ json ControlApiHandler::getModulationDepth(int sock, const json& request){
         component->getType()).modulatableParameters ;
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
@@ -993,17 +995,17 @@ json ControlApiHandler::getModulationDepth(int sock, const json& request){
     try {
         depth = component->getParameterDepth(p);
     } catch (const std::exception& e){
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "Failed to get depth from specified parameter: " + std::string(e.what())
         );
     }
     
     response["depth"] = depth ;
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
 
-json ControlApiHandler::setModulationDepth(int sock, const json& request){
+json ControlApiHandler::setModulationDepth(const json& request){
     ComponentId id ;
     ParameterType p ;
     double depth ;
@@ -1015,7 +1017,7 @@ json ControlApiHandler::setModulationDepth(int sock, const json& request){
         depth = request["depth"];
     } catch (const std::exception& e){
         json response = request ;
-        return sendApiResponse(sock, response, 
+        return sendApiResponse(response, 
             "failed to parse request to update modulation strategy:" + std::string(e.what())
         );
     }
@@ -1023,7 +1025,7 @@ json ControlApiHandler::setModulationDepth(int sock, const json& request){
     auto component = engine_->componentManager.getRaw(id);
     if (!component){
         json response = request ;
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "could not find component"
         );
     }
@@ -1032,16 +1034,16 @@ json ControlApiHandler::setModulationDepth(int sock, const json& request){
         component->getType()).modulatableParameters ;
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
-        return sendApiResponse(sock, response,
+        return sendApiResponse(response,
             "Parameter " + std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " is not listed as modulatable for this component."
         );
     }
 
     component->setParameterDepth(p, depth);
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getFilePath(int sock, const json& request){
+json ControlApiHandler::getFilePath(const json& request){
     json response = request ;
     ComponentId id ;
     std::string path ;
@@ -1049,21 +1051,21 @@ json ControlApiHandler::getFilePath(int sock, const json& request){
     try {
         id = response.at("componentId");
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     FileComponent* c = engine_->componentManager.getFileComponent(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "File component not found");
+        return sendApiResponse(response, "File component not found");
     }
 
     path = c->getPath();
     response["path"] = path ;
 
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::setFilePath(int sock, const json& request){
+json ControlApiHandler::setFilePath(const json& request){
     json response = request ;
     ComponentId id ;
     std::string path ;
@@ -1072,19 +1074,19 @@ json ControlApiHandler::setFilePath(int sock, const json& request){
         id = response.at("componentId");
         path = response.at("path");
     } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     FileComponent* c = engine_->componentManager.getFileComponent(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "File component not found");
+        return sendApiResponse(response, "File component not found");
     }
 
     c->setPath(path);
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 }
 
-json ControlApiHandler::getBufferData(int sock, const json& request){
+json ControlApiHandler::getBufferData(const json& request){
     json response = request ;
     ComponentId id ;
     size_t channel ;
@@ -1093,16 +1095,16 @@ json ControlApiHandler::getBufferData(int sock, const json& request){
         id = response.at("componentId");
         channel = response.at("channel");
     } catch ( const std::exception& e ){
-        return sendApiResponse(sock, response, "Error parsing json request: " + std::string(e.what()));
+        return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()));
     }
 
     AudioBufferComponent* c = engine_->componentManager.getBufferComponent(id);
     if ( !c ){
-        return sendApiResponse(sock, response, "Buffer component not found");
+        return sendApiResponse(response, "Buffer component not found");
     }
 
     if ( channel >= c->getNumOutputs() ){
-        return sendApiResponse(sock, response, "Invalid channel number for buffer component");
+        return sendApiResponse(response, "Invalid channel number for buffer component");
     }
 
     const auto& buffer = c->getBuffer(channel);
@@ -1114,7 +1116,7 @@ json ControlApiHandler::getBufferData(int sock, const json& request){
     };
 
     DataApiHandler::instance()->sendApiData(header, c->getBuffer(channel));
-    return sendApiResponse(sock, response);
+    return sendApiResponse(response);
 
 }
 
@@ -1132,7 +1134,7 @@ bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){
     return false ;
 }
 
-bool ControlApiHandler::loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap){
+bool ControlApiHandler::loadCreateComponent(const json& components, std::unordered_map<int,int>& idMap){
     json params ;
     ComponentId id ;
     json componentRequest ;
@@ -1146,7 +1148,7 @@ bool ControlApiHandler::loadCreateComponent(int sock, const json& components, st
             id = component.at("id");
             componentRequest["action"] = "add_component" ;
             componentRequest["name"] = component.at("name") ;
-            componentResponse = addComponent(sock, componentRequest);
+            componentResponse = addComponent(componentRequest);
             idMap[id] = componentResponse["componentId"];
 
             for ( const auto& [p, data] : params.items() ){
@@ -1157,7 +1159,7 @@ bool ControlApiHandler::loadCreateComponent(int sock, const json& components, st
                 parameterRequest["componentId"] = idMap[id] ;
                 parameterRequest["parameter"] = p ;
                 parameterRequest["value"] = data.at("currentValue") ;
-                setParameter(sock, parameterRequest);
+                setParameter(parameterRequest);
             }
         } catch ( const std::exception& e ){
             SPDLOG_WARN("Error creating component: {}", std::string(e.what()));
@@ -1168,7 +1170,7 @@ bool ControlApiHandler::loadCreateComponent(int sock, const json& components, st
     return success ;
 }
 
-bool ControlApiHandler::loadConnectComponent(int sock, const json& connections){
+bool ControlApiHandler::loadConnectComponent(const json& connections){
     bool success = true ;
 
     if ( !connections.is_array() ) return false ;
@@ -1182,7 +1184,7 @@ bool ControlApiHandler::loadConnectComponent(int sock, const json& connections){
             success = false ;
         }
 
-        const auto& connectionResponse = parseConnectionRequest(sock, request);
+        const auto& connectionResponse = parseConnectionRequest(request);
         if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
             SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
             success = false ;

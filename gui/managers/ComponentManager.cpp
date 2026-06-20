@@ -18,6 +18,7 @@
 #include "managers/ComponentManager.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "api/ControlApiClient.hpp"
+#include "api/DataApiClient.hpp"
 
 ComponentManager::ComponentManager(QObject* parent):
     QObject(parent),
@@ -27,7 +28,15 @@ ComponentManager::ComponentManager(QObject* parent):
 {
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
-        this, &ComponentManager::onApiDataReceived
+        this, &ComponentManager::onControlMessageReceived
+    );
+    connect(
+        DataApiClient::instance(), &DataApiClient::dataReceived,
+        this, &ComponentManager::onDataMessageReceived
+    );
+    connect(
+        this, &ComponentManager::componentRemoved,
+        DataApiClient::instance(), &DataApiClient::onComponentRemoved
     );
 }
 
@@ -289,7 +298,7 @@ bool ComponentManager::handleCollectionApiResponse(const json& msg){
 }
 
 
-void ComponentManager::onApiDataReceived(const json& msg){
+void ComponentManager::onControlMessageReceived(const json& msg){
     QString action = QString::fromStdString(msg["action"]);
     bool success = msg.at("status") == "success" ;
 
@@ -375,6 +384,16 @@ void ComponentManager::onApiDataReceived(const json& msg){
     if ( success && handleCollectionApiResponse(msg) ){
         return ;
     }
+}
+
+void ComponentManager::onDataMessageReceived(DataDescriptor header, const std::vector<double>& buffer){
+    auto* model = getModel(header.componentId);
+    if ( !model ){
+        qWarning() << "no model with component id" << header.componentId << " is available." ; 
+        return ;
+    }
+
+    model->setBuffer(header.channel, buffer);
 }
 
 void ComponentManager::onParameterEdited(int componentId, ParameterType p, ParameterValue value){
