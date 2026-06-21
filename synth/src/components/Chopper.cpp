@@ -78,7 +78,7 @@ void Chopper::onParameterChanged(ParameterType p){
     // guard against empty inbound buffer
     if ( buf.empty() ){
         buffers_[0].clear();
-        notifyOutputs();
+        notifyDownstream(0);
         return ;
     }
 
@@ -96,5 +96,5 @@ void Chopper::onParameterChanged(ParameterType p){
         buf.begin() + start,
         buf.begin() + start + duration
     );
-    notifyOutputs();
+    notifyDownstream(0);
 }

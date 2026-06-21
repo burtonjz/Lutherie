@@ -75,32 +75,23 @@ void DataApiClient::onReadyRead(){
         QByteArray payload = readBuffer_.mid(headerSize, dataSize);
         readBuffer_.remove(0, totalSize);
 
-        if ( buffers_.contains(header) ){
-            buffers_.at(header).clear();
-        }
-
-        auto& data = buffers_[header];
+        std::vector<double> data ;
+        const int numValues = dataSize / sizeof(double);
         if ( dataSize > 0 ){
-            if ( dataSize % sizeof(double) != 0 ){
-                qWarning() << "Invalid data size:" << dataSize << "(not divisible by sizeof(double))";
-                continue ;
-            }
-
-            const int numValues = dataSize / sizeof(double);
             data.resize(numValues);
-
             std::memcpy(
                 data.data(),
-                readBuffer_.constData() + headerSize,
+                payload.constData(),
                 dataSize
             );
         }
 
         qDebug() << "received data for componentId:" << header.componentId
+            << "channel " << header.channel
             << ". dataSize: " << dataSize
             << "bytes (" << data.size() << " values)";
 
-        emit dataReceived(header, data);
+        emit dataReceived(header, std::move(data));
     }
 }
 
@@ -115,14 +106,4 @@ void DataApiClient::onDisconnected() {
 void DataApiClient::onErrorOccurred(QAbstractSocket::SocketError socketError) {
     Q_UNUSED(socketError);
     emit errorOccurred(socket_->errorString());
-}
-
-void DataApiClient::onComponentRemoved(int componentId){
-    for ( auto it = buffers_.begin() ; it != buffers_.end(); ){
-        if ( it->first.componentId == componentId ){
-            it = buffers_.erase(it);
-        } else {
-            ++it ;
-        }
-    }
 }

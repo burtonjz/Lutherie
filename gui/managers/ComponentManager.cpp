@@ -34,10 +34,6 @@ ComponentManager::ComponentManager(QObject* parent):
         DataApiClient::instance(), &DataApiClient::dataReceived,
         this, &ComponentManager::onDataMessageReceived
     );
-    connect(
-        this, &ComponentManager::componentRemoved,
-        DataApiClient::instance(), &DataApiClient::onComponentRemoved
-    );
 }
 
 ComponentManager::~ComponentManager(){
@@ -143,6 +139,11 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     auto model = new ComponentModel(componentId, type);
     models_[componentId] = model ;
 
+    connect(
+        model, &ComponentModel::requestBufferData,
+        this, &ComponentManager::onRequestBufferData
+    );
+    
     ComponentParameters* params = nullptr ;
     if ( model->getDescriptor().shouldShowBasicParameters() ){
         params = new ComponentParameters(model);
@@ -156,6 +157,7 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
             this, &ComponentManager::onFileSelected
         );
     }
+
     
     ModulationParameters* modParams = nullptr ;
     if ( model->getDescriptor().shouldShowModulationParameters() ){
@@ -386,7 +388,8 @@ void ComponentManager::onControlMessageReceived(const json& msg){
     }
 }
 
-void ComponentManager::onDataMessageReceived(DataDescriptor header, const std::vector<double>& buffer){
+void ComponentManager::onDataMessageReceived(DataDescriptor header, std::vector<double> buffer){
+    qDebug() << "data reached component manager!";
     auto* model = getModel(header.componentId);
     if ( !model ){
         qWarning() << "no model with component id" << header.componentId << " is available." ; 
@@ -417,7 +420,17 @@ void ComponentManager::onFileSelected(int componentId, std::string path){
     requestSetFile(componentId, path);
 }
 
+void ComponentManager::onRequestBufferData(int componentId, size_t channel){
+    json obj ;
+    obj["action"] = "get_buffer_data" ;
+    obj["componentId"] = componentId ;
+    obj["channel"] = channel ;
+
+    ControlApiClient::instance()->sendMessage(obj);
+}
+
 void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
+    // handle modulation connection tracking
     if ( 
         req.inboundSocket == SocketType::ModulationInbound && 
         req.inboundID.has_value() &&
@@ -427,9 +440,27 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
         if ( !modParams ) return ;
         modParams->setConnectionStatus(req.inboundParameter.value(), true);
     }
+
+    // handle upstream buffer tracking
+    if (
+        req.inboundSocket == SocketType::BufferInbound &&
+        req.inboundID.has_value() &&
+        req.inboundIdx.has_value()
+    ){
+        ComponentModel* downstream = getModel(req.inboundID.value());
+        ComponentModel* upstream = getModel(req.outboundID.value());
+
+        if ( !upstream || !downstream || !upstream->hasBuffer(req.outboundIdx.value()) ) return ;
+        downstream->setUpstreamModel(
+            req.inboundIdx.value(),
+            req.outboundIdx.value(),
+            upstream
+        );
+    }
 }
 
 void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
+    // handle modulation connection tracking
     if ( 
         req.inboundSocket == SocketType::ModulationInbound && 
         req.inboundID.has_value() &&
@@ -438,5 +469,17 @@ void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
         auto modParams = getModulationParameters(req.inboundID.value());
         if ( !modParams ) return ;
         modParams->setConnectionStatus(req.inboundParameter.value(), false);
+    }
+
+    // handle upstream buffer tracking
+    if (
+        req.inboundSocket == SocketType::BufferInbound &&
+        req.inboundID.has_value() &&
+        req.inboundIdx.has_value()
+    ){
+        ComponentModel* downstream = getModel(req.outboundID.value());
+
+        if ( !downstream ) return ;
+        downstream->clearUpstreamModel(req.inboundIdx.value());
     }
 }

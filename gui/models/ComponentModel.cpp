@@ -79,24 +79,70 @@ void ComponentModel::setFile(std::string name){
     file_ = name ;
 }
 
-bool ComponentModel::hasBuffer() const {
-    return buffers_.has_value();
+bool ComponentModel::hasBuffer(size_t channel) const {
+    return buffers_.contains(channel);
 }   
 
 const std::vector<double>& ComponentModel::getBuffer(size_t channel) const {
-    if ( !hasBuffer() || !buffers_.value().contains(channel) ){
+    if ( !hasBuffer(channel) ){
         throw std::runtime_error("buffer/channel not present in component model");
     }
-    return buffers_->at(channel);
+    return buffers_.at(channel);
 }
 
-void ComponentModel::setBuffer(size_t channel, const std::vector<double>& buffer){
-    if ( !buffers_.has_value() ){
-        buffers_.emplace();
+void ComponentModel::setBuffer(size_t channel, std::vector<double> buffer){
+    buffers_[channel] = buffer ;
+    emit bufferUpdated(channel);
+}
+
+bool ComponentModel::hasUpstreamBuffer(size_t channel) const {
+    if ( !upstream_.contains(channel) ) return false ;
+
+    auto [outbound, m] = upstream_.at(channel);
+    return m && m->hasBuffer(outbound);
+}
+
+const std::vector<double>& ComponentModel::getUpstreamBuffer(size_t channel) const {
+    if ( !hasUpstreamBuffer(channel) ){
+        throw std::runtime_error("upstream buffer/channel not present in component model");
     }
-    buffers_->emplace(channel, buffer);
+    auto [outbound, m] = upstream_.at(channel);
+    return m->getBuffer(outbound);
 }
 
+void ComponentModel::setUpstreamModel(size_t inboundChannel, size_t outboundChannel, ComponentModel* outboundModel){
+    auto it = upstream_.find(inboundChannel);
+    if ( it != upstream_.end() && it->second.second ){
+        disconnect(
+            it->second.second, &ComponentModel::bufferUpdated,
+            this, nullptr
+        );
+    }
+    upstream_[inboundChannel] = std::pair<size_t, ComponentModel*>(outboundChannel, outboundModel);
+    
+    emit upstreamBufferUpdated(inboundChannel);
+    connect(
+        outboundModel, &ComponentModel::bufferUpdated,
+        [this, inboundChannel, outboundChannel](size_t channel){
+            if ( channel == outboundChannel ){
+                emit upstreamBufferUpdated(inboundChannel);
+            }
+        }
+    );
+}
+
+void ComponentModel::clearUpstreamModel(size_t channel){
+    if ( upstream_.contains(channel) ){
+        auto [ch, m] = upstream_.at(channel);
+        if ( m ){
+            disconnect(
+                m, &ComponentModel::bufferUpdated,
+                this, &ComponentModel::upstreamBufferUpdated
+            );
+        }
+    }
+    upstream_.erase(channel);
+}
 
 const ComponentDescriptor& ComponentModel::getDescriptor() const {
     return descriptor_ ;

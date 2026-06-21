@@ -24,7 +24,6 @@
 #include <QTcpSocket>
 #include <QAbstractSocket>
 #include <vector>
-#include <unordered_map>
 
 class DataApiClient : public QObject {
     Q_OBJECT
@@ -32,7 +31,6 @@ class DataApiClient : public QObject {
 private:
     QTcpSocket* socket_ ;
     QByteArray readBuffer_ ;
-    std::unordered_map<DataDescriptor, std::vector<double>, DataDescriptorHash> buffers_ ;
 
     explicit DataApiClient(QObject* parent = nullptr);
     ~DataApiClient() = default ;
@@ -49,7 +47,7 @@ public:
 signals:
     void connected();
     void disconnected();
-    void dataReceived(DataDescriptor header, const std::vector<double>& buffer);
+    void dataReceived(DataDescriptor header, std::vector<double> buffer);
     void errorOccurred(const QString &error);
 
 private slots:
@@ -57,9 +55,6 @@ private slots:
     void onConnected();
     void onDisconnected();
     void onErrorOccurred(QAbstractSocket::SocketError socketError);
-
-public slots:
-    void onComponentRemoved(int componentId);
 
 };
 

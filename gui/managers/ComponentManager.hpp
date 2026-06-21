@@ -69,12 +69,13 @@ private:
 
 public slots:
     void onControlMessageReceived(const json& msg);
-    void onDataMessageReceived(DataDescriptor header, const std::vector<double>& buffer);
+    void onDataMessageReceived(DataDescriptor header, std::vector<double> buffer);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onCollectionEdited(CollectionRequest req );
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);
     void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
     void onFileSelected(int componentId, std::string path);
+    void onRequestBufferData(int componentId, size_t channel);
 
     // for updating modulation menus
     void onConnectionAdded(const ConnectionRequest& req);

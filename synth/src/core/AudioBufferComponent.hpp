@@ -52,80 +52,26 @@ protected:
     double sampleRate_ ;
 
 public:
-    AudioBufferComponent(size_t in, size_t out):
-        nInputs_(in),
-        nOutputs_(out),
-        inboundConnections_(in),
-        outboundConnections_(out),
-        buffers_(out)
-    {
-        Config::load();
-        sampleRate_ = Config::get<double>("audio.sample_rate").value();
-    }
+    AudioBufferComponent(size_t in, size_t out);
 
-    void connectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
-        assert( input < nInputs_ );
-        assert( sourceOutput < source->nOutputs_ );
-
-        inboundConnections_[input].insert({source, sourceOutput});
-        source->outboundConnections_[sourceOutput].insert({this, input});
-        SPDLOG_DEBUG("input from source {} outbound channel {} connected to inbound channel {}. Current number of inputs: {}", 
-            fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
-        onInputConnect();
-    }
-
-    void disconnectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
-        assert ( input < nInputs_ );
-        assert ( sourceOutput < source->nOutputs_ );
-
-        inboundConnections_[input].erase({source, sourceOutput});
-        source->outboundConnections_[sourceOutput].erase({this, input});
-        SPDLOG_DEBUG("input from source {} outbound channel {} disconnected from inbound channel {}. Current number of inputs: {}", 
-            fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
-        onInputDisconnect();
-    }
-
-    const std::vector<double>& getBuffer(size_t idx) const {
-        if ( idx >= nOutputs_ ){
-            std::string err = fmt::format("Cannot get buffer of index {}. Out of range (size={})", idx, nOutputs_);
-            SPDLOG_CRITICAL(err);
-            throw std::runtime_error(err);
-        }
-
-        return buffers_.at(idx);
-    }
-
-    size_t getNumInputs() const {
-        return nInputs_ ; 
-    }
-
-    size_t getNumOutputs() const {
-        return nOutputs_ ;
-    }
+    void connectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput);
+    void disconnectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput);
     
-    const std::unordered_set<BufferConnection, BufferHash>& getInputs(size_t inp) const {    
-        assert( inp < nInputs_ );
-        return inboundConnections_[inp] ;
-    }
+    const std::vector<double>& getBuffer(size_t idx) const ;
 
-    const std::unordered_set<BufferConnection, BufferHash>& getOutputs(size_t out) const {
-        assert( out < nOutputs_ );
-        return outboundConnections_[out] ;
-    }
-
-protected:
-    virtual void onInputConnect(){};
-    virtual void onInputDisconnect(){};
-    virtual void onInputUpdated(){};
-
-    void notifyOutputs(){
-        for ( size_t i = 0 ; i < nOutputs_ ; ++i ){
-            for ( const auto& conn : getOutputs(i) ){
-                conn.component->onInputUpdated();
-            }
-        }
+    size_t getNumInputs() const ;
+    size_t getNumOutputs() const ;
+    
+    const std::unordered_set<BufferConnection, BufferHash>& getInputs(size_t inp) const ;
+    const std::unordered_set<BufferConnection, BufferHash>& getOutputs(size_t out) const ;
         
-    }
+protected:
+    virtual void onInputConnect();
+    virtual void onInputDisconnect();
+    virtual void onInputUpdated();
+
+    void notifyDownstream(size_t index);
+        
 };
 
 #endif // AUDIO_BUFFER_COMPONENT_HPP_

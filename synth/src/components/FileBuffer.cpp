@@ -28,7 +28,8 @@ FileBuffer::FileBuffer(ComponentId id,[[maybe_unused]] FileBufferConfig cfg):
 
 void FileBuffer::onSetPath(){
     loadWavBuffer();
-    notifyOutputs();
+    notifyDownstream(0);
+    notifyDownstream(1);
 }
 
 void FileBuffer::loadWavBuffer(){

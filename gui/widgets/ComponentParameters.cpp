@@ -18,6 +18,7 @@
 #include "widgets/ComponentParameters.hpp"
 #include "app/Theme.hpp"
 #include "types/ComponentType.hpp"
+#include "widgets/AudioWaveform.hpp"
 #include "widgets/PianoRollWidget.hpp"
 
 #include <QVBoxLayout>
@@ -141,6 +142,19 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
             pianoRoll, &PianoRollWidget::onParameterChanged
         );
         return scroll ;
+    }
+    case ComponentType::Chopper:
+    {
+        // auto* scroll = new QScrollArea();
+        AudioWaveformWidget* waveform = new AudioWaveformWidget(model_, 0);
+        waveform->setUpstream(true);
+        // scroll->setWidget(waveform);
+        // scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        model_->requestBufferData(model_->getId(), 0);
+        waveform->resize(800,200);
+
+        return waveform ;
+        // return scroll ;
     }
     default:
         return nullptr ;

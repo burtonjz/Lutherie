@@ -39,7 +39,9 @@ private:
     std::map<ParameterType, ModulationModel*> modulations_ ;
     QString name_ ;
     std::optional<std::string> file_ ;
-    std::optional<std::unordered_map<size_t, const std::vector<double>&>> buffers_ ;
+
+    std::unordered_map<size_t, std::vector<double>> buffers_ ;
+    std::unordered_map<size_t, std::pair<size_t, ComponentModel*>> upstream_ ;
 
 public:
     ComponentModel(int id, ComponentType typ);
@@ -54,9 +56,14 @@ public:
     std::string getFile() const ;
     void setFile(std::string name);
 
-    bool hasBuffer() const ;
+    bool hasBuffer(size_t channel) const ;
     const std::vector<double>& getBuffer(size_t channel) const ;
-    void setBuffer(size_t channel, const std::vector<double>& buffer);
+    void setBuffer(size_t channel, std::vector<double> buffer);
+
+    bool hasUpstreamBuffer(size_t channel) const ;
+    const std::vector<double>& getUpstreamBuffer(size_t channel) const ;
+    void setUpstreamModel(size_t inboundChannel, size_t outboundChannel, ComponentModel* outboundModel);
+    void clearUpstreamModel(size_t channel);
     
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;
@@ -70,11 +77,15 @@ private:
     bool validParam(ParameterType p) const ;
 
 signals:
+    void requestModelSync(int componentId);
+    void requestBufferData(int componentId, size_t channel);
+
     void parameterValueChanged(ParameterType p, ParameterValue v) const ;
     void collectionUpdated(const CollectionRequest& req);
     void modulationDepthChanged(int componentId, ParameterType p, double depth);
     void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
-    void requestModelSync(int componentId);
+    void bufferUpdated(size_t channel);
+    void upstreamBufferUpdated(size_t channel);
         
 };
 

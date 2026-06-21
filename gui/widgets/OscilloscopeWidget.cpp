@@ -39,7 +39,7 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
     updateTimer_->setInterval(16); 
 
-    int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 8;
+    int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 8 ;
     controls_->setGeometry(
         Theme::OSCILLOSCOPE_MARGIN_LEFT,
         footerY,
@@ -52,24 +52,24 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
 }
 
 void OscilloscopeWidget::setAmplitudeRange(float minAmp, float maxAmp){
-    minAmp_ = minAmp;
-    maxAmp_ = maxAmp;
+    minAmp_ = minAmp ;
+    maxAmp_ = maxAmp ;
     update();
 }
 
 void OscilloscopeWidget::setSampleRate(float sampleRate){
-    sampleRate_ = sampleRate;
+    sampleRate_ = sampleRate ;
     update();
 }
 
 void OscilloscopeWidget::addLayer(int componentId, const QString& label){
-    if ( controls_->isLayerPresent(componentId) ) return;
+    if ( controls_->isLayerPresent(componentId) ) return ;
     controls_->addLayer(componentId, label);
     layerData_[componentId];
 }
 
 void OscilloscopeWidget::removeLayer(int componentId){
-    if ( !controls_->isLayerPresent(componentId) ) return;
+    if ( !controls_->isLayerPresent(componentId) ) return ; 
     controls_->removeLayer(componentId);
     layerData_.erase(componentId);
 }
@@ -83,18 +83,18 @@ void OscilloscopeWidget::toggleLayer(int componentId, bool enabled){
 }
 
 void OscilloscopeWidget::onData(int componentId, const float* data, size_t count){
-    if ( !controls_->isLayerPresent(componentId) ) return;
+    if ( !controls_->isLayerPresent(componentId) ) return ;
 
     auto& layerBuffer = layerData_.at(componentId);
     layerBuffer.assign(data, data + count);
 
-    dataReady_ = true;
+    dataReady_ = true ;
 }
 
 void OscilloscopeWidget::onUpdateTimeout(){
     if ( dataReady_ ){
         renderToCache();
-        dataReady_ = false;
+        dataReady_ = false ;
     } 
     
     if ( !cachedFrame_.isNull() ){
@@ -117,7 +117,6 @@ void OscilloscopeWidget::paintEvent(QPaintEvent* event){
 }
 
 void OscilloscopeWidget::resizeEvent(QResizeEvent* event){
-    Q_UNUSED(event)
     if ( !cachedFrame_.isNull() ){
         cachedFrame_ = cachedFrame_.scaled(
             event->size(), 

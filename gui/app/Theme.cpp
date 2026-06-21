@@ -49,7 +49,7 @@ const QColor Theme::COMPONENT_BORDER_SELECTED  = QColor(245, 237, 240);
 const QColor Theme::COMPONENT_BACKGROUND_HOVER = QColor(52, 62, 68, 200);
 const QColor Theme::COMPONENT_TEXT             = QColor(245, 237, 240);
 
-// Cable colors - warmer and more saturated
+// Cable colors
 const QColor Theme::CABLE_SHADOW     = QColor(0, 0, 0, 60);
 const QColor Theme::CABLE_SIGNAL    = QColor(135, 179, 141);  
 const QColor Theme::CABLE_BUFFER     = QColor(128, 27, 211);
