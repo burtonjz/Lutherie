@@ -23,6 +23,7 @@
 #include <QPainterPath>
 #include <QResizeEvent>
 #include <QTimer>
+#include <QTime>
 
 AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, QWidget* parent):
     QWidget(parent),
@@ -30,6 +31,7 @@ AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, 
     upstream_(false),
     minVolt_(-1.0),
     maxVolt_(1.0),
+    plotWidth_(Theme::WAVEFORM_MIN_PLOT_WIDTH),
     channel_(channel),
     voltages_(),
     resizeDebounce_(new QTimer(this))
@@ -44,6 +46,12 @@ AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, 
         resizeDebounce_, &QTimer::timeout,
         this, &AudioWaveformWidget::rebuild
     );
+    
+    resize(
+        Theme::WAVEFORM_MIN_WIDTH,
+        Theme::WAVEFORM_HEIGHT
+    );
+    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 }
 
 void AudioWaveformWidget::setBufferModel(ComponentModel* model){
@@ -74,6 +82,8 @@ void AudioWaveformWidget::paintEvent(QPaintEvent* event){
 }
 
 void AudioWaveformWidget::resizeEvent(QResizeEvent* event){
+    QWidget::resizeEvent(event);
+
     if ( !cachedFrame_.isNull() ){
         cachedFrame_ = cachedFrame_.scaled(
             event->size(),
@@ -81,13 +91,24 @@ void AudioWaveformWidget::resizeEvent(QResizeEvent* event){
             Qt::SmoothTransformation
         );
     }
+
+    plotWidth_ = width() 
+        - Theme::WAVEFORM_MARGIN_LEFT
+        - Theme::WAVEFORM_MARGIN_RIGHT ;
     update();
-    resizeDebounce_->start(150);
+    resizeDebounce_->start(50);
 }
 
 void AudioWaveformWidget::showEvent(QShowEvent* event){
     QWidget::showEvent(event);
     rebuild();
+}
+
+QSize AudioWaveformWidget::sizeHint() const {
+    return { 
+        Theme::WAVEFORM_MIN_PLOT_WIDTH,
+        Theme::WAVEFORM_HEIGHT
+    };
 }
 
 bool AudioWaveformWidget::hasDisplayBuffer() const {
@@ -132,10 +153,14 @@ void AudioWaveformWidget::connectModel(){
 }
 
 void AudioWaveformWidget::rebuild(){
-    if ( !hasDisplayBuffer() ) return ;
+    if ( !hasDisplayBuffer() ){
+        renderToCache();
+        return ;
+    }
+
     const auto& buf = getDisplayBuffer();
     
-    int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT ;
+    int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
     if ( plotWidth <= 0 || buf.empty() ) return ;
 
     samplesPerPixel_ = std::max<size_t>(1, buf.size() / static_cast<size_t>(plotWidth));
@@ -158,20 +183,21 @@ void AudioWaveformWidget::renderToCache(){
     if ( size().isEmpty() ) return ;
 
     cachedFrame_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
-    cachedFrame_.fill(Theme::OSCILLOSCOPE_BACKGROUND_COLOR);
+    cachedFrame_.fill(Theme::WAVEFORM_BACKGROUND_COLOR);
 
     QPainter painter(&cachedFrame_);
     painter.setRenderHint(QPainter::Antialiasing);
 
     drawWaveform(painter);
+    drawGrid(painter);
     update();
 }
 
 void AudioWaveformWidget::drawWaveform(QPainter& painter){
     double midY = height() 
-        - Theme::OSCILLOSCOPE_MARGIN_BOTTOM
-        - Theme::OSCILLOSCOPE_MARGIN_TOP ;
-    double startX = Theme::OSCILLOSCOPE_MARGIN_LEFT ;
+        - Theme::WAVEFORM_MARGIN_BOTTOM
+        - Theme::WAVEFORM_MARGIN_TOP ;
+    double startX = Theme::WAVEFORM_MARGIN_LEFT ;
 
     QPainterPath path ;
     const size_t n = voltages_.size();
@@ -196,19 +222,99 @@ void AudioWaveformWidget::drawWaveform(QPainter& painter){
     }
 
     path.closeSubpath();
-    painter.fillPath(path, Theme::SOCKET_BUFFER);
+    painter.fillPath(path, Theme::WAVEFORM_WAVE_COLOR);
+}
+
+void AudioWaveformWidget::drawGrid(QPainter& painter){
+    int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
+    int plotHeight = height() - Theme::WAVEFORM_MARGIN_TOP - Theme::WAVEFORM_MARGIN_BOTTOM ;
+
+    QFont textFont = font() ;
+    textFont.setPixelSize(Theme::WAVEFORM_GRID_FONT_SIZE);
+    painter.setFont(textFont);
+    int fontYAdjust = Theme::WAVEFORM_GRID_FONT_SIZE / 2 ;
+
+    for ( float volt : {-1.0f, -0.5f, 0.0f, 0.5f, 1.0f} ){
+        if ( volt == floor(volt) ){ 
+            // whole number, solid line
+            painter.setPen(QPen(Theme::WAVEFORM_GRID_COLOR, 1));
+        } else { 
+            // fraction, dotted line
+            painter.setPen(QPen(Theme::WAVEFORM_GRID_COLOR, 1, Qt::DotLine));
+        }
+
+        int y = voltageToY(volt);
+        // -0.5 to account for line width
+        painter.drawLine( 
+            QPointF(Theme::WAVEFORM_MARGIN_LEFT, y - 0.5),
+            QPointF(Theme::WAVEFORM_MARGIN_LEFT + plotWidth, y - 0.5)
+        );
+        painter.drawText(5, y + fontYAdjust, 
+            QString("%1 V").arg(volt, 0, 'f', 1)
+        );
+    }
+
+    // time divisions
+    const size_t numSamples = voltages_.size() * samplesPerPixel_ ;
+    if ( numSamples == 0 ) return ;
+
+    const double totalTimeSeconds = numSamples / sampleRate_ ;
+    const int maxNumSteps = plotWidth_ / Theme::WAVEFORM_TIME_WIDTH ;
+    const int maxTimeStep = totalTimeSeconds / maxNumSteps ;
+    
+    // get best time step
+    int timeStep = 0 ;
+    for ( const auto& delta : Theme::WAVEFORM_DELTA_TIMES ){
+        if ( delta < maxTimeStep ){
+            timeStep = delta ;
+        } else {
+            break ;
+        }
+    }
+
+    for ( int time = 0; time < totalTimeSeconds; ){
+        int sample = sampleRate_ * time ;
+        int x = sampleToX(sample, numSamples);
+        painter.drawText(x, 5 + fontYAdjust, 
+            secondsToText(time)
+        );
+        
+        time += timeStep ; 
+    }
+    
 }
 
 float AudioWaveformWidget::sampleToX(size_t sampleIndex, size_t totalSamples) const {
-    int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT ;
+    int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
     float normalized = static_cast<float>(sampleIndex) / (totalSamples - 1);
-    return Theme::OSCILLOSCOPE_MARGIN_LEFT + normalized * plotWidth ;
+    return Theme::WAVEFORM_MARGIN_LEFT + normalized * plotWidth ;
 }
 
 float AudioWaveformWidget::voltageToY(float voltage) const {
-    int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
+    int plotHeight = height() - Theme::WAVEFORM_MARGIN_TOP - Theme::WAVEFORM_MARGIN_BOTTOM ;
     float normalized = (voltage - minVolt_ ) / (maxVolt_ - minVolt_);
-    return Theme::OSCILLOSCOPE_MARGIN_TOP + (1.0f - normalized) * plotHeight ;
+    return Theme::WAVEFORM_MARGIN_TOP + (1.0f - normalized) * plotHeight ;
+}
+
+QString AudioWaveformWidget::secondsToText(int seconds) const {
+    if ( seconds < 60 ){
+        return QString::number(seconds) + "s" ;
+    }
+
+    int minutes = seconds / 60 ;
+    seconds = seconds % 60 ;
+
+    if ( minutes < 60 ){
+        return QString::number(minutes) + ":" 
+            + QString("%1").arg(seconds, 2, 10, '0');
+    }
+
+    int hours = minutes / 60 ;
+    minutes = minutes % 60 ;
+
+    return QString::number(hours) + ":"
+        + QString("%1:").arg(minutes, 2, 10, '0')
+        + QString("%1").arg(seconds, 2, 10, '0');
 }
 
 void AudioWaveformWidget::onBufferDataUpdated(size_t channel){

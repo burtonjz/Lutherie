@@ -88,6 +88,10 @@ public:
     static const std::array<QColor,6> OSCILLOSCOPE_LINE_COLORS ;
     static const QColor OSCILLOSCOPE_GRID_COLOR ;
 
+    static const QColor WAVEFORM_BACKGROUND_COLOR ;
+    static const QColor WAVEFORM_WAVE_COLOR ;
+    static const QColor WAVEFORM_GRID_COLOR ;
+
     static const QColor MODULATION_ACTIVE ;
     static const QColor MODULATION_INACTIVE ;
 
@@ -179,6 +183,23 @@ public:
     static constexpr std::initializer_list<float> OSCILLOSCOPE_AMPLITUDE_LABELS = {
         -0.75f, -0.5f, -0.25f, 0.0f, 0.25f, 0.5f, 0.75f 
     };
+
+    static constexpr int WAVEFORM_MARGIN_LEFT        = 40 ;
+    static constexpr int WAVEFORM_MARGIN_RIGHT       = 20 ;
+    static constexpr int WAVEFORM_MARGIN_TOP         = 20 ;
+    static constexpr int WAVEFORM_MARGIN_BOTTOM      = 30 ;
+    static constexpr int WAVEFORM_MIN_PLOT_WIDTH     = 1000 ;
+    static constexpr int WAVEFORM_FIXED_PLOT_HEIGHT  = 100 ;
+    static constexpr int WAVEFORM_GRID_FONT_SIZE     = 8 ;
+    static constexpr int WAVEFORM_TIME_WIDTH         = 100 ;
+    
+    static constexpr std::initializer_list<int> WAVEFORM_DELTA_TIMES = {
+        5, 10, 15, 20, 30, 60, 90, 120, 150
+    };
+    static constexpr int WAVEFORM_MIN_WIDTH          =
+        WAVEFORM_MARGIN_LEFT + WAVEFORM_MARGIN_RIGHT + WAVEFORM_MIN_PLOT_WIDTH ;
+    static constexpr int WAVEFORM_HEIGHT             =
+        WAVEFORM_MARGIN_TOP + WAVEFORM_MARGIN_BOTTOM + WAVEFORM_FIXED_PLOT_HEIGHT ;
 
     static constexpr qreal SWITCH_WIDGET_OPACITY_ON       = 0.8 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_OFF      = 0.38 ;

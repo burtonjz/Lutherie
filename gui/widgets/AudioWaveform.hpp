@@ -31,6 +31,7 @@ private:
     ComponentModel* model_ ;
     bool upstream_ ;
 
+    float plotWidth_ ;
     float minVolt_ ;
     float maxVolt_ ;
 
@@ -54,6 +55,7 @@ protected:
     void paintEvent(QPaintEvent* event) override ;
     void resizeEvent(QResizeEvent* event) override ;
     void showEvent(QShowEvent* event) override ;
+    QSize sizeHint() const override ;
 
 private:
     bool hasDisplayBuffer() const ;
@@ -63,10 +65,12 @@ private:
 
     void rebuild();
     void renderToCache();
-    void drawWaveform(QPainter& Painter);
+    void drawWaveform(QPainter& painter);
+    void drawGrid(QPainter& painter);
 
     float sampleToX(size_t sampleIndex, size_t totalSamples) const ;
     float voltageToY(float voltage) const ;
+    QString secondsToText(int seconds) const ;
 
 public slots:
     void onBufferDataUpdated(size_t channel);

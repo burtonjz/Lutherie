@@ -145,16 +145,17 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
     }
     case ComponentType::Chopper:
     {
-        // auto* scroll = new QScrollArea();
+        auto* scroll = new QScrollArea();
+        scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        
         AudioWaveformWidget* waveform = new AudioWaveformWidget(model_, 0);
         waveform->setUpstream(true);
-        // scroll->setWidget(waveform);
-        // scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        scroll->setWidget(waveform);
+        scroll->setWidgetResizable(true);
+        scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         model_->requestBufferData(model_->getId(), 0);
-        waveform->resize(800,200);
-
-        return waveform ;
-        // return scroll ;
+        
+        return scroll ;
     }
     default:
         return nullptr ;
