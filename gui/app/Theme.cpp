@@ -106,6 +106,9 @@ const QColor Theme::WAVEFORM_BACKGROUND_COLOR = SPECTRUM_BACKGROUND_COLOR ;
 const QColor Theme::WAVEFORM_WAVE_COLOR       = SOCKET_BUFFER ;
 const QColor Theme::WAVEFORM_GRID_COLOR       = TEXT_SECONDARY ;
 
+const QColor Theme::CHOPPER_SHADE_COLOR  = QColor(0,0,0,100);
+const QColor Theme::CHOPPER_HANDLE_COLOR = TEXT_PRIMARY ;
+
 const QColor Theme::MODULATION_ACTIVE   = QColor(185, 49, 79);  
 const QColor Theme::MODULATION_INACTIVE = QColor(15, 15, 15);
 

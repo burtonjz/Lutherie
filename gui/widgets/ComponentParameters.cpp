@@ -18,12 +18,13 @@
 #include "widgets/ComponentParameters.hpp"
 #include "app/Theme.hpp"
 #include "types/ComponentType.hpp"
-#include "widgets/AudioWaveform.hpp"
+#include "widgets/BufferChopper.hpp"
 #include "widgets/PianoRollWidget.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QTimer>
 
 ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent):
@@ -147,14 +148,18 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
     {
         auto* scroll = new QScrollArea();
         scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        scroll->verticalScrollBar()->setEnabled(false);
         
-        AudioWaveformWidget* waveform = new AudioWaveformWidget(model_, 0);
-        waveform->setUpstream(true);
-        scroll->setWidget(waveform);
+        BufferChopper* chopper = new BufferChopper(model_, 0);
+        chopper->setUpstream(true);
+        scroll->setWidget(chopper);
         scroll->setWidgetResizable(true);
         scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         model_->requestBufferData(model_->getId(), 0);
-        
+        connect(
+            model_, &ComponentModel::parameterValueChanged, 
+            chopper, &BufferChopper::onParameterChanged
+        );
         return scroll ;
     }
     default:

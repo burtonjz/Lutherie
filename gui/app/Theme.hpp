@@ -92,6 +92,9 @@ public:
     static const QColor WAVEFORM_WAVE_COLOR ;
     static const QColor WAVEFORM_GRID_COLOR ;
 
+    static const QColor CHOPPER_SHADE_COLOR ;
+    static const QColor CHOPPER_HANDLE_COLOR ;
+
     static const QColor MODULATION_ACTIVE ;
     static const QColor MODULATION_INACTIVE ;
 
@@ -192,6 +195,8 @@ public:
     static constexpr int WAVEFORM_FIXED_PLOT_HEIGHT  = 100 ;
     static constexpr int WAVEFORM_GRID_FONT_SIZE     = 8 ;
     static constexpr int WAVEFORM_TIME_WIDTH         = 100 ;
+
+    static constexpr int CHOPPER_HANDLE_WIDTH = 6 ;
     
     static constexpr std::initializer_list<int> WAVEFORM_DELTA_TIMES = {
         5, 10, 15, 20, 30, 60, 90, 120, 150

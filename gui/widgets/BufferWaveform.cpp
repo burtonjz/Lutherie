@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/AudioWaveform.hpp"
+#include "widgets/BufferWaveform.hpp"
 #include "config/Config.hpp"
 #include "app/Theme.hpp"
 
@@ -25,7 +25,7 @@
 #include <QTimer>
 #include <QTime>
 
-AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, QWidget* parent):
+BufferWaveform::BufferWaveform(ComponentModel* model, size_t channel, QWidget* parent):
     QWidget(parent),
     model_(nullptr),
     upstream_(false),
@@ -33,6 +33,8 @@ AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, 
     maxVolt_(1.0),
     plotWidth_(Theme::WAVEFORM_MIN_PLOT_WIDTH),
     channel_(channel),
+    samplesPerPixel_(1),
+    totalNumSamples_(0),
     voltages_(),
     resizeDebounce_(new QTimer(this))
 {
@@ -44,7 +46,7 @@ AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, 
     resizeDebounce_->setSingleShot(true);
     connect(
         resizeDebounce_, &QTimer::timeout,
-        this, &AudioWaveformWidget::rebuild
+        this, &BufferWaveform::rebuild
     );
     
     resize(
@@ -54,18 +56,18 @@ AudioWaveformWidget::AudioWaveformWidget(ComponentModel* model, size_t channel, 
     setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 }
 
-void AudioWaveformWidget::setBufferModel(ComponentModel* model){
+void BufferWaveform::setBufferModel(ComponentModel* model){
     disconnectModel();
     model_ = model ;
     connectModel();
     rebuild();
 }
 
-bool AudioWaveformWidget::isUpstream() const {
+bool BufferWaveform::isUpstream() const {
     return upstream_ ;
 }
 
-void AudioWaveformWidget::setUpstream(bool upstream){
+void BufferWaveform::setUpstream(bool upstream){
     if ( upstream_ == upstream ) return ;
     disconnectModel();
     upstream_ = upstream ;
@@ -73,7 +75,7 @@ void AudioWaveformWidget::setUpstream(bool upstream){
     rebuild();
 }
 
-void AudioWaveformWidget::paintEvent(QPaintEvent* event){
+void BufferWaveform::paintEvent(QPaintEvent* event){
     Q_UNUSED(event)
     QPainter painter(this);
     if ( !cachedFrame_.isNull() ){
@@ -81,7 +83,7 @@ void AudioWaveformWidget::paintEvent(QPaintEvent* event){
     }
 }
 
-void AudioWaveformWidget::resizeEvent(QResizeEvent* event){
+void BufferWaveform::resizeEvent(QResizeEvent* event){
     QWidget::resizeEvent(event);
 
     if ( !cachedFrame_.isNull() ){
@@ -99,19 +101,19 @@ void AudioWaveformWidget::resizeEvent(QResizeEvent* event){
     resizeDebounce_->start(50);
 }
 
-void AudioWaveformWidget::showEvent(QShowEvent* event){
+void BufferWaveform::showEvent(QShowEvent* event){
     QWidget::showEvent(event);
     rebuild();
 }
 
-QSize AudioWaveformWidget::sizeHint() const {
+QSize BufferWaveform::sizeHint() const {
     return { 
         Theme::WAVEFORM_MIN_PLOT_WIDTH,
         Theme::WAVEFORM_HEIGHT
     };
 }
 
-bool AudioWaveformWidget::hasDisplayBuffer() const {
+bool BufferWaveform::hasDisplayBuffer() const {
     if ( !model_ ){
         return false ;
     }
@@ -123,7 +125,7 @@ bool AudioWaveformWidget::hasDisplayBuffer() const {
     }
 }
 
-const std::vector<double>& AudioWaveformWidget::getDisplayBuffer() const {
+const std::vector<double>& BufferWaveform::getDisplayBuffer() const {
     if ( upstream_ ){
         return model_->getUpstreamBuffer(channel_);
     } 
@@ -131,28 +133,28 @@ const std::vector<double>& AudioWaveformWidget::getDisplayBuffer() const {
     return model_->getBuffer(channel_);
 }
 
-void AudioWaveformWidget::disconnectModel(){
+void BufferWaveform::disconnectModel(){
     if ( model_ ){
         disconnect(
             model_,
             upstream_ ? &ComponentModel::upstreamBufferUpdated
                 : &ComponentModel::bufferUpdated, 
-            this, &AudioWaveformWidget::onBufferDataUpdated
+            this, &BufferWaveform::onBufferDataUpdated
         );
     }
 }
-void AudioWaveformWidget::connectModel(){
+void BufferWaveform::connectModel(){
     if ( model_ ){
         connect(
             model_,
             upstream_ ? &ComponentModel::upstreamBufferUpdated 
                 : &ComponentModel::bufferUpdated,
-            this, &AudioWaveformWidget::onBufferDataUpdated
+            this, &BufferWaveform::onBufferDataUpdated
         );
     }
 }
 
-void AudioWaveformWidget::rebuild(){
+void BufferWaveform::rebuild(){
     if ( !hasDisplayBuffer() ){
         renderToCache();
         return ;
@@ -161,10 +163,13 @@ void AudioWaveformWidget::rebuild(){
     const auto& buf = getDisplayBuffer();
     
     int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
-    if ( plotWidth <= 0 || buf.empty() ) return ;
+    if ( plotWidth <= 0 ) return ;
+    
+    totalNumSamples_ = buf.size();
+    if ( totalNumSamples_ == 0 ) return ;
 
     samplesPerPixel_ = std::max<size_t>(1, buf.size() / static_cast<size_t>(plotWidth));
-     
+    
     // populate voltages
     voltages_.clear();
     for ( size_t i = 0 ; i < buf.size(); i += samplesPerPixel_ ){
@@ -179,7 +184,7 @@ void AudioWaveformWidget::rebuild(){
     renderToCache();
 }
 
-void AudioWaveformWidget::renderToCache(){
+void BufferWaveform::renderToCache(){
     if ( size().isEmpty() ) return ;
 
     cachedFrame_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
@@ -193,7 +198,7 @@ void AudioWaveformWidget::renderToCache(){
     update();
 }
 
-void AudioWaveformWidget::drawWaveform(QPainter& painter){
+void BufferWaveform::drawWaveform(QPainter& painter){
     double midY = height() 
         - Theme::WAVEFORM_MARGIN_BOTTOM
         - Theme::WAVEFORM_MARGIN_TOP ;
@@ -204,19 +209,19 @@ void AudioWaveformWidget::drawWaveform(QPainter& painter){
     if ( n < 2 ) return ; // 0 case, also can't draw with only one bucket
 
     // start with max values left to right
-    float x0 = sampleToX(0, n);
+    float x0 = sampleToX(0);
     float yTop0 = voltageToY(voltages_[0].second);
     path.moveTo(x0, yTop0);
 
     for ( size_t i = 1; i < n; ++i ){
-        float x = sampleToX(i, n);
+        float x = sampleToX(i * samplesPerPixel_);
         float yTop = voltageToY(voltages_[i].second);
         path.lineTo(x,yTop);
     }
 
     // now min values right to left
     for ( size_t i = n - 1; i > 0; --i ){
-        float x = sampleToX(i,n);
+        float x = sampleToX(i * samplesPerPixel_);
         float yBot = voltageToY(voltages_[i].first);
         path.lineTo(x, yBot);
     }
@@ -225,7 +230,7 @@ void AudioWaveformWidget::drawWaveform(QPainter& painter){
     painter.fillPath(path, Theme::WAVEFORM_WAVE_COLOR);
 }
 
-void AudioWaveformWidget::drawGrid(QPainter& painter){
+void BufferWaveform::drawGrid(QPainter& painter){
     int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::WAVEFORM_MARGIN_TOP - Theme::WAVEFORM_MARGIN_BOTTOM ;
 
@@ -255,10 +260,9 @@ void AudioWaveformWidget::drawGrid(QPainter& painter){
     }
 
     // time divisions
-    const size_t numSamples = voltages_.size() * samplesPerPixel_ ;
-    if ( numSamples == 0 ) return ;
+    if ( totalNumSamples_ == 0 ) return ;
 
-    const double totalTimeSeconds = numSamples / sampleRate_ ;
+    const double totalTimeSeconds = totalNumSamples_ / sampleRate_ ;
     const int maxNumSteps = plotWidth_ / Theme::WAVEFORM_TIME_WIDTH ;
     const int maxTimeStep = totalTimeSeconds / maxNumSteps ;
     
@@ -274,7 +278,7 @@ void AudioWaveformWidget::drawGrid(QPainter& painter){
 
     for ( int time = 0; time < totalTimeSeconds; ){
         int sample = sampleRate_ * time ;
-        int x = sampleToX(sample, numSamples);
+        int x = sampleToX(sample);
         painter.drawText(x, 5 + fontYAdjust, 
             secondsToText(time)
         );
@@ -284,19 +288,20 @@ void AudioWaveformWidget::drawGrid(QPainter& painter){
     
 }
 
-float AudioWaveformWidget::sampleToX(size_t sampleIndex, size_t totalSamples) const {
+float BufferWaveform::sampleToX(size_t sampleIndex) const {
+    if ( totalNumSamples_ == 0 ) return 0 ;
     int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
-    float normalized = static_cast<float>(sampleIndex) / (totalSamples - 1);
+    float normalized = static_cast<float>(sampleIndex) / (totalNumSamples_ - 1);
     return Theme::WAVEFORM_MARGIN_LEFT + normalized * plotWidth ;
 }
 
-float AudioWaveformWidget::voltageToY(float voltage) const {
+float BufferWaveform::voltageToY(float voltage) const {
     int plotHeight = height() - Theme::WAVEFORM_MARGIN_TOP - Theme::WAVEFORM_MARGIN_BOTTOM ;
     float normalized = (voltage - minVolt_ ) / (maxVolt_ - minVolt_);
     return Theme::WAVEFORM_MARGIN_TOP + (1.0f - normalized) * plotHeight ;
 }
 
-QString AudioWaveformWidget::secondsToText(int seconds) const {
+QString BufferWaveform::secondsToText(int seconds) const {
     if ( seconds < 60 ){
         return QString::number(seconds) + "s" ;
     }
@@ -317,7 +322,7 @@ QString AudioWaveformWidget::secondsToText(int seconds) const {
         + QString("%1").arg(seconds, 2, 10, '0');
 }
 
-void AudioWaveformWidget::onBufferDataUpdated(size_t channel){
+void BufferWaveform::onBufferDataUpdated(size_t channel){
     qDebug() << "audio buffer updated. channel:" << channel << ". Internal channel " << channel_ ;
     if ( channel != channel_ ) return ;
     rebuild();

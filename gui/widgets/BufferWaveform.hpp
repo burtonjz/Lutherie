@@ -15,28 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef AUDIO_WAVEFORM_WIDGET_HPP_
-#define AUDIO_WAVEFORM_WIDGET_HPP_
+#ifndef BUFFER_WAVEFORM_HPP_
+#define BUFFER_WAVEFORM_HPP_
 
 #include "models/ComponentModel.hpp"
 
 #include <QWidget>
 
-class AudioWaveformWidget : public QWidget {
+class BufferWaveform : public QWidget {
     Q_OBJECT
 
-private:
+protected:
     float sampleRate_ ;
     size_t channel_ ;
     ComponentModel* model_ ;
     bool upstream_ ;
 
-    float plotWidth_ ;
+    int plotWidth_ ;
     float minVolt_ ;
     float maxVolt_ ;
 
     QImage cachedFrame_ ;
+
     size_t samplesPerPixel_ ;
+    size_t totalNumSamples_ ;
     std::vector<std::pair<float, float>> voltages_ ;
 
     QTimer* resizeDebounce_ ;
@@ -44,7 +46,7 @@ private:
     
 
 public:
-    explicit AudioWaveformWidget(ComponentModel* model, size_t channel, QWidget* parent = nullptr);
+    explicit BufferWaveform(ComponentModel* model, size_t channel, QWidget* parent = nullptr);
 
     void setBufferModel(ComponentModel* model);
     
@@ -57,7 +59,6 @@ protected:
     void showEvent(QShowEvent* event) override ;
     QSize sizeHint() const override ;
 
-private:
     bool hasDisplayBuffer() const ;
     const std::vector<double>& getDisplayBuffer() const ;
     void disconnectModel();
@@ -68,7 +69,7 @@ private:
     void drawWaveform(QPainter& painter);
     void drawGrid(QPainter& painter);
 
-    float sampleToX(size_t sampleIndex, size_t totalSamples) const ;
+    float sampleToX(size_t sampleIndex) const ;
     float voltageToY(float voltage) const ;
     QString secondsToText(int seconds) const ;
 
@@ -77,4 +78,4 @@ public slots:
     
 };
 
-#endif // AUDIO_WAVEFORM_WIDGET_HPP_
+#endif // BUFFER_WAVEFORM_HPP_

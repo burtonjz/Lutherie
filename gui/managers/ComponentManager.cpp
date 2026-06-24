@@ -324,7 +324,7 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         return ;
     }
 
-    if ( action == "set_component_parameter" && success ){
+    if ( action == "set_parameter" && success ){
         int id = msg.at("componentId");
         auto it = models_.find(id);
         if ( it == models_.end() ){
@@ -333,7 +333,7 @@ void ComponentManager::onControlMessageReceived(const json& msg){
             return ;
         }
 
-        ParameterType p = static_cast<ParameterType>(msg.at("parameter"));
+        ParameterType p = stringToParameter(msg.at("parameter"));
 
         setParameterValue(id, p, msg.at("value"));
         return ;
@@ -389,7 +389,6 @@ void ComponentManager::onControlMessageReceived(const json& msg){
 }
 
 void ComponentManager::onDataMessageReceived(DataDescriptor header, std::vector<double> buffer){
-    qDebug() << "data reached component manager!";
     auto* model = getModel(header.componentId);
     if ( !model ){
         qWarning() << "no model with component id" << header.componentId << " is available." ; 
