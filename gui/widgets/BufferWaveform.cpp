@@ -268,6 +268,7 @@ void BufferWaveform::drawGrid(QPainter& painter){
     
     // get best time step
     int timeStep = 0 ;
+
     for ( const auto& delta : Theme::WAVEFORM_DELTA_TIMES ){
         if ( delta < maxTimeStep ){
             timeStep = delta ;
@@ -275,6 +276,8 @@ void BufferWaveform::drawGrid(QPainter& painter){
             break ;
         }
     }
+
+    if ( timeStep == 0 ) timeStep = 1 ;
 
     for ( int time = 0; time < totalTimeSeconds; ){
         int sample = sampleRate_ * time ;

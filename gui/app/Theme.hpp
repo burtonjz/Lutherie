@@ -199,7 +199,7 @@ public:
     static constexpr int CHOPPER_HANDLE_WIDTH = 6 ;
     
     static constexpr std::initializer_list<int> WAVEFORM_DELTA_TIMES = {
-        5, 10, 15, 20, 30, 60, 90, 120, 150
+        1, 5, 10, 15, 20, 30, 60, 90, 120, 150
     };
     static constexpr int WAVEFORM_MIN_WIDTH          =
         WAVEFORM_MARGIN_LEFT + WAVEFORM_MARGIN_RIGHT + WAVEFORM_MIN_PLOT_WIDTH ;
