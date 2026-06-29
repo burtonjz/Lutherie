@@ -37,50 +37,81 @@ void BufferChopper::drawSelectionRegion(QPainter& painter, bool start){
     if ( !model_ ) return ;
     if ( totalNumSamples_ == 0 ) return ;
 
-    int sampleStart, sampleEnd ;
+    int shadeStartX, shadeEndX, handlePosX ;
     if ( start ){
-        sampleStart = 0 ;
-        sampleEnd = std::get<float>(model_->getParameterValue(ParameterType::START_POSITION));
+        shadeStartX = sampleToX(0);
+        shadeEndX = startPosX_ ;
+        handlePosX = shadeEndX ;
     } else {
-        sampleStart = std::get<float>(model_->getParameterValue(ParameterType::DURATION));
-        sampleEnd = totalNumSamples_ ;
+        shadeStartX = endPosX_ ;
+        shadeEndX = sampleToX(totalNumSamples_);
+        handlePosX = shadeStartX ;
     }
-    qDebug() << "samples:" << sampleStart << sampleEnd ; 
-    
-    int startPos = sampleToX(sampleStart);
-    int endPos   = sampleToX(sampleEnd);
 
     // shaded area
     QRect shaded = {
-        startPos, Theme::WAVEFORM_MARGIN_TOP, 
-        sampleEnd - sampleStart, Theme::WAVEFORM_FIXED_PLOT_HEIGHT
+        shadeStartX, Theme::WAVEFORM_MARGIN_TOP, 
+        shadeEndX - shadeStartX, Theme::WAVEFORM_FIXED_PLOT_HEIGHT
     };
     painter.fillRect(shaded, Theme::CHOPPER_SHADE_COLOR);
 
     // selection handle
-    int handlePos = start ? endPos : startPos ;
-    int tick = start ? Theme::CHOPPER_HANDLE_WIDTH : -Theme::CHOPPER_HANDLE_WIDTH ;
+    drawSelectionHandle(painter, handlePosX, start);
+}
+
+void BufferChopper::drawSelectionHandle(QPainter& painter, int posX, bool dir){
     int yTop = Theme::WAVEFORM_MARGIN_TOP ;
     int yBot = Theme::WAVEFORM_HEIGHT - Theme::WAVEFORM_MARGIN_BOTTOM ;
+    int tick = Theme::CHOPPER_HANDLE_WIDTH ;
+    if ( !dir ) tick *= -1 ;
 
     painter.setPen(QPen(Theme::CHOPPER_HANDLE_COLOR, 2));
     
     painter.drawLine(
-        handlePos, yTop,
-        handlePos, yBot
+        posX, yTop,
+        posX, yBot
     );
     painter.drawLine(
-        handlePos, yTop,
-        handlePos + tick, yTop
+        posX, yTop,
+        posX + tick, yTop
     );
     painter.drawLine(
-        handlePos, yBot,
-        handlePos + tick, yBot
+        posX, yBot,
+        posX + tick, yBot
     );
+}
+
+void BufferChopper::resizeEvent(QResizeEvent* event){
+    BufferWaveform::resizeEvent(event);
+
+    calculateStartEndPos();
+    update();
+}
+
+void BufferChopper::calculateStartEndPos(){
+    int start = std::get<float>(model_->getParameterValue(ParameterType::START_POSITION));
+    int duration = std::get<float>(model_->getParameterValue(ParameterType::DURATION));
+    startPosX_ = sampleToX(start);
+    endPosX_ = sampleToX(start + duration);
+}
+
+bool BufferChopper::event(QEvent *event){
+    if ( event->type() == QEvent::HoverEnter ) {
+        qDebug() << "Mouse Entered!";
+        return true; 
+    } else if ( event->type() == QEvent::HoverLeave ) {
+        qDebug() << "Mouse Left!";
+        return true;
+    } else if ( event->type() == QEvent::HoverMove ) {
+        return true;
+    }
+    
+    return QWidget::event(event); // Let other events pass through
 }
 
 void BufferChopper::onParameterChanged(ParameterType p){
     if ( p == ParameterType::START_POSITION || p == ParameterType::DURATION ){
+        calculateStartEndPos();
         update();
     }
 }

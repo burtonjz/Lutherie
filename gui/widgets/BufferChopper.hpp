@@ -24,12 +24,26 @@
 class BufferChopper : public BufferWaveform {
     Q_OBJECT
 
+private:
+    int startPosX_ ;
+    int endPosX_ ;
+
+    bool isDragging_ ;
+    bool DragStart_ ;
+    int dragPosX_ ;
+
 public:
     explicit BufferChopper(ComponentModel* model, size_t channel, QWidget* parent = nullptr);
 
 protected:
-    void paintEvent(QPaintEvent* event);
+    void paintEvent(QPaintEvent* event) override ;
     void drawSelectionRegion(QPainter& painter, bool start);
+    void drawSelectionHandle(QPainter& painter, int posX, bool dir);
+
+    void resizeEvent(QResizeEvent* event) override ;
+    void calculateStartEndPos();
+
+    bool event(QEvent *event) override ;
 
 public slots:
     void onParameterChanged(ParameterType p);
