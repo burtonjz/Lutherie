@@ -160,6 +160,10 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
             model_, &ComponentModel::parameterValueChanged, 
             chopper, &BufferChopper::onParameterChanged
         );
+        connect(
+            chopper, &BufferChopper::parameterEdited,
+            this, &ComponentParameters::parameterEdited
+        );
         return scroll ;
     }
     default:

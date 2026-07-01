@@ -29,7 +29,7 @@ private:
     int endPosX_ ;
 
     bool isDragging_ ;
-    bool DragStart_ ;
+    bool dragStart_ ;
     int dragPosX_ ;
 
 public:
@@ -43,10 +43,21 @@ protected:
     void resizeEvent(QResizeEvent* event) override ;
     void calculateStartEndPos();
 
-    bool event(QEvent *event) override ;
+    bool event(QEvent *event) override ; 
+    void mousePressEvent(QMouseEvent* e) override ;
+    void mouseMoveEvent(QMouseEvent* e) override ;
+    void mouseReleaseEvent(QMouseEvent* e) override ;
+
+    void setHoverCursor(QPointF pos);
+    bool startDrag(QPointF pos);
+    void updateDrag(QPointF pos);
+    void finishDrag(QPointF pos);
 
 public slots:
     void onParameterChanged(ParameterType p);
+
+signals:
+    void parameterEdited(int componentId, ParameterType p, ParameterValue value);
     
 };
 

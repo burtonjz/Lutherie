@@ -298,6 +298,17 @@ float BufferWaveform::sampleToX(size_t sampleIndex) const {
     return Theme::WAVEFORM_MARGIN_LEFT + normalized * plotWidth ;
 }
 
+int BufferWaveform::xToSample(int posX) const {
+    if ( totalNumSamples_ == 0 ) return 0 ;
+    int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
+    float normalized = (static_cast<float>(posX) - Theme::WAVEFORM_MARGIN_LEFT) / plotWidth ; 
+    if ( normalized > 1.0f ){
+        qWarning() << "normalized x value is " << normalized << "which is out of range. setting to max";
+        normalized = 1.0f ;
+    }
+    return normalized * (totalNumSamples_ - 1);
+}
+
 float BufferWaveform::voltageToY(float voltage) const {
     int plotHeight = height() - Theme::WAVEFORM_MARGIN_TOP - Theme::WAVEFORM_MARGIN_BOTTOM ;
     float normalized = (voltage - minVolt_ ) / (maxVolt_ - minVolt_);

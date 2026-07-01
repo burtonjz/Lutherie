@@ -43,8 +43,6 @@ protected:
 
     QTimer* resizeDebounce_ ;
 
-    
-
 public:
     explicit BufferWaveform(ComponentModel* model, size_t channel, QWidget* parent = nullptr);
 
@@ -70,7 +68,10 @@ protected:
     void drawGrid(QPainter& painter);
 
     float sampleToX(size_t sampleIndex) const ;
+    int xToSample(int posX) const ;
+
     float voltageToY(float voltage) const ;
+
     QString secondsToText(int seconds) const ;
 
 public slots:

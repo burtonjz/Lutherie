@@ -19,11 +19,13 @@
 #include "app/Theme.hpp"
 
 #include <QPainter>
+#include <QMouseEvent>
 
 BufferChopper::BufferChopper(ComponentModel* model, size_t channel, QWidget* parent):
-    BufferWaveform(model, channel, parent)
+    BufferWaveform(model, channel, parent),
+    isDragging_(false)
 {
-
+    setAttribute(Qt::WA_Hover, true);
 }
 
 void BufferChopper::paintEvent(QPaintEvent* event){
@@ -37,13 +39,24 @@ void BufferChopper::drawSelectionRegion(QPainter& painter, bool start){
     if ( !model_ ) return ;
     if ( totalNumSamples_ == 0 ) return ;
 
+    // handle drag logic
+    int startX, endX ;
+    if ( isDragging_ ){
+        startX = dragStart_ ? dragPosX_ : startPosX_ ;
+        endX = dragStart_ ? endPosX_ : dragPosX_ ;
+    } else {
+        startX = startPosX_ ;
+        endX = endPosX_ ;
+    }
+
+    // shaded region
     int shadeStartX, shadeEndX, handlePosX ;
     if ( start ){
         shadeStartX = sampleToX(0);
-        shadeEndX = startPosX_ ;
+        shadeEndX = startX ;
         handlePosX = shadeEndX ;
     } else {
-        shadeStartX = endPosX_ ;
+        shadeStartX = endX ;
         shadeEndX = sampleToX(totalNumSamples_);
         handlePosX = shadeStartX ;
     }
@@ -96,17 +109,111 @@ void BufferChopper::calculateStartEndPos(){
 }
 
 bool BufferChopper::event(QEvent *event){
-    if ( event->type() == QEvent::HoverEnter ) {
-        qDebug() << "Mouse Entered!";
-        return true; 
-    } else if ( event->type() == QEvent::HoverLeave ) {
-        qDebug() << "Mouse Left!";
-        return true;
-    } else if ( event->type() == QEvent::HoverMove ) {
+    // change cursor if in hover range
+    if ( event->type() == QEvent::HoverMove ){
+        QHoverEvent* e = dynamic_cast<QHoverEvent*>(event);
+        QPointF pos = mapFromGlobal(e->globalPosition());
+        setHoverCursor(pos);
         return true;
     }
     
-    return QWidget::event(event); // Let other events pass through
+    return QWidget::event(event);
+}
+
+void BufferChopper::mousePressEvent(QMouseEvent* e){
+    QPointF pos = mapFromGlobal(e->globalPosition());
+
+    if ( e->button() == Qt::LeftButton ){
+        startDrag(pos);
+    }
+}
+
+void BufferChopper::mouseMoveEvent(QMouseEvent* e){
+    if ( !isDragging_ ) return ;
+
+    QPointF pos = mapFromGlobal(e->globalPosition());
+    updateDrag(pos);
+}
+
+void BufferChopper::mouseReleaseEvent(QMouseEvent* e){
+    if ( !isDragging_ ) return ;
+
+    if ( e->button() == Qt::LeftButton ){
+        QPointF pos = mapFromGlobal(e->globalPosition());
+        finishDrag(pos);
+    }
+}
+
+void BufferChopper::setHoverCursor(QPointF pos){
+    int startX, endX ;
+    if ( isDragging_ ){
+        startX = dragStart_ ? dragPosX_ : startPosX_ ;
+        endX = dragStart_ ? endPosX_ : dragPosX_ ;
+        return ;
+    } else {
+        startX = startPosX_ ;
+        endX = endPosX_ ;
+    }
+    
+    
+    if ( abs(pos.x() - startX ) < Theme::CHOPPER_HANDLE_WIDTH * 2 ){
+        if ( cursor() != Qt::SizeHorCursor ) setCursor(Qt::SizeHorCursor);
+    } else if ( abs(pos.x() - endX ) < Theme::CHOPPER_HANDLE_WIDTH * 2 ){
+        if ( cursor() != Qt::SizeHorCursor ) setCursor(Qt::SizeHorCursor);
+    } else {
+        unsetCursor();
+    }
+}
+
+bool BufferChopper::startDrag(QPointF pos){
+    if ( cursor() != Qt::SizeHorCursor ) return false ;
+
+    if ( abs(pos.x() - startPosX_ ) < Theme::CHOPPER_HANDLE_WIDTH * 2 ){
+        dragStart_ = true ;
+        dragPosX_ = pos.x();
+    } else {
+        dragStart_ = false ;
+        dragPosX_ = pos.x();
+    }
+    
+    isDragging_ = true ;
+    return true ;
+}
+
+void BufferChopper::updateDrag(QPointF pos){
+    dragPosX_ = pos.x();
+    if ( dragStart_ ){
+        if ( dragPosX_ >= endPosX_ ){
+            dragPosX_ = endPosX_ - Theme::CHOPPER_HANDLE_WIDTH ;
+        }
+        int plotStart = sampleToX(0);
+        if ( dragPosX_ < plotStart ){
+            dragPosX_ = plotStart ;
+        }
+    } else {
+        if ( dragPosX_ < startPosX_ ){
+            dragPosX_ = startPosX_ + Theme::CHOPPER_HANDLE_WIDTH ;
+        }
+        int plotEnd = plotWidth_ + Theme::WAVEFORM_MARGIN_LEFT ;
+        if ( dragPosX_ > plotEnd ){
+            dragPosX_ = plotEnd ;
+        }
+    }
+    update();
+}
+
+void BufferChopper::finishDrag(QPointF pos){
+    isDragging_ = false ;
+    if ( dragStart_ ){
+        startPosX_ = dragPosX_ ;
+        emit parameterEdited(model_->getId(), ParameterType::START_POSITION, xToSample(startPosX_));
+    } else {
+        endPosX_ = dragPosX_ ;
+        float duration = xToSample(endPosX_) - std::get<float>(model_->getParameterValue(ParameterType::START_POSITION));
+        emit parameterEdited(model_->getId(), ParameterType::DURATION, duration);
+    }
+    update();
+    
 }
 
 void BufferChopper::onParameterChanged(ParameterType p){
