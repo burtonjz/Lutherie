@@ -16,8 +16,9 @@
  */
 
 #include "views/ConnectionRenderer.hpp"
-
 #include "graphics/GraphNode.hpp"
+
+#include <spdlog/spdlog.h>
 
 ConnectionRenderer::ConnectionRenderer(
     QGraphicsScene* scene,
@@ -66,7 +67,7 @@ void ConnectionRenderer::finishDrag(const QPointF& scenePos){
     ConnectionRequest request ;
     
     if ( !dragCable_ || !dragFromSocket_ ){
-        qWarning() << "drag connection not available. Unable to finish drag.";
+        SPDLOG_DEBUG("drag connection not available. Unable to finish drag.");
         return ;
     }
 
@@ -74,7 +75,7 @@ void ConnectionRenderer::finishDrag(const QPointF& scenePos){
 
     SocketWidget* toSocket = socketLookup_->findSocketAt(scenePos);
     if ( !toSocket ){
-        qInfo() << "No socket endpoint specified for drag cable. Cancelling connection." ;
+        SPDLOG_DEBUG("No socket endpoint specified for drag cable. Cancelling connection.");
         cancelDrag();
         return ;
     }
@@ -134,7 +135,6 @@ void ConnectionRenderer::requestRemoveSocket(SocketWidget* s){
     if ( socketIsRemovable(s, true) ){
         emit canRemoveSocket(s);
     } else {
-        qDebug() << "queuing socket for removal...";
         socketsQueuedForRemoval_.insert(s);
     }
 }
@@ -244,7 +244,7 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
     });
 
     if ( !outbound || !inbound ){
-        qWarning() << "did not find sockets to draw connection cable. Please investigate" ;
+        SPDLOG_DEBUG("did not find sockets to draw connection cable. Please investigate");
         return ;
     }
 
@@ -275,9 +275,7 @@ void ConnectionRenderer::onConnectionRemoved(const ConnectionRequest& req){
     }
 
     for ( auto s : socketsQueuedForRemoval_ ){
-        qDebug() << "checking socket for removal..." ;
         if ( socketIsRemovable(s, false) ){
-            qDebug() << "removing queued socket" ;
             emit canRemoveSocket(s);
         }
     }

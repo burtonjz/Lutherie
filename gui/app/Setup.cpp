@@ -19,6 +19,7 @@
 #include "managers/StateManager.hpp"
 #include "api/ControlApiClient.hpp"
 #include "ui_Setup.h"
+#include <spdlog/spdlog.h>
 
 Setup::Setup(QWidget* parent): 
     QWidget(parent),
@@ -48,14 +49,14 @@ Setup::~Setup()
 
 void Setup::populateSetupComboBox(QComboBox* box, const json& data){
     if ( !data.is_array() ){
-        qWarning() << "data is not in expected format. Exiting." ;
+        SPDLOG_WARN("data is not in expected format. Exiting.");
         return ;
     }
 
     box->clear();
     for ( const auto& item : data ){
         if ( ! item.is_object() || ! item.contains("id") || ! item.contains("name") ){
-            qWarning() << "array object does not match expected form. Skipping item:" << item.dump() ;
+            SPDLOG_WARN("array object does not match expected form. Skipping item: {}", item.dump()) ;
             continue ;
         }
 
@@ -82,7 +83,7 @@ void Setup::onControlMessageReceived(const json& json){
 
     if ( action == "set_audio_device" ){
         QString status = QString::fromStdString(json["status"]);
-        qDebug() << "set_audio_device return state:" << status ;
+        SPDLOG_DEBUG("set_audio_device return state: {}", status.toStdString());
         if ( status == "success" ){
             StateManager::instance()->setSetupAudioComplete(true);
         }
@@ -91,7 +92,7 @@ void Setup::onControlMessageReceived(const json& json){
 
     if ( action == "set_midi_device" ){
         QString status = QString::fromStdString(json["status"]);
-        qDebug() << "set_midi_device return state:" << status ;
+        SPDLOG_DEBUG("set_midi_device return state: {}", status) ;
         if ( status == "success" ){
             StateManager::instance()->setSetupMidiComplete(true);
         }
@@ -111,7 +112,7 @@ void Setup::onSetupSubmit(){
 }
 
 void Setup::onSetupCompleted(){
-    qInfo() << "setup completed." ;
+    SPDLOG_INFO("setup completed.");
     json j ; 
     emit setupCompleted();
     close();

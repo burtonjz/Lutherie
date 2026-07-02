@@ -22,6 +22,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
 #include <QPoint>
+#include <spdlog/spdlog.h>
 
 GraphNode::GraphNode(QString name, QGraphicsItem* parent): 
     QGraphicsObject(parent),
@@ -369,7 +370,7 @@ void GraphNode::deserialize(const json& node){
                 SocketWidget* s = getSocket(spec);
                 hideSocket(s);
             } catch ( const std::exception& e){
-                qWarning() << "hidden sockets did not contain a valid socket spec." ;
+                SPDLOG_WARN("hidden sockets did not contain a valid socket spec.");
             }
         }
     }
@@ -383,7 +384,6 @@ void GraphNode::onRename(QString name){
 
 void GraphNode::removeSocket(SocketWidget* socket){
     if ( !socket || socket->getParent() != this ) return ;
-    qDebug() << "GraphNode removing socket..." ;
     
     sockets_.erase(std::remove(
         sockets_.begin(), sockets_.end(), socket), 

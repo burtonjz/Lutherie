@@ -20,6 +20,7 @@
 
 #include <QPainter>
 #include <QMouseEvent>
+#include <spdlog/spdlog.h>
 
 BufferChopper::BufferChopper(ComponentModel* model, size_t channel, QWidget* parent):
     BufferWaveform(model, channel, parent),
@@ -42,13 +43,13 @@ void BufferChopper::updateCollection(const CollectionRequest& req){
         case CollectionAction::GET_ALL:
             break ;
         default:
-            qWarning() << "unsupported collection action received for buffer chopper" ;
+            SPDLOG_WARN("unsupported collection action received for buffer chopper, which only accepts SET or GET_ALL");
             return ;
     }
 
     const CollectionDescriptor& cd = model_->getDescriptor().getCollection();
     if ( !req.valid(cd) ){
-        qWarning() << "Invalid collection request received for buffer chopper." ;
+        SPDLOG_WARN("Invalid collection request received for buffer chopper.");
         return ;
     }
     
@@ -59,8 +60,8 @@ void BufferChopper::updateCollection(const CollectionRequest& req){
     startPosX_ = sampleToX(startSample_);
     endPosX_   = sampleToX(endSample_);
 
-    qDebug() << "collection update resulted in startSample=" << startSample_ << ", endSample=" << endSample_ << ", startPosX_=" << startPosX_
-        << "endPosX_=" << endPosX_ ;
+    SPDLOG_DEBUG("collection update resulted in startSample={}, endSample={}, startPos={}, endPos={}",
+        startSample_, endSample_, startPosX_, endPosX_);
     update();
 }
 

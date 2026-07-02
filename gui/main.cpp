@@ -27,6 +27,7 @@
 #include <QApplication>
 #include <qlogging.h>
 #include <qobject.h>
+#include <spdlog/spdlog.h>
 
 namespace KDDW   = KDDockWidgets ;
 
@@ -35,6 +36,9 @@ int main(int argc, char *argv[]){
     qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/docking support matures
 #endif 
 
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
+    spdlog::set_level(spdlog::level::debug);
+    
     QApplication app(argc, argv);
 
     KDDW::initFrontend(KDDW::FrontendType::QtWidgets);

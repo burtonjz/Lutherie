@@ -19,6 +19,7 @@
 #include "config/Config.hpp"
 #include "requests/DataDescriptor.hpp"
 
+#include <spdlog/spdlog.h>
 #include <string>
 
 DataApiClient* DataApiClient::instance(){
@@ -41,7 +42,7 @@ void DataApiClient::connectToBackend(){
     Config::load();
     QString serverAddress = QString::fromStdString(Config::get<std::string>("server.address").value()) ;
     int serverPort = Config::get<int>("server.data_port").value() ;
-    qDebug() << "connecting to " << serverAddress << "port" << serverPort ;
+    SPDLOG_INFO("connecting to {} port {}", serverAddress.toStdString(), serverPort);
     socket_->connectToHost(serverAddress, serverPort );
 }
 
@@ -86,10 +87,8 @@ void DataApiClient::onReadyRead(){
             );
         }
 
-        qDebug() << "received data for componentId:" << header.componentId
-            << "channel " << header.channel
-            << ". dataSize: " << dataSize
-            << "bytes (" << data.size() << " values)";
+        SPDLOG_INFO("received data for componentId {} on channel {}. dataSize={} bytes ({})",
+            header.componentId, header.channel, dataSize, data.size());
 
         emit dataReceived(header, std::move(data));
     }

@@ -30,6 +30,7 @@
 #include <QMouseEvent>
 #include <QShortcut>
 #include <QLineEdit>
+#include <spdlog/spdlog.h>
 
 
 ParameterWidget::ParameterWidget(QWidget* parent):
@@ -316,7 +317,7 @@ void WaveformWidget::setValue(const ParameterValue& value, bool block){
     if ( idx != -1 ){
         waveforms_->setCurrentIndex(idx);
     } else {
-        qWarning() << "could not set waveform value, enum not found in data" ;
+        SPDLOG_WARN("could not set waveform value, enum not found in data");
         return ;
     }
 }
@@ -382,7 +383,7 @@ void FilterTypeWidget::setValue(const ParameterValue& value, bool block){
     if ( idx != -1 ){
         type_->setCurrentIndex(idx);
     } else {
-        qWarning() << "could not set filter type value, enum not found in data" ;
+        SPDLOG_WARN("could not set filter type value, enum not found in data");
         return ;
     }
 }
@@ -448,7 +449,7 @@ void MonophonicTriggerBehaviorWidget::setValue(const ParameterValue& value, bool
     if ( idx != -1 ){
         type_->setCurrentIndex(idx);
     } else {
-        qWarning() << "could not set filter type value, enum not found in data" ;
+        SPDLOG_WARN("could not set filter type value, enum not found in data");
         return ;
     }
 }
@@ -558,9 +559,8 @@ void SliderWidget::setValue(const ParameterValue& value, bool block){
             PARAMETER_TYPE_LIST
         #undef X
         default:
-            qWarning() << "Parameter of type " << 
-                GET_PARAMETER_TRAIT_MEMBER(param_, name) 
-                << " is not in enum. This shouldn't happen." ;
+            SPDLOG_WARN("Parameter of type {} is not in enum. This is a programming bug",
+                GET_PARAMETER_TRAIT_MEMBER(param_, name));
             break ;
     }
 
@@ -602,9 +602,8 @@ void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
                 PARAMETER_TYPE_LIST
             #undef X
         default:
-            qWarning() << "Parameter of type " <<
-                GET_PARAMETER_TRAIT_MEMBER(param_, name) <<
-                " is not in enum. This shouldn't happen." ;
+            SPDLOG_WARN("Parameter of type {} is not in enum. This is a programming bug",
+                GET_PARAMETER_TRAIT_MEMBER(param_, name));
             break ;
         }
     });
@@ -656,9 +655,8 @@ void SliderWidget::setupUI(){
         PARAMETER_TYPE_LIST
         #undef X
         default:
-            qWarning() << "Parameter of type " << 
-                GET_PARAMETER_TRAIT_MEMBER(param_, name) 
-                << " is not in enum. This shouldn't happen." ;
+            SPDLOG_WARN("Parameter of type {} is not in enum. This is a programming bug",
+                GET_PARAMETER_TRAIT_MEMBER(param_, name));
             knob_->setValue(0);
     }
 

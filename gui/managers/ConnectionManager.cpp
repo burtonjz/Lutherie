@@ -20,8 +20,8 @@
 #include "api/ControlApiClient.hpp"
 
 #include <QGraphicsItem>
-#include <QDebug>
 #include <algorithm>
+#include <spdlog/spdlog.h>
 
 ConnectionManager::ConnectionManager(QObject* parent): 
     QObject(parent)
@@ -31,12 +31,12 @@ ConnectionManager::ConnectionManager(QObject* parent):
 
 void ConnectionManager::loadConnection(const ConnectionRequest& req){
     if ( !req.valid() ){
-        qWarning() << "Connection failed: Json is not a valid ConnectionRequest." ;
+        SPDLOG_WARN("Connection failed: Json is not a valid ConnectionRequest.");
         return ;
     }
 
     if ( connectionExists(req) ){
-        qWarning() << "Connection already exists. Will not load connection again.";
+        SPDLOG_WARN("Connection already exists. Will not load connection again.");
         return ;
     }
     
@@ -54,7 +54,7 @@ void ConnectionManager::loadConnection(const ConnectionRequest& req){
     });
 
     if ( ! inboundSocket || ! outboundSocket ){
-        qWarning() << "Json connection not successfully loaded: sockets not found";
+        SPDLOG_WARN("Json connection not successfully loaded: sockets not found");
         return ;
     }
 
@@ -97,8 +97,7 @@ std::vector<ParameterType> ConnectionManager::getModulationDepthConnections(int 
 
 void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){
     if ( !req.valid() ){
-        qDebug() << nlohmann::json(req).dump() ;
-        qWarning() << "Invalid connection request created. Cancelling connection.";
+        SPDLOG_WARN("Invalid connection request created. Cancelling connection. {}", json(req).dump());
         return ;
     }
 
@@ -134,7 +133,7 @@ void ConnectionManager::onControlMessageReceived(const json& msg){
 
     if ( req.remove ){
         if ( !connectionExists(req) ){
-            qWarning() << "requested connection is not present in connection manager. will not trigger removal.";
+            SPDLOG_WARN("requested connection is not present in connection manager. will not trigger removal.");
             return ;
         }
         connections_.erase(std::remove(
@@ -144,7 +143,7 @@ void ConnectionManager::onControlMessageReceived(const json& msg){
         emit connectionRemoved(req);
     } else {
         if ( connectionExists(req) ){
-            qWarning() << "requested connection already exists in connection manager. Will not add again.";
+            SPDLOG_WARN("requested connection already exists in connection manager. Will not add again.");
             return ;
         }
         connections_.push_back(req);

@@ -18,8 +18,6 @@
 #include "models/ComponentModel.hpp"
 #include "meta/ComponentRegistry.hpp"
 
-#include <QDebug>
-
 
 ComponentModel::ComponentModel(int id, ComponentType typ):
     id_(id),
@@ -170,7 +168,8 @@ const ParameterValue& ComponentModel::getParameterValue(ParameterType p) const {
 
 void ComponentModel::setParameterValue(ParameterType p, ParameterValue v, bool block){
     if ( !validParam(p) ){
-        qWarning() << "invalid parameter specified: " << GET_PARAMETER_TRAIT_MEMBER(p, name);
+        SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter.", 
+            GET_PARAMETER_TRAIT_MEMBER(p, name));
         return ;
     }
     parameters_[p] = v ;
@@ -182,7 +181,8 @@ void ComponentModel::setParameterValue(ParameterType p, ParameterValue v, bool b
 
 void ComponentModel::setParameterToDefault(ParameterType p, bool block){
     if ( !validParam(p) ){
-        qWarning() << "invalid parameter specified: " << GET_PARAMETER_TRAIT_MEMBER(p, name);
+        SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter to default.", 
+            GET_PARAMETER_TRAIT_MEMBER(p, name));
         return ;
     }
     
@@ -195,7 +195,8 @@ void ComponentModel::setParameterToDefault(ParameterType p, bool block){
         PARAMETER_TYPE_LIST
         #undef X
         default:
-            qWarning() << "invalid parameter specified: " << GET_PARAMETER_TRAIT_MEMBER(p, name);
+            SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter to default.", 
+                GET_PARAMETER_TRAIT_MEMBER(p, name));
             break ;
     }
 

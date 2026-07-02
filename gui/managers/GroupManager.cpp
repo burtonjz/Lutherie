@@ -17,8 +17,8 @@
 
 #include "managers/GroupManager.hpp"
 
-#include <QDebug>
 #include <QWidget>
+#include <spdlog/spdlog.h>
 
 GroupManager::GroupManager(QObject* parent):
     QObject(parent),
@@ -93,7 +93,7 @@ void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::opti
 
     if ( model->getComponents().size() == 0 ){
         model->deleteLater();
-        qWarning() << "group creation does not have any valid component ids" ;
+        SPDLOG_WARN("group creation does not have any valid component ids");
         return ;
     } 
 
@@ -103,7 +103,7 @@ void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::opti
 
 void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentIds){
     if ( ! groups_.contains(groupId) ){
-        qWarning() << "group update requested for invalid group id." ;
+        SPDLOG_WARN("group update requested for invalid group id: {}", groupId);
         return ;
     }
     auto model = groups_.at(groupId);
@@ -119,7 +119,7 @@ void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentI
 
 void GroupManager::onRequestGroupRemove(int groupId){
     if ( ! groups_.contains(groupId) ){
-        qWarning() << "group removal requested for invalid group id." ;
+        SPDLOG_WARN("group removal requested for invalid group id: {}", groupId);
         return ;
     }
     emit groupRemoved(groupId, groups_.at(groupId)->getComponents());

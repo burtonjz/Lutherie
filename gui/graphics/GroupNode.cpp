@@ -17,6 +17,7 @@
 
 #include "GroupNode.hpp"
 #include <QGraphicsScene>
+#include <spdlog/spdlog.h>
 
 GroupNode::GroupNode(int groupId, const QString& name, QGraphicsItem* parent):
     GraphNode(name, parent),
@@ -26,7 +27,7 @@ GroupNode::GroupNode(int groupId, const QString& name, QGraphicsItem* parent):
 
 void GroupNode::add(ComponentNode* node){
     if ( !node || contains(node) ){
-        qWarning() << "ignoring GroupNode Component add with null pointer" ;
+        SPDLOG_WARN("ignoring GroupNode Component add with null pointer");
         return ;
     } 
     children_.push_back(node);

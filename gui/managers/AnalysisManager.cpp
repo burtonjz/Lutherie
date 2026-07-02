@@ -22,6 +22,8 @@
 #include "widgets/SpectrumAnalyzerWidget.hpp"
 #include "widgets/OscilloscopeWidget.hpp"
 
+#include <spdlog/spdlog.h>
+
 AnalysisManager::AnalysisManager(QObject* parent):
     QObject(parent),
     analyzerWidgets_(),
@@ -53,9 +55,9 @@ void AnalysisManager::setPort(quint16 port){
     port_ = port ;
 
     if ( !udpSocket_->bind(QHostAddress::LocalHost, port_)){
-        qWarning() << "Failed to bind UDP socket to port" << port_ ;
+        SPDLOG_WARN("Failed to bind UDP socket to port", port_);
     } else {
-        qDebug() << "Spectrum analyzer listening on UDP port" << port_ ;
+        SPDLOG_INFO("Spectrum analyzer listening on UDP port {}", port_);
     }
 }
 

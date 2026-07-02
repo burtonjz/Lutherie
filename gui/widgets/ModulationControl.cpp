@@ -3,6 +3,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <spdlog/spdlog.h>
 
 ModulationControl::ModulationControl(ParameterType p, QWidget* parent):
     QWidget(parent),
@@ -71,7 +72,7 @@ void ModulationControl::setStrategy(ModulationStrategy strategy, bool block){
     auto idx = strategySelector_->findData(static_cast<uint8_t>(strategy));
 
     if ( idx == -1 ){
-        qWarning() << "modulation strategy set to an invalid value. This is a programming bug." ;
+        SPDLOG_WARN("modulation strategy set to an invalid value {}. This is a programming bug.", idx);
         return ;
     }
 

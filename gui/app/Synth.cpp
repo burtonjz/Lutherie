@@ -420,7 +420,7 @@ QMenu* Synth::buildComponentMenu(){
                 return ;
             }    
         }
-        qDebug() << "component add completer did not match a component name: " << componentName ;
+        SPDLOG_DEBUG("component add completer did not match a component name: {}", componentName) ;
     });
 
     connect(menu, &QMenu::aboutToShow, search, &QLineEdit::clear);
@@ -430,7 +430,7 @@ QMenu* Synth::buildComponentMenu(){
 void Synth::createComponentDetailDock(int componentId, ComponentParameters* params){
     if ( !params ) return ;
     if ( componentDetailDocks_.contains(componentId) ){
-        qWarning() << "cannot create component detail dock: already exists for component" << componentId ;
+        SPDLOG_WARN("cannot create component detail dock: already exists for componentId {}", componentId);
         return ;
     }
 
@@ -463,7 +463,7 @@ void Synth::onControlMessageReceived(const json& j){
     if ( action == "set_state" ){
         QString state = QString::fromStdString(j["state"]);
         if ( j["status"] != "success"){
-            qDebug() << "request to set state was unsuccessful." ;
+            SPDLOG_WARN("request to set state was unsuccessful.");
             return ;
         }
         if (  state == "stop" ){
@@ -471,14 +471,14 @@ void Synth::onControlMessageReceived(const json& j){
         } else if ( state == "run" ) {
             emit engineStatusChanged(true);
         } else {
-            qDebug() << "invalid state received from set_state" << state ;
+            SPDLOG_WARN("invalid state received from set_state: {}", state.toStdString());
         }
         return ;
     }
 
     if ( action == "get_configuration" ){
         if ( j["status"] != "success" ){
-            qDebug() << "request to get configuration data failed." ;
+            SPDLOG_WARN("request to get configuration data failed.");
             return ;
         }
 
@@ -613,7 +613,7 @@ void Synth::performSave(){
     QByteArray data = saveData_.dump(2).c_str();
     file.write(data);
     file.close();
-    qDebug() << "file" << saveFilePath_ << "saved." ; 
+    SPDLOG_DEBUG("configuration state saved to file {}.", file.toStdString());
     setWindowModified(false);
     windowHandle()->requestUpdate();
     return ;

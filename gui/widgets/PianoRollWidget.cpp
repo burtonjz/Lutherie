@@ -22,6 +22,7 @@
 
 #include <nlohmann/json.hpp>
 #include <qpainter.h>
+#include <spdlog/spdlog.h>
 
 PianoRollWidget::PianoRollWidget(ComponentModel* model, QWidget* parent):
     CollectionWidget(model, parent),
@@ -378,7 +379,7 @@ void PianoRollWidget::endResize(const QPointF pos){
     
     // validate index
     if ( idx == -1 ){
-        qWarning() << "attempted to delete a note that has no index. Please investigate" ;
+        SPDLOG_DEBUG("attempted to delete a note that has no index. Please investigate");
         return ;
     }
 
@@ -479,7 +480,8 @@ void PianoRollWidget::handleCollectionRemove(const CollectionRequest& req){
         
     auto it = notes_.find(index);
     if ( it == notes_.end() ){
-        qWarning() << "received request to delete note with index " << index << ", but element is not in map";
+        SPDLOG_DEBUG("received request to delete note with index {}, but element is not in map", 
+            index);
         return ;
     }
 

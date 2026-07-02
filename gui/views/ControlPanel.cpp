@@ -16,6 +16,7 @@
  */
 
 #include "views/ControlPanel.hpp"
+#include <spdlog/spdlog.h>
 
 ControlPanel::ControlPanel(QWidget* parent):
     QScrollArea(parent),
@@ -110,12 +111,12 @@ void ControlPanel::moveContent(QWidget* content, QWidget* destination){
     if ( !section ) return ;
 
     if ( destination && !container_->isAncestorOf(destination) ){
-        qWarning() << "Cannot move content: destination is not owned by this control panel" ;
+        SPDLOG_WARN("Cannot move content: destination is not owned by this control panel");
         return ;
     }
 
     if ( destination && !destination->layout() ){
-        qWarning() << "Cannot move content: destination has no layout" ;
+        SPDLOG_WARN("Cannot move content: destination has no layout");
         return ;
     }
 

@@ -30,7 +30,6 @@
 #include <QWheelEvent>
 #include <QKeyEvent>
 #include <QPainter>
-#include <QDebug>
 #include <QGraphicsProxyWidget>
 #include <QDialog>
 #include <QVBoxLayout>
@@ -162,7 +161,8 @@ void GraphPanel::addAudioOutput(){
     
     setNodeConnections(audioOut_);
 
-    qDebug() << "Created Audio Output Device Widget:" << audioOut_->getName() << "at position:" << audioOut_->pos() ;
+    SPDLOG_INFO("Created audio output node named {} at position {},{}", 
+        audioOut_->getName().toStdString(), audioOut_->pos().x(), audioOut_->pos().y());
 }
 
 void GraphPanel::addMidiInput(){
@@ -178,7 +178,8 @@ void GraphPanel::addMidiInput(){
     
     setNodeConnections(midiIn_);
 
-    qDebug() << "Created Midi Input Device Widget:" << midiIn_->getName() << "at position:" << midiIn_->pos() ;
+    SPDLOG_INFO("Created midi input node named {} at position {},{}",
+        midiIn_->getName().toStdString(), midiIn_->pos().x(), midiIn_->pos().y());
 }
 
 GraphNode* GraphPanel::getVisibleNode(int componentId) const {
@@ -241,13 +242,13 @@ json GraphPanel::serializeNodes() const {
 
 void GraphPanel::deserializeNodes(const json& nodes){
     if ( ! nodes.is_array() ){
-        qWarning() << "nodes are not in expected json format." ;
+        SPDLOG_WARN("nodes are not in expected json format.");
         return ;
     }
 
     for ( const auto& n : nodes ) {        
         if ( ! n.contains("node_type") || ! n.at("node_type").is_string() ){
-            qWarning() << "serialized node does not have a type identifier. Ignoring object." ;
+            SPDLOG_WARN("serialized node does not have a type identifier. Ignoring object.");
             continue ;
         }
 
@@ -255,18 +256,18 @@ void GraphPanel::deserializeNodes(const json& nodes){
 
         if ( nodeType == "ComponentNode" ){
             if ( ! n.contains("componentId") || ! n.at("componentId").is_number() ){
-                qWarning() << "component node does not have id specified" ;
+                SPDLOG_WARN("component node does not have id specified");
                 continue ;
             }
             auto c = getComponentNode(n.at("componentId"));
             if ( ! c){
-                qWarning() << "component node not found for id " << n.at("componentId").dump() ;
+                SPDLOG_WARN("component node not found for id {}");
                 continue ;
             }
             c->deserialize(n);
         } else if ( nodeType == "PeripheralNode" ){
             if ( !n.contains("deviceId") || ! n.at("deviceId").is_number() ){
-                qWarning() << "peripheral node does not have a defined deviceId" ;
+                SPDLOG_WARN("peripheral node does not have a defined deviceId");
                 continue ;
             }
 
@@ -279,7 +280,7 @@ void GraphPanel::deserializeNodes(const json& nodes){
             if ( p ){
                 p->deserialize(n);
             } else {
-                qWarning() << "Invalid deviceId specified." ;
+                SPDLOG_WARN("Invalid deviceId specified: {}", n.at("deviceId").dump());
             }
         } else if ( nodeType == "GroupNode" ){
             if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
@@ -289,7 +290,8 @@ void GraphPanel::deserializeNodes(const json& nodes){
             std::vector<int> ids ;
             for ( const auto& id : n.at("componentIds") ){
                 if ( ! id.is_number() ){
-                    qWarning() << "component id in array is malformed. Expected number format." ;
+                    SPDLOG_WARN("componentId in array is malformed. Expected number format, but got {}",
+                        id.dump());
                     continue ;
                 }
                 ids.push_back(id);
@@ -298,7 +300,7 @@ void GraphPanel::deserializeNodes(const json& nodes){
             if ( ids.size() > 1 ){
                 emit requestGroupCreate(ids, n);
             } else {
-                qWarning() << "Group node does not contain more than 2 valid component ids.";
+                SPDLOG_WARN("Group node does not contain at least 2 valid component ids.");
             }
         }
     }
@@ -345,7 +347,7 @@ SocketWidget* GraphPanel::findSocket(SocketSpec spec) const {
     }
 
     if ( !w ){ 
-        qWarning() << "Could not find node matching search criteria." ;
+        SPDLOG_WARN("Could not find node matching search criteria.");
         return nullptr ;
     }
 
@@ -356,7 +358,7 @@ SocketWidget* GraphPanel::findSocket(SocketSpec spec) const {
         }
     }
 
-    qWarning() << "Could not find socket matching search criteria." ;
+    SPDLOG_WARN("Could not find socket matching search criteria.");
     return nullptr ;
 }
 
@@ -534,7 +536,6 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     }
 
     // socket menu
-    qDebug() << "Node: " << node ;
     QAction* unhideAll = new QAction("Unhide All", socketMenu);
     connect(unhideAll, &QAction::triggered, [node]{
         node->unhideAllSockets();
@@ -740,7 +741,7 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
     auto m = componentManager_->getModel(componentId);
 
     if ( !m ){
-        qWarning() << "cannot create component node. Model not found";
+        SPDLOG_WARN("cannot create component node. No model found with componentId {}", componentId);
         return ;
     }
 
@@ -762,7 +763,7 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
 void GraphPanel::onComponentRemoved(int componentId){
     auto n = getComponentNode(componentId);
     if ( !n ){
-        qWarning() << "requested removal of component id which does not exist. id:" << componentId ;
+        SPDLOG_WARN("Cannot remove component with id {}. Node does not exist.");
         return ;
     }
 
@@ -794,7 +795,7 @@ void GraphPanel::onComponentGroupRemoved(int groupId, std::unordered_set<int> co
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){
-        qWarning() << "graph node not found. Cannot delete." ;
+        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", groupId);
         return ;
     }
 
@@ -810,7 +811,7 @@ void GraphPanel::onComponentGroupUpdated(int groupId, std::unordered_set<int> co
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){
-        qWarning() << "graph node not found. Cannot delete." ;
+        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", groupId);
         return ;
     }
 
@@ -905,13 +906,13 @@ void GraphPanel::onNodeZUpdate(){
 
 void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
     if ( ! socket ){
-        qWarning() << "drag cable parameter requested for an invalid socket. Cancelling drag." ;
+        SPDLOG_WARN("drag cable parameter requested for an invalid socket. Cancelling drag.");
         connectionRenderer_->cancelDrag();
         return ;
     }
 
     if ( ! socket->getSpec().componentId.has_value() ){
-        qWarning() << "drag cable inbound socket does not have a defined component id. Cancelling drag." ;
+        SPDLOG_WARN("drag cable inbound socket does not have a defined componentId. Cancelling drag.");
         connectionRenderer_->cancelDrag();
         return ;
     }

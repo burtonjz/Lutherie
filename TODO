@@ -1,98 +1,115 @@
 # Lutherie TODO
 
-## Bugs / Cleanup
-- components with detail view take extra vertical space when reducing width, but they don't remove the empty space when resized wider (thus moving controls onto less vertical grid positions)
-- move setup button to menus, make it a tooltip popup instead of a dedicated window (or an undockable dock...)
-- Fix the issue with positioning of the graph panel when docking something
-- Create zoom out view of graph panel with drag to navigate
-- Create max zoom out of graph panel
-- allow group deletions?
-- when content deleted from control panel, update geometry so that min size doesn't get messed up
-- create specialized widget for midi filter (horizontal piano roll, highlight pass-through key ranges)
-  - PianoRollWidget should be renamed to SequencerWidget, and the PianoRoll component should be broken out and given a horizontal/vertical flag.8
-- KDDW dock widgets that aren't on the main window show "gui" in title bar if they are docked together
-- request rename when node gets its unique name (so that parameters/other panels update properly)
-- Sequencer: 
-  - don't allow note adds while status is on. 
-- Analyzer Nodes automatically group and reflect "channel" numbers
+---
 
-## Misc Improvements
-- move file buffer resampling to separate thread? Some kind of indicator when file is loaded?
-- Buffer streamer turn off when end of all input streams is reached
-- disable status toggle on buffer streamer if incoming streams are not armed
-
-## UI
-
-### Layout
-- GraphPanel defaults to central widget but can be docked/moved freely
-- Add "open editor" button to ComponentParameters (and node right click context menu) that launches specialized widget as a floating KDDW::DockWidget
-
-### Components
-- Expose Min/Max/Default parameters via right click tool window
-- Prevent modules from spawning on top of each other
-- Move add logic to toolbar menu with hotkeys for quick-add context menu
-- Component duplication — plain copy, and copy-with-connections
-- Ctrl+A to make component menu context menu for convenience
+## High Priority
 
 ### Sequencer
-- Per-note velocity support
-- Shift+scroll for horizontal scrollbar
-- Prevent note creation while engine is running
-- On sequencer status toggle, send note-off for all active notes (or disallow toggling during run)
-- labels on individual notes (midi note + velocity)
-- adjust size of sequencer grid based on duration parameter
+- [Quick] Don't allow note adds while sequencer status is on
+- [Quick] On sequencer status toggle, send note-off for all active notes
+- [Medium] Per-note velocity support
 
-## Signal Flow
+### Docking
+- [Quick] Make graph panel dockable and don't use central widget.
+- [Medium] Fix positioning bug when docking something onto the graph panel
+- [Medium] Theme out the KDDW docking indicators
 
-### Control Connections
-- create boolean control port signal/trigger system
-  - hard sync ( phase cycle complete signal, phase reset trigger)
+### Signal Flow
+- [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs.
 
-### Buffer-level Components
-- New BufferSource extension of BaseComponent
-- New BufferProcessor extension of BaseComponent
-- New BufferConnection type
-  - Square Port + Dashed Line for visual representation
-- Relevant Components:
-  - File Reader (no input, buffer output)
-  - Recorder (read in and save an audio stream, buffer output)
-  - Spectrogram (analysis)
-  - SpectralFilter (buffer in, buffer out)
-  - Chopper (buffer in, buffer out)
-  - BufferTrigger (buffer in, midi in, stream out)
-  - BufferLooper (buffer in, stream out)
-
-### Macro Knobs
-- Macro Knob panel docked to edge of graph panel, moves with it
-- Modulation socket on each macro knob
-- Macro Edit Mode: indicator appears next to each control panel parameter, drag to assign to macro knob
-- Indicator outside of Macro Edit Mode showing a macro is assigned (same style as MIDI indicator)
-- Arbitrary functions to apply value from macro knob to control knob, listed below the macro knob
-  
 ### MIDI Control Mapping
-- Right click context menu on parameter widget to map to MIDI control
-- Continuous variables: generate wiggle to map
-- Discrete variables: map on button press count with configurable threshold
-- Warn if continuous mode sees no continuous values coming in (and vice versa)
-- Indicator on parameter showing MIDI association, hover to reveal control id
+- [Medium] Right-click context menu on parameter widget to map to MIDI control. Backend system to route midi control messages appropriately and send updates to frontend.
+
+---
+
+## Medium Priority
+
+### Configuration / Patch Saving
+- [Medium] Support `ParameterCollection` data in save_configuration/sync_component. Ensure only one code path. 
+  - Likely need a light refactor: move parsing logic to static functions on `CollectionRequest` so component manager can reuse it without hitting the API
+- [Big] Write appropriate round-trip api testing suite in order to ensure consistent, valid configuration saving.
+- [Medium] Create better patch load menu
+- [Medium] Create a configuration menu editor for config.json
+  
+### UI / Workflow improvements
+- [Quick] Allow group deletions, but with a warning pop-up
+- [Quick] Update geometry on control-panel content deletion so min size doesn't break
+- [Quick] Request rename when a node gets its unique name, so parameters/other panels update properly
+- [Medium] improve component add text search workflow, and also create a hotkey to load the menu in a floating context for convenience
+
+### Buffer
+- [Quick] Fix `BufferChopper` UI to load on inbound update, not only on connect
+- [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
+- [Quick] `BufferSaver` component to allow saving to external wav/mp3/whatever.
+- [Medium] Move `FileBuffer` resampling to a separate thread; add a loading indicator
+- [Medium] "Arming" system for buffer loads so real-time audio isn't disrupted
+- [Medium] Specialized `BufferStreamer` widget with standard controls (loop, playback scroller, start/reset)
+- [Medium] `StreamRecorder` component (read in and save an audio stream, buffer output)
+- [Big] `SpectralFilter` component (buffer in, buffer out) -- essentially grab 
+
+### Layout / Components
+- [Quick] Expose Min/Max/Default parameters via right-click tool window
+- [Quick] "stack" specialized widgets into a dedicated window when grouped by default. Ensure secondary window has sensible title bar.
+- [Quick] Prevent modules from spawning on top of each other
+- [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 
+- [Medium] Component duplication — plain copy, and copy-with-connections
+- [Big] consider drag/drop component parameters from the parameter panel to a group widget when grouped, with sensible defaults
+
+### Sequencer
+- [Quick] Labels on individual notes (MIDI note + velocity)
+- [Quick] Adjust sequencer grid size based on duration parameter
+
+### Misc Component Improvements
+- [Big] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges). `PianoRollWidget` → `SequencerWidget`, break out `PianoRoll` component with a horizontal/vertical flag
+- [Quick] Send Pitchbend Control to `PolyOscillator`
+
+### Macro Knobs (New Feature)
+- *Dependency: ControlConnection/ControlPort*
+- MacroControl is a panel with a basic graph node that contains outbound control ports.
+- Any component with controllable parameters gets an inbound Macro assignment slot, and a corresponding indicator on the parameter control widget indicating it is controlled.
+- Internally, it has a basic formula editor to convert the generic knob value towards whatever parameters it is connected to.
+- It also is capable of receiving modulation input.
+- The MacroKnob is also capable of receiving control input from MIDI (but probably not another MacroKnob)":TY
+
+### MIDI Control Mapping (New Feature)
+- *Dependency: ControlConnection/ControlPort*
+- Component to turn midi signal into control signal
+- Only allow one control signal per parameter, so that MidiControl and MacroKnob don't compete
+- UI gives touch-learn midi assignment (either wiggle control or tap button to assign. Potentially filter based on parameter type and control type )
+- [Quick] Indicator on parameter showing MIDI association, hover to reveal control id
 
 ### Peripheral Devices
-- match audio output to the number of ports on the peripheral device
-- allow for multiple midi peripheral devices
-- support midi output peripherals
-  
-## Components to Add
-- Arpeggiator
-- Pitchbend Support
-- Panner
-- Inverter
-- Quantizer / Velocity Manipulation
-- Mixer (with pluggable mixing strategies, e.g. ring modulation)
-- Bitcrusher
-- MidiSwitch (based on modulatable control value, send to output 1 or 2)
-- AudioSwitch 
+- [Big] Support Audio Input peripherals
+- [Big] Allow multiple MIDI peripheral devices
+- [Big] Support MIDI output peripherals
 
-## One Day
-- Envelope with drawable curve
-- Custom wavetable drawing
-- Export synths to VST/LV2 (probably not lol)
+### Components to Add
+- [Quick] Bitcrusher
+- [Quick] AudioSwitch (send audio through output channel 0 or 1)
+- [Quick] MidiSwitch (leverage midi channel system)
+- [Medium] Quantizer / velocity manipulation
+- [Big] Arpeggiator
+- [Big] Mixer *note: investigate whether this should be a primary component or a configured GroupComponent (e.g., chained panners with some scalar controls or something)*
+  
+---
+
+## Low Priority
+
+### Bugs / Cleanup
+- [Medium] Components with detail view take extra vertical space when narrowed, but don't reclaim it when widened again (controls stay pushed onto fewer vertical grid positions)
+- [Quick] Move setup button to menus; make it a tooltip popup instead of a dedicated window, or move it to the configuration screen?
+- [Quick] Max zoom-out level for graph panel, reference mini-map for position on graph.
+- [Quick] KDDW dock widgets not on the main window shouldn't show "gui" in the title bar when docked together
+- [Big] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
+
+### Misc / Infra
+- [Medium] Disperse `CollectionRequest` validation to the `CollectionDescriptor` (e.g. a validation function, which actions are supported). This will make a less complex validation function and enforce rules that unofficially exist in code.
+- [Quick] Floating KDDW windows (specialized widgets) instantiate with a sensible size hint
+
+### Sequencer
+- [Quick] Shift+scroll for horizontal scrollbar
+
+### One Day
+- [Big] Envelope with drawable curve
+- [Big] Custom wavetable drawing
+- [Big] Export synths to VST/LV2 (probably not, lol)

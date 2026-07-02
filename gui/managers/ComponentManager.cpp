@@ -112,7 +112,7 @@ void ComponentManager::requestSetFile(int componentId, std::string path){
 
 ComponentModel* ComponentManager::getModel(int componentId) const {
     if ( !models_.contains(componentId) ){
-        qWarning() << "No component model found with id = " << componentId ;
+        SPDLOG_WARN("No component model found with id = {}",componentId);
         return nullptr ;
     } 
 
@@ -189,7 +189,7 @@ void ComponentManager::removeComponent(int componentId){
     auto it = models_.find(componentId);
 
     if ( it == models_.end() ){
-        qWarning() << "could not find model for component to delete";
+        SPDLOG_WARN("could not find model for component to delete");
         return ;
     }
 
@@ -235,7 +235,7 @@ void ComponentManager::syncModel(const json& msg){
 
     auto model = getModel(id);
     if ( !model ){
-        qWarning() << "Cannot find model with id = " << id ;
+        SPDLOG_WARN("Cannot find model with id = {}", id);
         return ;
     }
 
@@ -250,7 +250,7 @@ void ComponentManager::syncModel(const json& msg){
 void ComponentManager::setFile(int componentId, std::string path){
     auto model = getModel(componentId);
     if ( !model ){
-        qWarning() << "Cannot find model with id = " << componentId ;
+        SPDLOG_WARN("Cannot find model with id = {}", componentId);
         return ;
     }
 
@@ -286,8 +286,8 @@ bool ComponentManager::handleCollectionApiResponse(const json& msg){
 
     auto it = parameters_.find(req.componentId);
     if ( it == parameters_.end() ){
-        qWarning() << "Could not find model with Component ID" << req.componentId 
-            << ". Will not process collection request" ;
+        SPDLOG_WARN("Could not find model with componentId {}. Will not process collection request", 
+            req.componentId);
         return true ;
     }
     
@@ -328,8 +328,8 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         int id = msg.at("componentId");
         auto it = models_.find(id);
         if ( it == models_.end() ){
-            qWarning() << "Could not find model with Component ID" << id 
-                << ". Will not process set parameter request" ;
+            SPDLOG_WARN("Could not find model with componentId {}. Will not process set parameter request", 
+                id);
             return ;
         }
 
@@ -343,17 +343,16 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         int id = msg["componentId"];
         auto it = models_.find(id);
         if ( it == models_.end() ){
-            qWarning() << "Could not find model with Component ID" << id 
-                << ". Will not process modulation depth request" ;
+            SPDLOG_WARN("Could not find model with componentId {}. Will not process modulation depth request",
+                id); 
             return ;
         }
 
         ParameterType p = stringToParameter(msg.at("parameter"));
         ModulationModel* m = it->second->getModulationModel(p);
         if ( !m ){
-            qWarning() << "Could not find Modulation Model for Parameter " 
-                << GET_PARAMETER_TRAIT_MEMBER(p, name) 
-                << "from Component Model: " << it->second ;
+            SPDLOG_WARN("Could not find modulation model for parameter {} from componentId {}.",
+                GET_PARAMETER_TRAIT_MEMBER(p, name), it->second->getId());
             return ;
         }
 
@@ -365,17 +364,16 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         int id = msg.at("componentId");
         auto model = getModel(id);
         if (  !model ){
-            qWarning() << "Could not find model with Component ID" << id 
-                << ". Will not process modulation strategy request" ;
+            SPDLOG_WARN("Could not find model with componentId {}. Will not process modulation strategy request",
+                id);
             return ;
         }
 
         ParameterType p = stringToParameter(msg.at("parameter"));
         ModulationModel* m = model->getModulationModel(p);
         if ( !m ){
-            qWarning() << "Could not find Modulation Model for Parameter " 
-                << GET_PARAMETER_TRAIT_MEMBER(p, name) 
-                << "from Component Model: " << id ;
+            SPDLOG_WARN("Could not find modulation model for parameter {} from componentId {}.",
+                GET_PARAMETER_TRAIT_MEMBER(p, name), id);
             return ;
         }
 
@@ -393,7 +391,7 @@ void ComponentManager::onControlMessageReceived(const json& msg){
 void ComponentManager::onDataMessageReceived(DataDescriptor header, std::vector<double> buffer){
     auto* model = getModel(header.componentId);
     if ( !model ){
-        qWarning() << "no model with component id" << header.componentId << " is available." ; 
+        SPDLOG_WARN("no model with component id {} is available.", header.componentId); 
         return ;
     }
 
@@ -405,7 +403,6 @@ void ComponentManager::onParameterEdited(int componentId, ParameterType p, Param
 }
 
 void ComponentManager::onCollectionEdited(CollectionRequest req ){
-    qDebug() << "collection edit request received!";
     requestCollectionUpdate(req);
 }
 

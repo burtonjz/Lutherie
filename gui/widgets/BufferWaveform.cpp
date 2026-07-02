@@ -306,7 +306,8 @@ int BufferWaveform::xToSample(int posX) const {
     int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
     float normalized = (static_cast<float>(posX) - Theme::WAVEFORM_MARGIN_LEFT) / plotWidth ; 
     if ( normalized > 1.0f ){
-        qWarning() << "normalized x value is " << normalized << "which is out of range. setting to max";
+        SPDLOG_WARN("normalized x coordinate value is {}, which is out of range. setting to max sample", 
+            normalized);
         normalized = 1.0f ;
     }
     return normalized * (totalNumSamples_ - 1);
@@ -340,7 +341,7 @@ QString BufferWaveform::secondsToText(int seconds) const {
 }
 
 void BufferWaveform::onBufferDataUpdated(size_t channel){
-    qDebug() << "audio buffer updated. channel:" << channel << ". Internal channel " << channel_ ;
     if ( channel != channel_ ) return ;
+    SPDLOG_DEBUG("inbound audio buffer on channel {} updated. Updating this widget on internal channel {}", channel, channel_);
     rebuild();
 }

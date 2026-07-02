@@ -18,6 +18,7 @@
 #include "api/ControlApiClient.hpp"
 #include "config/Config.hpp"
 
+#include <spdlog/spdlog.h>
 #include <string>
 
 ControlApiClient* ControlApiClient::instance(){
@@ -42,13 +43,13 @@ void ControlApiClient::connectToBackend(){
     Config::load();
     QString serverAddress = QString::fromStdString(Config::get<std::string>("server.address").value()) ;
     int serverPort = Config::get<int>("server.control_port").value() ;
-    qDebug() << "connecting to " << serverAddress << "port" << serverPort ;
+    SPDLOG_INFO("connecting to {} port {}", serverAddress.toStdString(), serverPort);
     socket_->connectToHost(serverAddress, serverPort );
 }
 
 void ControlApiClient::sendMessage(const json& j){
     QByteArray msg = QByteArray::fromStdString(j.dump()) + "\n" ;
-    qInfo() << "Sending Message:" << msg ;
+    SPDLOG_INFO("sending Control API Client request: {}", j.dump());
     if ( socket_->state() == QAbstractSocket::ConnectedState ){
         socket_->write(msg);
     }
@@ -68,10 +69,10 @@ void ControlApiClient::onReadyRead() {
 
         try {
             json j = json::parse(line.constData(), line.constData() + line.size());
-            qDebug() << "Api Response Received:" << line;
+            SPDLOG_DEBUG("Api Response Received: {}", line.toStdString());
             emit dataReceived(j);
         } catch (const json::parse_error& e) {
-            qWarning() << "Invalid JSON received:" << line << "-" << e.what();
+            SPDLOG_WARN("Invalid JSON received: {}. Error: {}", line.toStdString(), e.what());
         }
     }
 }

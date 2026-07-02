@@ -17,8 +17,6 @@
 
 #include "models/GroupModel.hpp"
 
-#include <QDebug>
-
 GroupModel::GroupModel(int id, QString name):
     id_(id),
     name_(name),
