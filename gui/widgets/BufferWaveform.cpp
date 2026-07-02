@@ -26,7 +26,7 @@
 #include <QTime>
 
 BufferWaveform::BufferWaveform(ComponentModel* model, size_t channel, QWidget* parent):
-    QWidget(parent),
+    CollectionWidget(model, parent),
     model_(nullptr),
     upstream_(false),
     minVolt_(-1.0),
@@ -73,6 +73,9 @@ void BufferWaveform::setUpstream(bool upstream){
     upstream_ = upstream ;
     connectModel();
     rebuild();
+}
+
+void BufferWaveform::updateCollection(const CollectionRequest& req){
 }
 
 void BufferWaveform::paintEvent(QPaintEvent* event){

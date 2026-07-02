@@ -19,10 +19,11 @@
 #define BUFFER_WAVEFORM_HPP_
 
 #include "models/ComponentModel.hpp"
+#include "widgets/CollectionWidget.hpp"
 
 #include <QWidget>
 
-class BufferWaveform : public QWidget {
+class BufferWaveform : public CollectionWidget {
     Q_OBJECT
 
 protected:
@@ -52,6 +53,8 @@ public:
     void setUpstream(bool upstream);
 
 protected:
+    virtual void updateCollection(const CollectionRequest& req) override ;
+    
     void paintEvent(QPaintEvent* event) override ;
     void resizeEvent(QResizeEvent* event) override ;
     void showEvent(QShowEvent* event) override ;

@@ -17,7 +17,6 @@
 
 #include "widgets/PianoRollWidget.hpp"
 #include "app/Theme.hpp"
-#include "types/CollectionType.hpp"
 #include "widgets/NoteWidget.hpp"
 #include "requests/CollectionRequest.hpp"
 
@@ -279,7 +278,6 @@ void PianoRollWidget::handleNoteHover(const QPointF pos){
 
 void PianoRollWidget::requestRemoveNote(int idx){
     CollectionRequest req ;
-    req.collectionType = CollectionType::SEQUENCER ;
     req.action = CollectionAction::REMOVE ;
     req.index = idx ;
     req.componentId = model_->getId() ;
@@ -335,7 +333,6 @@ void PianoRollWidget::endDrag(const QPointF pos){
     } 
 
     CollectionRequest req ;
-    req.collectionType = CollectionType::SEQUENCER ;
     req.action = CollectionAction::ADD ;
     req.componentId = model_->getId() ;
     req.value = dragNote_->getNote() ;
@@ -395,7 +392,6 @@ void PianoRollWidget::endResize(const QPointF pos){
 
     // otherwise, update note
     CollectionRequest req ;
-    req.collectionType = CollectionType::SEQUENCER ;
     req.action = CollectionAction::SET ;
     req.componentId = model_->getId() ;
     req.index =  idx ;
@@ -415,7 +411,6 @@ void PianoRollWidget::updateSelectedNotePitch(int p){
         n->setMidiNote(n->getMidiNote() + p);
         
         CollectionRequest req ;
-        req.collectionType = CollectionType::SEQUENCER ; 
         req.action = CollectionAction::SET ;
         req.index = idx ;
         req.componentId = model_->getId() ;
@@ -432,7 +427,6 @@ void PianoRollWidget::updateSelectedNoteStart(float t){
     
         n->setBeatRange(n->getStartBeat() + t, n->getEndBeat() + t);
         CollectionRequest req ;
-        req.collectionType = CollectionType::SEQUENCER ; 
         req.action = CollectionAction::SET ;
         req.index = idx ;
         req.componentId = model_->getId() ;
@@ -449,7 +443,6 @@ void PianoRollWidget::updateSelectedNoteDuration(float d){
         
         n->setEndBeat(n->getEndBeat() + d);
         CollectionRequest req ;
-        req.collectionType = CollectionType::SEQUENCER ; 
         req.action = CollectionAction::SET ;
         req.index = idx ;
         req.componentId = model_->getId() ;

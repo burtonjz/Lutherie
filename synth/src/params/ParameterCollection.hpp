@@ -19,6 +19,7 @@
 #define PARAMETER_COLLECTION_HPP_
 
 #include "types/ParameterType.hpp"
+#include "params/ParameterListener.hpp"
 
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -27,6 +28,7 @@
 class ParameterCollectionBase {
 protected:
     ParameterType type_ ;
+    std::vector<ParameterListener*> listeners_ ;
 
 public:
     ParameterCollectionBase(
@@ -35,8 +37,22 @@ public:
         type_(typ)
     {}
 
-    ParameterCollectionBase(const ParameterCollectionBase&) = delete;
-    ParameterCollectionBase& operator=(const ParameterCollectionBase&) = delete;
+    ParameterCollectionBase(const ParameterCollectionBase&) = delete ;
+    ParameterCollectionBase& operator=(const ParameterCollectionBase&) = delete ;
+
+    void addListener(ParameterListener* listener){
+        if ( listener ) listeners_.push_back(listener);
+    }
+
+    void removeListener(ParameterListener* listener){
+        listeners_.erase(std::remove(listeners_.begin(), listeners_.end(), listener), listeners_.end());
+    }
+
+    void notifyListeners(){
+        for (auto* listener : listeners_ ){
+            listener->onParameterChanged(type_, true);
+        }
+    }
 };
 
 template<ParameterType typ>
@@ -45,12 +61,12 @@ public:
     using ValueType = GET_PARAMETER_VALUE_TYPE(typ);
 
 private:
-    int nextID = 0 ;
-    std::vector<int> active_ ;
-    std::map<int, ValueType> values_ ;
+    size_t nextID = 0 ;
+    std::vector<size_t> active_ ;
+    std::map<size_t, ValueType> values_ ;
     ValueType minValue_ ;
     ValueType maxValue_ ;
-    std::map<int, ValueType> defaultValues_ ;
+    std::map<size_t, ValueType> defaultValues_ ;
 
 public:
     ParameterCollection(
@@ -78,7 +94,7 @@ public:
         return nextID++ ;
     }
 
-    int removeValue(int idx){
+    size_t removeValue(size_t idx){
         if ( !values_.contains(idx) ){
             std::string msg = fmt::format("Cannot remove value from collection. idx {} is not in use", idx);
             SPDLOG_ERROR(msg);
@@ -103,7 +119,7 @@ public:
         return values_.at(idx) ;
     }
 
-    const std::map<int, ValueType>& getValues() const {
+    const std::map<size_t, ValueType>& getValues() const {
         return values_ ;
     }
 
@@ -122,7 +138,7 @@ public:
             SPDLOG_ERROR(msg);
             throw std::runtime_error(msg);
         }
-        return defaultValues_[idx] ;
+        return defaultValues_.at(idx) ;
     }
 
     void setDefaultValue(size_t idx, ValueType v){
@@ -191,7 +207,7 @@ public:
         defaultValues_.reserve(capacity);
     }
 
-    const std::vector<int>& getIndices() const {
+    const std::vector<size_t>& getIndices() const {
         return active_ ;
     }
 

@@ -23,7 +23,6 @@
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
-#include "types/CollectionType.hpp"
 #include "types/ParameterType.hpp"
 #include "types/ComponentType.hpp"
 #include "meta/CollectionDescriptor.hpp"
@@ -33,7 +32,7 @@ struct ComponentDescriptor {
     ComponentType type ;
     std::vector<ParameterType> modulatableParameters = {};
     std::vector<ParameterType> controllableParameters = {};
-    std::vector<CollectionDescriptor> collections = {};
+    std::optional<CollectionDescriptor> collection = std::nullopt ;
 
     size_t numSignalInputs  = 0 ;
     size_t numSignalOutputs = 0 ;
@@ -56,32 +55,21 @@ struct ComponentDescriptor {
             && numBufferInputs == 0 && numBufferOutputs == 0 ;
     }
 
-    int hasCollection(CollectionType c) const {
-        for ( size_t i = 0 ; i < collections.size() ; ++i ){
-            if ( collections[i].collectionType == c ){
-                return i ;
-            }
-        }
-        return -1 ;
+    bool hasCollection() const {
+        return collection.has_value() ;
     }
 
-    const CollectionDescriptor& getCollection(size_t i) const {
-        return collections[i] ;
-    }
-
-    const CollectionDescriptor& getCollection(CollectionType c) const {
-        int i = hasCollection(c);
-        if ( i == -1 ){
-            std::string msg = fmt::format("No collection found with name {}", name);
+    const CollectionDescriptor& getCollection() const {
+        if ( !hasCollection() ){
+            std::string msg = fmt::format("No collection found for component ", name);
             SPDLOG_ERROR(msg);
             throw std::runtime_error(msg);
         }
-
-        return getCollection(i);
+        return collection.value() ;
     }
 
-    bool shouldShowBasicParameters() const {
-        return controllableParameters.size() > 0 || hasFile ;
+    bool shouldShowControlParameters() const {
+        return controllableParameters.size() > 0 || hasFile || hasCollection() ;
     }
 
     bool shouldShowModulationParameters() const {

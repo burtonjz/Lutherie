@@ -71,7 +71,8 @@ To add a ParameterType, the following is required:
     X(DURATION) \
     X(SCALE_NOTE) \
     X(SCALE_TYPE) \
-    X(TRIGGER)
+    X(TRIGGER) \
+    X(SAMPLE)
 
 /**
  * @brief types of parameters that might exist within any given module
@@ -537,7 +538,19 @@ template <> struct ParameterTraits<ParameterType::TRIGGER>{
     static constexpr size_t uiPrecision = 0 ; // num decimals
 };
   
-
+template <> struct ParameterTraits<ParameterType::SAMPLE>{
+    using ValueType = int ;
+    static constexpr std::string_view name = "Sample" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = std::numeric_limits<float>::max() ;
+    static constexpr float defaultValue = 0 ;
+    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
+        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
+        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
+        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
+    }};
+    static constexpr size_t uiPrecision = 3 ; // num decimals
+};
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime
 

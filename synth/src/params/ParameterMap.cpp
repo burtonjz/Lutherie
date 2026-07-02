@@ -153,6 +153,47 @@ json ParameterMap::getCollectionValueDispatch(ParameterType p, size_t idx) const
         #undef X
         default: throw std::runtime_error("Invalid Collection dispatch");
     }
+
+    auto c = getCollection<ParameterType::SAMPLE>();
+    for ( const auto& idx : c->getIndices() ){
+        c->getValue(idx);
+    }
+}
+
+json ParameterMap::getCollectionValuesDispatch(ParameterType p) const {
+    switch (p) {
+        #define X(NAME) case ParameterType::NAME:          \
+        {                                                  \
+            auto c = getCollection<ParameterType::NAME>(); \
+            json arr ;                                     \
+            if ( !c ) return arr ;                         \
+            for ( const auto& idx : c->getIndices() ){     \
+                arr[idx] = c->getValue(idx) ;              \
+            }                                              \
+            return arr ;                                   \
+        }
+        PARAMETER_TYPE_LIST
+        #undef X
+        default: throw std::runtime_error("Invalid Collection dispatch");
+    }
+}
+
+json ParameterMap::getCollectionDefaultsDispatch(ParameterType p) const {
+    switch (p) {
+        #define X(NAME) case ParameterType::NAME:          \
+        {                                                  \
+            auto c = getCollection<ParameterType::NAME>(); \
+            json arr ;                                     \
+            if ( !c ) return arr ;                         \
+            for ( const auto& idx : c->getIndices() ){     \
+                arr[idx] = c->getDefaultValue(idx) ;       \
+            }                                              \
+            return arr ;                                   \
+        }
+        PARAMETER_TYPE_LIST
+        #undef X
+        default: throw std::runtime_error("Invalid Collection dispatch");
+    }
 }
 
 size_t ParameterMap::addCollectionValueDispatch(ParameterType p, const json& value){
@@ -245,22 +286,27 @@ void ParameterMap::addCollectionDispatch(ParameterType p, const json& cfg){
 
 
 // serialization
-json ParameterMap::toJson() const {
-    json output ;
+json ParameterMap::toJson(json& output) const {
+    /* 
+    Note: we don't serialize collections directly -- front end is only expected to understand
+    constructed CollectionRequests, which requires some information not available to the 
+    ParameterMap. See ComponentManager::serializeComponent for how collection dispatches are utilized
+    */
     for ( size_t p = 0 ; p < N_PARAMETER_TYPES ; ++p ){
         ParameterType typ = static_cast<ParameterType>(p);
 
-        if ( !parameters_[p] ) continue ;
-        if (reference_.find(typ) != reference_.end()) continue ;
-        
-        output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
-            {"currentValue", getValueDispatch(typ)},
-            {"defaultValue", getDefaultDispatch(typ)},
-            {"minimumValue", getMinDispatch(typ)},
-            {"maximumValue", getMaxDispatch(typ)},
-            {"modulatable", getParameter(typ)->isModulatable()}
-        };
+        // normal parameters
+        if ( parameters_[p] && reference_.find(typ) == reference_.end() ){
+            output["parameters"][GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
+                {"currentValue", getValueDispatch(typ)},
+                {"defaultValue", getDefaultDispatch(typ)},
+                {"minimumValue", getMinDispatch(typ)},
+                {"maximumValue", getMaxDispatch(typ)},
+                {"modulatable", getParameter(typ)->isModulatable()}
+            };
+        }
     }
+
     return output ;
 }
 

@@ -639,11 +639,9 @@ json ControlApiHandler::resetParameter(const json& request){
 json ControlApiHandler::parseCollectionRequest(const json& request){
     json response = request ;
     ComponentId id ;
-    CollectionType collectionType ;
 
     try {
         id = response["componentId"];
-        collectionType = CollectionType(response["collection"]);
     } catch (const std::exception& e){
         return sendApiResponse(response, "Error parsing json request: " + std::string(e.what()) );
     }
@@ -656,7 +654,7 @@ json ControlApiHandler::parseCollectionRequest(const json& request){
     const CollectionDescriptor* cd = nullptr ;
     CollectionRequest req ;
     try {
-        cd = &getCollectionDescriptor(c->getType(), collectionType);
+        cd = &getCollectionDescriptor(c->getType());
         req = response ;
     } catch (const std::exception& e){
         return sendApiResponse(response, "Error getting collection: " + std::string(e.what()) );
@@ -674,7 +672,7 @@ json ControlApiHandler::parseCollectionRequest(const json& request){
     case CollectionAction::ADD:       return addCollectionValue(c, *cd, req);
     case CollectionAction::REMOVE:    return removeCollectionValue(c, *cd, req);
     case CollectionAction::GET:       return getCollectionValue(c, *cd, req);
-    case CollectionAction::GET_RANGE: return getCollectionValueRange(c, *cd, req);
+    case CollectionAction::GET_ALL:   return getCollectionValues(c, *cd, req);
     case CollectionAction::SET:       return setCollectionValue(c, *cd, req);
     case CollectionAction::RESET:     return resetCollection(c, *cd, req);
     default:                          return sendApiResponse(response, "Unknown collection action");
@@ -682,16 +680,21 @@ json ControlApiHandler::parseCollectionRequest(const json& request){
 }
 
 json ControlApiHandler::addCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
     try {
+        json response = request ;
+
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
-            request.index = c->getParameters()->addCollectionValueDispatch(cd.params[0], request.value);
+            request.index = params->addCollectionValueDispatch(cd.params[0], request.value);
+            params->getCollection(cd.params[0])->notifyListeners();
             break ;
         case CollectionStructure::GROUPED:
             for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
                 size_t idx = c->getParameters()->addCollectionValueDispatch(cd.params[0], (*request.value)[i]);
                 if ( i == 0 ) request.index = idx ;
             }
+            params->getCollection(cd.params[0])->notifyListeners();
             break ;
         case CollectionStructure::SYNCHRONIZED:
             for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
@@ -699,11 +702,11 @@ json ControlApiHandler::addCollectionValue(BaseComponent* c, const CollectionDes
                     cd.params[i], 
                     (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)]
                 );
+                params->getCollection(cd.params[i])->notifyListeners();
             }
             break ;
         default: 
         {
-            json response = request ;
             sendApiResponse(response, "unrecognized collection structure");
             break ;
         }}
@@ -718,19 +721,23 @@ json ControlApiHandler::addCollectionValue(BaseComponent* c, const CollectionDes
 }
 
 json ControlApiHandler::removeCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
-            c->getParameters()->removeCollectionValueDispatch(cd.params[0], *request.index);
+            params->removeCollectionValueDispatch(cd.params[0], *request.index);
+            params->getCollection(cd.params[0])->notifyListeners();
             break ;
         case CollectionStructure::GROUPED:
             for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
-                c->getParameters()->removeCollectionValueDispatch(cd.params[0], *request.index);
+                params->removeCollectionValueDispatch(cd.params[0], *request.index);
             }
+            params->getCollection(cd.params[0])->notifyListeners();
             break ;
         case CollectionStructure::SYNCHRONIZED:
             for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
-                c->getParameters()->removeCollectionValueDispatch(cd.params[i], *request.index);
+                params->removeCollectionValueDispatch(cd.params[i], *request.index);
+                params->getCollection(cd.params[i])->notifyListeners();
             }
             break ;
         default: 
@@ -749,20 +756,21 @@ json ControlApiHandler::removeCollectionValue(BaseComponent* c, const Collection
 }
 
 json ControlApiHandler::getCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
-            request.value = c->getParameters()->getCollectionValueDispatch(cd.params[0], *request.index);
+            request.value = params->getCollectionValueDispatch(cd.params[0], *request.index);
             break ;
         case CollectionStructure::GROUPED:
             for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
-                (*request.value)[i] = c->getParameters()->getCollectionValueDispatch(cd.params[0], *request.index);
+                (*request.value)[i] = params->getCollectionValueDispatch(cd.params[0], *request.index);
             }
             break ;
         case CollectionStructure::SYNCHRONIZED:
             for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
                 (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)] = 
-                    c->getParameters()->getCollectionValueDispatch(cd.params[i], *request.index);
+                    params->getCollectionValueDispatch(cd.params[i], *request.index);
             }
             break ;
         default: 
@@ -780,21 +788,55 @@ json ControlApiHandler::getCollectionValue(BaseComponent* c, const CollectionDes
     return sendApiResponse(response);
 }
 
-json ControlApiHandler::setCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+json ControlApiHandler::getCollectionValues(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
-            c->getParameters()->setCollectionValueDispatch(cd.params[0], *request.index, *request.value);
-            break ;
         case CollectionStructure::GROUPED:
-            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
-                c->getParameters()->setCollectionValueDispatch(cd.params[0], *request.index + i, (*request.value)[i]);
-            }
+            request.value = params->getCollectionValuesDispatch(cd.params[0]);
             break ;
         case CollectionStructure::SYNCHRONIZED:
             for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
-                c->getParameters()->setCollectionValueDispatch(cd.params[i], *request.index, 
+                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)] = 
+                    params->getCollectionValuesDispatch(cd.params[i]);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(response, "failed to get collection value:" + std::string(e.what()));
+    }
+
+    json response = request ;
+    return sendApiResponse(response);
+}
+
+
+json ControlApiHandler::setCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            params->setCollectionValueDispatch(cd.params[0], *request.index, *request.value);
+            params->getCollection(cd.params[0])->notifyListeners();
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                params->setCollectionValueDispatch(cd.params[0], *request.index + i, (*request.value)[i]);
+            }
+            params->getCollection(cd.params[0])->notifyListeners();
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                params->setCollectionValueDispatch(cd.params[i], *request.index, 
                     (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)]);
+                params->getCollection(cd.params[i])->notifyListeners();
             }
             break ;
         default: 
@@ -813,19 +855,23 @@ json ControlApiHandler::setCollectionValue(BaseComponent* c, const CollectionDes
 }
 
 json ControlApiHandler::resetCollection(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
     try {
         switch ( cd.structure ){
         case CollectionStructure::INDEPENDENT:
-            c->getParameters()->resetCollectionDispatch(cd.params[0]);
+            params->resetCollectionDispatch(cd.params[0]);
+            params->getCollection(cd.params[0])->notifyListeners();
             break ;
         case CollectionStructure::GROUPED:
             for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
-                c->getParameters()->resetCollectionDispatch(cd.params[0]);
+                params->resetCollectionDispatch(cd.params[0]);
             }
+            params->getCollection(cd.params[0])->notifyListeners();
             break ;
         case CollectionStructure::SYNCHRONIZED:
             for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
-                c->getParameters()->resetCollectionDispatch(cd.params[i]);
+                params->resetCollectionDispatch(cd.params[i]);
+                params->getCollection(cd.params[i])->notifyListeners();
             }
             break ;
         default: 
@@ -837,39 +883,6 @@ json ControlApiHandler::resetCollection(BaseComponent* c, const CollectionDescri
     } catch (const std::exception& e){
         json response = request ;
         sendApiResponse(response, "failed to reset collection:" + std::string(e.what()));
-    }
-
-    json response = request ;
-    return sendApiResponse(response);
-}
-
-json ControlApiHandler::getCollectionValueRange(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
-    json min ;
-    json max ;
-    try {
-        switch ( cd.structure ){
-        case CollectionStructure::INDEPENDENT:
-        case CollectionStructure::GROUPED:
-            (*request.value)[0] = c->getParameters()->getCollectionMinDispatch(cd.params[0]);
-            (*request.value)[1] = c->getParameters()->getCollectionMaxDispatch( cd.params[0]);
-            break ;
-        case CollectionStructure::SYNCHRONIZED:
-            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
-                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)][0] = 
-                    c->getParameters()->getCollectionMinDispatch(cd.params[i]);
-                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)][1] = 
-                    c->getParameters()->getCollectionMinDispatch(cd.params[i]);
-            }
-            break ;
-        default: 
-        {
-            json response = request ;
-            sendApiResponse(response, "unrecognized collection structure");
-            break ;
-        }}
-    } catch (const std::exception& e){
-        json response = request ;
-        sendApiResponse(response, "failed to get collection range:" + std::string(e.what()));
     }
 
     json response = request ;
@@ -1238,18 +1251,17 @@ void ControlApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int
     }
 }
 
-const CollectionDescriptor& ControlApiHandler::getCollectionDescriptor(ComponentType t, CollectionType c) const {
+const CollectionDescriptor& ControlApiHandler::getCollectionDescriptor(ComponentType t) const {
     const ComponentDescriptor& descriptor = ComponentRegistry::getComponentDescriptor(t);
-    int idx = descriptor.hasCollection(c);
+    int idx = descriptor.hasCollection();
     if ( idx == -1 ){
         std::string msg = fmt::format(
-            "Cannot retrieve collection {} from Component Type {}.", 
-            CollectionType::toString(c),  
+            "Cannot retrieve collection from Component Type {}.",  
             ComponentRegistry::getComponentDescriptor(t).name
         );
         SPDLOG_ERROR(msg);
         throw std::runtime_error(msg);
     }
 
-    return descriptor.getCollection(idx);
+    return descriptor.getCollection();
 }

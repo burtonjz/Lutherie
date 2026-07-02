@@ -30,7 +30,7 @@ public:
     BufferStreamer(ComponentId id, BufferStreamerConfig cfg);
 
     void calculateSample() override ;
-    void onParameterChanged([[maybe_unused]] ParameterType p) override ;
+    void onParameterChanged([[maybe_unused]] ParameterType p, bool isCollection = false) override ;
 };
 
 #endif // BUFFER_STREAMER_HPP_

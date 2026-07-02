@@ -145,7 +145,7 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     );
     
     ComponentParameters* params = nullptr ;
-    if ( model->getDescriptor().shouldShowBasicParameters() ){
+    if ( model->getDescriptor().shouldShowControlParameters() ){
         params = new ComponentParameters(model);
         parameters_[componentId] = params ;
         connect(
@@ -383,8 +383,10 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         return ;
     }
 
-    if ( success && handleCollectionApiResponse(msg) ){
-        return ;
+    for ( const auto& [_,actionStr] : CollectionRequest::actionMap ){
+        if ( action == actionStr && success ){
+             handleCollectionApiResponse(msg);
+        }
     }
 }
 

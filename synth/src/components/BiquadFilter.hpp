@@ -38,7 +38,7 @@ public:
 
     void calculateSample() override ;
     void tick() override ;
-    void onParameterChanged(ParameterType p) override ;
+    void onParameterChanged(ParameterType p, bool isCollection = false) override ;
 
 private:
     void calculateCoefficients();

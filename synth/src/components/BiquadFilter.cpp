@@ -182,6 +182,6 @@ void BiquadFilter::tick(){
     AudioSignalComponent::tick();
 }
 
-void BiquadFilter::onParameterChanged([[maybe_unused]] ParameterType p){
+void BiquadFilter::onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection){
     dirty_ = true ;
 } 

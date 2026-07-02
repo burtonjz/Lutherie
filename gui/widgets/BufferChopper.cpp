@@ -35,6 +35,35 @@ void BufferChopper::paintEvent(QPaintEvent* event){
     drawSelectionRegion(painter, false);
 }
 
+void BufferChopper::updateCollection(const CollectionRequest& req){
+    // only responds to SET -- BufferChopper only supports one min/max combo.
+    switch(req.action){
+        case CollectionAction::SET:
+        case CollectionAction::GET_ALL:
+            break ;
+        default:
+            qWarning() << "unsupported collection action received for buffer chopper" ;
+            return ;
+    }
+
+    const CollectionDescriptor& cd = model_->getDescriptor().getCollection();
+    if ( !req.valid(cd) ){
+        qWarning() << "Invalid collection request received for buffer chopper." ;
+        return ;
+    }
+    
+    nlohmann::basic_json<> sampleRange = req.value.value();
+    startSample_ = sampleRange[0];
+    endSample_ = sampleRange[1];
+
+    startPosX_ = sampleToX(startSample_);
+    endPosX_   = sampleToX(endSample_);
+
+    qDebug() << "collection update resulted in startSample=" << startSample_ << ", endSample=" << endSample_ << ", startPosX_=" << startPosX_
+        << "endPosX_=" << endPosX_ ;
+    update();
+}
+
 void BufferChopper::drawSelectionRegion(QPainter& painter, bool start){
     if ( !model_ ) return ;
     if ( totalNumSamples_ == 0 ) return ;
@@ -97,15 +126,9 @@ void BufferChopper::drawSelectionHandle(QPainter& painter, int posX, bool dir){
 void BufferChopper::resizeEvent(QResizeEvent* event){
     BufferWaveform::resizeEvent(event);
 
-    calculateStartEndPos();
+    startPosX_ = sampleToX(startSample_);
+    endPosX_ = sampleToX(endSample_);
     update();
-}
-
-void BufferChopper::calculateStartEndPos(){
-    int start = std::get<float>(model_->getParameterValue(ParameterType::START_POSITION));
-    int duration = std::get<float>(model_->getParameterValue(ParameterType::DURATION));
-    startPosX_ = sampleToX(start);
-    endPosX_ = sampleToX(start + duration);
 }
 
 bool BufferChopper::event(QEvent *event){
@@ -206,19 +229,24 @@ void BufferChopper::finishDrag(QPointF pos){
     isDragging_ = false ;
     if ( dragStart_ ){
         startPosX_ = dragPosX_ ;
-        emit parameterEdited(model_->getId(), ParameterType::START_POSITION, xToSample(startPosX_));
+        startSample_ = xToSample(startPosX_);
+        sendCollectionUpdate();
     } else {
         endPosX_ = dragPosX_ ;
-        float duration = xToSample(endPosX_) - std::get<float>(model_->getParameterValue(ParameterType::START_POSITION));
-        emit parameterEdited(model_->getId(), ParameterType::DURATION, duration);
+        endSample_ = xToSample(endPosX_);
+        sendCollectionUpdate();
     }
     update();
     
 }
 
-void BufferChopper::onParameterChanged(ParameterType p){
-    if ( p == ParameterType::START_POSITION || p == ParameterType::DURATION ){
-        calculateStartEndPos();
-        update();
-    }
+void BufferChopper::sendCollectionUpdate(){
+    json val({xToSample(startPosX_), xToSample(endPosX_)});
+    CollectionRequest req = {
+        .action = CollectionAction::SET,
+        .componentId = model_->getId(),
+        .value = val,
+        .index = 0
+    };
+    emit collectionEdited(req);
 }

@@ -19,7 +19,6 @@
 #define __COLLECTION_DESCRIPTOR_HPP_
 
 #include "types/ParameterType.hpp"
-#include "types/CollectionType.hpp"
 
 #include <stdexcept>
 #include <vector>
@@ -33,48 +32,41 @@ enum class CollectionStructure {
 struct CollectionDescriptor {
     std::vector<ParameterType> params ;
     CollectionStructure structure ;
-    CollectionType collectionType ;
     size_t groupSize = 0 ; // for GROUPED only
 
     static CollectionDescriptor Independent(
-        ParameterType p,
-        CollectionType collectionType
+        ParameterType p
     ){
         return {
-            {p},
-            CollectionStructure::INDEPENDENT,
-            collectionType,
-            0
+            .params={p},
+            .structure=CollectionStructure::INDEPENDENT,
+            .groupSize=0
         };
     }
 
     static CollectionDescriptor Grouped(
         ParameterType p,
-        CollectionType collectionType,
         size_t groupSize
     ){
         if (groupSize < 2){
             throw std::invalid_argument("Grouped collections must have size > 1");
         }
         return {
-            {p},
-            CollectionStructure::GROUPED,
-            collectionType,
-            groupSize
+            .params={p},
+            .structure=CollectionStructure::GROUPED,
+            .groupSize=groupSize
         };
     }
 
     static CollectionDescriptor Synchronized(
-        const std::vector<ParameterType>& params,
-        CollectionType collectionType
+        const std::vector<ParameterType>& params
     ){
         if ( params.size() < 2 ){
             throw std::invalid_argument("Synchronized collections require at least 2 parameter types");
         }
         return {
-            params,
-            CollectionStructure::SYNCHRONIZED,
-            collectionType
+            .params=params,
+            .structure=CollectionStructure::SYNCHRONIZED,
         };
     }
 

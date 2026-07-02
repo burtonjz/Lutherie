@@ -97,9 +97,9 @@ private:
     json addCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     json removeCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json getCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json getCollectionValues(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     json setCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json resetCollection(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
-    json getCollectionValueRange(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
 
     // modulation management
     json getModulationStrategy(const json& request);
@@ -120,7 +120,7 @@ private:
     void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);
 
     // collection helpers
-    const CollectionDescriptor& getCollectionDescriptor(ComponentType t, CollectionType c) const ;
+    const CollectionDescriptor& getCollectionDescriptor(ComponentType t) const ;
     bool validateCollectionJson(const json& j, CollectionStructure s) const ;
 };
 

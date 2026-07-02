@@ -23,7 +23,7 @@
 class ParameterListener {
 public:
     virtual ~ParameterListener() = default ;
-    virtual void onParameterChanged([[maybe_unused]] ParameterType p){} ;
+    virtual void onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection = false){} ;
 };
 
 #endif // PARAMETER_LISTENER_HPP_

@@ -19,7 +19,6 @@
 #include "meta/CollectionDescriptor.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "types/ComponentType.hpp"
-#include "types/CollectionType.hpp"
 #include "types/ParameterType.hpp"
 #include <stdexcept>
 
@@ -77,9 +76,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Midi Filter",
                 .type = ComponentType::MidiFilter,
-                .collections = {
-                    CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE,CollectionType::GENERIC, 2)
-                },
+                .collection = CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE, 2),
                 .numMidiInputs = 1,
                 .numMidiOutputs = 1,
                 .canModulate = false
@@ -104,12 +101,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 .type = ComponentType::Sequencer,
                 .modulatableParameters = {ParameterType::AMPLITUDE},
                 .controllableParameters = {ParameterType::STATUS, ParameterType::BPM, ParameterType::DURATION},
-                .collections{
-                    CollectionDescriptor::Synchronized(
-                        {ParameterType::MIDI_VALUE, ParameterType::VELOCITY, ParameterType::START_POSITION, ParameterType::DURATION}, 
-                        CollectionType::SEQUENCER
-                    )
-                },
+                .collection = CollectionDescriptor::Synchronized({
+                    ParameterType::MIDI_VALUE, 
+                    ParameterType::VELOCITY, 
+                    ParameterType::START_POSITION, 
+                    ParameterType::DURATION 
+                }),
                 .numMidiOutputs = 1,
             }
         },
@@ -195,7 +192,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Buffer Chopper",
                 .type = ComponentType::Chopper,
-                .controllableParameters = { ParameterType::START_POSITION , ParameterType::DURATION },
+                .collection = CollectionDescriptor::Grouped(ParameterType::SAMPLE, 2),
                 .numBufferInputs = 1,
                 .numBufferOutputs = 1,
                 .allowMultipleBufferConnections = false,

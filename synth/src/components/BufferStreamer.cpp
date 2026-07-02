@@ -47,7 +47,7 @@ void BufferStreamer::calculateSample(){
     bufferPos_ += 1 ;
 }
 
-void BufferStreamer::onParameterChanged([[maybe_unused]] ParameterType p){
+void BufferStreamer::onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection){
     // whenever status is toggled on, reset to beginning of buffer
     if ( parameters_->getParameter<ParameterType::STATUS>()->getValue() ){
         bufferPos_ = 0 ;

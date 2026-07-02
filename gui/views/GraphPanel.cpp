@@ -456,8 +456,6 @@ void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
    
     QGraphicsItem* item = scene()->itemAt(scenePos, transform());
     while (item){
-        // edit a node label
-
         // launch the component editor ; 
         if ( GraphNode* w = dynamic_cast<GraphNode*>(item)){ 
             graphNodeDoubleClicked(w);

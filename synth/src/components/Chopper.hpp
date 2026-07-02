@@ -32,7 +32,7 @@ protected:
     void onInputDisconnect() override ;
     void onInputUpdated() override ;
 
-    void onParameterChanged(ParameterType p) override ;
+    void onParameterChanged(ParameterType p, bool isCollection) override ;
 
 };
 

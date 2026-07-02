@@ -20,7 +20,6 @@
 
 #include "meta/CollectionDescriptor.hpp"
 #include "types/ParameterType.hpp"
-#include "types/CollectionType.hpp"
 
 #include <optional>
 #include <nlohmann/json.hpp>
@@ -33,7 +32,6 @@ enum class CollectionAction {
     REMOVE,
     GET,
     GET_ALL,
-    GET_RANGE,
     SET,
     RESET
 };
@@ -41,7 +39,6 @@ enum class CollectionAction {
 struct CollectionRequest {
     CollectionAction action ;
     int componentId ;
-    CollectionType collectionType ;
 
     std::optional<json> value ; // for ADD/SET
     std::optional<size_t> index ; // for REMOVE, output for ADD
@@ -51,7 +48,6 @@ struct CollectionRequest {
         {CollectionAction::REMOVE, "remove_collection_value"},
         {CollectionAction::GET, "get_collection_value"},
         {CollectionAction::GET_ALL, "get_collection_values"},
-        {CollectionAction::GET_RANGE, "get_collection_range"},
         {CollectionAction::SET, "set_collection_value"},
         {CollectionAction::RESET, "reset_collection"}
     }};
@@ -71,14 +67,14 @@ struct CollectionRequest {
     }
 
     bool valid(const CollectionDescriptor& d) const {
-        bool valid = true ;
+        bool isValid = true ;
         // make sure index is specified if expected
         if ( 
                 action == CollectionAction::REMOVE || 
                 action == CollectionAction::GET ||
                 action == CollectionAction::SET
         ){
-            valid = valid && index.has_value() ;
+            isValid = isValid && index.has_value() ;
         }
 
         // now, depending on what collection structure is used,
@@ -89,23 +85,23 @@ struct CollectionRequest {
         ){
             switch(d.structure){
             case CollectionStructure::INDEPENDENT:
-                valid = valid && value.has_value() &&
+                isValid = isValid && value.has_value() &&
                     value->is_number() ;
                 break ;
             case CollectionStructure::GROUPED:    
-                valid = valid && value.has_value() &&
+                isValid = isValid && value.has_value() &&
                     value->is_array() && 
                     value->size() == d.groupSize ;
                 break ;
             case CollectionStructure::SYNCHRONIZED:
-                valid = valid && value.has_value() &&
-                    value->is_structured() &&
+                isValid = isValid && value.has_value() &&
+                    value->is_object() &&
                     validateSyncParams(d, *value);
                 break ;
             }
         }
 
-        return valid ;
+        return isValid ;
     }
 
     bool validateSyncParams(const CollectionDescriptor& d, const json& value) const {
@@ -122,7 +118,6 @@ struct CollectionRequest {
 inline void to_json(json& j, const CollectionRequest& req){
     j["action"] = req.actionToJson();
     j["componentId"] = req.componentId ;
-    j["collection"] = req.collectionType ;
     if ( req.value.has_value() ) j["value"] = *req.value ;
     if ( req.index.has_value() ) j["index"] = *req.index ;
 }
@@ -130,7 +125,6 @@ inline void to_json(json& j, const CollectionRequest& req){
 inline void from_json(const json& j, CollectionRequest& req){
     req.action = req.actionFromJson(j["action"]);
     req.componentId = j["componentId"];
-    req.collectionType = j["collection"];
     if ( j.contains("value") ) req.value = j["value"] ;
     if ( j.contains("index") ) req.index = j["index"] ;
 }

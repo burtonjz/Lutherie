@@ -16,6 +16,8 @@
  */
 
 #include "core/ComponentManager.hpp"
+#include "requests/CollectionRequest.hpp"
+#include "api/ControlApiHandler.hpp"
 
 ComponentManager::ComponentManager(MidiController* midiCtrl):
     midiController_(midiCtrl)
@@ -131,14 +133,26 @@ json ComponentManager::serializeComponent(BaseComponent* c) const {
     output["id"] = c->getId() ;
     output["name"] = ComponentRegistry::getComponentDescriptor(c->getType()).name ;
 
-    // parameters
-    output["parameters"] = c->getParameters()->toJson();
+    // parameters / collections
+    c->getParameters()->toJson(output);
 
-    // check modulation
-    auto modulatableParameters = ComponentRegistry::getComponentDescriptor(
-        c->getType()).modulatableParameters ;
+    auto cd = ComponentRegistry::getComponentDescriptor(c->getType());
 
-    for ( auto p : modulatableParameters ){
+    // collections need to be reconfigured into a GET_ALL CollectionRequest    
+    // rather than creating a second code path, just send a separate response
+    if ( cd.hasCollection() ){
+        CollectionRequest req = {
+            .action = CollectionAction::GET_ALL,
+            .componentId = c->getId(),
+            .value = std::nullopt,
+            .index = std::nullopt
+        };
+        json r = req ;
+        ControlApiHandler::instance()->handleClientMessage(r.dump());
+    }
+
+    // modulation
+    for ( auto p : cd.modulatableParameters ){
         auto modulator = c->getParameterModulator(p);
         if ( modulator ){
             output["parameters"][GET_PARAMETER_TRAIT_MEMBER(p, name)]["modulatorId"] = modulator->getId();

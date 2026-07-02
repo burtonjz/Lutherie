@@ -22,11 +22,8 @@ Chopper::Chopper(ComponentId id,[[maybe_unused]] ChopperConfig cfg):
     BaseComponent(id, ComponentType::Chopper),
     AudioBufferComponent(1,1)
 {
-    parameters_->add<ParameterType::START_POSITION>(0,false,0,0);
-    parameters_->add<ParameterType::DURATION>(0, false, 0, 0);
-
-    parameters_->getParameter<ParameterType::START_POSITION>()->addListener(this);
-    parameters_->getParameter<ParameterType::DURATION>()->addListener(this);
+    parameters_->addCollection<ParameterType::SAMPLE>({0,0});
+    parameters_->getCollection<ParameterType::SAMPLE>()->addListener(this);
 }
 
 void Chopper::onInputConnect(){
@@ -38,63 +35,66 @@ void Chopper::onInputDisconnect(){
 }
 
 void Chopper::onInputUpdated(){
-    auto start = parameters_->getParameter<ParameterType::START_POSITION>();
-    auto duration = parameters_->getParameter<ParameterType::DURATION>();
+    auto collection = parameters_->getCollection<ParameterType::SAMPLE>();
+    if ( collection->size() != 2 ){
+        SPDLOG_ERROR("Chopper collection size is not 2. This is a programming bug.");
+        return ;
+    }
 
     const auto& inp = getInputs(0);
     if ( inp.size() > 0 ){
         BufferConnection conn = *inp.begin();
         const auto& buf = conn.component->getBuffer(conn.index);    
 
-        start->setMaximum(buf.size() - 1);
-        start->setValue(0, false); // don't recalculate yet
-        duration->setMaximum(buf.size() - 1);
-        duration->setValue(buf.size() - 1);
+        collection->setMaxValue(buf.size()-1);
+        collection->setValue(0,0); // start
+        collection->setValue(1,buf.size()-1); // end 
+        collection->notifyListeners();
     } else {
-        start->setMaximum(0);
-        start->setValue(0, false);
-        duration->setMaximum(0);
-        duration->setValue(0);
+        collection->setMaxValue(0);
+        collection->setValue(0,0); // start
+        collection->setValue(1,0); // end
+        collection->notifyListeners();
     }
 
     triggerComponentSync();
 }
 
-void Chopper::onParameterChanged(ParameterType p){
-    switch(p){
-    case ParameterType::START_POSITION:
-    case ParameterType::DURATION:
-        break ;
-    default:
-        return ;
-    }
+void Chopper::onParameterChanged(ParameterType p, bool isCollection){
+    SPDLOG_DEBUG("onParameterChanged: ParameterType={}, isCollection={}", GET_PARAMETER_TRAIT_MEMBER(p, name), isCollection);
+    if ( !isCollection || p != ParameterType::SAMPLE ) return ;
 
     const auto& inp = getInputs(0);
-    if ( inp.size() == 0 ) return ;
+    if ( inp.size() == 0 ){
+        SPDLOG_WARN("parameter update received, but no input buffer is available. ignoring.");
+        return ;
+    } 
         
     BufferConnection conn = *inp.begin();
     const auto& buf = conn.component->getBuffer(conn.index);    
 
     // guard against empty inbound buffer
     if ( buf.empty() ){
+        SPDLOG_WARN("parameter update received, but inbound buffer is empty.");
         buffers_[0].clear();
         notifyDownstream(0);
         return ;
     }
 
-    int start    = parameters_->getParameter<ParameterType::START_POSITION>()->getValue();
-    int duration = parameters_->getParameter<ParameterType::DURATION>()->getValue();
-
-    // clamp duration
-    int maxDuration = int(buf.size()) - start ;
-    if ( duration <= 0 || duration > maxDuration ){
-        duration = maxDuration ;
-        parameters_->getParameter<ParameterType::DURATION>()->setValue(duration, false);
+    auto collection = parameters_->getCollection<ParameterType::SAMPLE>();
+    if ( collection->size() != 2 ){
+        SPDLOG_ERROR("Chopper collection size is not 2. This is a programming bug.");
+        return ;
     }
+
+    int start = collection->getValue(0);
+    int end   = collection->getValue(1);
 
     buffers_[0].assign(
         buf.begin() + start,
-        buf.begin() + start + duration
+        buf.begin() + end
     );
+
+    SPDLOG_DEBUG("Chopper buffer updated: startSample={}, endSample={}, size={}", start, end, buffers_[0].size());
     notifyDownstream(0);
 }

@@ -47,7 +47,6 @@ class ParameterMap {
         std::set<ParameterType> modulatable_ ; 
         std::set<ParameterType> reference_ ; // parameters that are reference only to a parent parameter map (like a polyOscillator managing child oscillators)
 
-        bool has_collections = false ;
         collections collections_{} ;
 
     public:
@@ -86,10 +85,9 @@ class ParameterMap {
         void   resetCollectionDispatch(ParameterType p);
         void   addCollectionDispatch(ParameterType p, const json& cfg);
 
-
         // serialization
-        json toJson() const ;
-        void fromJson(const json& j);
+        json toJson(json& j) const ;
+        void fromJson(const json& output);
 
         // templates
         template <ParameterType typ>

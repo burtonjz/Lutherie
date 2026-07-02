@@ -156,14 +156,6 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
         scroll->setWidgetResizable(true);
         scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         model_->requestBufferData(model_->getId(), 0);
-        connect(
-            model_, &ComponentModel::parameterValueChanged, 
-            chopper, &BufferChopper::onParameterChanged
-        );
-        connect(
-            chopper, &BufferChopper::parameterEdited,
-            this, &ComponentParameters::parameterEdited
-        );
         return scroll ;
     }
     default:
