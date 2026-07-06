@@ -1,0 +1,102 @@
+[
+    {
+        "action": "set_midi_device", 
+        "device_id": 2
+    },
+    {
+        "action": "set_audio_device", 
+        "device_id": 129
+    },
+    {
+        "action":"add_component",
+        "name":"Sequencer"
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":48,"MIDI Velocity":100,"Start":0.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":50,"MIDI Velocity":90,"Start":1.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":52,"MIDI Velocity":80,"Start":2.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":53,"MIDI Velocity":120,"Start":3.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":55,"MIDI Velocity":120,"Start":4.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":57,"MIDI Velocity":40,"Start":5.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":59,"MIDI Velocity":60,"Start":6.0}
+    },
+    {
+        "action":"add_collection_value",
+        "componentId":0,
+        "value":{"Duration":1.0,"MIDI Value":60,"MIDI Velocity":90,"Start":7.0}
+    },
+    {
+        "action":"add_component",
+        "name":"ADSR Envelope"
+    },
+    {
+        "action":"add_component",
+        "name":"Polyphonic Oscillator"
+    },
+    {
+        "action":"create_connection",
+        "inbound":{"componentId":1,"socketType":"MIDI Inbound"},
+        "outbound":{"componentId":0,"socketType":"MIDI Outbound"}
+    },
+    {
+        "action":"create_connection",
+        "inbound":{"componentId":2,"socketType":"MIDI Inbound"},
+        "outbound":{"componentId":1,"socketType":"MIDI Outbound"}
+    },
+    {
+        "action":"create_connection",
+        "inbound":{"componentId":2,"parameter":"Amplitude","socketType":"Modulation Inbound"},
+        "outbound":{"componentId":1,"socketType":"Modulation Outbound"}
+    },
+    {
+        "action":"create_connection",
+        "inbound":{"index":0,"socketType":"Signal Inbound"},
+        "outbound":{"componentId":2,"index":0,"socketType":"Signal Outbound"}
+    },
+    {
+        "action":"set_parameter",
+        "componentId":2,
+        "parameter":"Waveform",
+        "value":3
+    },
+    {
+        "action":"set_parameter",
+        "componentId":0,
+        "parameter":"Duration",
+        "value":8.0
+    },
+    {
+        "action":"get_collection_values",
+        "componentId":0
+    },
+    {
+        "action": "set_state", 
+        "state": "run"
+    }
+]

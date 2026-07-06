@@ -57,6 +57,8 @@ uint8_t NoteWidget::getMidiNote() const {
 
 void NoteWidget::setMidiNote(uint8_t midiNote){
     midiNote_ = std::min(std::max(midiNote, (uint8_t) 0), (uint8_t) 127 );
+    noteName_ = midi2str(midiNote_);
+    setToolTip(noteName_);
     updateSize();
 }
 

@@ -35,6 +35,7 @@ public:
 
 protected:
     void onReset() override ;
+    void onParameterChanged(ParameterType p, bool isCollection = false) override ;
 
 };
 

@@ -33,6 +33,9 @@ Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     parameters_->add<ParameterType::BPM>(cfg.bpm, false);
     parameters_->add<ParameterType::DURATION>(cfg.length, false, 0, cfg.max_length);
 
+    parameters_->getParameter(ParameterType::BPM)->addListener(this);
+    parameters_->getParameter(ParameterType::DURATION)->addListener(this);
+
     parameters_->addCollection<ParameterType::MIDI_VALUE>({});
     parameters_->addCollection<ParameterType::VELOCITY>({});
     parameters_->addCollection<ParameterType::START_POSITION>({});
@@ -75,6 +78,9 @@ void Sequencer::onTick(float dt){
     for ( int i : notes->getIndices() ){
         float start = starts->getValue(i);
         float end = start + durations->getValue(i);
+        
+        if ( end > maxBeats ) end = maxBeats ;
+        if ( std::abs(start - end) < 0.001 ) continue ; // skip notes near 0 length
 
         
         if ( currentBeat < lastQueriedBeat_ ){ // handle loop around
@@ -127,4 +133,8 @@ void Sequencer::pushToQueue(uint8_t midiNote, uint8_t velocity, bool noteOn){
 void Sequencer::onReset(){
     currentTime_ = 0 ;
     lastQueriedBeat_ = -1 ;
+}
+
+void Sequencer::onParameterChanged([[maybe_unused]] ParameterType p,[[maybe_unused]] bool isCollection){
+    reset();
 }

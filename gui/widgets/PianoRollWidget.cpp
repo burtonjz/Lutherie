@@ -492,7 +492,7 @@ void PianoRollWidget::handleCollectionRemove(const CollectionRequest& req){
 
 void PianoRollWidget::onParameterChanged(ParameterType p){
     if ( p == ParameterType::DURATION ){
-        setTotalBeats(std::get<double>(model_->getParameterValue(p)));
+        setTotalBeats(std::get<float>(model_->getParameterValue(p)));
         return ;
     }
 }

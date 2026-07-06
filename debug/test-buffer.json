@@ -1,0 +1,51 @@
+[
+    {
+        "action": "set_midi_device", 
+        "device_id": 2
+    },
+    {
+        "action": "set_audio_device", 
+        "device_id": 129
+    },
+    {
+        "action": "add_component", 
+        "name": "File Buffer"
+    },
+    {
+        "action": "add_component", 
+        "name": "Buffer Chopper"
+    },
+    {
+        "action": "add_component", 
+        "name": "Buffer Streamer"
+    },
+    {
+        "action": "set_file_path", 
+        "componentId": 0, "path": "/home/burtonjz/Downloads/chopper-test.mp3"
+    },
+    {
+        "action": "create_connection",
+        "inbound": {"componentId": 1, "index": 0, "socketType": "Buffer Inbound"},
+        "outbound": {"componentId": 0, "index": 0, "socketType": "Buffer Outbound"}
+    },
+    {
+        "action": "create_connection",
+        "inbound": {"componentId": 2, "index": 0, "socketType": "Buffer Inbound"},
+        "outbound": {"componentId": 1, "index": 0, "socketType": "Buffer Outbound"}
+    },
+    {
+        "action": "create_connection",
+        "inbound": {"index": 0, "socketType": "Signal Inbound"},
+        "outbound": {"componentId": 2, "index": 0, "socketType": "Signal Outbound"}
+    },
+    {
+        "action":"set_collection_value",
+        "componentId":1,
+        "index":0,
+        "value":[48000,480000]
+    },
+    {
+        "action": "set_state", 
+        "state": "run"
+    }
+]
