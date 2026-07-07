@@ -292,3 +292,11 @@ const QString& Theme::getLabelHeaderStyle(){
     
     return title ;
 }
+
+const QString& Theme::getLabelCommentStyle(){
+    static const QString title = QString(
+        "font-size: 12px; font-weight: italic; color: %1;"
+    ).arg(TEXT_PRIMARY.name()) ;
+    
+    return title ;
+}

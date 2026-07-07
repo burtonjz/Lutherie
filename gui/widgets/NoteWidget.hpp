@@ -21,15 +21,11 @@
 #include "types/SequenceData.hpp"
 
 #include <QWidget>
-#include <QPainter>
-
-class PianoRollWidget ; // forward declaration
-
+#include <QLabel>
 class NoteWidget : public QWidget {
     Q_OBJECT
 
 private:
-    PianoRollWidget* parent_ ;
     uint8_t midiNote_ ;
     uint8_t velocity_ ;
     float startBeat_ ;
@@ -41,9 +37,11 @@ private:
     float y_ ;
     float w_ ;
 
+    QLabel* label_ ;
+    
 public:
-    NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float end, PianoRollWidget* parent);
-    NoteWidget(SequenceNote note, PianoRollWidget* parent);
+    NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float end, QWidget* parent = nullptr);
+    NoteWidget(SequenceNote note, QWidget* parent = nullptr);
 
     void paintEvent(QPaintEvent*) override ;
 

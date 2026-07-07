@@ -21,37 +21,79 @@
 #include "requests/CollectionRequest.hpp"
 
 #include <nlohmann/json.hpp>
-#include <qpainter.h>
 #include <spdlog/spdlog.h>
+#include <QPainter>
+#include <QScrollBar>
+#include <QStyle>
+#include <QCursor>
 
 PianoRollWidget::PianoRollWidget(ComponentModel* model, QWidget* parent):
     CollectionWidget(model, parent),
+    pianoScroll_(new QScrollArea(this)),
+    piano_(new PianoWidget(this)),
+    pianoContainer_(new QWidget(this)),
+    pianoScrollSpacer_(new QWidget(pianoContainer_)),
+    pianoLayout_(new QVBoxLayout(pianoContainer_)),
+    rollScroll_(new QScrollArea(this)),
+    roll_(new ContentWidget(this)),
+    layout_(new QHBoxLayout(this)),
     totalBeats_(16.0f),
     notes_(),
     selectedNotes_()
 {
-    setMouseTracking(true);
-    setFocusPolicy(Qt::StrongFocus);
+    layout_->setContentsMargins(0,0,0,0);
+    layout_->setSpacing(0);
 
-    updateSize();
+    // piano and roll scroll need to be in 2 synced scroll areas. 
+    // the roll scroll will control both to keep in sync.
+    pianoScroll_->setWidget(piano_);
+    pianoScroll_->setWidgetResizable(true);
+    pianoScroll_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    pianoScroll_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    pianoScroll_->setFixedWidth(piano_->sizeHint().width());
+    pianoScroll_->setFrameShape(QFrame::NoFrame);
+    
+    // account for rollScroll horizontal bar size
+    int hBarHeight = qApp->style()->pixelMetric(QStyle::PM_ScrollBarExtent);
+    pianoLayout_->setContentsMargins(0,0,0,0);
+    pianoLayout_->setSpacing(0);
+    pianoLayout_->addWidget(pianoScroll_);
+
+    pianoScrollSpacer_->setFixedHeight(hBarHeight);
+    pianoLayout_->addWidget(pianoScrollSpacer_);
+    layout_->addWidget(pianoContainer_);
+
+    rollScroll_->setWidget(roll_);
+    rollScroll_->setWidgetResizable(true);
+    rollScroll_->setFrameShape(QFrame::NoFrame);
+    rollScroll_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    rollScroll_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    rollScroll_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    layout_->addWidget(rollScroll_, 1);
+
+    connect(
+        rollScroll_->verticalScrollBar(), &QScrollBar::valueChanged,
+        pianoScroll_->verticalScrollBar(), &QScrollBar::setValue
+    );
+    connect(
+        rollScroll_->verticalScrollBar(), &QScrollBar::valueChanged,
+        roll_, [this](int){ roll_->update(); }
+    );
+    connect(
+        rollScroll_->horizontalScrollBar(), &QScrollBar::valueChanged,
+        roll_, [this](int){ roll_->update(); }
+    );
+    
+    update();
 }
 
 void PianoRollWidget::setTotalBeats(float beats){
     totalBeats_ = beats ;
-    updateSize();
-    update();
+    roll_->updateGeometry();
 }
 
-void PianoRollWidget::paintEvent(QPaintEvent*){
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
-
-    drawGrid(p);
-    drawPianoKeys(p);
-}
-
-void PianoRollWidget::mousePressEvent(QMouseEvent* e){
-    QPointF pos = mapFromGlobal(e->globalPosition());
+void PianoRollWidget::contentMousePress(QMouseEvent* e){
+    QPointF pos = e->position();
     
     if ( e->button() == Qt::LeftButton ){
         NoteWidget* clickedNote = findNoteAtPos(pos);
@@ -67,14 +109,20 @@ void PianoRollWidget::mousePressEvent(QMouseEvent* e){
             return ;
         }
 
-        deselectNotes();
-        startDrag(pos);
+        if ( e->modifiers() & Qt::ControlModifier ){
+            deselectNotes();
+            startDrag(pos);
+        } else {
+            startSelectionBox(pos);
+        }
+
+        e->accept();
         return ;
     }
 }
 
-void PianoRollWidget::mouseMoveEvent(QMouseEvent* e){
-    QPointF pos = mapFromGlobal(e->globalPosition());
+void PianoRollWidget::contentMouseMove(QMouseEvent* e){
+    QPointF pos = e->position();
 
     if ( isDragging_ ){    
         updateDrag(pos);
@@ -86,12 +134,16 @@ void PianoRollWidget::mouseMoveEvent(QMouseEvent* e){
         return ;
     }
 
-    handleNoteHover(pos);
-    
+    if ( isSelecting_ ){
+        updateSelectionBox(pos);
+        return ;
+    }
+
+    updateCursor(pos);
 }
 
-void PianoRollWidget::mouseReleaseEvent(QMouseEvent* e){
-    QPointF pos = mapFromGlobal(e->globalPosition());
+void PianoRollWidget::contentMouseRelease(QMouseEvent* e){
+    QPointF pos = e->position();
 
     if ( e->button() == Qt::LeftButton ){
          if ( isDragging_ ){
@@ -105,10 +157,21 @@ void PianoRollWidget::mouseReleaseEvent(QMouseEvent* e){
             e->accept();
             return ;
          }
+
+         if ( isSelecting_ ){
+            endSelectionBox(pos);
+            e->accept();
+            return ;
+         }
     }
 }
 
-void PianoRollWidget::keyPressEvent(QKeyEvent* e){
+void PianoRollWidget::contentKeyPress(QKeyEvent* e){
+    if ( e->key() == Qt::Key_Control ){
+        ctrlHeld_ = true ;
+        updateCursor(roll_->cursor().pos());
+    }
+
     if ( e->key() == Qt::Key_Delete ){
         requestRemoveSelectedNotes();
         e->accept();
@@ -148,20 +211,36 @@ void PianoRollWidget::keyPressEvent(QKeyEvent* e){
     }
 }
 
-void PianoRollWidget::updateSize(){
-    float width = Theme::PIANO_ROLL_KEY_WIDTH + static_cast<float>(totalBeats_ * Theme::PIANO_ROLL_PIXELS_PER_BEAT);
-    float height = 128 * Theme::PIANO_ROLL_NOTE_HEIGHT ;
-    setMinimumSize(width,height);
-    setMaximumSize(width,height);
+void PianoRollWidget::contentKeyRelease(QKeyEvent* e){
+    if ( e->key() == Qt::Key_Control  ){
+        ctrlHeld_ = false ;
+        updateCursor(roll_->cursor().pos());
+    }
 }
 
-void PianoRollWidget::drawGrid(QPainter& p){
-    // vertical beats
-    p.setPen(QPen(Theme::PIANO_ROLL_BACKGROUND, Theme::PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY));
-    for ( int beat = 0; beat <= totalBeats_ ; ++beat ){
-        int x = Theme::PIANO_ROLL_KEY_WIDTH + beat * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
-        p.drawLine(x, 0, x, height());
+void PianoRollWidget::paintContent(QWidget* target, QPaintEvent* event){
+    QPainter p(target);
 
+    // vertical beats
+    for ( int beat = 0; beat <= totalBeats_ ; ++beat ){
+        int x = beat * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+
+        p.setPen(QPen(
+            Theme::PIANO_ROLL_BACKGROUND, 
+            Theme::PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY
+        ));
+        p.drawLine(x, 0, x, target->height());
+
+        p.setPen(Theme::TEXT_SECONDARY);
+
+        int vOffset = rollScroll_->verticalScrollBar()->value();
+        p.drawText(
+            QPoint(
+                x + Theme::PIANO_KEY_LABEL_PAD, 
+                vOffset + fontMetrics().ascent() + Theme::PIANO_KEY_LABEL_PAD 
+            ), 
+            QString("%1").arg(beat + 1)
+        );
     }
 
     // vertical beat subdivisions
@@ -171,62 +250,46 @@ void PianoRollWidget::drawGrid(QPainter& p){
         } else {
             p.setPen(QPen(Theme::PIANO_ROLL_GRID_SECONDARY, Theme::PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY));
         }
-        int x = Theme::PIANO_ROLL_KEY_WIDTH + beat * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
-        p.drawLine(x,0,x,height());
+        int x = beat * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+        p.drawLine(x,0,x,target->height());
     }
 
     // horizontal notes
     for ( uint8_t note = 0 ; note < 128; ++note ){
-        int y = note * Theme::PIANO_ROLL_NOTE_HEIGHT ;
+        int y = note * Theme::PIANO_KEY_THICKNESS ;
         QColor keyColor ;
-        if ( isWhiteNote(127 - note) ){
+        if ( piano_->isWhiteNote(127 - note) ){
             keyColor = Theme::PIANO_ROLL_KEY_WHITE ;
         } else {
             keyColor = Theme::PIANO_ROLL_KEY_BLACK ;
         }
+        keyColor.setAlpha(30);
         p.setPen(QPen(keyColor, Theme::PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY));
+        p.fillRect(0, y, target->width(), Theme::PIANO_KEY_THICKNESS, keyColor);
+    }
+
+    if ( isSelecting_ ){
+        QColor fillColor = Theme::ACCENT_COLOR ;
+        fillColor.setAlpha(30);
+        p.setPen(QPen(Theme::TEXT_SECONDARY, 1, Qt::DashLine));
+        p.drawRect(selectionRect_);
+        p.fillRect(selectionRect_, fillColor);
     }
 }
 
-void PianoRollWidget::drawPianoKeys(QPainter& p){
-    for ( uint8_t note = 0; note < 128; ++note ){
-        int y = (127 - note) * Theme::PIANO_ROLL_NOTE_HEIGHT ;
-        QColor keyColor ;
-        if ( isWhiteNote(note) ){
-            keyColor = Theme::PIANO_ROLL_KEY_WHITE ;
-        } else {
-            keyColor = Theme::PIANO_ROLL_KEY_BLACK ;
-        }
-        p.fillRect(0,y,Theme::PIANO_ROLL_KEY_WIDTH, Theme::PIANO_ROLL_NOTE_HEIGHT, keyColor);
-        p.setPen(Theme::PIANO_ROLL_KEY_BORDER);
-        p.drawRect(0,y,Theme::PIANO_ROLL_KEY_WIDTH, Theme::PIANO_ROLL_NOTE_HEIGHT);
-
-        // draw some note names
-        if ( note % 12 == 0 ){
-            p.setPen(Theme::PIANO_ROLL_KEY_LABEL);
-            p.drawText(
-                QRect(2,y, Theme::PIANO_ROLL_KEY_WIDTH - Theme::PIANO_ROLL_KEY_LABEL_X_PAD, Theme::PIANO_ROLL_NOTE_HEIGHT),
-                Qt::AlignCenter,
-                QString("C%1").arg(note / 12 - 1)
-            );
-        }
-    }
-}   
-
-bool PianoRollWidget::isWhiteNote(uint8_t pitch) const {
-    uint8_t note = pitch % 12 ;
-    return note == 0 || note == 2 || 
-           note == 4 || note == 5 || 
-           note == 7 || note == 9 || 
-           note == 11 ;
+QSize PianoRollWidget::contentSizeHint() const {
+    return {
+        static_cast<int>(totalBeats_ * Theme::PIANO_ROLL_PIXELS_PER_BEAT),
+        static_cast<int>(128 * Theme::PIANO_KEY_THICKNESS) 
+    };
 }
 
 float PianoRollWidget::xToBeat(float x) const {
-    return static_cast<float>(x - Theme::PIANO_ROLL_KEY_WIDTH) / Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+    return x / Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
 }
 
 int PianoRollWidget::yToPitch(float y) const {
-    float row = ( y - Theme::PIANO_ROLL_NOTE_HEIGHT / 2.0 ) / Theme::PIANO_ROLL_NOTE_HEIGHT ;
+    float row = ( y - Theme::PIANO_KEY_THICKNESS / 2.0 ) / Theme::PIANO_KEY_THICKNESS ;
     return 127 - static_cast<int>(std::round(row));
 }
 
@@ -259,22 +322,6 @@ void PianoRollWidget::deselectNotes(){
         }
     }
     selectedNotes_.clear();
-}
-
-void PianoRollWidget::handleNoteHover(const QPointF pos){
-    NoteWidget* n = findNoteAtPos(pos);
-    if ( n ){
-        QPointF notePos = n->mapFromParent(pos); // note local position
-        const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
-
-        if ( notePos.x() <= threshold || notePos.x() >= n->width() - threshold ){
-            setCursor(Qt::SizeHorCursor);
-        } else {
-            setCursor(Qt::ArrowCursor);
-        }
-    } else {
-        setCursor(Qt::ArrowCursor);
-    }
 }
 
 void PianoRollWidget::requestRemoveNote(int idx){
@@ -313,7 +360,7 @@ NoteWidget* PianoRollWidget::findNoteAtPos(const QPointF& pos) {
 void PianoRollWidget::startDrag(const QPointF pos){
     anchorBeat_ = xToBeat(pos.x());
     uint8_t pitch = yToPitch(pos.y());
-    dragNote_ = new NoteWidget(pitch,100,anchorBeat_ + 0.25,anchorBeat_,this);
+    dragNote_ = new NoteWidget(pitch,100,anchorBeat_ + 0.25,anchorBeat_,roll_);
     isDragging_ = true ;
 }
 
@@ -404,6 +451,35 @@ void PianoRollWidget::endResize(const QPointF pos){
     emit collectionEdited(req);
 }
 
+void PianoRollWidget::startSelectionBox(const QPointF pos){
+    deselectNotes();
+    selectionStart_ = pos ;
+    selectionRect_ = QRect(pos.toPoint(), QSize(0,0));
+    isSelecting_ = true ;
+}
+
+void PianoRollWidget::updateSelectionBox(const QPointF pos){
+    selectionRect_ = QRect(selectionStart_.toPoint(), pos.toPoint()).normalized();
+    roll_->update();
+}
+
+void PianoRollWidget::endSelectionBox(const QPointF pos){
+    selectionRect_ = QRect(selectionStart_.toPoint(), pos.toPoint()).normalized();
+    
+    for ( auto& [idx, note] : notes_ ){
+        if ( !note ) continue ;
+        if ( selectionRect_.intersects(note->geometry()) ){
+            note->setSelected(true);
+            selectedNotes_.push_back(idx);
+        }
+    }
+
+    isSelecting_ = false ;
+    selectionRect_ = QRect();
+    roll_->update();
+}
+
+
 void PianoRollWidget::updateSelectedNotePitch(int p){
     for ( int idx : selectedNotes_ ){
         NoteWidget* n = notes_[idx];
@@ -453,6 +529,22 @@ void PianoRollWidget::updateSelectedNoteDuration(float d){
     }
 }
 
+void PianoRollWidget::updateCursor(const QPointF pos){
+    NoteWidget* n = findNoteAtPos(pos);
+    if ( n ){
+        QPointF notePos = n->mapFromParent(pos); // note local position
+        const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
+
+        if ( notePos.x() <= threshold || notePos.x() >= n->width() - threshold ){
+            setCursor(Qt::SizeHorCursor);
+        } else {
+            setCursor(Qt::ArrowCursor);
+        }
+        return ;
+    } 
+
+    setCursor(ctrlHeld_ ? Qt::CrossCursor : Qt::ArrowCursor);
+}
 
 void PianoRollWidget::updateCollection(const CollectionRequest& req){    
     switch(req.action){
@@ -470,7 +562,7 @@ void PianoRollWidget::updateCollection(const CollectionRequest& req){
 void PianoRollWidget::handleCollectionAdd(const CollectionRequest& req){
     SequenceNote note = req.value.value();
     int index = req.index.value();
-    notes_[index] = new NoteWidget(note, this);
+    notes_[index] = new NoteWidget(note, roll_);
     
     update();
 }

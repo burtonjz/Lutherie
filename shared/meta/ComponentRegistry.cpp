@@ -99,7 +99,6 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Sequencer",
                 .type = ComponentType::Sequencer,
-                .modulatableParameters = {ParameterType::AMPLITUDE},
                 .controllableParameters = {ParameterType::STATUS, ParameterType::BPM, ParameterType::DURATION},
                 .collection = CollectionDescriptor::Synchronized({
                     ParameterType::MIDI_VALUE, 

@@ -22,30 +22,74 @@
 #include "models/ComponentModel.hpp"
 #include "types/SequenceData.hpp"
 #include "widgets/NoteWidget.hpp"
+#include "widgets/PianoWidget.hpp"
 
 #include <QWidget>
 #include <QScrollArea>
 #include <QPainter>
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <vector>
+#include <QBoxLayout>
+#include <vector> 
 #include <map>
-#include <cstdint>
 
 class PianoRollWidget : public CollectionWidget {
     Q_OBJECT
 
 private:
+    // lightweight widget to support partial QScrollArea wrap
+    class ContentWidget : public QWidget {
+    private:
+        PianoRollWidget* owner_ ;
+
+    public:
+        explicit ContentWidget(PianoRollWidget* owner, QWidget* parent = nullptr):
+            QWidget(parent),
+            owner_(owner)
+        {
+            setMouseTracking(true);
+            setFocusPolicy(Qt::StrongFocus);
+            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        }
+    
+    protected:
+        void paintEvent(QPaintEvent* event) override {
+            owner_->paintContent(this, event);
+        }
+        QSize sizeHint() const override { return owner_->contentSizeHint(); }
+        QSize minimumSizeHint() const override { return sizeHint(); }
+        void mousePressEvent(QMouseEvent* e) override   { owner_->contentMousePress(e); }
+        void mouseMoveEvent(QMouseEvent* e) override    { owner_->contentMouseMove(e); }
+        void mouseReleaseEvent(QMouseEvent* e) override { owner_->contentMouseRelease(e); }
+        void keyPressEvent(QKeyEvent* e) override       { owner_->contentKeyPress(e); }
+        void keyReleaseEvent(QKeyEvent* e) override     { owner_->contentKeyRelease(e); }
+    };
+
+    QHBoxLayout* layout_ ;
+    QScrollArea* pianoScroll_ ;
+    PianoWidget* piano_ ;
+    QWidget* pianoContainer_ ;
+    QWidget* pianoScrollSpacer_ ;
+    QVBoxLayout* pianoLayout_ ;
+    QScrollArea* rollScroll_ ;
+    ContentWidget* roll_ ;
+
     std::map<int, NoteWidget*> notes_ ;
     std::vector<int> selectedNotes_ ;
 
     float totalBeats_ ;
 
-    bool isDragging_ = false ;
-    bool isResizing_ = false ;
+    bool isDragging_  = false ;
+    bool isResizing_  = false ;
+    bool isSelecting_ = false ;
 
     NoteWidget* dragNote_ ;
     float anchorBeat_ ;
+
+    QPointF selectionStart_ ;
+    QRect selectionRect_ ;
+
+    bool ctrlHeld_ = false ;
 
 public:
     explicit PianoRollWidget(ComponentModel* model, QWidget* parent = nullptr);
@@ -56,19 +100,17 @@ public:
     // void removeNote(int idx);
 
 protected:
-    void paintEvent(QPaintEvent*) override ;
-    void mousePressEvent(QMouseEvent* e) override ;
-    void mouseMoveEvent(QMouseEvent* e) override ;
-    void mouseReleaseEvent(QMouseEvent* e) override ;
-    void keyPressEvent(QKeyEvent* e) override ;
+    void contentMousePress(QMouseEvent* e);
+    void contentMouseMove(QMouseEvent* e);
+    void contentMouseRelease(QMouseEvent* e);
+    void contentKeyPress(QKeyEvent* e);
+    void contentKeyRelease(QKeyEvent* e);
 
 private:
-    // draw functions
-    void updateSize();
-    void drawGrid(QPainter& p);
-    void drawPianoKeys(QPainter& p);
+    // content wrappers
+    void paintContent(QWidget* target, QPaintEvent* event);
+    QSize contentSizeHint() const ;
 
-    bool isWhiteNote(uint8_t pitch) const ;
     float xToBeat(float x) const ;
     int yToPitch(float y) const ;
 
@@ -79,7 +121,6 @@ private:
     // functions for Qt event handling
     void selectNote(NoteWidget* note, bool multiSelect);
     void deselectNotes();
-    void handleNoteHover(const QPointF pos);
 
     // dragging new notes
     void startDrag(const QPointF pos);
@@ -91,9 +132,16 @@ private:
     void updateResize(const QPointF pos);
     void endResize(const QPointF pos);
 
+    // selection
+    void startSelectionBox(const QPointF pos);
+    void updateSelectionBox(const QPointF pos);
+    void endSelectionBox(const QPointF pos);
+
     void updateSelectedNotePitch(int p);
     void updateSelectedNoteStart(float t);
     void updateSelectedNoteDuration(float d);
+
+    void updateCursor(const QPointF pos);
 
     // functions for api responses
     void handleCollectionAdd(const CollectionRequest& req);

@@ -158,14 +158,15 @@ public:
     static constexpr qreal COMPONENT_DETAIL_COLLECTION_WIDGET_SPACING  = 8 ;
     static constexpr qreal COMPONENT_DETAIL_COLLECTION_DELETE_BTN_SIZE = 24 ;
 
-    static constexpr qreal PIANO_ROLL_NOTE_HEIGHT         = 30 ; 
-    static constexpr qreal PIANO_ROLL_NOTE_EDGE_THRESHOLD = 8 ;
+    static constexpr qreal PIANO_KEY_THICKNESS = 30 ; 
+    static constexpr qreal PIANO_KEY_LENGTH    = 60 ;
+    static constexpr qreal PIANO_KEY_LABEL_PAD = 4 ;
 
+    static constexpr qreal PIANO_ROLL_NOTE_EDGE_THRESHOLD      = 8 ;
     static constexpr qreal PIANO_ROLL_PIXELS_PER_BEAT          = 100 ;
-    static constexpr qreal PIANO_ROLL_KEY_WIDTH                = 60 ;
     static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY   = 1 ;
     static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY = .75 ;
-    static constexpr qreal PIANO_ROLL_KEY_LABEL_X_PAD          = 4 ;
+    
 
     static constexpr int   SPECTRUM_MARGIN_LEFT      = 60 ;
     static constexpr int   SPECTRUM_MARGIN_RIGHT     = 20 ;
@@ -247,6 +248,7 @@ public:
     */
     static const QString& getLabelTitleStyle();
     static const QString& getLabelHeaderStyle();
+    static const QString& getLabelCommentStyle();
 
 };
 

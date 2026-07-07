@@ -133,16 +133,12 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
     switch(t){
     case ComponentType::Sequencer:
     {
-        auto* scroll = new QScrollArea() ;
         PianoRollWidget* pianoRoll = new PianoRollWidget(model_);
-        scroll->setWidget(pianoRoll);
-        scroll->setWidgetResizable(true);
-        scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         connect(
             model_, &ComponentModel::parameterValueChanged, 
             pianoRoll, &PianoRollWidget::onParameterChanged
         );
-        return scroll ;
+        return pianoRoll ;
     }
     case ComponentType::Chopper:
     {

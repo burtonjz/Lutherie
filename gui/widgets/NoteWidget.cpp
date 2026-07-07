@@ -16,26 +16,31 @@
  */
 
 #include "widgets/NoteWidget.hpp"
-#include "widgets/PianoRollWidget.hpp"
 #include "app/Theme.hpp"
 #include <QEvent>
 #include <QWidget>
+#include <QPainter>
 
-NoteWidget::NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float end, PianoRollWidget* parent):
+NoteWidget::NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float end, QWidget* parent):
     QWidget(parent),
     midiNote_(midiNote),
     velocity_(velocity),
     startBeat_(start),
     endBeat_(end),
     selected_(false),
-    noteName_(midi2str(midiNote))
+    noteName_(midi2str(midiNote)),
+    label_(new QLabel(noteName_, this))
 { 
-    setToolTip(noteName_);
+    label_->setMargin(4);
+    label_->setStyleSheet(Theme::getLabelCommentStyle());
+    label_->setMinimumWidth(label_->fontMetrics().horizontalAdvance("0000"));
+
+    setToolTip(noteName_ + QString(", velocity=%1").arg(velocity_));
     setMouseTracking(true);
-    updateSize();
+    updateSize();    
 }
 
-NoteWidget::NoteWidget(SequenceNote note, PianoRollWidget* parent):
+NoteWidget::NoteWidget(SequenceNote note, QWidget* parent):
     NoteWidget::NoteWidget(note.pitch, note.velocity, note.startBeat, note.getEndBeat(), parent)
 {}
 
@@ -46,9 +51,9 @@ void NoteWidget::paintEvent(QPaintEvent*){
     QColor fillColor = selected_ ? Theme::PIANO_ROLL_NOTE_SELECTED_COLOR :
         Theme::PIANO_ROLL_NOTE_COLOR ;
 
-    painter.fillRect(0,0,w_, Theme::PIANO_ROLL_NOTE_HEIGHT, fillColor);
+    painter.fillRect(0,0,w_, Theme::PIANO_KEY_THICKNESS, fillColor);
     painter.setPen(Theme::PIANO_ROLL_NOTE_BORDER);
-    painter.drawRect(0,0,w_, Theme::PIANO_ROLL_NOTE_HEIGHT);
+    painter.drawRect(0,0,w_, Theme::PIANO_KEY_THICKNESS);
 }
 
 uint8_t NoteWidget::getMidiNote() const {
@@ -58,7 +63,8 @@ uint8_t NoteWidget::getMidiNote() const {
 void NoteWidget::setMidiNote(uint8_t midiNote){
     midiNote_ = std::min(std::max(midiNote, (uint8_t) 0), (uint8_t) 127 );
     noteName_ = midi2str(midiNote_);
-    setToolTip(noteName_);
+    setToolTip(noteName_ + QString(", velocity=%1").arg(velocity_));
+    label_->setText(noteName_);
     updateSize();
 }
 
@@ -68,6 +74,7 @@ uint8_t NoteWidget::getVelocity() const {
 
 void NoteWidget::setVelocity(uint8_t velocity){
     velocity_ = std::min(std::max(velocity, (uint8_t) 0), (uint8_t) 127 );
+    setToolTip(noteName_ + QString(", velocity=%1").arg(velocity_));
     updateSize();
 }
 
@@ -139,11 +146,10 @@ QString NoteWidget::midi2str(uint8_t midiNote){
 }
 
 void NoteWidget::updateSize(){
-    x_ = Theme::PIANO_ROLL_KEY_WIDTH + startBeat_ * 
-        Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
-    y_ = (127 - midiNote_) * Theme::PIANO_ROLL_NOTE_HEIGHT ;
+    x_ = startBeat_ * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+    y_ = (127 - midiNote_) * Theme::PIANO_KEY_THICKNESS ;
     w_ = static_cast<float>(endBeat_ - startBeat_) * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
-    setGeometry(x_,y_,w_, Theme::PIANO_ROLL_NOTE_HEIGHT);
+    setGeometry(x_,y_,w_, Theme::PIANO_KEY_THICKNESS);
     show();
     update();
 }

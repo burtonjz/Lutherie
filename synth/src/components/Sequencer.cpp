@@ -33,14 +33,13 @@ Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     parameters_->add<ParameterType::BPM>(cfg.bpm, false);
     parameters_->add<ParameterType::DURATION>(cfg.length, false, 0, cfg.max_length);
 
-    parameters_->getParameter(ParameterType::BPM)->addListener(this);
-    parameters_->getParameter(ParameterType::DURATION)->addListener(this);
-
     parameters_->addCollection<ParameterType::MIDI_VALUE>({});
     parameters_->addCollection<ParameterType::VELOCITY>({});
     parameters_->addCollection<ParameterType::START_POSITION>({});
     parameters_->addCollection<ParameterType::DURATION>({});
 
+    parameters_->getParameter(ParameterType::BPM)->addListener(this);
+    parameters_->getParameter(ParameterType::DURATION)->addListener(this);
 }
 
 void Sequencer::onTick(float dt){
@@ -136,5 +135,8 @@ void Sequencer::onReset(){
 }
 
 void Sequencer::onParameterChanged([[maybe_unused]] ParameterType p,[[maybe_unused]] bool isCollection){
-    reset();
+    if ( !isCollection ){
+        reset();
+        return ;
+    }    
 }

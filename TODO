@@ -5,8 +5,6 @@
 ## High Priority
 
 ### Sequencer
-- [Quick] Don't allow note adds while sequencer status is on
-- [Quick] On sequencer status toggle, send note-off for all active notes
 - [Medium] Per-note velocity support
 
 ### Docking
@@ -54,10 +52,6 @@
 - [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 
 - [Medium] Component duplication — plain copy, and copy-with-connections
 - [Big] consider drag/drop component parameters from the parameter panel to a group widget when grouped, with sensible defaults
-
-### Sequencer
-- [Quick] Labels on individual notes (MIDI note + velocity)
-- [Quick] Adjust sequencer grid size based on duration parameter
 
 ### Misc Component Improvements
 - [Big] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges). `PianoRollWidget` → `SequencerWidget`, break out `PianoRoll` component with a horizontal/vertical flag
@@ -107,7 +101,7 @@
 - [Quick] Floating KDDW windows (specialized widgets) instantiate with a sensible size hint
 
 ### Sequencer
-- [Quick] Shift+scroll for horizontal scrollbar
+- [Quick] Shift+scroll for horizontal scrollbar (override OS-specific behavior?)
 
 ### One Day
 - [Big] Envelope with drawable curve
