@@ -30,7 +30,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QBoxLayout>
-#include <vector> 
+#include <set> 
 #include <map>
 
 class PianoRollWidget : public CollectionWidget {
@@ -75,7 +75,7 @@ private:
     ContentWidget* roll_ ;
 
     std::map<int, NoteWidget*> notes_ ;
-    std::vector<int> selectedNotes_ ;
+    std::set<int> selectedNotes_ ;
 
     float totalBeats_ ;
 
@@ -128,7 +128,7 @@ private:
     void endDrag(const QPointF pos);
 
     // resize existing note
-    bool startResize(NoteWidget* note, const QPointF pos);
+    void startResize(NoteWidget* note, const QPointF pos);
     void updateResize(const QPointF pos);
     void endResize(const QPointF pos);
 

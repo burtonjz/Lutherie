@@ -100,9 +100,6 @@
 - [Medium] Disperse `CollectionRequest` validation to the `CollectionDescriptor` (e.g. a validation function, which actions are supported). This will make a less complex validation function and enforce rules that unofficially exist in code.
 - [Quick] Floating KDDW windows (specialized widgets) instantiate with a sensible size hint
 
-### Sequencer
-- [Quick] Shift+scroll for horizontal scrollbar (override OS-specific behavior?)
-
 ### One Day
 - [Big] Envelope with drawable curve
 - [Big] Custom wavetable drawing

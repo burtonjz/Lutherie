@@ -98,10 +98,11 @@ void PianoRollWidget::contentMousePress(QMouseEvent* e){
     if ( e->button() == Qt::LeftButton ){
         NoteWidget* clickedNote = findNoteAtPos(pos);
         if ( clickedNote ){
-            if ( startResize(clickedNote, pos) ){
+            if ( cursor() == Qt::SizeHorCursor ){
+                startResize(clickedNote, pos);
                 e->accept();
                 return ;
-            } 
+            }
 
             bool multiSelect = e->modifiers() & Qt::ControlModifier ;
             selectNote(clickedNote, multiSelect);
@@ -271,7 +272,7 @@ void PianoRollWidget::paintContent(QWidget* target, QPaintEvent* event){
     if ( isSelecting_ ){
         QColor fillColor = Theme::ACCENT_COLOR ;
         fillColor.setAlpha(30);
-        p.setPen(QPen(Theme::TEXT_SECONDARY, 1, Qt::DashLine));
+        p.setPen(QPen(Theme::TEXT_SECONDARY, 1));
         p.drawRect(selectionRect_);
         p.fillRect(selectionRect_, fillColor);
     }
@@ -307,10 +308,10 @@ void PianoRollWidget::selectNote(NoteWidget* note, bool multiSelect){
 
     if ( note->isSelected() ){    
         note->setSelected(false);
-        selectedNotes_.erase(std::remove(selectedNotes_.begin(), selectedNotes_.end(), idx), selectedNotes_.end());
+        selectedNotes_.erase(idx);
     } else {
         note->setSelected(true);
-        selectedNotes_.push_back(idx);
+        selectedNotes_.insert(idx);
     }
 }
 
@@ -349,12 +350,35 @@ int PianoRollWidget::findNoteIndex(NoteWidget* note) const {
 }
 
 NoteWidget* PianoRollWidget::findNoteAtPos(const QPointF& pos) {
+    const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
+    NoteWidget* inThreshold = nullptr ;
+    qreal thresholdDistance = threshold + 1 ;
     for ( auto& [idx, note] : notes_ ) {
-        if (note && note->geometry().contains(pos.toPoint())) {
-            return note;
+        if ( !note ) continue ;
+        
+        auto geo = note->geometry();
+        auto point = pos.toPoint();
+
+        // clear fit, return immediately
+        if ( geo.contains(point) ){
+            return note ;
+        }
+
+        // within threshold, search for closest note
+        auto threshGeo = geo.adjusted(-threshold, 0, threshold, 0);
+        if ( threshGeo.contains(point) ){
+            int dist = std::min(
+                abs(point.x() - geo.left()),
+                abs(point.x() - geo.right())
+            );
+            if ( dist < thresholdDistance ){
+                inThreshold = note ;
+                thresholdDistance = dist ;
+            }
         }
     }
-    return nullptr;
+
+    return inThreshold ;
 }
 
 void PianoRollWidget::startDrag(const QPointF pos){
@@ -393,23 +417,17 @@ void PianoRollWidget::endDrag(const QPointF pos){
     emit collectionEdited(req);
 }
 
-bool PianoRollWidget::startResize(NoteWidget* note, const QPointF pos){
-    // if it's within edge threshold, start a resize
-    QPointF notePos = note->mapFromParent(pos); // this is a local position
-    const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
-    if ( notePos.x() <= threshold ){ // left side click
-        isResizing_ = true ;
-        anchorBeat_ = note->getEndBeat() ;
-        dragNote_ = note ;
-        return true ;
-    } else if ( notePos.x() >= note->width() - threshold ){ // right side click
-        isResizing_ = true ;
-        anchorBeat_ = note->getStartBeat() ;
-        dragNote_ = note ;
-        return true ;
-    }
+void PianoRollWidget::startResize(NoteWidget* note, const QPointF pos){    
+    isResizing_ = true ;
+    dragNote_ = note ;
 
-    return false ;
+    // determine if pos is closer to left or right side
+    QPointF notePos = note->mapFromParent(pos);
+    if ( std::abs(notePos.x()) < std::abs(notePos.x() - note->width()) ){
+        anchorBeat_ = note->getEndBeat();
+    } else {
+        anchorBeat_ = note->getStartBeat();
+    }
 }
 
 void PianoRollWidget::updateResize(const QPointF pos){
@@ -419,12 +437,11 @@ void PianoRollWidget::updateResize(const QPointF pos){
 
 void PianoRollWidget::endResize(const QPointF pos){
     float dragBeat = xToBeat(pos.x());
+    if ( dragBeat > totalBeats_ ) dragBeat = totalBeats_ ;
+    if ( dragBeat < 0.0f ) dragBeat = 0.0f ;
     dragNote_->setBeatRange(anchorBeat_, dragBeat, true);
 
-
     int idx = findNoteIndex(dragNote_);
-    
-    // validate index
     if ( idx == -1 ){
         SPDLOG_DEBUG("attempted to delete a note that has no index. Please investigate");
         return ;
@@ -470,7 +487,7 @@ void PianoRollWidget::endSelectionBox(const QPointF pos){
         if ( !note ) continue ;
         if ( selectionRect_.intersects(note->geometry()) ){
             note->setSelected(true);
-            selectedNotes_.push_back(idx);
+            selectedNotes_.insert(idx);
         }
     }
 
@@ -502,7 +519,17 @@ void PianoRollWidget::updateSelectedNoteStart(float t){
         NoteWidget* n = notes_[idx];
         if ( !n ) continue ;
     
-        n->setBeatRange(n->getStartBeat() + t, n->getEndBeat() + t);
+        float newStart = n->getStartBeat() + t ;
+        float newEnd = n->getEndBeat() + t ;
+        if ( newStart < 0 ) newStart = 0 ;
+        if ( newEnd > totalBeats_ ) newEnd = totalBeats_ ;
+
+        n->setBeatRange(newStart, newEnd);
+        if ( n->getEndBeat() - n->getStartBeat() <= 0 ){
+            requestRemoveNote(idx);
+            return ;
+        }
+
         CollectionRequest req ;
         req.action = CollectionAction::SET ;
         req.index = idx ;
@@ -531,14 +558,17 @@ void PianoRollWidget::updateSelectedNoteDuration(float d){
 
 void PianoRollWidget::updateCursor(const QPointF pos){
     NoteWidget* n = findNoteAtPos(pos);
+    const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
     if ( n ){
-        QPointF notePos = n->mapFromParent(pos); // note local position
-        const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
-
-        if ( notePos.x() <= threshold || notePos.x() >= n->width() - threshold ){
+        // if its within threshold of an edge, present resize cursor
+        int dist = std::min(
+            abs(pos.x() - n->geometry().left()),
+            abs(pos.x() - n->geometry().right())
+        );
+        if ( dist < threshold ){
             setCursor(Qt::SizeHorCursor);
         } else {
-            setCursor(Qt::ArrowCursor);
+            unsetCursor();
         }
         return ;
     } 
@@ -579,6 +609,7 @@ void PianoRollWidget::handleCollectionRemove(const CollectionRequest& req){
 
     delete it->second ;
     notes_.erase(it);
+    selectedNotes_.erase(it->first);
     update();
 }
 

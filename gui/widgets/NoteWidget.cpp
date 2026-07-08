@@ -34,6 +34,7 @@ NoteWidget::NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float en
     label_->setMargin(4);
     label_->setStyleSheet(Theme::getLabelCommentStyle());
     label_->setMinimumWidth(label_->fontMetrics().horizontalAdvance("0000"));
+    label_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
 
     setToolTip(noteName_ + QString(", velocity=%1").arg(velocity_));
     setMouseTracking(true);
