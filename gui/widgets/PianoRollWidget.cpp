@@ -219,6 +219,10 @@ void PianoRollWidget::contentKeyRelease(QKeyEvent* e){
     }
 }
 
+void PianoRollWidget::contentLeave(QEvent* e){
+    unsetCursor();
+}
+
 void PianoRollWidget::paintContent(QWidget* target, QPaintEvent* event){
     QPainter p(target);
 

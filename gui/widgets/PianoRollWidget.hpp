@@ -63,6 +63,7 @@ private:
         void mouseReleaseEvent(QMouseEvent* e) override { owner_->contentMouseRelease(e); }
         void keyPressEvent(QKeyEvent* e) override       { owner_->contentKeyPress(e); }
         void keyReleaseEvent(QKeyEvent* e) override     { owner_->contentKeyRelease(e); }
+        void leaveEvent(QEvent* e) override             { owner_->contentLeave(e); }
     };
 
     QHBoxLayout* layout_ ;
@@ -105,6 +106,7 @@ protected:
     void contentMouseRelease(QMouseEvent* e);
     void contentKeyPress(QKeyEvent* e);
     void contentKeyRelease(QKeyEvent* e);
+    void contentLeave(QEvent* e);
 
 private:
     // content wrappers
