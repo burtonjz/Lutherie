@@ -25,6 +25,7 @@
 #include "app/Theme.hpp"
 
 #include <kddockwidgets/DockWidget.h>
+#include <kddockwidgets/core/FloatingWindow.h>
 #include <QStandardItemModel>
 #include <QCloseEvent>
 #include <QFileDialog>
@@ -43,7 +44,7 @@ namespace KDDW   = KDDockWidgets ;
 Synth::Synth(QWidget* parent):
     KDDockWidgets::QtWidgets::MainWindow(
         Theme::DEFAULT_WINDOW_TITLE,
-        {KDDockWidgets::MainWindowOption_HasCentralWidget}, 
+        {KDDockWidgets::MainWindowOption_None}, 
         parent
     ),
     setup_(nullptr),
@@ -62,20 +63,11 @@ Synth::Synth(QWidget* parent):
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
 
     graph_ = new GraphPanel(componentManager_, this);
+    graphDock_ = new KDDWQt::DockWidget("__graphDock");
 
     configureDocks();
     configureMenu();
     configureToolBar();
-
-    // central widget (graph_)
-    auto* container = new QWidget(this);
-    auto* layout = new QVBoxLayout(container);
-    layout->setContentsMargins(0,0,0,0);
-    layout->setSpacing(0);
-
-    layout->addWidget(graph_);
-    container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    setPersistentCentralWidget(container);
 
     // ==============================
     // ======== CONNECTIONS =========
@@ -202,15 +194,18 @@ void Synth::configureMenu(){
     // view menu
     auto* menuView = menuBar()->addMenu("View");
 
+    actionShowGraph_  = new QAction("Connection Graph", this);
+    actionShowGraph_->setShortcut(QKeySequence("Ctrl+G"));
+    menuView->addAction(actionShowGraph_);
+
     actionShowParameterPanel_ = new QAction("Parameter Panel", this);
     actionShowParameterPanel_->setShortcut(QKeySequence("Ctrl+P"));
+    menuView->addAction(actionShowParameterPanel_);
 
     actionShowModulationPanel_ = new QAction("Modulation Panel", this);
     actionShowModulationPanel_->setShortcut(QKeySequence("Ctrl+M"));
-
-    menuView->addAction(actionShowParameterPanel_);
     menuView->addAction(actionShowModulationPanel_);
-
+    
     for ( const auto& [key, _]: analyzerDocks_ ){
         QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(key).name);
         QAction* action = menuView->addAction(name);
@@ -236,6 +231,10 @@ void Synth::configureMenu(){
     connect(
         actionSaveAs_, &QAction::triggered, 
         this, &Synth::onActionSaveAs
+    );
+    connect(
+        actionShowGraph_, &QAction::triggered,
+        this, &Synth::onActionToggleGraph
     );
     connect(
         actionShowParameterPanel_, &QAction::triggered, 
@@ -297,14 +296,17 @@ void Synth::configureToolBar(){
 }
 
 void Synth::configureDocks(){
+    graphDock_->setWidget(graph_);
+    graphDock_->setTitle("Connection Graph");
+    addDockWidget(graphDock_, KDDW::Location_OnLeft);
+
     parameterDock_->setWidget(parameterPanel_);
     parameterDock_->setTitle("Parameters");
-    addDockWidget(parameterDock_, KDDW::Location_OnRight);
+    addDockWidget(parameterDock_, KDDW::Location_OnRight, graphDock_);
     
-
     modulationDock_->setWidget(modulationPanel_);
     modulationDock_->setTitle("Modulation");
-    addDockWidget(modulationDock_, KDDW::Location_OnBottom, parameterDock_);
+    parameterDock_->addDockWidgetAsTab(modulationDock_);
 
     parameterDock_->close();
     modulationDock_->close();
@@ -317,8 +319,6 @@ void Synth::configureDocks(){
         dock->setWidget(analysisManager_->getAnalyzerWidget(typ));
         
         dock->setTitle(name);
-        addDockWidget(dock, KDDW::Location_None);
-
         dock->close();
         analyzerDocks_[typ] = dock ;
     }
@@ -627,6 +627,14 @@ void Synth::onActionToggleAnalyzer(ComponentType typ){
         dock->close();
     } else {
         dock->open();
+    }
+}
+
+void Synth::onActionToggleGraph(){
+    if ( graphDock_->isOpen() ){
+        graphDock_->close();
+    } else {
+        graphDock_->open();
     }
 }
 

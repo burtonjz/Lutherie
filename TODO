@@ -4,11 +4,7 @@
 
 ## High Priority
 
-### Sequencer
-- [Medium] Per-note velocity support
-
 ### Docking
-- [Quick] Make graph panel dockable and don't use central widget.
 - [Medium] Fix positioning bug when docking something onto the graph panel
 - [Medium] Theme out the KDDW docking indicators
 
@@ -54,7 +50,7 @@
 - [Big] consider drag/drop component parameters from the parameter panel to a group widget when grouped, with sensible defaults
 
 ### Misc Component Improvements
-- [Big] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges). `PianoRollWidget` → `SequencerWidget`, break out `PianoRoll` component with a horizontal/vertical flag
+- [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
 - [Quick] Send Pitchbend Control to `PolyOscillator`
 
 ### Macro Knobs (New Feature)

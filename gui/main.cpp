@@ -36,6 +36,7 @@ int main(int argc, char *argv[]){
     qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/docking support matures
 #endif     
     QApplication app(argc, argv);
+    app.setApplicationName("Lutherie");
 
     KDDW::initFrontend(KDDW::FrontendType::QtWidgets);
     KDDW::Core::ViewFactory::s_dropIndicatorType = KDDW::DropIndicatorType::Segmented ;

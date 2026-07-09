@@ -49,6 +49,8 @@ private:
     AnalysisManager* analysisManager_ ;
 
     // docks
+    KDDWQt::DockWidget* graphDock_ ;
+
     ControlPanel* parameterPanel_ ;
     KDDWQt::DockWidget* parameterDock_ ;
 
@@ -69,6 +71,7 @@ private:
     QAction* actionSaveAs_ ;
 
     // view menu
+    QAction* actionShowGraph_ ;
     QAction* actionShowParameterPanel_ ;
     QAction* actionShowModulationPanel_ ;
 
@@ -117,6 +120,7 @@ private slots:
 
     // view menu actions
     void onActionToggleAnalyzer(ComponentType typ);
+    void onActionToggleGraph();
     void onActionToggleParameterPanel();
     void onActionToggleModulationPanel();
 
