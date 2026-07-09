@@ -80,13 +80,22 @@ private:
 
     float totalBeats_ ;
 
-    bool isDragging_  = false ;
-    bool isResizing_  = false ;
-    bool isSelecting_ = false ;
+    enum class ClickAction {
+        None,
+        Pending, // click or drag?
+        Selecting,
+        Moving,
+        Resizing,
+        Dragging
+    };
+    ClickAction clickAction_ ;
 
-    NoteWidget* dragNote_ ;
+    NoteWidget* actionedNote_ ;
+    bool multiSelect_ = false ;
+    QPointF actionPos_ ;
+
     float anchorBeat_ ;
-
+    
     QPointF selectionStart_ ;
     QRect selectionRect_ ;
 
@@ -133,6 +142,10 @@ private:
     void startResize(NoteWidget* note, const QPointF pos);
     void updateResize(const QPointF pos);
     void endResize(const QPointF pos);
+
+    // move existing note
+    void updateMove(const QPointF pos);
+    void endMove(const QPointF pos);
 
     // selection
     void startSelectionBox(const QPointF pos);

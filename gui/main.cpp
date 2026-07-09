@@ -34,12 +34,7 @@ namespace KDDW   = KDDockWidgets ;
 int main(int argc, char *argv[]){
 #ifdef __linux__
     qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/docking support matures
-#endif 
-
-    auto logger = spdlog::default_logger();
-    logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
-    logger->set_level(spdlog::level::debug);
-    
+#endif     
     QApplication app(argc, argv);
 
     KDDW::initFrontend(KDDW::FrontendType::QtWidgets);
@@ -85,6 +80,10 @@ int main(int argc, char *argv[]){
     DataApiClient::instance()->connectToBackend();
     
     synth->showMaximized();
+
+    auto logger = spdlog::default_logger();
+    logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
+    logger->set_level(spdlog::level::debug);
 
     return app.exec() ;
 }

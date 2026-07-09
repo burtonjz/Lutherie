@@ -94,77 +94,86 @@ void PianoRollWidget::setTotalBeats(float beats){
 
 void PianoRollWidget::contentMousePress(QMouseEvent* e){
     QPointF pos = e->position();
-    
-    if ( e->button() == Qt::LeftButton ){
-        NoteWidget* clickedNote = findNoteAtPos(pos);
-        if ( clickedNote ){
-            if ( cursor() == Qt::SizeHorCursor ){
-                startResize(clickedNote, pos);
-                e->accept();
-                return ;
-            }
+    if ( e->button() != Qt::LeftButton ) return ;
 
-            bool multiSelect = e->modifiers() & Qt::ControlModifier ;
-            selectNote(clickedNote, multiSelect);
+    NoteWidget* clickedNote = findNoteAtPos(pos);
+    if ( clickedNote ){
+        if ( cursor() == Qt::SizeHorCursor ){
+            startResize(clickedNote, pos);
             e->accept();
             return ;
         }
 
-        if ( e->modifiers() & Qt::ControlModifier ){
-            deselectNotes();
-            startDrag(pos);
-        } else {
-            startSelectionBox(pos);
-        }
-
+        // wait to determine if it is a simple selection or a move
+        actionedNote_ = clickedNote ;
+        multiSelect_ = e->modifiers() & Qt::ControlModifier ;
+        clickAction_ = ClickAction::Pending ;
         e->accept();
         return ;
     }
+
+    if ( e->modifiers() & Qt::ControlModifier ){
+        deselectNotes();
+        startDrag(pos);
+    } else {
+        // wait to determine if it is a simple selection or a move
+        actionedNote_ = clickedNote ;
+        multiSelect_ = e->modifiers() & Qt::ControlModifier ;
+        clickAction_ = ClickAction::Pending ;
+        e->accept();
+    }
+
+    e->accept();
 }
 
 void PianoRollWidget::contentMouseMove(QMouseEvent* e){
     QPointF pos = e->position();
 
-    if ( isDragging_ ){    
-        updateDrag(pos);
+    switch ( clickAction_){
+    case ClickAction::Dragging:  updateDrag(pos);         return ;
+    case ClickAction::Resizing:  updateResize(pos);       return ;
+    case ClickAction::Selecting: updateSelectionBox(pos); return ;
+    case ClickAction::Moving:    updateMove(pos);         return ;
+    case ClickAction::Pending: {
+        // if we pass the drag threshold, it's either a move or a selection box
+        if ( (pos - actionPos_).manhattanLength() < QApplication::startDragDistance() ) return ;
+        
+        if ( !selectedNotes_.contains(findNoteIndex(actionedNote_)) ){
+            selectNote(actionedNote_, multiSelect_);
+        } 
+
+        if ( selectedNotes_.size() > 0 ){
+            clickAction_ = ClickAction::Moving ;
+            actionPos_ = pos ;
+        } else {
+            startSelectionBox(pos);
+        }
+    }
+    default:
+        updateCursor(pos);
         return ;
     }
-
-    if ( isResizing_ ){
-        updateResize(pos);
-        return ;
-    }
-
-    if ( isSelecting_ ){
-        updateSelectionBox(pos);
-        return ;
-    }
-
-    updateCursor(pos);
 }
 
 void PianoRollWidget::contentMouseRelease(QMouseEvent* e){
     QPointF pos = e->position();
+    if ( e->button() != Qt::LeftButton ) return ;
 
-    if ( e->button() == Qt::LeftButton ){
-         if ( isDragging_ ){
-            endDrag(pos);
-            e->accept();
-            return ;
-         }
-
-         if ( isResizing_ ){
-            endResize(pos);
-            e->accept();
-            return ;
-         }
-
-         if ( isSelecting_ ){
-            endSelectionBox(pos);
-            e->accept();
-            return ;
-         }
+    switch ( clickAction_ ){
+    case ClickAction::Dragging:  endDrag(pos);         break ;
+    case ClickAction::Resizing:  endResize(pos);       break ;
+    case ClickAction::Selecting: endSelectionBox(pos); break ;
+    case ClickAction::Moving:    endMove(pos);         break ;
+    case ClickAction::Pending:   
+        selectNote(actionedNote_, multiSelect_); 
+        break ;
+    default:
+        break ;
     }
+
+    clickAction_ = ClickAction::None ;
+    actionedNote_ = nullptr ;
+    e->accept();
 }
 
 void PianoRollWidget::contentKeyPress(QKeyEvent* e){
@@ -273,7 +282,7 @@ void PianoRollWidget::paintContent(QWidget* target, QPaintEvent* event){
         p.fillRect(0, y, target->width(), Theme::PIANO_KEY_THICKNESS, keyColor);
     }
 
-    if ( isSelecting_ ){
+    if ( clickAction_ == ClickAction::Selecting ){
         QColor fillColor = Theme::ACCENT_COLOR ;
         fillColor.setAlpha(30);
         p.setPen(QPen(Theme::TEXT_SECONDARY, 1));
@@ -388,42 +397,39 @@ NoteWidget* PianoRollWidget::findNoteAtPos(const QPointF& pos) {
 void PianoRollWidget::startDrag(const QPointF pos){
     anchorBeat_ = xToBeat(pos.x());
     uint8_t pitch = yToPitch(pos.y());
-    dragNote_ = new NoteWidget(pitch,100,anchorBeat_ + 0.25,anchorBeat_,roll_);
-    isDragging_ = true ;
+    actionedNote_ = new NoteWidget(pitch,100,anchorBeat_ + 0.25,anchorBeat_,roll_);
+    clickAction_ = ClickAction::Dragging ;
 }
 
 void PianoRollWidget::updateDrag(const QPointF pos){
     float dragBeat = xToBeat(pos.x());
-    dragNote_->setBeatRange(anchorBeat_, dragBeat);
+    actionedNote_->setBeatRange(anchorBeat_, dragBeat);
 }
 
 void PianoRollWidget::endDrag(const QPointF pos){
     float dragBeat = xToBeat(pos.x());
-    dragNote_->setBeatRange(anchorBeat_, dragBeat, true);
+    actionedNote_->setBeatRange(anchorBeat_, dragBeat, true);
 
-    if ( dragNote_->getEndBeat() == dragNote_->getStartBeat() ){
-        dragNote_->deleteLater();
-        dragNote_ = nullptr ;
-        isDragging_ = false ;
+    if ( actionedNote_->getEndBeat() == actionedNote_->getStartBeat() ){
+        actionedNote_->deleteLater();
+        actionedNote_ = nullptr ;
         return ;
     } 
 
     CollectionRequest req ;
     req.action = CollectionAction::ADD ;
     req.componentId = model_->getId() ;
-    req.value = dragNote_->getNote() ;
+    req.value = actionedNote_->getNote() ;
     
     // clean up drag
-    dragNote_->deleteLater();
-    dragNote_ = nullptr ;
-    isDragging_ = false ;
+    actionedNote_->deleteLater();
     
     emit collectionEdited(req);
 }
 
 void PianoRollWidget::startResize(NoteWidget* note, const QPointF pos){    
-    isResizing_ = true ;
-    dragNote_ = note ;
+    clickAction_ = ClickAction::Resizing ;
+    actionedNote_ = note ;
 
     // determine if pos is closer to left or right side
     QPointF notePos = note->mapFromParent(pos);
@@ -436,26 +442,24 @@ void PianoRollWidget::startResize(NoteWidget* note, const QPointF pos){
 
 void PianoRollWidget::updateResize(const QPointF pos){
     float dragBeat = xToBeat(pos.x());
-    dragNote_->setBeatRange(anchorBeat_, dragBeat);
+    actionedNote_->setBeatRange(anchorBeat_, dragBeat);
 }
 
 void PianoRollWidget::endResize(const QPointF pos){
     float dragBeat = xToBeat(pos.x());
     if ( dragBeat > totalBeats_ ) dragBeat = totalBeats_ ;
     if ( dragBeat < 0.0f ) dragBeat = 0.0f ;
-    dragNote_->setBeatRange(anchorBeat_, dragBeat, true);
+    actionedNote_->setBeatRange(anchorBeat_, dragBeat, true);
 
-    int idx = findNoteIndex(dragNote_);
+    int idx = findNoteIndex(actionedNote_);
     if ( idx == -1 ){
         SPDLOG_DEBUG("attempted to delete a note that has no index. Please investigate");
         return ;
     }
 
     // delete note if no length
-    if ( dragNote_->getEndBeat() == dragNote_->getStartBeat() ){
+    if ( actionedNote_->getEndBeat() == actionedNote_->getStartBeat() ){
         requestRemoveNote(idx);
-        dragNote_ = nullptr ;
-        isResizing_ = false ;
         return ;
     } 
 
@@ -464,19 +468,39 @@ void PianoRollWidget::endResize(const QPointF pos){
     req.action = CollectionAction::SET ;
     req.componentId = model_->getId() ;
     req.index =  idx ;
-    req.value = dragNote_->getNote() ;
-    
-    isResizing_ = false ;
-    dragNote_ = nullptr ;
+    req.value = actionedNote_->getNote() ;
 
     emit collectionEdited(req);
 }
 
+void PianoRollWidget::updateMove(const QPointF pos){
+    if ( selectedNotes_.size() == 0 ){
+        clickAction_ = ClickAction::None ;
+        return ;
+    }
+
+    // y flipped because y coordinate increases in opposite direction of piano roll
+    int numXSteps = ( pos.x() - actionPos_.x() ) / Theme::PIANO_ROLL_PIXELS_PER_BEAT * 8 ; // 8th note precision
+    int numYSteps = ( actionPos_.y() - pos.y() ) / Theme::PIANO_KEY_THICKNESS ; 
+        
+    // x axis 8th note precision
+    if ( std::abs(numXSteps) >= 1 ){
+        updateSelectedNoteStart(numXSteps / 8.0f );
+        actionPos_.setX(pos.x());
+    }
+    if ( std::abs(numYSteps) >= 1 ){
+        updateSelectedNotePitch(numYSteps);
+        actionPos_.setY(pos.y());
+    }
+}
+
+void PianoRollWidget::endMove(const QPointF pos){
+}
+
 void PianoRollWidget::startSelectionBox(const QPointF pos){
-    deselectNotes();
+    clickAction_ = ClickAction::Selecting ;
     selectionStart_ = pos ;
     selectionRect_ = QRect(pos.toPoint(), QSize(0,0));
-    isSelecting_ = true ;
 }
 
 void PianoRollWidget::updateSelectionBox(const QPointF pos){
@@ -492,10 +516,12 @@ void PianoRollWidget::endSelectionBox(const QPointF pos){
         if ( selectionRect_.intersects(note->geometry()) ){
             note->setSelected(true);
             selectedNotes_.insert(idx);
+        } else {
+            note->setSelected(false);
+            selectedNotes_.erase(idx);
         }
     }
 
-    isSelecting_ = false ;
     selectionRect_ = QRect();
     roll_->update();
 }
@@ -505,6 +531,12 @@ void PianoRollWidget::updateSelectedNotePitch(int p){
     for ( int idx : selectedNotes_ ){
         NoteWidget* n = notes_[idx];
         if ( !n ) continue ;
+
+        if ( n->getMidiNote() == 0 && p < 0 ){
+            return ;
+        } else if ( n->getMidiNote() == 127 && p > 0 ){
+            return ;
+        }
 
         n->setMidiNote(n->getMidiNote() + p);
         
