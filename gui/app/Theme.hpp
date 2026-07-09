@@ -67,12 +67,11 @@ public:
     static const QColor PIANO_ROLL_KEY_BLACK ;
     static const QColor PIANO_ROLL_KEY_BORDER ;
     static const QColor PIANO_ROLL_KEY_LABEL ;
-    static const QColor PIANO_ROLL_NOTE_COLOR ;
-    static const QColor PIANO_ROLL_NOTE_SELECTED_COLOR ;
     static const QColor PIANO_ROLL_NOTE_BORDER ;
     static const QColor PIANO_ROLL_BACKGROUND ;
     static const QColor PIANO_ROLL_GRID_PRIMARY ;
     static const QColor PIANO_ROLL_GRID_SECONDARY ;
+    static QColor pianoRollVelocityColor(uint8_t velocity);
 
     static const QColor SWITCH_WIDGET_ON_COLOR ;
     static const QColor SWITCH_WIDGET_OFF_COLOR ;
@@ -166,6 +165,8 @@ public:
     static constexpr qreal PIANO_ROLL_PIXELS_PER_BEAT          = 100 ;
     static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY   = 1 ;
     static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY = .75 ;
+    static constexpr qreal PIANO_ROLL_SELECTED_ALPHA           = 150 ;
+    static constexpr qreal PIANO_ROLL_VELOCITY_UPDATE_PIXELS   = 3 ;
     
 
     static constexpr int   SPECTRUM_MARGIN_LEFT      = 60 ;

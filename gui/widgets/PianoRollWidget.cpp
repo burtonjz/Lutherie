@@ -134,16 +134,24 @@ void PianoRollWidget::contentMouseMove(QMouseEvent* e){
     case ClickAction::Resizing:  updateResize(pos);       return ;
     case ClickAction::Selecting: updateSelectionBox(pos); return ;
     case ClickAction::Moving:    updateMove(pos);         return ;
+    case ClickAction::Velocity:  updateVelocity(pos);     return ;
     case ClickAction::Pending: {
-        // if we pass the drag threshold, it's either a move or a selection box
+        // don't update pending unless we've passed the drag threshold
         if ( (pos - actionPos_).manhattanLength() < QApplication::startDragDistance() ) return ;
         
+        // early select on currently selected note (if started on a note)
         if ( !selectedNotes_.contains(findNoteIndex(actionedNote_)) ){
             selectNote(actionedNote_, multiSelect_);
         } 
 
+
         if ( selectedNotes_.size() > 0 ){
-            clickAction_ = ClickAction::Moving ;
+            if ( ctrlHeld_ ){
+                clickAction_ = ClickAction::Velocity ;
+            } else {
+                clickAction_ = ClickAction::Moving ;
+            }
+            
             actionPos_ = pos ;
         } else {
             startSelectionBox(pos);
@@ -163,10 +171,11 @@ void PianoRollWidget::contentMouseRelease(QMouseEvent* e){
     case ClickAction::Dragging:  endDrag(pos);         break ;
     case ClickAction::Resizing:  endResize(pos);       break ;
     case ClickAction::Selecting: endSelectionBox(pos); break ;
-    case ClickAction::Moving:    endMove(pos);         break ;
     case ClickAction::Pending:   
         selectNote(actionedNote_, multiSelect_); 
         break ;
+    case ClickAction::Moving:    break ;
+    case ClickAction::Velocity:  break ;
     default:
         break ;
     }
@@ -189,13 +198,21 @@ void PianoRollWidget::contentKeyPress(QKeyEvent* e){
     }
 
     if ( e->key() == Qt::Key_Up ){
-        updateSelectedNotePitch(1);
+        if ( ctrlHeld_ ){
+            updateSelectedNoteVelocity(1);
+        } else {
+            updateSelectedNotePitch(1);
+        }
         e->accept();
         return ;
     }
         
     if ( e->key() == Qt::Key_Down ){
-        updateSelectedNotePitch(-1);
+        if ( ctrlHeld_ ){
+            updateSelectedNoteVelocity(-1);
+        } else {
+            updateSelectedNotePitch(-1);
+        }
         e->accept();
         return ;
     }
@@ -494,7 +511,19 @@ void PianoRollWidget::updateMove(const QPointF pos){
     }
 }
 
-void PianoRollWidget::endMove(const QPointF pos){
+void PianoRollWidget::updateVelocity(const QPointF pos){
+    if ( selectedNotes_.size() == 0 ){
+        clickAction_ = ClickAction::None ;
+        return ;
+    }
+
+    // y flipped because y coordinate increases in opposite direction of piano roll
+    int numYSteps = ( actionPos_.y() - pos.y() ) / Theme::PIANO_ROLL_VELOCITY_UPDATE_PIXELS ; 
+        
+    if ( std::abs(numYSteps) >= 1 ){
+        updateSelectedNoteVelocity(numYSteps);
+        actionPos_.setY(pos.y());
+    }
 }
 
 void PianoRollWidget::startSelectionBox(const QPointF pos){
@@ -582,6 +611,28 @@ void PianoRollWidget::updateSelectedNoteDuration(float d){
         if ( !n ) continue ;
         
         n->setEndBeat(n->getEndBeat() + d);
+        CollectionRequest req ;
+        req.action = CollectionAction::SET ;
+        req.index = idx ;
+        req.componentId = model_->getId() ;
+        req.value = n->getNote() ;
+
+        emit collectionEdited(req);
+    }
+}
+
+void PianoRollWidget::updateSelectedNoteVelocity(int v){
+    for ( int idx : selectedNotes_ ){
+        NoteWidget* n = notes_[idx];
+        if ( !n ) continue ;
+
+        if ( n->getVelocity() == 0 && v < 0 ){
+            return ;
+        } else if ( n->getVelocity() == 127 && v > 0 ){
+            return ;
+        }
+
+        n->setVelocity(n->getVelocity() + v);
         CollectionRequest req ;
         req.action = CollectionAction::SET ;
         req.index = idx ;

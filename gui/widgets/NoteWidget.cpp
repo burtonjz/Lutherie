@@ -49,9 +49,9 @@ void NoteWidget::paintEvent(QPaintEvent*){
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    QColor fillColor = selected_ ? Theme::PIANO_ROLL_NOTE_SELECTED_COLOR :
-        Theme::PIANO_ROLL_NOTE_COLOR ;
-
+    QColor fillColor = Theme::pianoRollVelocityColor(velocity_);
+    if ( selected_ ) fillColor = fillColor.lighter(Theme::PIANO_ROLL_SELECTED_ALPHA);
+    
     painter.fillRect(0,0,w_, Theme::PIANO_KEY_THICKNESS, fillColor);
     painter.setPen(Theme::PIANO_ROLL_NOTE_BORDER);
     painter.drawRect(0,0,w_, Theme::PIANO_KEY_THICKNESS);
@@ -76,7 +76,7 @@ uint8_t NoteWidget::getVelocity() const {
 void NoteWidget::setVelocity(uint8_t velocity){
     velocity_ = std::min(std::max(velocity, (uint8_t) 0), (uint8_t) 127 );
     setToolTip(noteName_ + QString(", velocity=%1").arg(velocity_));
-    updateSize();
+    update();
 }
 
 float NoteWidget::getStartBeat() const {

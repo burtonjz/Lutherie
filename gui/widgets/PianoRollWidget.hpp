@@ -86,7 +86,8 @@ private:
         Selecting,
         Moving,
         Resizing,
-        Dragging
+        Dragging,
+        Velocity
     };
     ClickAction clickAction_ ;
 
@@ -143,10 +144,10 @@ private:
     void updateResize(const QPointF pos);
     void endResize(const QPointF pos);
 
-    // move existing note
+    // move existing note / velocity
     void updateMove(const QPointF pos);
-    void endMove(const QPointF pos);
-
+    void updateVelocity(const QPointF pos);
+    
     // selection
     void startSelectionBox(const QPointF pos);
     void updateSelectionBox(const QPointF pos);
@@ -155,6 +156,7 @@ private:
     void updateSelectedNotePitch(int p);
     void updateSelectedNoteStart(float t);
     void updateSelectedNoteDuration(float d);
+    void updateSelectedNoteVelocity(int v);
 
     void updateCursor(const QPointF pos);
 

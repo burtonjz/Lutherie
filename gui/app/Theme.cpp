@@ -51,7 +51,7 @@ const QColor Theme::COMPONENT_TEXT             = QColor(245, 237, 240);
 
 // Cable colors
 const QColor Theme::CABLE_SHADOW     = QColor(0, 0, 0, 60);
-const QColor Theme::CABLE_SIGNAL    = QColor(135, 179, 141);  
+const QColor Theme::CABLE_SIGNAL     = QColor(135, 179, 141);  
 const QColor Theme::CABLE_BUFFER     = QColor(128, 27, 211);
 const QColor Theme::CABLE_MODULATION = QColor(185, 49, 79); 
 const QColor Theme::CABLE_MIDI       = QColor(132, 169, 192); 
@@ -62,22 +62,44 @@ const QColor Theme::SOCKET_SIGNAL           = Theme::CABLE_SIGNAL ;
 const QColor Theme::SOCKET_BUFFER           = Theme::CABLE_BUFFER ;
 const QColor Theme::SOCKET_MODULATION       = Theme::CABLE_MODULATION ;
 const QColor Theme::SOCKET_MIDI             = Theme::CABLE_MIDI ;
-const QColor Theme::SOCKET_SIGNAL_LIGHT      = Theme::SOCKET_SIGNAL.lighter(140);
-const QColor Theme::SOCKET_BUFFER_LIGHT      = Theme::SOCKET_BUFFER.lighter(140);
+const QColor Theme::SOCKET_SIGNAL_LIGHT     = Theme::SOCKET_SIGNAL.lighter(140);
+const QColor Theme::SOCKET_BUFFER_LIGHT     = Theme::SOCKET_BUFFER.lighter(140);
 const QColor Theme::SOCKET_MODULATION_LIGHT = Theme::SOCKET_MODULATION.lighter(140);
 const QColor Theme::SOCKET_MIDI_LIGHT       = Theme::SOCKET_MIDI.lighter(140);
 
 // Piano Roll
-const QColor Theme::PIANO_ROLL_KEY_WHITE           = QColor(220, 218, 215);  
-const QColor Theme::PIANO_ROLL_KEY_BLACK           = QColor(32, 38, 42);
-const QColor Theme::PIANO_ROLL_KEY_BORDER          = QColor(75, 82, 88);
-const QColor Theme::PIANO_ROLL_KEY_LABEL           = QColor(32, 38, 42);
-const QColor Theme::PIANO_ROLL_NOTE_COLOR          = QColor(132, 169, 192, 180);  
-const QColor Theme::PIANO_ROLL_NOTE_SELECTED_COLOR = Theme::PIANO_ROLL_NOTE_COLOR.lighter(150);  
-const QColor Theme::PIANO_ROLL_NOTE_BORDER         = QColor(132, 169, 192);
-const QColor Theme::PIANO_ROLL_BACKGROUND          = QColor(28, 32, 36);
-const QColor Theme::PIANO_ROLL_GRID_PRIMARY        = QColor(65, 72, 78);
-const QColor Theme::PIANO_ROLL_GRID_SECONDARY      = QColor(42, 48, 52);
+const QColor Theme::PIANO_ROLL_KEY_WHITE      = QColor(220, 218, 215);  
+const QColor Theme::PIANO_ROLL_KEY_BLACK      = QColor(32, 38, 42);
+const QColor Theme::PIANO_ROLL_KEY_BORDER     = QColor(75, 82, 88);
+const QColor Theme::PIANO_ROLL_KEY_LABEL      = QColor(32, 38, 42);
+const QColor Theme::PIANO_ROLL_NOTE_BORDER    = Theme::COMPONENT_BORDER ;
+const QColor Theme::PIANO_ROLL_BACKGROUND     = QColor(28, 32, 36);
+const QColor Theme::PIANO_ROLL_GRID_PRIMARY   = QColor(65, 72, 78);
+const QColor Theme::PIANO_ROLL_GRID_SECONDARY = QColor(42, 48, 52);
+
+QColor Theme::pianoRollVelocityColor(uint8_t velocity){
+    if ( velocity > 127 ) velocity = 127 ;
+
+    qreal step = velocity / 127.0 ;
+
+    // Anchor colors — low and high velocity
+    static const QColor lowColor  = QColor(90, 110, 130, 180);
+    static const QColor highColor = QColor(255, 170, 60, 180);
+
+    float h1, s1, v1, a1 ;
+    float h2, s2, v2, a2 ;
+    lowColor.getHsvF(&h1, &s1, &v1, &a1);
+    highColor.getHsvF(&h2, &s2, &v2, &a2);
+
+    qreal h = h1 + (h2 - h1) * step ;
+    qreal s = s1 + (s2 - s1) * step ;
+    qreal v = v1 + (v2 - v1) * step ;
+    qreal a = a1 + (a2 - a1) * step ;
+
+    QColor result ;
+    result.setHsvF(h, s, v, a);
+    return result ;
+}
 
 // switch button
 const QColor Theme::SWITCH_WIDGET_ON_COLOR        = QColor(213, 137, 54);
@@ -100,6 +122,7 @@ const std::array<QColor,6> Theme::SPECTRUM_LINE_COLORS = {
 
 const QColor Theme::OSCILLOSCOPE_BACKGROUND_COLOR = SPECTRUM_BACKGROUND_COLOR ;
 const QColor Theme::OSCILLOSCOPE_GRID_COLOR       = SPECTRUM_GRID_COLOR ;
+
 const std::array<QColor,6> Theme::OSCILLOSCOPE_LINE_COLORS = SPECTRUM_LINE_COLORS ;
 
 const QColor Theme::WAVEFORM_BACKGROUND_COLOR = SPECTRUM_BACKGROUND_COLOR ;
