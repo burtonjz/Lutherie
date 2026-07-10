@@ -195,7 +195,7 @@ void Synth::configureMenu(){
     auto* menuView = menuBar()->addMenu("View");
 
     actionShowGraph_  = new QAction("Connection Graph", this);
-    actionShowGraph_->setShortcut(QKeySequence("Ctrl+G"));
+    actionShowGraph_->setShortcut(QKeySequence("Ctrl+R"));
     menuView->addAction(actionShowGraph_);
 
     actionShowParameterPanel_ = new QAction("Parameter Panel", this);
@@ -434,10 +434,13 @@ void Synth::createComponentDetailDock(int componentId, ComponentParameters* para
         return ;
     }
 
-    auto dock = new KDDWQt::DockWidget("__componentDetailDock");
+    auto dock = new KDDWQt::DockWidget(QString(
+        "__componentDetailDock_%1_%2").arg(
+        params->getModel()->getDescriptor().name ).arg(
+        componentId
+        ));
     dock->setWidget(params);
     dock->setTitle(params->getModel()->getName());
-    addDockWidget(dock, KDDW::Location_None);
     componentDetailDocks_[componentId] = dock ;
 
     connect( 

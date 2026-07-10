@@ -4,9 +4,6 @@
 
 ## High Priority
 
-### Docking
-- [Medium] Fix positioning bug when docking something onto the graph panel
-
 ### Signal Flow
 - [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs.
 
@@ -85,11 +82,10 @@
 ## Low Priority
 
 ### Bugs / Cleanup
-- [Medium] Components with detail view take extra vertical space when narrowed, but don't reclaim it when widened again (controls stay pushed onto fewer vertical grid positions)
 - [Quick] Move setup button to menus; make it a tooltip popup instead of a dedicated window, or move it to the configuration screen?
 - [Quick] Max zoom-out level for graph panel, reference mini-map for position on graph.
-- [Quick] KDDW dock widgets not on the main window shouldn't show "gui" in the title bar when docked together
-- [Big] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
+- [Quick] Add Buffer submenu to Add Component
+- [Medium] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
 
 ### Misc / Infra
 - [Medium] Disperse `CollectionRequest` validation to the `CollectionDescriptor` (e.g. a validation function, which actions are supported). This will make a less complex validation function and enforce rules that unofficially exist in code.
