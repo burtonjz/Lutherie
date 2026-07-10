@@ -6,7 +6,6 @@
 
 ### Docking
 - [Medium] Fix positioning bug when docking something onto the graph panel
-- [Medium] Theme out the KDDW docking indicators
 
 ### Signal Flow
 - [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs.

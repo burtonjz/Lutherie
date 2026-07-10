@@ -106,7 +106,11 @@ public:
     static const QColor KNOB_WIDGET_NOTCH_COLOR ;
     static const QColor KNOB_WIDGET_BODY_COLOR ;
     static const QColor KNOB_WIDGET_BODY_BORDER_COLOR ;
-    static const QColor KNOB_WIDGET_HIGHLIGHT_COLOR;  
+    static const QColor KNOB_WIDGET_HIGHLIGHT_COLOR ;
+
+    static const QColor DOCKING_SEGMENT_PEN_COLOR ;
+    static const QColor DOCKING_SEGMENT_BRUSH_COLOR ;
+    static const QColor DOCKING_SEGMENT_HOVERED_COLOR ;  
     
     // Apply theme to application
     static void applyDarkTheme();
@@ -241,6 +245,12 @@ public:
     static constexpr double KNOB_WIDGET_SWEEP_ANGLE      = 270.0 ; 
 
     static constexpr int FILE_SELECTOR_LABEL_WIDTH = 150 ;
+
+    static constexpr int    DOCKING_SEGMENT_GIRTH = 20 ;
+    static constexpr int    DOCKING_SEGMENT_PEN_WIDTH = 2 ;
+    static constexpr double DOCKING_DRAG_OPACITY = 0.7 ;
+    static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_WIDTH  = 50 ;
+    static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_HEIGHT = 50 ;
 
     /*
     =======================================================

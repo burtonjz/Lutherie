@@ -15,21 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "api/ControlApiClient.hpp"
-#include "api/DataApiClient.hpp"
-#include "app/Theme.hpp"
-#include "app/Synth.hpp"
-
 #include <kddockwidgets/KDDockWidgets.h>
 #include <kddockwidgets/core/ViewFactory.h>
 #include <kddockwidgets/core/DockWidget.h>
 #include <kddockwidgets/Config.h>
 #include <QApplication>
-#include <qlogging.h>
-#include <qobject.h>
 #include <spdlog/spdlog.h>
+#include <kddockwidgets/KDDockWidgets.h>
+#include <kddockwidgets/qtwidgets/views/SegmentedDropIndicatorOverlay.h>  
+#include <kddockwidgets/core/indicators/SegmentedDropIndicatorOverlay.h>  
+
+#include "api/ControlApiClient.hpp"
+#include "api/DataApiClient.hpp"
+#include "app/Theme.hpp"
+#include "app/Synth.hpp"
 
 namespace KDDW   = KDDockWidgets ;
+namespace KDDWQt = KDDockWidgets::QtWidgets ;
 
 int main(int argc, char *argv[]){
 #ifdef __linux__
@@ -38,6 +40,7 @@ int main(int argc, char *argv[]){
     QApplication app(argc, argv);
     app.setApplicationName("Lutherie");
 
+    // Dock Widget initialization/customization
     KDDW::initFrontend(KDDW::FrontendType::QtWidgets);
     KDDW::Core::ViewFactory::s_dropIndicatorType = KDDW::DropIndicatorType::Segmented ;
     KDDW::Config::self().setFlags(
@@ -68,8 +71,17 @@ int main(int argc, char *argv[]){
         return true ;
     });
 
+    // Theming
+    KDDW::Core::SegmentedDropIndicatorOverlay::s_segmentGirth              = Theme::DOCKING_SEGMENT_GIRTH ;
+    KDDW::Core::SegmentedDropIndicatorOverlay::s_segmentPenWidth           = Theme::DOCKING_SEGMENT_PEN_WIDTH ;
+    KDDW::Core::SegmentedDropIndicatorOverlay::s_draggedWindowOpacity      = Theme::DOCKING_DRAG_OPACITY ;
+    KDDW::Core::SegmentedDropIndicatorOverlay::s_centralIndicatorMaxWidth  = Theme::DOCKING_CENTRAL_SEGMENT_MAX_WIDTH ;
+    KDDW::Core::SegmentedDropIndicatorOverlay::s_centralIndicatorMaxHeight = Theme::DOCKING_CENTRAL_SEGMENT_MAX_HEIGHT ;
+    KDDWQt::SegmentedDropIndicatorOverlay::s_segmentBrushColor             = Theme::DOCKING_SEGMENT_BRUSH_COLOR ;  
+    KDDWQt::SegmentedDropIndicatorOverlay::s_segmentPenColor               = Theme::DOCKING_SEGMENT_PEN_COLOR ;  
+    KDDWQt::SegmentedDropIndicatorOverlay::s_hoveredSegmentBrushColor      = Theme::DOCKING_SEGMENT_HOVERED_COLOR ;
+
     Theme::applyDarkTheme();
-    qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss.zzz}] %{type}: %{message}");
     
     // initiate TCP clients
     ControlApiClient::instance() ; 
@@ -82,6 +94,7 @@ int main(int argc, char *argv[]){
     
     synth->showMaximized();
 
+    // format logger
     auto logger = spdlog::default_logger();
     logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
     logger->set_level(spdlog::level::debug);
