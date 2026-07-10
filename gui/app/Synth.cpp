@@ -438,7 +438,7 @@ void Synth::createComponentDetailDock(int componentId, ComponentParameters* para
         "__componentDetailDock_%1_%2").arg(
         params->getModel()->getDescriptor().name ).arg(
         componentId
-        ));
+    ));
     dock->setWidget(params);
     dock->setTitle(params->getModel()->getName());
     componentDetailDocks_[componentId] = dock ;
