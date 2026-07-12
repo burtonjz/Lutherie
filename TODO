@@ -17,14 +17,12 @@
 ### Configuration / Patch Saving
 - [Medium] Support `ParameterCollection` data in save_configuration/sync_component. Ensure only one code path. 
   - Likely need a light refactor: move parsing logic to static functions on `CollectionRequest` so component manager can reuse it without hitting the API
-- [Big] Write appropriate round-trip api testing suite in order to ensure consistent, valid configuration saving.
 - [Medium] Create better patch load menu
 - [Medium] Create a configuration menu editor for config.json
   
 ### UI / Workflow improvements
 - [Quick] Allow group deletions, but with a warning pop-up
-- [Quick] Update geometry on control-panel content deletion so min size doesn't break
-- [Quick] Request rename when a node gets its unique name, so parameters/other panels update properly
+- [Quick] Request rename when a node gets its unique name on graph, so parameters/other panels update properly
 - [Medium] improve component add text search workflow, and also create a hotkey to load the menu in a floating context for convenience
 
 ### Buffer
@@ -39,7 +37,6 @@
 
 ### Layout / Components
 - [Quick] Expose Min/Max/Default parameters via right-click tool window
-- [Quick] "stack" specialized widgets into a dedicated window when grouped by default. Ensure secondary window has sensible title bar.
 - [Quick] Prevent modules from spawning on top of each other
 - [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 
 - [Medium] Component duplication — plain copy, and copy-with-connections
@@ -86,6 +83,9 @@
 - [Quick] Max zoom-out level for graph panel, reference mini-map for position on graph.
 - [Quick] Add Buffer submenu to Add Component
 - [Medium] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
+- [Quick] show event (parameters, modulation, detail editors) needs not only to ensure visibility, but also tab to it if it's tabbed with other docks. Maybe a small little border highlight would be nice too.
+- [Quick] ensure backend always runs a sync on component creation, and front end always handles the sync.
+- [Quick] improve several ui precision sliders (duration)
 
 ### Misc / Infra
 - [Medium] Disperse `CollectionRequest` validation to the `CollectionDescriptor` (e.g. a validation function, which actions are supported). This will make a less complex validation function and enforce rules that unofficially exist in code.
@@ -94,4 +94,5 @@
 ### One Day
 - [Big] Envelope with drawable curve
 - [Big] Custom wavetable drawing
+- [Big] Write appropriate round-trip api testing suite using debug control client
 - [Big] Export synths to VST/LV2 (probably not, lol)

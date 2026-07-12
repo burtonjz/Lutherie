@@ -246,11 +246,11 @@ public:
 
     static constexpr int FILE_SELECTOR_LABEL_WIDTH = 150 ;
 
-    static constexpr int    DOCKING_SEGMENT_GIRTH = 20 ;
-    static constexpr int    DOCKING_SEGMENT_PEN_WIDTH = 2 ;
-    static constexpr double DOCKING_DRAG_OPACITY = 0.7 ;
-    static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_WIDTH  = 50 ;
-    static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_HEIGHT = 50 ;
+    static constexpr int    DOCKING_SEGMENT_GIRTH              = 40 ;
+    static constexpr int    DOCKING_SEGMENT_PEN_WIDTH          = 2 ;
+    static constexpr double DOCKING_DRAG_OPACITY               = 0.7 ;
+    static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_WIDTH  = 150 ;
+    static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_HEIGHT = 150 ;
 
     /*
     =======================================================

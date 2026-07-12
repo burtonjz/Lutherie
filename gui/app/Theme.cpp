@@ -150,6 +150,8 @@ const QColor Theme::DOCKING_SEGMENT_PEN_COLOR     = Theme::GRAPH_GRID_COLOR ;
 const QColor Theme::DOCKING_SEGMENT_BRUSH_COLOR   = QColor(213, 137, 54, 150);
 const QColor Theme::DOCKING_SEGMENT_HOVERED_COLOR = QColor(219, 173, 125, 150);
 
+// THEME FUNCTIONS
+
 void Theme::applyDarkTheme() {
 
     QPalette darkPalette ;
