@@ -70,6 +70,9 @@ class ParameterMap {
         bool setMaxDispatch(ParameterType p, const json& value);
         bool setMinDispatch(ParameterType p, const json& value);
         void addParameterDispatch(ParameterType p, const json& cfg);
+
+        void setValuePercentDispatch(ParameterType p, double percent);
+        void setValueTickWrapDispatch(ParameterType p);
         
         // collection dispatchers
         json   getCollectionValueDispatch(ParameterType p, size_t idx) const ;

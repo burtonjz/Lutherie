@@ -27,6 +27,7 @@
 #include "requests/CollectionRequest.hpp"
 #include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
+#include "midi/MidiControlRouter.hpp"
 
 #include <netinet/in.h>
 #include <string>
@@ -89,6 +90,9 @@ void ControlApiHandler::initialize(Engine* engine){
     handlers_["get_file_path"] = [this](const json& request){ return getFilePath(request); };
     handlers_["set_file_path"] = [this](const json& request){ return setFilePath(request); };
     handlers_["get_buffer_data"] = [this](const json& request){ return getBufferData(request); };
+    handlers_["midi_learn"] = [this](const json& request){ return midiLearn(request); };
+    handlers_["get_midi_control"] = [this](const json& request){ return getMidiControl(request); };
+    handlers_["set_midi_control"] = [this](const json& request){ return setMidiControl(request); };
 }
 
 void ControlApiHandler::start(){
@@ -198,13 +202,16 @@ void ControlApiHandler::onClientConnection(int sock){
 }
 
 json ControlApiHandler::sendApiResponse(json& response, const std::string& err){
-    if ( err == "" ){
-        response["status"] = "success" ;
-    } else {
-        response["status"] = "failed" ;
-        response["error"] = err ;
-        SPDLOG_ERROR("Api Request Failed: {}", err);
+    if ( !response.contains("status") ){
+        if ( err == "" ){
+            response["status"] = "success" ;
+        } else {
+            response["status"] = "failed" ;
+            response["error"] = err ;
+            SPDLOG_ERROR("Api Request Failed: {}", err);
+        }    
     }
+
     std::string r = response.dump() + '\n' ;
     SPDLOG_INFO("sending API response: {}", r.c_str());
     for ( const auto& sock : clientSockets_ ){
@@ -946,7 +953,10 @@ json ControlApiHandler::getFilePath(const json& request){
 
     FileComponent* c = engine_->componentManager.getFileComponent(id);
     if ( !c ){
-        throw std::runtime_error("File component not found");
+        throw std::runtime_error(fmt::format(
+            "File component with id {} not found",
+            id
+        ));
     }
 
     response["path"] = c->getPath();
@@ -961,7 +971,10 @@ json ControlApiHandler::setFilePath(const json& request){
 
     FileComponent* c = engine_->componentManager.getFileComponent(id);
     if ( !c ){
-        throw std::runtime_error("File component not found");
+        throw std::runtime_error(fmt::format(
+            "File component with id {} not found",
+            id
+        ));
     }
 
     c->setPath(path);
@@ -976,7 +989,10 @@ json ControlApiHandler::getBufferData(const json& request){
 
     AudioBufferComponent* c = engine_->componentManager.getBufferComponent(id);
     if ( !c ){
-        throw std::runtime_error("Buffer component not found");
+        throw std::runtime_error(fmt::format(
+            "Buffer component with id {} not found",
+            id
+        ));
     }
 
     if ( channel >= c->getNumOutputs() ){
@@ -997,6 +1013,85 @@ json ControlApiHandler::getBufferData(const json& request){
     return response ;
 
 }
+
+json ControlApiHandler::midiLearn(const json& request){
+    // this is a special case. if we don't have a value/control type,
+    // then we need to tell the control router to start a learn session
+    // otherwise, we just pass through the response from the control router
+    // which calls the api directly
+    if ( request.contains("value") && request.contains("control_type") ){
+        return request ;    
+    }
+
+    MidiControlRouter::instance()->setLearning(true);
+    json response = request ;
+    response["status"] = "pending" ;
+    return response ;
+}
+
+json ControlApiHandler::getMidiControl(const json& request){
+    ComponentId id = request.at("componentId");
+    ParameterType p = stringToParameter(request.at("parameter"));
+
+    BaseComponent* c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        throw std::runtime_error(fmt::format(
+            "Component with id {} not found",
+            id
+        ));
+    }
+
+    uint8_t ctrl = MidiControlRouter::instance()->getControlForRoute(c, p);
+
+    if ( ctrl == MidiControlRouter::INVALID_ROUTE ){
+        throw std::runtime_error(fmt::format(
+            "no midi control route specified for component with"
+            "id {} on {}",
+            id, GET_PARAMETER_TRAIT_MEMBER(p, name)
+        ));
+    }
+
+    json response = request ;
+    response["value"] = ctrl ;
+
+    return response ;
+}
+
+json ControlApiHandler::setMidiControl(const json& request){
+    ComponentId id = request.at("componentId");
+    ParameterType p = stringToParameter(request.at("parameter"));
+    uint8_t ctrl = request.at("value");
+
+    BaseComponent* c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        throw std::runtime_error(fmt::format(
+            "Component with id {} not found",
+            id
+        ));
+    }
+
+    if ( ctrl > 127 ){
+        throw std::runtime_error(fmt::format(
+            "midi control identifier {} is not valid",
+            ctrl
+        ));
+    }
+
+    auto router = MidiControlRouter::instance();
+    if ( request.contains("control_type") ){
+        if ( request.at("control_type") == "continuous" ){
+            router->setMidiControlType(ctrl, MidiControlRouter::ControlType::CONTINUOUS);
+        } else if ( request.at("control_type") == "discrete" ){
+            router->setMidiControlType(ctrl, MidiControlRouter::ControlType::DISCRETE);
+        }
+    }
+
+    
+    router->registerRoute(ctrl, c, p);
+
+    return request ;
+}
+
 
 bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )

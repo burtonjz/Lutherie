@@ -64,9 +64,7 @@ void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *m
 
 void MidiController::processMessage([[maybe_unused]] double deltaTime, std::vector<unsigned char> *message){    
     MidiCommand command = static_cast<MidiCommand>((*message)[0] & 0xF0) ;
-    int channel         = static_cast<int>((*message)[0] & 0x0F) ;
-
-    SPDLOG_INFO("MIDI Message received by midi controller: command={}, channel={}", midiCommand2String(command), channel) ;
+    // int channel         = static_cast<int>((*message)[0] & 0x0F) ;
 
     switch(command){
         case MidiCommand::MIDI_CMD_NOTE_OFF:

@@ -331,17 +331,21 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         return ;
     }
 
-    if ( action == "set_parameter" && success ){
+    if ( 
+        ( action == "set_parameter" || action == "get_parameter") 
+        && success 
+    ){
         int id = msg.at("componentId");
         auto it = models_.find(id);
         if ( it == models_.end() ){
-            SPDLOG_WARN("Could not find model with componentId {}. Will not process set parameter request", 
+            SPDLOG_WARN(
+                "Could not find model with componentId {}"
+                " Will not process parameter request", 
                 id);
             return ;
         }
 
         ParameterType p = stringToParameter(msg.at("parameter"));
-
         setParameterValue(id, p, msg.at("value"));
         return ;
     }

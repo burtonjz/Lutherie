@@ -110,6 +110,11 @@ public:
 
     // data api
     json getBufferData(const json& request);
+
+    // midi control messages
+    json midiLearn(const json& request);
+    json getMidiControl(const json& request);
+    json setMidiControl(const json& request);
     
 private:
     void onClientConnection(int clientSock);

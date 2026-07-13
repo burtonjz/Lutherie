@@ -1,0 +1,48 @@
+[
+    {
+        "action": "set_midi_device", 
+        "device_id": 2
+    },
+    {
+        "action": "set_audio_device", 
+        "device_id": 129
+    },
+    {
+        "action": "add_component",
+        "name": "Oscillator"
+    },
+    {
+        "action": "set_midi_control",
+        "componentId": 0,
+        "parameter": "frequency",
+        "control_type": "continuous",
+        "value": 25
+    },
+    {
+        "action": "set_midi_control",
+        "componentId": 0,
+        "parameter": "amplitude",
+        "control_type": "continuous",
+        "value": 26
+    },
+    {
+        "action": "set_midi_control",
+        "componentId": 0,
+        "parameter": "waveform",
+        "control_type": "discrete",
+        "value": 115
+    },
+    {
+        "action":"create_connection",
+        "inbound":{"index":0,"socketType":"Signal Inbound"},
+        "outbound":{"componentId":0,"index":0,"socketType":"Signal Outbound"},
+        "status":"success"
+    },
+    {
+        "action": "set_state", 
+        "state": "run"
+    },
+    {
+        "action": "midi_learn"
+    }
+]

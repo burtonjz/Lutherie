@@ -38,8 +38,10 @@ protected:
 
     bool hasDepth_ ;
     bool depthInitialized_ ;
-    
+
     std::vector<ParameterListener*> listeners_ ;
+
+    uint8_t midiControl_ = 128 ;
 
 public:
     ParameterBase(
@@ -55,8 +57,8 @@ public:
         modData_(modData)    
     {}
 
-    ParameterBase(const ParameterBase&) = delete;
-    ParameterBase& operator=(const ParameterBase&) = delete;
+    ParameterBase(const ParameterBase&) = delete ;
+    ParameterBase& operator=(const ParameterBase&) = delete ;
 
     virtual void setModulatable(bool modulatable){
         modulatable_ = modulatable ;
@@ -114,7 +116,6 @@ public:
             listener->onParameterChanged(type_);
         }
     }
-
 };
 
 template <ParameterType typ>

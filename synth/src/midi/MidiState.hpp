@@ -21,6 +21,7 @@
 #include "containers/RTMap.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiNote.hpp"
+#include "midi/MidiControlRouter.hpp"
 
 #include <algorithm>
 #include <spdlog/spdlog.h>
@@ -63,7 +64,7 @@ public:
 
     // processing messages
     void processMsgNoteOn(int midiNote, int velocity){
-        SPDLOG_INFO("Processing NOTE_ON event. MidiNote={}, Velocity={}", midiNote, velocity);
+        SPDLOG_DEBUG("Processing NOTE_ON event. MidiNote={}, Velocity={}", midiNote, velocity);
         notes_[midiNote].setMidiNote(midiNote);
         notes_[midiNote].setMidiVelocity(velocity);
         notes_[midiNote].setStatus(true);
@@ -73,7 +74,7 @@ public:
     }
 
     void processMsgNoteOff(int midiNote, int velocity){
-        SPDLOG_INFO("Processing NOTE_OFF event. MidiNote={}, Velocity={}", midiNote, velocity);
+        SPDLOG_DEBUG("Processing NOTE_OFF event. MidiNote={}, Velocity={}", midiNote, velocity);
         notes_[midiNote].setStatus(false);
         for ( auto* h : handlers_ ){
             h->handleKeyReleased(notes_[midiNote]);
@@ -82,7 +83,7 @@ public:
     }
 
     void processMsgPitchbend(float pitchbend){
-        SPDLOG_INFO("Processing PITCHBEND event. pitchbend={}", pitchbend);
+        SPDLOG_DEBUG("Processing PITCHBEND event. pitchbend={}", pitchbend);
         pitchbend_ = pitchbend ;
         for ( auto* h : handlers_ ){
             h->handlePitchbend(pitchbend_);
@@ -93,8 +94,9 @@ public:
 
     }
 
-    void processMsgControl([[maybe_unused]] int ctrlID, [[maybe_unused]] int ctrlValue){
-
+    void processMsgControl(int ctrlID, int ctrlValue){
+        SPDLOG_DEBUG("Processing CONTROL event. identifier={}, value={}", ctrlID, ctrlValue);
+        MidiControlRouter::instance()->handleEvent(ctrlID, ctrlValue);
     }
 
     void processMsgProgram([[maybe_unused]] int program){

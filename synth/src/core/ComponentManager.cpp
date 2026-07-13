@@ -18,6 +18,7 @@
 #include "core/ComponentManager.hpp"
 #include "requests/CollectionRequest.hpp"
 #include "api/ControlApiHandler.hpp"
+#include "midi/MidiControlRouter.hpp"
 
 ComponentManager::ComponentManager(MidiController* midiCtrl):
     midiController_(midiCtrl)

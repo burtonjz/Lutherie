@@ -145,6 +145,45 @@ void ParameterMap::addParameterDispatch(ParameterType p, const json& cfg){
     };
 }
 
+void ParameterMap::setValuePercentDispatch(ParameterType p, double percent){
+    switch(p){
+        #define X(NAME) case ParameterType::NAME: {           \
+            auto param = getParameter<ParameterType::NAME>(); \
+            if ( !param ){                                    \
+                throw std::runtime_error(fmt::format(         \
+                    "parameter {} not found in map",          \
+                    GET_PARAMETER_TRAIT_MEMBER(p, name)       \
+                ));                                           \
+            }                                                 \
+            auto min = param->getMinimum();                   \
+            auto max = param->getMaximum();                   \
+            auto newVal = ( max - min ) * percent + min ;     \
+            param->setValue(newVal);                          \
+            break ; } ;                      
+        PARAMETER_TYPE_LIST
+        #undef X
+    default:
+        throw std::runtime_error("Invalid Parameter dispatch");
+    }   
+}
+
+void ParameterMap::setValueTickWrapDispatch(ParameterType p){
+    switch(p){
+        #define X(NAME) case ParameterType::NAME: {           \
+            auto param = getParameter<ParameterType::NAME>(); \
+            auto current = param->getValue();                 \
+            auto min = param->getMinimum();                   \
+            auto max = param->getMaximum();                   \
+            if ( current + 1 == max ) param->setValue(min);   \
+            else param->setValue(current + 1);                \
+            break ; } ;
+        PARAMETER_TYPE_LIST
+        #undef X
+    default:
+        throw std::runtime_error("Invalid Parameter dispatch");
+    }
+}
+
 // collection dispatchers
 json ParameterMap::getCollectionValueDispatch(ParameterType p, size_t idx) const {
     switch (p) {
@@ -292,13 +331,12 @@ json ParameterMap::toJson(json& output) const {
 
         // normal parameters
         if ( parameters_[p] && reference_.find(typ) == reference_.end() ){
-            output["parameters"][GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
-                {"currentValue", getValueDispatch(typ)},
-                {"defaultValue", getDefaultDispatch(typ)},
-                {"minimumValue", getMinDispatch(typ)},
-                {"maximumValue", getMaxDispatch(typ)},
-                {"modulatable", getParameter(typ)->isModulatable()}
-            };
+            auto& param = output["parameters"][GET_PARAMETER_TRAIT_MEMBER(typ, name)];
+            param["currentValue"] = getValueDispatch(typ);
+            param["defaultValue"] = getDefaultDispatch(typ);
+            param["minimumValue"] = getMinDispatch(typ);
+            param["maximumValue"] = getMaxDispatch(typ);
+            param["modulatable"] = getParameter(typ)->isModulatable();
         }
     }
 

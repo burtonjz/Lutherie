@@ -10,6 +10,7 @@
 #include "meta/ComponentRegistry.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiEventListener.hpp"
+#include "midi/MidiControlRouter.hpp"
 #include "types/SocketType.hpp"
 #include "types/Waveform.hpp"
 #include "midi/MidiController.hpp"
@@ -781,10 +782,10 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
 json Engine::serialize() const {
     json output ;
 
-    // capture component data (parameters, midi, modulation, signal)
+    // COMPONENTS
     output["components"] = componentManager.serializeComponents();
 
-    // capture connections
+    // CONNECTIONS
     std::vector<ConnectionRequest> connections ;
     for ( auto id : componentManager.getComponentIds() ){
         getComponentConnections(id, connections);
@@ -795,6 +796,9 @@ json Engine::serialize() const {
     for ( auto r : unique ){
         output["connections"].push_back(r);
     }
+
+    // MIDI CONTROLS
+    output["midi_controls"] = MidiControlRouter::instance()->serialize();
 
     return output ;
 }
