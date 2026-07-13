@@ -15,8 +15,6 @@
 ## Medium Priority
 
 ### Configuration / Patch Saving
-- [Medium] Support `ParameterCollection` data in save_configuration/sync_component. Ensure only one code path. 
-  - Likely need a light refactor: move parsing logic to static functions on `CollectionRequest` so component manager can reuse it without hitting the API
 - [Medium] Create better patch load menu
 - [Medium] Create a configuration menu editor for config.json
   
@@ -84,7 +82,6 @@
 - [Quick] Add Buffer submenu to Add Component
 - [Medium] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
 - [Quick] show event (parameters, modulation, detail editors) needs not only to ensure visibility, but also tab to it if it's tabbed with other docks. Maybe a small little border highlight would be nice too.
-- [Quick] ensure backend always runs a sync on component creation, and front end always handles the sync.
 - [Quick] improve several ui precision sliders (duration)
 
 ### Misc / Infra

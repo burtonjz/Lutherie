@@ -153,11 +153,6 @@ json ParameterMap::getCollectionValueDispatch(ParameterType p, size_t idx) const
         #undef X
         default: throw std::runtime_error("Invalid Collection dispatch");
     }
-
-    auto c = getCollection<ParameterType::SAMPLE>();
-    for ( const auto& idx : c->getIndices() ){
-        c->getValue(idx);
-    }
 }
 
 json ParameterMap::getCollectionValuesDispatch(ParameterType p) const {
@@ -168,7 +163,7 @@ json ParameterMap::getCollectionValuesDispatch(ParameterType p) const {
             json arr ;                                     \
             if ( !c ) return arr ;                         \
             for ( const auto& idx : c->getIndices() ){     \
-                arr[idx] = c->getValue(idx) ;              \
+                arr.push_back(c->getValue(idx)) ;          \
             }                                              \
             return arr ;                                   \
         }

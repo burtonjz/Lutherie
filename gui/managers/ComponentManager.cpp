@@ -182,6 +182,9 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
         );
     }
 
+    // request component sync to ensure sensible defaults
+    requestModelSync(componentId);
+
     emit componentAdded(componentId, type);
 }
 
@@ -245,6 +248,10 @@ void ComponentManager::syncModel(const json& msg){
             setParameterValue(id, stringToParameter(p), obj.at("currentValue") );
         }
     }
+
+    if ( data.contains("collection") ){
+        handleCollectionApiResponse(data.at("collection"));
+    }
 }
 
 void ComponentManager::setFile(int componentId, std::string path){
@@ -270,25 +277,25 @@ CollectionWidget* ComponentManager::getCollectionWidget(ComponentParameters* par
     return cw ;
 }
 
-bool ComponentManager::handleCollectionApiResponse(const json& msg){
-    // note: there is no centralized model for managing Collections. So we will 
-    // instead break the pattern here and only do this for specialized widget stored
-    // in the component editor. 
-
-    // bool response is to determine if the event should be considered "handled" so
-    // that we don't eat up the wrong types of request
+void ComponentManager::handleCollectionApiResponse(const json& msg){
+    /* 
+     note: there is no centralized model for managing collections. So we will 
+     instead break the pattern here and only do this for specialized widget stored
+     in the component editor. 
+    */
     CollectionRequest req ;
     try {
         req = msg ;
     } catch (std::exception& e){
-        return false ;
+        SPDLOG_WARN("invalid collection request received: {}", msg.dump());
+        return ;
     }
 
     auto it = parameters_.find(req.componentId);
     if ( it == parameters_.end() ){
         SPDLOG_WARN("Could not find model with componentId {}. Will not process collection request", 
             req.componentId);
-        return true ;
+        return ;
     }
     
     auto cw = getCollectionWidget(it->second);
@@ -296,7 +303,7 @@ bool ComponentManager::handleCollectionApiResponse(const json& msg){
         cw->updateCollection(req);
     }
     
-    return true ;
+    return ;
 }
 
 

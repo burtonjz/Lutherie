@@ -65,7 +65,7 @@ private:
     void setFile(int componentId, std::string path);
 
     CollectionWidget* getCollectionWidget(ComponentParameters* params) const ;
-    bool handleCollectionApiResponse(const json& msg);
+    void handleCollectionApiResponse(const json& msg);
 
 public slots:
     void onControlMessageReceived(const json& msg);

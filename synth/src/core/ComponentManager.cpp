@@ -138,8 +138,7 @@ json ComponentManager::serializeComponent(BaseComponent* c) const {
 
     auto cd = ComponentRegistry::getComponentDescriptor(c->getType());
 
-    // collections need to be reconfigured into a GET_ALL CollectionRequest    
-    // rather than creating a second code path, just send a separate response
+    // collections need to be reconfigured into a GET_ALL CollectionRequest to be readable by client
     if ( cd.hasCollection() ){
         CollectionRequest req = {
             .action = CollectionAction::GET_ALL,
@@ -148,7 +147,8 @@ json ComponentManager::serializeComponent(BaseComponent* c) const {
             .index = std::nullopt
         };
         json r = req ;
-        ControlApiHandler::instance()->handleClientMessage(r.dump());
+        output["collection"] = ControlApiHandler::instance()
+            ->parseCollectionRequest(r);
     }
 
     // modulation

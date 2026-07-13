@@ -52,13 +52,10 @@ public:
     void initialize(Engine* engine);
 
     void start();
-    void onClientConnection(int clientSock);
-    void handleClientMessage(std::string jsonStr);
-    json sendApiResponse(json& response, const std::string& err = "");
 
     const std::unordered_set<int>& getOpenClientSockets() const ;
+    void handleClientMessage(const std::string& jsonStr);
 
-private:
     /*
     ---------------------------------------------------------
     --------------------HANDLER FUNCTIONS--------------------
@@ -113,6 +110,10 @@ private:
 
     // data api
     json getBufferData(const json& request);
+    
+private:
+    void onClientConnection(int clientSock);
+    json sendApiResponse(json& response, const std::string& err = "");
     
     // load functions
     bool loadCreateComponent(const json& components, std::unordered_map<int,int>& idMap);
