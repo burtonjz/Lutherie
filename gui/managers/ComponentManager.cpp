@@ -278,8 +278,19 @@ void ComponentManager::syncModel(const json& msg){
 
     if ( data.contains("parameters") ){
         for ( const auto& [p, obj] : data.at("parameters").items() ){
-            if ( ! obj.contains("currentValue") ) continue ;
-            setParameterValue(id, stringToParameter(p), obj.at("currentValue") );
+            if ( obj.contains("currentValue") ){
+                setParameterValue(
+                    id, stringToParameter(p), 
+                    obj.at("currentValue") 
+                );
+            }
+            if ( obj.contains("minimumValue") && obj.contains("maximumValue") ){
+                setParameterRange(
+                    id, stringToParameter(p), 
+                    obj.at("minimumValue"), 
+                    obj.at("maximumValue")
+                );
+            }  
         }
     }
 
