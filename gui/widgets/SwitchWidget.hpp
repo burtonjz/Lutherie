@@ -31,12 +31,12 @@ private:
 public:
     explicit SwitchWidget(QWidget* parent = nullptr);
     
-    QSize sizeHint() const override;
+    QSize sizeHint() const override ;
 
 protected:
-    void paintEvent(QPaintEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
-    void enterEvent(QEnterEvent* event) override;
+    void paintEvent(QPaintEvent* event) override ;
+    void mouseReleaseEvent(QMouseEvent* event) override ;
+    void enterEvent(QEnterEvent* event) override ;
     void checkStateSet() override;
 
 private:

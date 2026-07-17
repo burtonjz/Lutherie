@@ -36,6 +36,7 @@ private:
     ComponentType type_ ;
     ComponentDescriptor descriptor_ ;
     std::map<ParameterType, ParameterValue> parameters_ ;
+    std::map<ParameterType, std::pair<ParameterValue,ParameterValue>> paramRanges_ ;
     std::map<ParameterType, ModulationModel*> modulations_ ;
     QString name_ ;
     std::optional<std::string> file_ ;
@@ -70,8 +71,12 @@ public:
     const std::map<ParameterType, ModulationModel*>& getModulationModels() const ;
 
     const ParameterValue& getParameterValue(ParameterType p) const ;
+    const std::pair<ParameterValue,ParameterValue>& getParameterRange(ParameterType p) const ;
     void setParameterValue(ParameterType p, ParameterValue v, bool block = false);
+    void setParameterRange(ParameterType p, ParameterValue min, ParameterValue max, bool block = false);
+    
     void setParameterToDefault(ParameterType p, bool block = false);
+    void setRangeToDefault(ParameterType p, bool block = false);
 
 private:
     bool validParam(ParameterType p) const ;
@@ -81,6 +86,7 @@ signals:
     void requestBufferData(int componentId, size_t channel);
 
     void parameterValueChanged(ParameterType p, ParameterValue v) const ;
+    void parameterRangeChanged(ParameterType p, ParameterValue min, ParameterValue max) const ;
     void collectionUpdated(const CollectionRequest& req);
     void modulationDepthChanged(int componentId, ParameterType p, double depth);
     void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);

@@ -39,16 +39,26 @@ public:
     virtual ParameterType getType() const = 0 ;
     virtual ParameterValue getValue() const = 0 ;
     virtual void setValue(const ParameterValue& value, bool block = false) = 0 ;
+    
+    virtual std::pair<double, double> getRange() const ;
+    virtual void setRange(const ParameterValue& min, const ParameterValue& max, bool block = false) ;
+    
     virtual int gridColumnSpan() const ;
 
 protected:
     void childEvent(QChildEvent* event) override ;
-    
+    void contextMenuEvent(QContextMenuEvent *event) override ;
+    QWidget* createRangeEditor(QWidget* parent = nullptr);
+
+private slots:
 public slots:
     void onModelParameterChanged(ParameterType p, ParameterValue v);
+    void onModelRangeChanged(ParameterType p, ParameterValue min, ParameterValue max);
 
 signals:
     void valueChanged();
+    void rangeChanged(ParameterType p, ParameterValue min, ParameterValue max);
+
 };
 
 class DelayWidget : public ParameterWidget {
@@ -70,6 +80,9 @@ public:
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
     void setValue(size_t samples, bool block = true);
+
+    std::pair<double, double> getRange() const override ;
+    void setRange(const ParameterValue& min, const ParameterValue& max, bool block = false) override ;
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override ;
@@ -105,7 +118,6 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
-
 };
 
 class MonophonicTriggerBehaviorWidget : public ParameterWidget {
@@ -132,7 +144,6 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
-
 };
 
 class SliderWidget : public ParameterWidget {
@@ -149,6 +160,9 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
+
+    std::pair<double, double> getRange() const override ;
+    void setRange(const ParameterValue& min, const ParameterValue& max, bool block = false) override ;
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override ;
@@ -177,6 +191,7 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
+    
     int gridColumnSpan() const override ;
 
 protected:

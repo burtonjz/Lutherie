@@ -68,6 +68,17 @@ void ComponentManager::requestParameterUpdate(int componentId, ParameterType p, 
     ControlApiClient::instance()->sendMessage(j); 
 }
 
+void ComponentManager::requestParameterRangeUpdate(int componentId, ParameterType p, ParameterValue min, ParameterValue max){
+    json j ;
+    j["action"] = "set_parameter_range" ;
+    j["componentId"] = componentId ;
+    j["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p,name);
+    j["minimum"] = ParameterValueToJson(min);
+    j["maximum"] = ParameterValueToJson(max);
+
+    ControlApiClient::instance()->sendMessage(j); 
+}
+
 void ComponentManager::requestCollectionUpdate(CollectionRequest req){
     json obj = req ;
     ControlApiClient::instance()->sendMessage(obj); 
@@ -153,6 +164,10 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
             this, &ComponentManager::onParameterEdited
         );
         connect(
+            params, &ComponentParameters::paramRangeEdited,
+            this, &ComponentManager::onParameterRangeEdited
+        );
+        connect(
             params, &ComponentParameters::fileSelected,
             this, &ComponentManager::onFileSelected
         );
@@ -229,6 +244,25 @@ void ComponentManager::setParameterValue(int componentId, ParameterType p, const
         }
 
         getModel(componentId)->setParameterValue(p,v);
+        return ;
+}
+
+void ComponentManager::setParameterRange(int componentId, ParameterType p, const json& min, const json& max){
+        // dispatch to set parameter value with correct variant
+        ParameterValue minimum, maximum ; 
+        switch(p){
+        #define X(name) \
+        case ParameterType::name: \
+            minimum = static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(min); \
+            maximum = static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(max); \
+            break ; 
+        PARAMETER_TYPE_LIST
+        #undef X     
+        default:
+            break ;
+        }
+
+        getModel(componentId)->setParameterRange(p,minimum,maximum);
         return ;
 }
 
@@ -350,6 +384,25 @@ void ComponentManager::onControlMessageReceived(const json& msg){
         return ;
     }
 
+    if ( 
+        ( action == "get_parameter_range" || action == "set_parameter_range" )
+        && success
+    ){
+        int id = msg.at("componentId");
+        auto it = models_.find(id);
+        if ( it == models_.end() ){
+            SPDLOG_WARN(
+                "Could not find model with componentId {}"
+                " Will not process parameter request", 
+                id);
+            return ;
+        }
+
+        ParameterType p = stringToParameter(msg.at("parameter"));
+        setParameterRange(id, p, msg.at("minimum"), msg.at("maximum"));
+        return ;
+    }
+
     if ( action == "set_modulation_depth" && success ){
         int id = msg["componentId"];
         auto it = models_.find(id);
@@ -411,6 +464,10 @@ void ComponentManager::onDataMessageReceived(DataDescriptor header, std::vector<
 
 void ComponentManager::onParameterEdited(int componentId, ParameterType p, ParameterValue value){
     requestParameterUpdate(componentId, p, value);
+}
+
+void ComponentManager::onParameterRangeEdited(int componentId, ParameterType p, ParameterValue min, ParameterValue max){
+    requestParameterRangeUpdate(componentId, p, min, max);
 }
 
 void ComponentManager::onCollectionEdited(CollectionRequest req ){

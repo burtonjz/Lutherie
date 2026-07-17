@@ -21,6 +21,7 @@
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
+#include "widgets/RangeSlider.hpp"
 #include "widgets/WheelGuard.hpp"
 
 #include <cmath>
@@ -30,6 +31,8 @@
 #include <QMouseEvent>
 #include <QShortcut>
 #include <QLineEdit>
+#include <QMenu>
+#include <QWidgetAction>
 #include <spdlog/spdlog.h>
 
 
@@ -41,10 +44,26 @@ int ParameterWidget::gridColumnSpan() const {
     return 1 ;
 }
 
+std::pair<double, double> ParameterWidget::getRange() const {
+    return {
+        GET_PARAMETER_TRAIT_MEMBER(getType(), minimum),
+        GET_PARAMETER_TRAIT_MEMBER(getType(), maximum)
+    };
+}
+
+void ParameterWidget::setRange(const ParameterValue& min, const ParameterValue& max, bool block){
+}
+
 void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
     if ( p != getType() ) return ;
 
     setValue(v, true);
+}
+
+void ParameterWidget::onModelRangeChanged(ParameterType p, ParameterValue min, ParameterValue max){
+    if ( p != getType() ) return ;
+
+    setRange(min,max, true);
 }
 
 void ParameterWidget::childEvent(QChildEvent* event){
@@ -56,6 +75,73 @@ void ParameterWidget::childEvent(QChildEvent* event){
         }
     }
     QWidget::childEvent(event);
+}
+
+void ParameterWidget::contextMenuEvent(QContextMenuEvent *event){
+    QMenu menu ;
+
+    // adjust min/max parameter range
+    if ( GET_PARAMETER_TRAIT_MEMBER(getType(), supportRangeUpdate) ){
+        QMenu* editRange = menu.addMenu("Edit Parameter Range");
+        QWidget* rangeWidget = createRangeEditor(editRange);
+        QWidgetAction* rangeAction = new QWidgetAction(editRange);
+        rangeAction->setDefaultWidget(rangeWidget);
+        editRange->addAction(rangeAction);
+    }
+    
+    QAction* editMidiControl = new QAction("Edit MIDI control", &menu);
+    menu.addAction(editMidiControl);
+
+    menu.exec(event->globalPos());
+    event->accept();
+}
+
+QWidget* ParameterWidget::createRangeEditor(QWidget* parent){
+    auto* popup = new QWidget(parent, Qt::Popup);
+    popup->setAttribute(Qt::WA_DeleteOnClose);
+
+    auto* layout = new QVBoxLayout(popup);
+    layout->setContentsMargins(8,8,8,8);
+
+    double min = GET_PARAMETER_TRAIT_MEMBER(getType(), minimum);
+    double max = GET_PARAMETER_TRAIT_MEMBER(getType(), maximum);
+    if ( getType() == ParameterType::FREQUENCY ){
+        max = Config::get<double>("audio.sample_rate").value() / 2.0 ;
+    }
+
+    const auto [curMin, curMax] = getRange();
+    
+    RangeSlider* slider = new RangeSlider(
+        min, max, curMin, curMax,
+        GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision),
+        popup
+    );
+
+    connect(slider, &RangeSlider::rangeUpdated, this, [this](double min, double max){
+        switch(getType()){
+            #define X(name)                                                       \
+                case ParameterType::name:                                         \
+                    emit rangeChanged(                                            \
+                        ParameterType::name,                                      \
+                        ParameterValue{static_cast<                               \
+                            GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(min)}, \
+                        ParameterValue{static_cast<                               \
+                            GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(max)}  \
+                    );                                                            \
+                    break ;
+            PARAMETER_TYPE_LIST
+            #undef X
+            default:
+                SPDLOG_WARN("invalid parameter specified: {}.", 
+                    GET_PARAMETER_TRAIT_MEMBER(getType(), name));
+                break ;
+        }
+    });
+    
+    layout->addWidget(slider);
+    popup->adjustSize();
+    
+    return popup ;
 }
 
 /*
@@ -116,6 +202,29 @@ void DelayWidget::setValue(size_t samples, bool block){
     }
 
     updateDisplay();
+}
+
+std::pair<double, double> DelayWidget::getRange() const {
+    return { minSamples_, maxSamples_ };
+}
+
+void DelayWidget::setRange(const ParameterValue& min, const ParameterValue& max, bool block){
+    minSamples_ = std::get<int>(min) ;
+    minMs_ = minSamples_ / sampleRate_ * 1000 ;
+
+    maxSamples_ = std::get<int>(max) ;
+    maxMs_ = maxSamples_ / sampleRate_ * 1000 ;
+
+    QSignalBlocker blocker(knob_);
+    if ( !block ) blocker.unblock();
+
+    if ( unitToggle_->isChecked() ){
+        knob_->setMinimum(minMs_);
+        knob_->setMaximum(maxMs_);
+    } else {
+        knob_->setMinimum(minSamples_);
+        knob_->setMaximum(maxSamples_);
+    }
 }
 
 void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
@@ -567,6 +676,36 @@ void SliderWidget::setValue(const ParameterValue& value, bool block){
     if ( block ) updateDisplay();
 }
 
+std::pair<double, double> SliderWidget::getRange() const {
+    return { 
+        knob_->minimum() * std::pow(10, -1.0 * precision_),
+        knob_->maximum() * std::pow(10, -1.0 * precision_)
+    };
+}
+
+void SliderWidget::setRange(const ParameterValue& min, const ParameterValue& max, bool block){
+    double newMin = std::visit([](auto&& val){
+        return static_cast<double>(val);
+    }, min) ;
+    double newMax = std::visit([](auto&& val){
+        return static_cast<double>(val);
+    }, max);
+
+    if ( param_ == ParameterType::FREQUENCY ){
+        double nyquist = Config::get<double>("audio.sample_rate").value() / 2.0 ;
+        newMin = std::clamp(newMin, 0.0, nyquist);
+        newMax = std::clamp(newMax, 0.0, nyquist);
+    }
+    
+    QSignalBlocker blocker(knob_);
+    if ( !block ) blocker.unblock();
+
+    knob_->setMinimum(scaleByPrecision(newMin));
+    knob_->setMaximum(scaleByPrecision(newMax));
+
+    if ( block ) updateDisplay();
+}
+
 void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
     auto s2v = [this](int v){ return v * std::pow(10, -1.0 * precision_);};
 
@@ -767,6 +906,7 @@ void DetuneWidget::setValue(const ParameterValue& value, bool block){
     double combined = std::get<double>(value);
     setFromCombined(combined, block);
 }
+
 
 void DetuneWidget::setupUI(){
     auto* layout = new QHBoxLayout(this);

@@ -46,6 +46,7 @@ public:
     void requestAddComponent(ComponentType type);
     void requestRemoveComponent(int componentId);
     void requestParameterUpdate(int componentId, ParameterType p, ParameterValue v);
+    void requestParameterRangeUpdate(int componentId, ParameterType p, ParameterValue min, ParameterValue max);
     void requestCollectionUpdate(CollectionRequest req);
     void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
     void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
@@ -61,6 +62,7 @@ private:
     void addComponent(int componentId, ComponentType type);
     void removeComponent(int componentId);
     void setParameterValue(int componentId, ParameterType p, const json& parameterValue);
+    void setParameterRange(int componentId, ParameterType p, const json& min, const json& max);
     void syncModel(const json& msg);
     void setFile(int componentId, std::string path);
 
@@ -71,6 +73,7 @@ public slots:
     void onControlMessageReceived(const json& msg);
     void onDataMessageReceived(DataDescriptor header, std::vector<double> buffer);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
+    void onParameterRangeEdited(int componentId, ParameterType p, ParameterValue min, ParameterValue max);
     void onCollectionEdited(CollectionRequest req );
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);
     void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);

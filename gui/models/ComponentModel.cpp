@@ -27,6 +27,7 @@ ComponentModel::ComponentModel(int id, ComponentType typ):
 
     for ( const auto& p : descriptor_.controllableParameters ){
         setParameterToDefault(p);
+        setRangeToDefault(p);
     }
 
     for ( const auto& p : descriptor_.modulatableParameters ){
@@ -166,6 +167,17 @@ const ParameterValue& ComponentModel::getParameterValue(ParameterType p) const {
     return parameters_.at(p) ;
 }
 
+const std::pair<ParameterValue,ParameterValue>& ComponentModel::getParameterRange(ParameterType p) const {
+    if ( !validParam(p) ){
+        throw std::logic_error(
+            "FATAL: Invalid Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name)
+            + " accessed in an unsupported Component Type (" + static_cast<char>(type_) 
+            + "). This is a programming bug. "
+        ); 
+    }
+    return paramRanges_.at(p);
+}
+
 void ComponentModel::setParameterValue(ParameterType p, ParameterValue v, bool block){
     if ( !validParam(p) ){
         SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter.", 
@@ -176,6 +188,19 @@ void ComponentModel::setParameterValue(ParameterType p, ParameterValue v, bool b
     
     if ( !block ){
         emit parameterValueChanged(p, v);
+    }
+}
+
+void ComponentModel::setParameterRange(ParameterType p, ParameterValue min, ParameterValue max, bool block){
+    if ( !validParam(p) ){
+        SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter range.", 
+            GET_PARAMETER_TRAIT_MEMBER(p, name));
+        return ;
+    }
+    paramRanges_[p] = {min, max};
+
+    if ( !block ){
+        emit parameterRangeChanged(p, min, max);
     }
 }
 
@@ -202,6 +227,36 @@ void ComponentModel::setParameterToDefault(ParameterType p, bool block){
 
     if ( !block ){
         emit parameterValueChanged(p, getParameterValue(p) );
+    }
+}
+
+void ComponentModel::setRangeToDefault(ParameterType p, bool block){
+    if ( !validParam(p) ){
+        SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter to default.", 
+            GET_PARAMETER_TRAIT_MEMBER(p, name));
+        return ;
+    }
+    
+    switch(p){
+        #define X(name) case ParameterType::name:                           \
+            paramRanges_[p] = {                                             \
+                static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>( \
+                    GET_PARAMETER_TRAIT_MEMBER(p, minimum)),                \
+                static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>( \
+                    GET_PARAMETER_TRAIT_MEMBER(p, maximum))                 \
+            } ; \
+            break ;
+        PARAMETER_TYPE_LIST
+        #undef X
+        default:
+            SPDLOG_WARN("invalid parameter specified: {}. Cannot set parameter range to default.", 
+                GET_PARAMETER_TRAIT_MEMBER(p, name));
+            break ;
+    }
+
+    if ( !block ){
+        const auto& [min,max] = getParameterRange(p);
+        emit parameterRangeChanged(p, min, max);
     }
 }
 

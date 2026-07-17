@@ -122,10 +122,18 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
         this, &ComponentParameters::onValueChange
     );
     connect(
+        w, &ParameterWidget::rangeChanged,
+        this, &ComponentParameters::onRangeChanged
+    );
+    connect(
         model_, &ComponentModel::parameterValueChanged,
         w, &ParameterWidget::onModelParameterChanged
     );
-    
+    connect(
+        model_, &ComponentModel::parameterRangeChanged,
+        w, &ParameterWidget::onModelRangeChanged
+    );
+
     return w ;
 }
 
@@ -234,6 +242,10 @@ void ComponentParameters::onValueChange(){
     
     pendingChanges_[p] = v ;
     parameterChangedTimer_->start();
+}
+
+void ComponentParameters::onRangeChanged(ParameterType p, ParameterValue min, ParameterValue max){
+    emit paramRangeEdited(model_->getId(), p, min, max);
 }
 
 void ComponentParameters::flushPendingChanges(){

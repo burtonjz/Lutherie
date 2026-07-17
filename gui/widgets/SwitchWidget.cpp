@@ -21,10 +21,10 @@
 #include <QPainter>
 #include <qevent.h>
 
-SwitchWidget::SwitchWidget(QWidget* parent)
-    : QAbstractButton(parent)
-    , thumbPosition_(0.0)
-    , animation_(new QPropertyAnimation(this, "thumbPosition", this))
+SwitchWidget::SwitchWidget(QWidget* parent): 
+    QAbstractButton(parent), 
+    thumbPosition_(0.0), 
+    animation_(new QPropertyAnimation(this, "thumbPosition", this))
 {
     setCheckable(true);
     animation_->setDuration(Theme::SWITCH_WIDGET_ANIMATION_DURATION);

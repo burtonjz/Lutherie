@@ -92,7 +92,8 @@ void Setup::onControlMessageReceived(const json& json){
 
     if ( action == "set_midi_device" ){
         QString status = QString::fromStdString(json["status"]);
-        SPDLOG_DEBUG("set_midi_device return state: {}", status) ;
+        SPDLOG_DEBUG("set_midi_device return state: {}", 
+            status.toStdString());
         if ( status == "success" ){
             StateManager::instance()->setSetupMidiComplete(true);
         }

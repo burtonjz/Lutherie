@@ -252,6 +252,12 @@ public:
     static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_WIDTH  = 150 ;
     static constexpr int    DOCKING_CENTRAL_SEGMENT_MAX_HEIGHT = 150 ;
 
+    static constexpr int RANGE_SLIDER_WIDTH         = 150 ;
+    static constexpr int RANGE_SLIDER_X_MARGIN      = 10 ;
+    static constexpr int RANGE_SLIDER_TOP_MARGIN    = 30 ;
+    static constexpr int RANGE_SLIDER_HEIGHT        = 60 ;
+    static constexpr int RANGE_SLIDER_HANDLE_RADIUS = 5 ;
+
     /*
     =======================================================
     =============== STYLE SHEET DEFINITIONS ===============

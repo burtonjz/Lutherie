@@ -420,7 +420,10 @@ QMenu* Synth::buildComponentMenu(){
                 return ;
             }    
         }
-        SPDLOG_DEBUG("component add completer did not match a component name: {}", componentName) ;
+        SPDLOG_DEBUG(
+            "component add completer did not match a component name: {}", 
+            componentName.toStdString()
+        );
     });
 
     connect(menu, &QMenu::aboutToShow, search, &QLineEdit::clear);
@@ -616,7 +619,7 @@ void Synth::performSave(){
     QByteArray data = saveData_.dump(2).c_str();
     file.write(data);
     file.close();
-    SPDLOG_DEBUG("configuration state saved to file {}.", file.toStdString());
+    SPDLOG_DEBUG("configuration state saved to file {}.", file.fileName().toStdString());
     setWindowModified(false);
     windowHandle()->requestUpdate();
     return ;

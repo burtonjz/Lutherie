@@ -39,6 +39,11 @@ target_include_directories(gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_compile_definitions(gui
+    PRIVATE
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
+)
+
 include(GNUInstallDirs)
 
 install(TARGETS gui

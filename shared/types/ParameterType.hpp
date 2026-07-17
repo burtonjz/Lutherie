@@ -130,12 +130,13 @@ template <> struct ParameterTraits<ParameterType::SCALAR>{
     static constexpr float minimum = -1.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
-    static constexpr size_t uiPrecision = 3 ; // num decimals
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+    static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::DELAY>{
@@ -149,7 +150,9 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+    
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::DEPTH>{
@@ -163,7 +166,9 @@ template <> struct ParameterTraits<ParameterType::DEPTH>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+
     static constexpr size_t uiPrecision = 2 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::STATUS>{
@@ -177,7 +182,9 @@ template <> struct ParameterTraits<ParameterType::STATUS>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::WAVEFORM>{
@@ -191,7 +198,9 @@ template <> struct ParameterTraits<ParameterType::WAVEFORM>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::FREQUENCY>{
@@ -205,7 +214,9 @@ template <> struct ParameterTraits<ParameterType::FREQUENCY>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
@@ -219,7 +230,9 @@ template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
         {ModulatorRange::UNKNOWN, ModulationStrategy::MULTIPLICATIVE_ZERO},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::GAIN>{
@@ -233,7 +246,9 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
         {ModulatorRange::UNKNOWN, ModulationStrategy::MULTIPLICATIVE_ZERO},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::DBGAIN>{
@@ -247,7 +262,9 @@ template <> struct ParameterTraits<ParameterType::DBGAIN>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::PHASE>{
@@ -261,7 +278,9 @@ template <> struct ParameterTraits<ParameterType::PHASE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::PAN>{
@@ -275,7 +294,9 @@ template <> struct ParameterTraits<ParameterType::PAN>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::DETUNE>{
@@ -289,15 +310,17 @@ template <> struct ParameterTraits<ParameterType::DETUNE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
+
     static constexpr size_t uiPrecision = 2 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 
     // ui decomposition constants
-    static constexpr float harmonicMin = 0.5f;
-    static constexpr float harmonicMax = 8.0f;
-    static constexpr size_t harmonicPrecision = 2;
-    static constexpr float detuneCentsMin = -100.0f;
-    static constexpr float detuneCentsMax = 100.0f;
-    static constexpr size_t detunePrecision = 1;
+    static constexpr float harmonicMin = 0.5f ;
+    static constexpr float harmonicMax = 8.0f ;
+    static constexpr size_t harmonicPrecision = 2 ;
+    static constexpr float detuneCentsMin = -100.0f ; 
+    static constexpr float detuneCentsMax = 100.0f ;
+    static constexpr size_t detunePrecision = 1 ;
 };
 
 template <> struct ParameterTraits<ParameterType::ATTACK>{
@@ -311,7 +334,10 @@ template <> struct ParameterTraits<ParameterType::ATTACK>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
+
 };
 
 template <> struct ParameterTraits<ParameterType::DECAY>{
@@ -325,7 +351,9 @@ template <> struct ParameterTraits<ParameterType::DECAY>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::SUSTAIN>{
@@ -339,7 +367,9 @@ template <> struct ParameterTraits<ParameterType::SUSTAIN>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::RELEASE>{
@@ -353,7 +383,9 @@ template <> struct ParameterTraits<ParameterType::RELEASE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
+
     static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
@@ -367,7 +399,9 @@ template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::CUTOFF>{
@@ -381,7 +415,9 @@ template <> struct ParameterTraits<ParameterType::CUTOFF>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
@@ -395,7 +431,9 @@ template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::SHELF>{
@@ -409,7 +447,9 @@ template <> struct ParameterTraits<ParameterType::SHELF>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 2 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
@@ -423,21 +463,25 @@ template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 2 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::BPM>{
     using ValueType = int ;
     static constexpr std::string_view name = "bpm";
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = 300 ;
+    static constexpr float maximum = 1000 ;
     static constexpr float defaultValue = 120 ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::MIDI_VALUE>{
@@ -451,7 +495,9 @@ template <> struct ParameterTraits<ParameterType::MIDI_VALUE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::VELOCITY>{
@@ -465,7 +511,9 @@ template <> struct ParameterTraits<ParameterType::VELOCITY>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::START_POSITION>{
@@ -479,7 +527,9 @@ template <> struct ParameterTraits<ParameterType::START_POSITION>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::DURATION>{
@@ -493,7 +543,9 @@ template <> struct ParameterTraits<ParameterType::DURATION>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
@@ -507,7 +559,9 @@ template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
@@ -521,7 +575,9 @@ template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
 
 template <> struct ParameterTraits<ParameterType::TRIGGER>{
@@ -535,7 +591,9 @@ template <> struct ParameterTraits<ParameterType::TRIGGER>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
+
     static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
   
 template <> struct ParameterTraits<ParameterType::SAMPLE>{
@@ -549,8 +607,11 @@ template <> struct ParameterTraits<ParameterType::SAMPLE>{
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
     }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
 };
+
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime
 
