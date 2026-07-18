@@ -409,6 +409,7 @@ json ControlApiHandler::removeComponent(const json& request){
         c.remove = true ;
         json j = c ;
         auto cresponse = parseConnectionRequest(j);
+        sendApiResponse(cresponse);
         allRemoved = allRemoved && cresponse.contains("status") && cresponse.at("status") == "success" ;
     }
 
