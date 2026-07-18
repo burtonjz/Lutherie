@@ -306,6 +306,12 @@ void Theme::applyDarkTheme() {
     qApp->setStyleSheet(styleSheet);
 }
 
+const QString& Theme::getMidiLearnInstructions(){
+    static const QString midiLearn = 
+    "Press, slide, or turn your midi control hardware for identification" ;
+    return midiLearn ;
+}
+
 const QString& Theme::getLabelTitleStyle(){
     static const QString title = QString(
         "font-size: 18px; font-weight: bold; color: %1;"

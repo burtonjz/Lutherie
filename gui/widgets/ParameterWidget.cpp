@@ -21,6 +21,7 @@
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
+#include "widgets/MidiLearnWidget.hpp"
 #include "widgets/RangeSlider.hpp"
 #include "widgets/WheelGuard.hpp"
 
@@ -90,14 +91,20 @@ void ParameterWidget::contextMenuEvent(QContextMenuEvent *event){
     }
     
     QAction* editMidiControl = new QAction("Edit MIDI control", &menu);
-    menu.addAction(editMidiControl);
+    QMenu* editMidi = menu.addMenu("Edit MIDI Control");
+    QWidget* midiWidget = createMidiLearn(editMidi);
+    QWidgetAction* midiAction = new QWidgetAction(editMidi);
+    midiAction->setDefaultWidget(midiWidget);
+    editMidi->addAction(midiAction);
 
+    connect(editMidi, &QMenu::aboutToHide, &menu, &QMenu::close);
+    
     menu.exec(event->globalPos());
     event->accept();
 }
 
 QWidget* ParameterWidget::createRangeEditor(QWidget* parent){
-    auto* popup = new QWidget(parent, Qt::Popup);
+    auto* popup = new QWidget(parent);
     popup->setAttribute(Qt::WA_DeleteOnClose);
 
     auto* layout = new QVBoxLayout(popup);
@@ -141,6 +148,24 @@ QWidget* ParameterWidget::createRangeEditor(QWidget* parent){
     layout->addWidget(slider);
     popup->adjustSize();
     
+    return popup ;
+}
+
+QWidget* ParameterWidget::createMidiLearn(QMenu* parent){
+    auto popup = new MidiLearnWidget(parent);
+
+    connect(
+        popup, &MidiLearnWidget::midiControlSelected,
+        this, [this](uint8_t ctrl){
+            emit midiControlSelected(getType(), ctrl);
+        }
+    );
+
+    connect(
+        popup, &MidiLearnWidget::midiControlSelected,
+        parent, &QMenu::close
+    );
+
     return popup ;
 }
 

@@ -62,12 +62,12 @@ private:
 signals:
     void parameterEdited(int componentId, ParameterType p, ParameterValue value);
     void paramRangeEdited(int componentId, ParameterType p, ParameterValue min, ParameterValue max);
-
+    void paramMidiEdited(int componentId, ParameterType p, uint8_t ctrl);
+    
     void fileSelected(int componentId, std::string path);
     
 public slots:
     void onValueChange();
-    void onRangeChanged(ParameterType p, ParameterValue min, ParameterValue max);
 
 private slots:
     void flushPendingChanges();

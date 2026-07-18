@@ -49,6 +49,7 @@ protected:
     void childEvent(QChildEvent* event) override ;
     void contextMenuEvent(QContextMenuEvent *event) override ;
     QWidget* createRangeEditor(QWidget* parent = nullptr);
+    QWidget* createMidiLearn(QMenu* parent);
 
 private slots:
 public slots:
@@ -58,6 +59,7 @@ public slots:
 signals:
     void valueChanged();
     void rangeChanged(ParameterType p, ParameterValue min, ParameterValue max);
+    void midiControlSelected(ParameterType p, uint8_t ctrl);
 
 };
 

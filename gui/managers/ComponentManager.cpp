@@ -79,6 +79,16 @@ void ComponentManager::requestParameterRangeUpdate(int componentId, ParameterTyp
     ControlApiClient::instance()->sendMessage(j); 
 }
 
+void ComponentManager::requestParameterMidiUpdate(int componentId, ParameterType p, uint8_t ctrl){
+    json j ;
+    j["action"] = "set_midi_control" ;
+    j["componentId"] = componentId ;
+    j["parameter"] = GET_PARAMETER_TRAIT_MEMBER(p, name);
+    j["value"] = ctrl ;
+
+    ControlApiClient::instance()->sendMessage(j);
+}
+
 void ComponentManager::requestCollectionUpdate(CollectionRequest req){
     json obj = req ;
     ControlApiClient::instance()->sendMessage(obj); 
@@ -166,6 +176,10 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
         connect(
             params, &ComponentParameters::paramRangeEdited,
             this, &ComponentManager::onParameterRangeEdited
+        );
+        connect(
+            params, &ComponentParameters::paramMidiEdited,
+            this, &ComponentManager::onParameterMidiEdited
         );
         connect(
             params, &ComponentParameters::fileSelected,
@@ -479,6 +493,10 @@ void ComponentManager::onParameterEdited(int componentId, ParameterType p, Param
 
 void ComponentManager::onParameterRangeEdited(int componentId, ParameterType p, ParameterValue min, ParameterValue max){
     requestParameterRangeUpdate(componentId, p, min, max);
+}
+
+void ComponentManager::onParameterMidiEdited(int componentId, ParameterType p, uint8_t ctrl){
+    requestParameterMidiUpdate(componentId, p, ctrl);
 }
 
 void ComponentManager::onCollectionEdited(CollectionRequest req ){

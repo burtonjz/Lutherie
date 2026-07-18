@@ -258,6 +258,8 @@ public:
     static constexpr int RANGE_SLIDER_HEIGHT        = 60 ;
     static constexpr int RANGE_SLIDER_HANDLE_RADIUS = 5 ;
 
+    static const QString& getMidiLearnInstructions();
+
     /*
     =======================================================
     =============== STYLE SHEET DEFINITIONS ===============

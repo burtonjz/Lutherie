@@ -47,6 +47,7 @@ public:
     void requestRemoveComponent(int componentId);
     void requestParameterUpdate(int componentId, ParameterType p, ParameterValue v);
     void requestParameterRangeUpdate(int componentId, ParameterType p, ParameterValue min, ParameterValue max);
+    void requestParameterMidiUpdate(int componentId, ParameterType p, uint8_t ctrl);
     void requestCollectionUpdate(CollectionRequest req);
     void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
     void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
@@ -74,6 +75,8 @@ public slots:
     void onDataMessageReceived(DataDescriptor header, std::vector<double> buffer);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onParameterRangeEdited(int componentId, ParameterType p, ParameterValue min, ParameterValue max);
+    void onParameterMidiEdited(int componentId, ParameterType p, uint8_t ctrl);
+
     void onCollectionEdited(CollectionRequest req );
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);
     void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);

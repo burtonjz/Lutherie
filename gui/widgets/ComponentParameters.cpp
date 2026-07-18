@@ -123,8 +123,17 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     );
     connect(
         w, &ParameterWidget::rangeChanged,
-        this, &ComponentParameters::onRangeChanged
+        this, [this](ParameterType p, ParameterValue min, ParameterValue max){
+            emit paramRangeEdited(model_->getId(), p, min, max);
+        }
     );
+    connect(
+        w, &ParameterWidget::midiControlSelected,
+        this, [this](ParameterType p, uint8_t ctrl){
+            emit paramMidiEdited(model_->getId(), p, ctrl);
+        }
+    );
+
     connect(
         model_, &ComponentModel::parameterValueChanged,
         w, &ParameterWidget::onModelParameterChanged
@@ -242,10 +251,6 @@ void ComponentParameters::onValueChange(){
     
     pendingChanges_[p] = v ;
     parameterChangedTimer_->start();
-}
-
-void ComponentParameters::onRangeChanged(ParameterType p, ParameterValue min, ParameterValue max){
-    emit paramRangeEdited(model_->getId(), p, min, max);
 }
 
 void ComponentParameters::flushPendingChanges(){
