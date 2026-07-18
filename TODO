@@ -7,9 +7,6 @@
 ### Signal Flow
 - [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs.
 
-### MIDI Control Mapping
-- [Medium] Right-click context menu on parameter widget to map to MIDI control. Backend system to route midi control messages appropriately and send updates to frontend.
-
 ---
 
 ## Medium Priority
@@ -31,7 +28,7 @@
 - [Medium] "Arming" system for buffer loads so real-time audio isn't disrupted
 - [Medium] Specialized `BufferStreamer` widget with standard controls (loop, playback scroller, start/reset)
 - [Medium] `StreamRecorder` component (read in and save an audio stream, buffer output)
-- [Big] `SpectralFilter` component (buffer in, buffer out) -- essentially grab 
+- [Big] `SpectralFilter` component (buffer in, buffer out) 
 
 ### Layout / Components
 - [Quick] Expose Min/Max/Default parameters via right-click tool window
@@ -51,13 +48,6 @@
 - Internally, it has a basic formula editor to convert the generic knob value towards whatever parameters it is connected to.
 - It also is capable of receiving modulation input.
 - The MacroKnob is also capable of receiving control input from MIDI (but probably not another MacroKnob)":TY
-
-### MIDI Control Mapping (New Feature)
-- *Dependency: ControlConnection/ControlPort*
-- Component to turn midi signal into control signal
-- Only allow one control signal per parameter, so that MidiControl and MacroKnob don't compete
-- UI gives touch-learn midi assignment (either wiggle control or tap button to assign. Potentially filter based on parameter type and control type )
-- [Quick] Indicator on parameter showing MIDI association, hover to reveal control id
 
 ### Peripheral Devices
 - [Big] Support Audio Input peripherals
