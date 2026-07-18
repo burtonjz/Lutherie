@@ -72,6 +72,9 @@ public:
 
     json serialize() const ;
 
+    static const std::string& controlTypeToString(ControlType typ);
+    static ControlType stringToControlType(const std::string& str);
+
     static constexpr uint8_t INVALID_ROUTE = 128 ;
     static constexpr size_t NUM_LEARN_EVENTS_NEEDED = 3 ;
 

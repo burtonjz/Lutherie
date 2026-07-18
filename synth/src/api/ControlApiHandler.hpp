@@ -123,6 +123,7 @@ private:
     // load functions
     bool loadCreateComponent(const json& components, std::unordered_map<int,int>& idMap);
     bool loadConnectComponent(const json& config);
+    bool loadMidiControls(const json& controls);
     void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);
 
     // collection helpers

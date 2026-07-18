@@ -366,6 +366,13 @@ json ControlApiHandler::loadPatch(const json& request){
             throw std::runtime_error("Error connecting components when loading patch");
         }
     }
+
+    // reconnect midi controls
+    if ( response.contains("midi_controls") ){
+        if ( ! loadMidiControls(response.at("midi_controls")) ){
+            throw std::runtime_error("Error configuring midi controls when loading patch");
+        }
+    }
     
     return response ;
 }
@@ -1079,11 +1086,16 @@ json ControlApiHandler::setMidiControl(const json& request){
 
     auto router = MidiControlRouter::instance();
     if ( request.contains("control_type") ){
-        if ( request.at("control_type") == "continuous" ){
-            router->setMidiControlType(ctrl, MidiControlRouter::ControlType::CONTINUOUS);
-        } else if ( request.at("control_type") == "discrete" ){
-            router->setMidiControlType(ctrl, MidiControlRouter::ControlType::DISCRETE);
+        MidiControlRouter::ControlType ctrlType ;
+        try {
+             ctrlType = MidiControlRouter::stringToControlType(request.at("control_type"));
+        } catch ( std::exception& e){
+            throw std::runtime_error(fmt::format(
+                "cannot process set midi request, control type is invalid: {}", 
+                request.at("control_type").dump()
+            ));
         }
+        router->setMidiControlType(ctrl, ctrlType);
     }
 
     
@@ -1122,6 +1134,7 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
             componentRequest["action"] = "add_component" ;
             componentRequest["name"] = component.at("name") ;
             componentResponse = addComponent(componentRequest);
+            sendApiResponse(componentResponse);
             idMap[id] = componentResponse["componentId"];
 
             for ( const auto& [p, data] : params.items() ){
@@ -1132,7 +1145,8 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
                 parameterRequest["componentId"] = idMap[id] ;
                 parameterRequest["parameter"] = p ;
                 parameterRequest["value"] = data.at("currentValue") ;
-                setParameter(parameterRequest);
+                auto parameterResponse = setParameter(parameterRequest);
+                sendApiResponse(parameterResponse);
             }
         } catch ( const std::exception& e ){
             SPDLOG_WARN("Error creating component: {}", std::string(e.what()));
@@ -1144,10 +1158,9 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
 }
 
 bool ControlApiHandler::loadConnectComponent(const json& connections){
-    bool success = true ;
-
     if ( !connections.is_array() ) return false ;
 
+    bool success = true ;
     for ( auto c : connections ){
         ConnectionRequest request ;
         try {
@@ -1157,7 +1170,8 @@ bool ControlApiHandler::loadConnectComponent(const json& connections){
             success = false ;
         }
 
-        const auto& connectionResponse = parseConnectionRequest(request);
+        auto connectionResponse = parseConnectionRequest(request);
+        sendApiResponse(connectionResponse);
         if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
             SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
             success = false ;
@@ -1166,6 +1180,23 @@ bool ControlApiHandler::loadConnectComponent(const json& connections){
 
     return success ;
 
+}
+
+bool ControlApiHandler::loadMidiControls(const json& controls){
+    if ( !controls.is_array() ) return false ;
+
+    bool success = true ;
+    for ( auto c : controls ){
+        try {
+            auto response = setMidiControl(c);
+            sendApiResponse(response);
+        } catch (std::exception& e){
+            SPDLOG_ERROR("error loading midi control: {}", e.what());
+            success = false ;
+        }
+    }
+
+    return success ;
 }
 
 void ControlApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap){

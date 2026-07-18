@@ -188,17 +188,7 @@ void MidiControlRouter::handleLearnEvent(uint8_t ctrl, uint8_t value){
 
     json j ;
     j["action"] = "midi_learn" ;
-    
-    switch(typ){
-    case ControlType::CONTINUOUS: 
-        j["control_type"] = "continuous" ; 
-        break ;
-    case ControlType::DISCRETE: 
-        j["control_type"] = "discrete" ; 
-        break ;
-    default: break ;
-    }
-
+    j["control_type"] = controlTypeToString(typ);
     j["value"] = ctrl ;
     controlTypes_[ctrl] = typ ;
     ControlApiHandler::instance()->handleClientMessage(j.dump());
@@ -252,10 +242,27 @@ json MidiControlRouter::serialize() const {
                 route.param, 
                 name
             );
-            j["control_type"] = controlTypes_.at(ctrl);
+            j["control_type"] = controlTypeToString(controlTypes_.at(ctrl)) ;        
             j["value"] = ctrl ;
             output.push_back(j);
         }
     }
     return output ;
+}
+
+const std::string& MidiControlRouter::controlTypeToString(ControlType typ){
+    static const std::map<ControlType, std::string> c2s = {
+        {ControlType::CONTINUOUS, "continuous"},
+        {ControlType::DISCRETE, "discrete"}
+    };
+    return c2s.at(typ);
+}
+
+MidiControlRouter::ControlType MidiControlRouter::stringToControlType(const std::string& str){
+    static const std::map<std::string, ControlType> s2c = {
+        {"continuous", ControlType::CONTINUOUS},
+        {"discrete", ControlType::DISCRETE}
+    };
+    if ( s2c.contains(str) ) return s2c.at(str) ;
+    throw std::runtime_error(fmt::format("invalid string for ControlAction: {}", str));
 }
