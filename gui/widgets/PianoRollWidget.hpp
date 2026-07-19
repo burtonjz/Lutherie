@@ -163,6 +163,8 @@ private:
     // functions for api responses
     void handleCollectionAdd(const CollectionRequest& req);
     void handleCollectionRemove(const CollectionRequest& req);
+    void handleCollectionAddAll(const CollectionRequest& req);
+    void handleCollectionGetAll(const CollectionRequest& req);
     
     void onNoteAdded(SequenceNote note);
     void onNoteRemoved(SequenceNote note);

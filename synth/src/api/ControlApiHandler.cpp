@@ -636,6 +636,7 @@ json ControlApiHandler::parseCollectionRequest(const json& request){
     case CollectionAction::GET:       return getCollectionValue(c, cd, req);
     case CollectionAction::GET_ALL:   return getCollectionValues(c, cd, req);
     case CollectionAction::SET:       return setCollectionValue(c, cd, req);
+    case CollectionAction::ADD_ALL:   return addCollectionValues(c, cd, req);
     case CollectionAction::RESET:     return resetCollection(c, cd, req);
     default:                          
         throw std::runtime_error("Unexpected Collection Action received");
@@ -802,6 +803,42 @@ json ControlApiHandler::setCollectionValue(BaseComponent* c, const CollectionDes
     } catch (const std::exception& e){
         throw std::runtime_error(fmt::format(
             "failed to set collection value: {}",
+            e.what()
+        ));
+    }
+
+    json response = request ;
+    return response ;
+}
+
+
+json ControlApiHandler::addCollectionValues(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    ParameterMap* params = c->getParameters();
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            params->addCollectionValuesDispatch(cd.params[0], *request.value);
+            params->getCollection(cd.params[0])->notifyListeners();
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                params->addCollectionValuesDispatch(cd.params[0], (*request.value)[i]);
+            }
+            params->getCollection(cd.params[0])->notifyListeners();
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                params->addCollectionValuesDispatch(cd.params[i],
+                    (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)]);
+                params->getCollection(cd.params[i])->notifyListeners();
+            }
+            break ;
+        default: 
+            throw std::runtime_error("unrecognized collection structure");
+        }
+    } catch (const std::exception& e){
+        throw std::runtime_error(fmt::format(
+            "failed to set collection values: {}",
             e.what()
         ));
     }
@@ -1149,6 +1186,27 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
                 auto parameterResponse = setParameter(parameterRequest);
                 sendApiResponse(parameterResponse);
             }
+
+            if ( component.contains("collection") ){
+                auto c = engine_->componentManager.getRaw(idMap[id]);
+                if ( !c ){
+                    SPDLOG_ERROR("cannot process collection request for a component that doesn't exist");
+                    success = false ;
+                    continue ;
+                }
+
+                ComponentDescriptor descriptor = ComponentRegistry::getComponentDescriptor(c->getType());
+                if ( !descriptor.hasCollection() ){
+                    SPDLOG_ERROR("cannot process collection request for a component that shouldn't have a collection");
+                    success = false ;
+                    continue ;
+                }
+                CollectionRequest req = component.at("collection");
+                req.componentId = idMap[id] ;
+                req.action = CollectionAction::ADD_ALL ;
+                auto resp = addCollectionValues(c,descriptor.getCollection(),req);
+                sendApiResponse(resp);
+            }
         } catch ( const std::exception& e ){
             SPDLOG_WARN("Error creating component: {}", std::string(e.what()));
             success = false ;
@@ -1159,6 +1217,7 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
 }
 
 bool ControlApiHandler::loadConnectComponent(const json& connections){
+    if ( connections.empty() ) return true ;
     if ( !connections.is_array() ) return false ;
 
     bool success = true ;
@@ -1184,6 +1243,7 @@ bool ControlApiHandler::loadConnectComponent(const json& connections){
 }
 
 bool ControlApiHandler::loadMidiControls(const json& controls){
+    if ( controls.empty() ) return true ;
     if ( !controls.is_array() ) return false ;
 
     bool success = true ;

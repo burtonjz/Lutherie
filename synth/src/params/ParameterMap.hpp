@@ -81,6 +81,7 @@ class ParameterMap {
         size_t addCollectionValueDispatch(ParameterType p, const json& value);
         size_t removeCollectionValueDispatch(ParameterType p, size_t idx);
         void   setCollectionValueDispatch(ParameterType p, size_t idx, const json& value);
+        void   addCollectionValuesDispatch(ParameterType p, const json& value);
         json   getCollectionMinDispatch(ParameterType p) const ;
         json   getCollectionMaxDispatch(ParameterType p) const ;
         bool   setCollectionMinDispatch(ParameterType p, const json& value);

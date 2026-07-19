@@ -259,6 +259,21 @@ void ParameterMap::setCollectionValueDispatch(ParameterType p, size_t idx, const
     }
 }
 
+void ParameterMap::addCollectionValuesDispatch(ParameterType p, const json& value){
+    bool success = true ;
+    switch (p) {
+        #define X(NAME) case ParameterType::NAME:                            \
+            for ( const auto v : value ){                                    \
+                success = getCollection<ParameterType::NAME>()->addValue(v); \
+            }                                                                \
+            break ;
+        PARAMETER_TYPE_LIST
+        #undef X
+        default: throw std::runtime_error("Invalid Collection dispatch");
+    if ( !success ) throw std::runtime_error("failed to set collection value");
+    }
+}
+
 json ParameterMap::getCollectionMinDispatch(ParameterType p) const {
     switch (p) {
         #define X(NAME) case ParameterType::NAME: return getCollection<ParameterType::NAME>()->getMinValue();

@@ -671,7 +671,15 @@ void PianoRollWidget::updateCollection(const CollectionRequest& req){
     case CollectionAction::REMOVE:
         handleCollectionRemove(req);
         break ;
+    case CollectionAction::GET_ALL:
+        handleCollectionGetAll(req);
+        break ;
+    case CollectionAction::ADD_ALL:
+        handleCollectionAddAll(req);
+        break ;
     default:
+        SPDLOG_WARN("received collection request with unexpected action: {}", 
+            static_cast<json>(req).dump());
         break ;
     }
 }
@@ -698,6 +706,56 @@ void PianoRollWidget::handleCollectionRemove(const CollectionRequest& req){
     notes_.erase(it);
     selectedNotes_.erase(it->first);
     update();
+}
+
+void PianoRollWidget::handleCollectionAddAll(const CollectionRequest& req){
+    if ( !req.value->is_structured() ){
+        SPDLOG_ERROR("Collection Request value not in expected format");
+        return ;
+    }
+
+    auto pitchStr   = GET_PARAMETER_TRAIT_MEMBER(ParameterType::MIDI_VALUE, name);
+    auto velocityStr= GET_PARAMETER_TRAIT_MEMBER(ParameterType::VELOCITY, name);
+    auto startStr   = GET_PARAMETER_TRAIT_MEMBER(ParameterType::START_POSITION, name);
+    auto durationStr= GET_PARAMETER_TRAIT_MEMBER(ParameterType::DURATION, name);
+
+    if ( 
+        !req.value->contains(pitchStr)    ||
+        !req.value->contains(velocityStr) ||
+        !req.value->contains(startStr)    ||
+        !req.value->contains(durationStr) 
+    ){
+        SPDLOG_ERROR("Collection request does not have all expected value members");
+        return ;
+    }
+
+    size_t numVals = req.value->at(pitchStr).size();
+    for ( size_t i = 0; i < numVals; ++i ){
+        SequenceNote n = {
+            .pitch=req.value->at(pitchStr)[i],
+            .velocity=req.value->at(velocityStr)[i],
+            .startBeat=req.value->at(startStr)[i],
+            .duration=req.value->at(durationStr)[i]
+        };
+        notes_[i] = new NoteWidget(n,  roll_);
+        SPDLOG_DEBUG("new note widget added: {}", 
+            static_cast<json>(n).dump());
+    }
+
+    update();
+    return ;
+
+}
+
+void PianoRollWidget::handleCollectionGetAll(const CollectionRequest& req){
+    // clear out existing notes to resync
+    
+    for(auto it = notes_.begin(); it != notes_.end(); ){
+        it->second->deleteLater() ;
+        it = notes_.erase(it);
+    }
+
+    handleCollectionAddAll(req);
 }
 
 void PianoRollWidget::onParameterChanged(ParameterType p){

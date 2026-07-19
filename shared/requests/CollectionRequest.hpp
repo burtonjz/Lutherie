@@ -33,6 +33,7 @@ enum class CollectionAction {
     GET,
     GET_ALL,
     SET,
+    ADD_ALL,
     RESET
 };
 
@@ -49,6 +50,7 @@ struct CollectionRequest {
         {CollectionAction::GET, "get_collection_value"},
         {CollectionAction::GET_ALL, "get_collection_values"},
         {CollectionAction::SET, "set_collection_value"},
+        {CollectionAction::ADD_ALL, "add_collection_values"},
         {CollectionAction::RESET, "reset_collection"}
     }};
 
@@ -81,7 +83,8 @@ struct CollectionRequest {
         // check the value for validity
         if ( 
             action == CollectionAction::ADD ||
-            action == CollectionAction::SET
+            action == CollectionAction::SET ||
+            action == CollectionAction::ADD_ALL
         ){
             switch(d.structure){
             case CollectionStructure::INDEPENDENT:

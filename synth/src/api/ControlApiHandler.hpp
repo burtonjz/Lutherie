@@ -96,6 +96,7 @@ public:
     json getCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     json getCollectionValues(BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     json setCollectionValue(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json addCollectionValues(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json resetCollection(BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
 
     // modulation management
