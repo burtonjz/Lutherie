@@ -2,42 +2,61 @@
 
 ---
 
-## High Priority
+## MVP Requirements
 
-### Signal Flow
-- [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs.
+### Configuration / UX
+- [Quick] Prevent modules from spawning on top of each other
+- [Quick] Launch KDDW/modern floating window for setup button
+- [Quick] Allow saving remembering audio/midi IDs in user config.
+- [Quick] Request rename when a node gets its unique name on graph, so parameters/other panels update properly
+- [Quick] fix UX oddities with the add component menu (auto highlight when one search item left, have search bar auto activate to allow immediate typing)
+- [Medium] Create application launcher (linux .desktop, single entry/exit scripts)
+- [Medium] Create better patch load menu (dedicated internal directory)
+- [Medium] hide/lock basic parameters (for simplifying patches)
 
+### Component Improvements
+- [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
+- [Quick] allow saving an output buffer to audio file
+- [Quick] Send Pitchbend Control to `PolyOscillator`
+- [Medium] develope glide mechanism for monophonic oscillator (possibly new oscillator component)
+- [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
+
+### New Components
+- [Quick] `BufferReverser` -- flip a buffer and play in reverse (buffer in, buffer out)
+- [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
+- [Medium] `Arpeggiator` -- play series of notes relative to pressed notes in a loop (midi in, midi out)
+- [Big] `SpectralDrawer` -- Allow a user to build a spectrograph (buffer out)
+- [Big] `SpectralFilter` -- Spectrogram of input buffer, with option to filter out frequency bands (buffer in, buffer out) 
+
+### New Patches
+- [Quick] basic all pass
+- [Quick] basic comb filter
+- [Quick] basic reverb
+- [Quick] example supersaw
+- [Quick] example additive synthesis
+  
 ---
 
-## Medium Priority
+## Day 2
 
-### Configuration / Patch Saving
-- [Medium] Create better patch load menu
-- [Medium] Create a configuration menu editor for config.json
-  
-### UI / Workflow improvements
+### Control Signals?
+- [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs. But certain internal parameters that aren't exposed through existing parameter system ( such as phase of an oscillator for a hard sync effect)
+
+### Configuration / UX
 - [Quick] Allow group deletions, but with a warning pop-up
-- [Quick] Request rename when a node gets its unique name on graph, so parameters/other panels update properly
+- [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 
+- [Medium] Create a configuration menu editor for config.json
 - [Medium] improve component add text search workflow, and also create a hotkey to load the menu in a floating context for convenience
+- [Medium] add component isolation tool (hide all but selected components)
+- [Medium] add "highlighting" logic so that selected components also light up connection paths
+- [Medium] Component duplication — plain copy, and copy-with-connections
+- [Medium] Specialized Widgets in component groups should all be stacked together by default in one floating window
 
-### Buffer
-- [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
-- [Quick] `BufferSaver` component to allow saving to external wav/mp3/whatever.
+### Component Improvements
 - [Medium] Move `FileBuffer` resampling to a separate thread; add a loading indicator
 - [Medium] "Arming" system for buffer loads so real-time audio isn't disrupted
-- [Medium] Specialized `BufferStreamer` widget with standard controls (loop, playback scroller, start/reset)
-- [Medium] `StreamRecorder` component (read in and save an audio stream, buffer output)
-- [Big] `SpectralFilter` component (buffer in, buffer out) 
-
-### Layout / Components
-- [Quick] Prevent modules from spawning on top of each other
-- [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 
-- [Medium] Component duplication — plain copy, and copy-with-connections
-- [Big] consider drag/drop component parameters from the parameter panel to a group widget when grouped, with sensible defaults
-
-### Misc Component Improvements
-- [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
-- [Quick] Send Pitchbend Control to `PolyOscillator`
+- [Medium] enhancements to `BufferStreamer`: add a reset control, loop control, and midi control
+- [Big] specialized widget for `BiquadFilter` that includes a graph representation for modifying parameters
 
 ### Macro Knobs (New Feature)
 - *Dependency: ControlConnection/ControlPort*
@@ -52,31 +71,32 @@
 - [Big] Allow multiple MIDI peripheral devices
 - [Big] Support MIDI output peripherals
 
-### Components to Add
-- [Quick] Bitcrusher
-- [Quick] AudioSwitch (send audio through output channel 0 or 1)
-- [Quick] MidiSwitch (leverage midi channel system)
-- [Medium] Quantizer / velocity manipulation
-- [Big] Arpeggiator
-- [Big] Mixer *note: investigate whether this should be a primary component or a configured GroupComponent (e.g., chained panners with some scalar controls or something)*
+### New Components
+- [Quick] `Bitcrusher` -- reduce audio resolution ( audio in, audio out)
+- [Quick] `AudioSwitch` -- switch audio through output channel 0 or 1 (audio in, 2 audio out)
+- [Quick] `MidiSwitch` -- leverage midi channel system? (midi in, midi out) 
+- [Quick] `Quantizer` -- real time midi manipulation and routing (midi in, midi out)
+- [Quick] `MidiOffset` -- set offsets note values, velocity values (midi in, midi out)
+- [Medium] `PitchShifter` -- maybe buffer + real time versions?
+- [Big] `Mixer` *note: investigate whether this should be a primary component or a configured GroupComponent (e.g., chained panners with some scalar controls or something)*
   
 ---
 
-## Low Priority
+## Backlog
 
 ### Bugs / Cleanup
-- [Quick] Move setup button to menus; make it a tooltip popup instead of a dedicated window, or move it to the configuration screen?
 - [Quick] Max zoom-out level for graph panel, reference mini-map for position on graph.
 - [Quick] Add Buffer submenu to Add Component
 - [Medium] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
 - [Quick] show event (parameters, modulation, detail editors) needs not only to ensure visibility, but also tab to it if it's tabbed with other docks. Maybe a small little border highlight would be nice too.
-- [Quick] improve several ui precision sliders (duration)
+- [Quick] parameter range widget is limited by slider width, so needs to be adjusted to account for high range parameters (e.g., frequency)
 
 ### Misc / Infra
 - [Medium] Disperse `CollectionRequest` validation to the `CollectionDescriptor` (e.g. a validation function, which actions are supported). This will make a less complex validation function and enforce rules that unofficially exist in code.
 - [Quick] Floating KDDW windows (specialized widgets) instantiate with a sensible size hint
 
 ### One Day
+- [Big] Physics Modeling (i.e., brass/woodwind/string instruments)
 - [Big] Envelope with drawable curve
 - [Big] Custom wavetable drawing
 - [Big] Write appropriate round-trip api testing suite using debug control client
