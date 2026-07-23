@@ -21,7 +21,6 @@
 - [Medium] improve component add text search workflow, and also create a hotkey to load the menu in a floating context for convenience
 
 ### Buffer
-- [Quick] Fix `BufferChopper` UI to load on inbound update, not only on connect
 - [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
 - [Quick] `BufferSaver` component to allow saving to external wav/mp3/whatever.
 - [Medium] Move `FileBuffer` resampling to a separate thread; add a loading indicator
@@ -31,7 +30,6 @@
 - [Big] `SpectralFilter` component (buffer in, buffer out) 
 
 ### Layout / Components
-- [Quick] Expose Min/Max/Default parameters via right-click tool window
 - [Quick] Prevent modules from spawning on top of each other
 - [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 
 - [Medium] Component duplication — plain copy, and copy-with-connections

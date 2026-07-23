@@ -117,6 +117,11 @@ void ComponentModel::setUpstreamModel(size_t inboundChannel, size_t outboundChan
             this, nullptr
         );
     }
+    SPDLOG_DEBUG(
+        "setting upstream model for buffer reference. "
+        "inbound channel {} references outbound buffer model with ID {} from channel {}",
+        inboundChannel, outboundModel->getId(), outboundChannel
+    );
     upstream_[inboundChannel] = std::pair<size_t, ComponentModel*>(outboundChannel, outboundModel);
     
     emit upstreamBufferUpdated(inboundChannel);
@@ -130,17 +135,27 @@ void ComponentModel::setUpstreamModel(size_t inboundChannel, size_t outboundChan
     );
 }
 
-void ComponentModel::clearUpstreamModel(size_t channel){
-    if ( upstream_.contains(channel) ){
-        auto [ch, m] = upstream_.at(channel);
-        if ( m ){
-            disconnect(
-                m, &ComponentModel::bufferUpdated,
-                this, &ComponentModel::upstreamBufferUpdated
-            );
-        }
+void ComponentModel::clearUpstreamModel(size_t inboundChannel){
+    ComponentModel* upstreamModel = nullptr ;
+    if ( upstream_.contains(inboundChannel) ){
+        upstreamModel = upstream_.at(inboundChannel).second ;
+        upstream_.erase(inboundChannel);
+        emit upstreamBufferUpdated(inboundChannel);
+    } else {
+        SPDLOG_WARN(
+            "received request to clear upstream model for channel {}, "
+            "but no upstream model defined for that channel. Ignoring request.",
+            inboundChannel
+        );
+        return ;
     }
-    upstream_.erase(channel);
+    
+    if ( upstreamModel ){
+        disconnect(
+            upstreamModel, &ComponentModel::bufferUpdated,
+            this, &ComponentModel::upstreamBufferUpdated
+        );
+    }
 }
 
 const ComponentDescriptor& ComponentModel::getDescriptor() const {

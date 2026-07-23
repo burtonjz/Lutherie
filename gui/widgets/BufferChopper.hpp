@@ -27,9 +27,6 @@ class BufferChopper : public BufferWaveform {
 private:
     int startSample_ ;
     int endSample_ ;
-    
-    int startPosX_ ;
-    int endPosX_ ;
 
     bool isDragging_ ;
     bool dragStart_ ;

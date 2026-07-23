@@ -46,7 +46,7 @@ public:
                 this,
                 tr("Select Component File"),
                 QDir::homePath(),
-                tr("Audio Files (*.wav, *.aiff, *.mp3);;All Files (*)")
+                tr("Audio Files (*.wav *.aiff *.mp3);;All Files (*)")
             );
             if (filePath.isEmpty()) {
                 return ; 

@@ -32,8 +32,10 @@ BufferChopper::BufferChopper(ComponentModel* model, size_t channel, QWidget* par
 void BufferChopper::paintEvent(QPaintEvent* event){
     BufferWaveform::paintEvent(event);
     QPainter painter(this);
-    drawSelectionRegion(painter, true);
-    drawSelectionRegion(painter, false);
+    if ( hasDisplayBuffer() ){
+        drawSelectionRegion(painter, true);
+        drawSelectionRegion(painter, false);
+    }
 }
 
 void BufferChopper::updateCollection(const CollectionRequest& req){
@@ -54,14 +56,10 @@ void BufferChopper::updateCollection(const CollectionRequest& req){
     }
     
     nlohmann::basic_json<> sampleRange = req.value.value();
+
     startSample_ = sampleRange[0];
     endSample_ = sampleRange[1];
-
-    startPosX_ = sampleToX(startSample_);
-    endPosX_   = sampleToX(endSample_);
-
-    SPDLOG_DEBUG("collection update resulted in startSample={}, endSample={}, startPos={}, endPos={}",
-        startSample_, endSample_, startPosX_, endPosX_);
+    
     update();
 }
 
@@ -72,11 +70,11 @@ void BufferChopper::drawSelectionRegion(QPainter& painter, bool start){
     // handle drag logic
     int startX, endX ;
     if ( isDragging_ ){
-        startX = dragStart_ ? dragPosX_ : startPosX_ ;
-        endX = dragStart_ ? endPosX_ : dragPosX_ ;
+        startX = dragStart_ ? dragPosX_ : sampleToX(startSample_);
+        endX = dragStart_ ? sampleToX(endSample_) : dragPosX_ ;
     } else {
-        startX = startPosX_ ;
-        endX = endPosX_ ;
+        startX = sampleToX(startSample_) ;
+        endX = sampleToX(endSample_) ;
     }
 
     // shaded region
@@ -126,9 +124,6 @@ void BufferChopper::drawSelectionHandle(QPainter& painter, int posX, bool dir){
 
 void BufferChopper::resizeEvent(QResizeEvent* event){
     BufferWaveform::resizeEvent(event);
-
-    startPosX_ = sampleToX(startSample_);
-    endPosX_ = sampleToX(endSample_);
     update();
 }
 
@@ -145,8 +140,9 @@ bool BufferChopper::event(QEvent *event){
 }
 
 void BufferChopper::mousePressEvent(QMouseEvent* e){
-    QPointF pos = mapFromGlobal(e->globalPosition());
+    if ( !hasDisplayBuffer() ) return ;
 
+    QPointF pos = mapFromGlobal(e->globalPosition());
     if ( e->button() == Qt::LeftButton ){
         startDrag(pos);
     }
@@ -171,12 +167,12 @@ void BufferChopper::mouseReleaseEvent(QMouseEvent* e){
 void BufferChopper::setHoverCursor(QPointF pos){
     int startX, endX ;
     if ( isDragging_ ){
-        startX = dragStart_ ? dragPosX_ : startPosX_ ;
-        endX = dragStart_ ? endPosX_ : dragPosX_ ;
+        startX = dragStart_ ? dragPosX_ : sampleToX(startSample_) ;
+        endX = dragStart_ ? sampleToX(endSample_) : dragPosX_ ;
         return ;
     } else {
-        startX = startPosX_ ;
-        endX = endPosX_ ;
+        startX = sampleToX(startSample_) ;
+        endX = sampleToX(endSample_) ;
     }
     
     
@@ -192,7 +188,11 @@ void BufferChopper::setHoverCursor(QPointF pos){
 bool BufferChopper::startDrag(QPointF pos){
     if ( cursor() != Qt::SizeHorCursor ) return false ;
 
-    if ( abs(pos.x() - startPosX_ ) < Theme::CHOPPER_HANDLE_WIDTH * 2 ){
+    double distL, distR ;
+    distL = abs(pos.x() - sampleToX(startSample_));
+    distR = abs(pos.x() - sampleToX(endSample_));
+
+    if ( distL < distR ){
         dragStart_ = true ;
         dragPosX_ = pos.x();
     } else {
@@ -206,17 +206,20 @@ bool BufferChopper::startDrag(QPointF pos){
 
 void BufferChopper::updateDrag(QPointF pos){
     dragPosX_ = pos.x();
+    float startPosX = sampleToX(startSample_);
+    float endPosX = sampleToX(endSample_);
+
     if ( dragStart_ ){
-        if ( dragPosX_ >= endPosX_ ){
-            dragPosX_ = endPosX_ - Theme::CHOPPER_HANDLE_WIDTH ;
+        if ( dragPosX_ >= endPosX ){
+            dragPosX_ = endPosX - Theme::CHOPPER_HANDLE_WIDTH ;
         }
         int plotStart = sampleToX(0);
         if ( dragPosX_ < plotStart ){
             dragPosX_ = plotStart ;
         }
     } else {
-        if ( dragPosX_ < startPosX_ ){
-            dragPosX_ = startPosX_ + Theme::CHOPPER_HANDLE_WIDTH ;
+        if ( dragPosX_ < startPosX ){
+            dragPosX_ = startPosX + Theme::CHOPPER_HANDLE_WIDTH ;
         }
         int plotEnd = plotWidth_ + Theme::WAVEFORM_MARGIN_LEFT ;
         if ( dragPosX_ > plotEnd ){
@@ -228,13 +231,12 @@ void BufferChopper::updateDrag(QPointF pos){
 
 void BufferChopper::finishDrag(QPointF pos){
     isDragging_ = false ;
+
     if ( dragStart_ ){
-        startPosX_ = dragPosX_ ;
-        startSample_ = xToSample(startPosX_);
+        startSample_ = xToSample(dragPosX_);
         sendCollectionUpdate();
     } else {
-        endPosX_ = dragPosX_ ;
-        endSample_ = xToSample(endPosX_);
+        endSample_ = xToSample(dragPosX_);
         sendCollectionUpdate();
     }
     update();
@@ -242,7 +244,10 @@ void BufferChopper::finishDrag(QPointF pos){
 }
 
 void BufferChopper::sendCollectionUpdate(){
-    json val({xToSample(startPosX_), xToSample(endPosX_)});
+    float startPosX = sampleToX(startSample_);
+    float endPosX = sampleToX(endSample_);
+
+    json val({startSample_,endSample_});
     CollectionRequest req = {
         .action = CollectionAction::SET,
         .componentId = model_->getId(),

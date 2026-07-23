@@ -542,14 +542,29 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
         req.inboundID.has_value() &&
         req.inboundIdx.has_value()
     ){
-        ComponentModel* downstream = getModel(req.inboundID.value());
-        ComponentModel* upstream = getModel(req.outboundID.value());
+        ComponentModel* inbound = getModel(req.inboundID.value());
+        ComponentModel* outbound = getModel(req.outboundID.value());
 
-        if ( !upstream || !downstream || !upstream->hasBuffer(req.outboundIdx.value()) ) return ;
-        downstream->setUpstreamModel(
+        if ( !outbound ){
+            SPDLOG_WARN(
+                "buffer connection created, but the outbound component (ID={})"
+                " does not exist.",
+                req.outboundID.value()
+            );
+            return ;
+        }
+        if ( !inbound ){
+            SPDLOG_WARN(
+                "buffer connection created, but the inbound component (ID={})"
+                " does not exist.",
+                req.inboundID.value()
+            );
+            return ;
+        }
+        inbound->setUpstreamModel(
             req.inboundIdx.value(),
             req.outboundIdx.value(),
-            upstream
+            outbound
         );
     }
 }
@@ -566,15 +581,16 @@ void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
         modParams->setConnectionStatus(req.inboundParameter.value(), false);
     }
 
-    // handle upstream buffer tracking
+    // handle buffer tracking
     if (
         req.inboundSocket == SocketType::BufferInbound &&
         req.inboundID.has_value() &&
         req.inboundIdx.has_value()
     ){
-        ComponentModel* downstream = getModel(req.outboundID.value());
+        ComponentModel* inbound = getModel(req.inboundID.value());
 
-        if ( !downstream ) return ;
-        downstream->clearUpstreamModel(req.inboundIdx.value());
+        if ( !inbound ) return ;
+
+        inbound->clearUpstreamModel(req.inboundIdx.value());
     }
 }

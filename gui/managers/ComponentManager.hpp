@@ -83,7 +83,6 @@ public slots:
     void onFileSelected(int componentId, std::string path);
     void onRequestBufferData(int componentId, size_t channel);
 
-    // for updating modulation menus
     void onConnectionAdded(const ConnectionRequest& req);
     void onConnectionRemoved(const ConnectionRequest& req);
 

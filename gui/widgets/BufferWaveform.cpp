@@ -159,6 +159,7 @@ void BufferWaveform::connectModel(){
 
 void BufferWaveform::rebuild(){
     if ( !hasDisplayBuffer() ){
+        voltages_.clear();
         renderToCache();
         return ;
     }
@@ -342,6 +343,10 @@ QString BufferWaveform::secondsToText(int seconds) const {
 
 void BufferWaveform::onBufferDataUpdated(size_t channel){
     if ( channel != channel_ ) return ;
-    SPDLOG_DEBUG("inbound audio buffer on channel {} updated. Updating this widget on internal channel {}", channel, channel_);
+    SPDLOG_DEBUG(
+        "buffer data updated on channel {}. Rebuilding widget.",
+        channel 
+    );
     rebuild();
+    update();
 }

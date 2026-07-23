@@ -42,6 +42,7 @@ private:
     std::optional<std::string> file_ ;
 
     std::unordered_map<size_t, std::vector<double>> buffers_ ;
+    // key = inbound channel id, val = outbound channel id + model
     std::unordered_map<size_t, std::pair<size_t, ComponentModel*>> upstream_ ;
 
 public:
@@ -64,7 +65,7 @@ public:
     bool hasUpstreamBuffer(size_t channel) const ;
     const std::vector<double>& getUpstreamBuffer(size_t channel) const ;
     void setUpstreamModel(size_t inboundChannel, size_t outboundChannel, ComponentModel* outboundModel);
-    void clearUpstreamModel(size_t channel);
+    void clearUpstreamModel(size_t inboundChannel);
     
     const ComponentDescriptor& getDescriptor() const ;
     ModulationModel* getModulationModel(ParameterType p) const ;
@@ -91,7 +92,7 @@ signals:
     void modulationDepthChanged(int componentId, ParameterType p, double depth);
     void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
     void bufferUpdated(size_t channel);
-    void upstreamBufferUpdated(size_t channel);
+    void upstreamBufferUpdated(size_t inboundChannel);
         
 };
 
