@@ -20,6 +20,11 @@
 #include <QWidget>
 #include <spdlog/spdlog.h>
 
+GroupManager* GroupManager::instance(){
+    static GroupManager manager ;
+    return &manager ;
+}
+
 GroupManager::GroupManager(QObject* parent):
     QObject(parent),
     currentGroupId_(0),
@@ -28,13 +33,6 @@ GroupManager::GroupManager(QObject* parent):
     modulationContent_()
 {
 
-}
-
-GroupManager::~GroupManager(){
-    const auto copy = groups_ ;
-    for ( auto [id, g] : copy ){
-        onRequestGroupRemove(id);
-    }
 }
 
 GroupModel* GroupManager::getModel(int groupId) const {
@@ -85,6 +83,10 @@ void GroupManager::removeContent(int groupId){
 void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialize){
     int groupId = currentGroupId_++ ;
     auto model = new GroupModel(groupId, QString("Group %1").arg(groupId));
+    connect(
+        model, &GroupModel::groupRenamed,
+        this, &GroupManager::groupRenamed
+    );
     for ( const auto id : componentIds ){
         if ( !getComponentGroup(id) ){
             model->addComponent(id);

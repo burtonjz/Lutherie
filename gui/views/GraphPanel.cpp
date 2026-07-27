@@ -21,6 +21,8 @@
 #include "graphics/GroupNode.hpp"
 #include "managers/ConnectionManager.hpp"
 #include "managers/StateManager.hpp"
+#include "managers/ComponentManager.hpp"
+#include "managers/GroupManager.hpp"
 #include "graphics/GraphNode.hpp"
 #include "graphics/SocketWidget.hpp"
 #include "graphics/ComponentNode.hpp"
@@ -42,15 +44,13 @@
 #include <QMenu>
 #include <QLineEdit>
 
-GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
+GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
-    componentManager_(manager),
     isDraggingConnection_(false)
 {
     setupScene();
 
-    connectionManager_ = new ConnectionManager(this);
-    connectionRenderer_ = new ConnectionRenderer(scene_, connectionManager_, this, this);
+    connectionRenderer_ = new ConnectionRenderer(scene_, ConnectionManager::instance(), this, this);
 
     addMidiInput();
     addAudioOutput();
@@ -60,29 +60,59 @@ GraphPanel::GraphPanel(ComponentManager* manager, QWidget* parent):
     setMouseTracking(true);
 
     // connections
+
+    // API Clients
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
         this, &GraphPanel::onControlMessageReceived
     );
-    connect(
-        componentManager_, &ComponentManager::componentAdded,
-        this, &GraphPanel::onComponentAdded
-    );
-    connect(
-        componentManager_, &ComponentManager::componentRemoved,
-        this, &GraphPanel::onComponentRemoved
-    );
+
+    // ConnectionRenderer
     connect(
         connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
         this, &GraphPanel::onDragCableParameterNeeded
     );
+
+    // ComponentManager
     connect(
-        connectionManager_, &ConnectionManager::connectionAdded,
-        componentManager_, &ComponentManager::onConnectionAdded
+        ComponentManager::instance(), &ComponentManager::componentAdded,
+        this, [this](int componentId, ComponentType typ) {
+        QTimer::singleShot(0, this, [this, componentId, typ]() {
+            onComponentAdded(componentId, typ);
+        });
+    });
+    connect(
+        ComponentManager::instance(), &ComponentManager::componentRemoved,
+        this, &GraphPanel::onComponentRemoved
+    );
+    
+
+    // GroupManager
+    connect(
+        this, &GraphPanel::requestGroupCreate,
+        GroupManager::instance(), &GroupManager::onRequestGroupCreate
     );
     connect(
-        connectionManager_, &ConnectionManager::connectionRemoved,
-        componentManager_, &ComponentManager::onConnectionRemoved
+        GroupManager::instance(), &GroupManager::groupCreated,
+        this, &GraphPanel::onComponentGroupCreated
+    );
+
+    connect(
+        this, &GraphPanel::requestGroupUpdate,
+        GroupManager::instance(), &GroupManager::onRequestGroupUpdate
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupUpdated,
+        this, &GraphPanel::onComponentGroupUpdated
+    );
+
+    connect(
+        this, &GraphPanel::requestGroupRemove,
+        GroupManager::instance(), &GroupManager::onRequestGroupRemove
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupRemoved,
+        this, &GraphPanel::onComponentGroupRemoved
     );
 }
 
@@ -127,24 +157,6 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         connectionRenderer_, &ConnectionRenderer::canRemoveSocket,
         node, &GraphNode::removeSocket
     );
-
-    // component node
-    auto component = dynamic_cast<ComponentNode*>(node);
-    if ( component ){
-        connect(
-            component, &ComponentNode::requestComponentRename,
-            this, &GraphPanel::requestComponentRename
-        );
-    }
-
-    // group node
-    auto group = dynamic_cast<GroupNode*>(node);
-    if ( group ){
-        connect(
-            group, &GroupNode::requestGroupRename,
-            this, &GraphPanel::requestGroupRename
-        );
-    }
 }
 
 void GraphPanel::addAudioOutput(){
@@ -660,7 +672,7 @@ void GraphPanel::startRename(GraphNode* node ){
         QString newName = edit->text().trimmed();
         if ( ! newName.isEmpty() ){
             if ( isNodeNameAvailable(newName, node) ){
-                node->requestRename(newName);
+                updateModelName(node, newName);
             } else {
                 ToastNotification::show(scene_, this, 
                     "Cannot name widget '" + newName + "'. Name is unavailable.");
@@ -688,6 +700,18 @@ bool GraphPanel::isNodeNameAvailable(const QString& name, GraphNode* target) con
         }
     }
     return true ;
+}
+
+void GraphPanel::updateModelName(GraphNode* node, const QString& name){
+    if ( ComponentNode* cn = dynamic_cast<ComponentNode*>(node) ){
+        cn->getModel()->setName(name);
+        return ;
+    } 
+
+    if ( GroupNode* gn = dynamic_cast<GroupNode*>(node) ){
+        gn->getModel()->setName(name);
+        return ;
+    } 
 }
 
 void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
@@ -734,11 +758,11 @@ void GraphPanel::onControlMessageReceived(const json& msg){
 }
 
 void GraphPanel::onComponentSelected(ComponentType type){
-    componentManager_->requestAddComponent(type);
+    ComponentManager::instance()->requestAddComponent(type);
 }
 
 void GraphPanel::onComponentAdded(int componentId, ComponentType type){
-    auto m = componentManager_->getModel(componentId);
+    auto* m = ComponentManager::instance()->getModel(componentId);
 
     if ( !m ){
         SPDLOG_WARN("cannot create component node. No model found with componentId {}", componentId);
@@ -751,8 +775,9 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
     while ( !isNodeNameAvailable(name) ){
         name = baseName + " " + QString::number(count++);
     }
-
-    auto n = new ComponentNode(m, name);
+    if ( count > 1 ) m->setName(name);
+    
+    auto n = new ComponentNode(m);
     nodes_.push_back(n);
 
     setNodeConnections(n);
@@ -773,7 +798,10 @@ void GraphPanel::onComponentRemoved(int componentId){
 }
 
 void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds, std::optional<json> deserialized){
-    auto gNode =  new GroupNode(groupId, QString("Group %1").arg(groupId));
+    auto* model = GroupManager::instance()->getModel(groupId);
+    model->setName(QString("Group %1").arg(groupId));
+
+    auto gNode =  new GroupNode(model);
     nodes_.push_back(gNode);
     gNode->addToScene(scene_);
 
@@ -843,7 +871,7 @@ void GraphPanel::onDeletePressed(){
     }
     // delete all selected components
     for ( const auto c : getSelectedComponents() ){
-        componentManager_->requestRemoveComponent(c->getModel()->getId());
+        ComponentManager::instance()->requestRemoveComponent(c->getModel()->getId());
     }
 }
 
@@ -925,14 +953,14 @@ void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
 
     int id = socket->getSpec().componentId.value() ;
 
-    auto params = componentManager_
+    auto params = ComponentManager::instance()
         ->getModel(id)
         ->getDescriptor().modulatableParameters ;
 
-    auto existing = connectionManager_
+    auto existing = ConnectionManager::instance()
         ->getModulationConnections(id);
 
-    auto depthExisting = connectionManager_
+    auto depthExisting = ConnectionManager::instance()
         ->getModulationDepthConnections(id);
 
     bool hasActions = false ;

@@ -38,9 +38,15 @@ private:
     std::map<int, ComponentParameters*> parameters_ ;
     std::map<int, ModulationParameters*> modParameters_ ;
 
+    explicit ComponentManager(QObject* parent = nullptr);
+
 public:
-    ComponentManager(QObject* parent = nullptr);
-    ~ComponentManager();
+    static ComponentManager* instance();
+
+    ComponentManager(const ComponentManager&) = delete ;
+    ComponentManager& operator=(const ComponentManager&) = delete ;
+    ComponentManager(ComponentManager&&) = delete ;
+    ComponentManager& operator=(ComponentManager&&) = delete ;
 
     // API requests
     void requestAddComponent(ComponentType type);
@@ -89,6 +95,7 @@ public slots:
 signals:
     void componentAdded(int ComponentId, ComponentType typ);
     void componentRemoved(int componentId);
+    void componentRenamed(int componentId);
 };
 
 #endif // COMPONENT_MANAGER_HPP_

@@ -16,9 +16,15 @@
  */
 
 #include "managers/ComponentManager.hpp"
+#include "managers/ConnectionManager.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "api/ControlApiClient.hpp"
 #include "api/DataApiClient.hpp"
+
+ComponentManager* ComponentManager::instance(){
+    static ComponentManager manager ;
+    return &manager ;
+}
 
 ComponentManager::ComponentManager(QObject* parent):
     QObject(parent),
@@ -34,12 +40,14 @@ ComponentManager::ComponentManager(QObject* parent):
         DataApiClient::instance(), &DataApiClient::dataReceived,
         this, &ComponentManager::onDataMessageReceived
     );
-}
-
-ComponentManager::~ComponentManager(){
-    for ( const auto& m : models_ ) m.second->deleteLater();
-    for ( const auto& p : parameters_ ) p.second->deleteLater();
-    for ( const auto& mp: modParameters_ ) mp.second->deleteLater();
+    connect(
+        ConnectionManager::instance(), &ConnectionManager::connectionAdded,
+        this, &ComponentManager::onConnectionAdded
+    );
+    connect(
+        ConnectionManager::instance(), &ConnectionManager::connectionRemoved,
+        this, &ComponentManager::onConnectionRemoved
+    );
 }
 
 void ComponentManager::requestAddComponent(ComponentType type){
@@ -163,6 +171,10 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     connect(
         model, &ComponentModel::requestBufferData,
         this, &ComponentManager::onRequestBufferData
+    );
+    connect(
+        model, &ComponentModel::componentRenamed,
+        this, &ComponentManager::componentRenamed
     );
     
     ComponentParameters* params = nullptr ;

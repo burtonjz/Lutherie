@@ -17,12 +17,16 @@
 
 #include "app/Synth.hpp"
 #include "managers/StateManager.hpp"
+#include "managers/ComponentManager.hpp"
+#include "managers/GroupManager.hpp"
+#include "managers/AnalysisManager.hpp"
 #include "views/GraphPanel.hpp"
 #include "api/ControlApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "config/Config.hpp"
 #include "graphics/ToastNotification.hpp"
 #include "app/Theme.hpp"
+#include "widgets/ComponentParameters.hpp"
 
 #include <kddockwidgets/DockWidget.h>
 #include <kddockwidgets/core/FloatingWindow.h>
@@ -48,9 +52,6 @@ Synth::Synth(QWidget* parent):
         parent
     ),
     setup_(nullptr),
-    componentManager_(new ComponentManager(this)),
-    groupManager_(new GroupManager(this)),
-    analysisManager_(new AnalysisManager(this)),
     graph_(nullptr),
     parameterPanel_(new ControlPanel(this)),
     parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
@@ -62,7 +63,7 @@ Synth::Synth(QWidget* parent):
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
 
-    graph_ = new GraphPanel(componentManager_, this);
+    graph_ = new GraphPanel(this);
     graphDock_ = new KDDWQt::DockWidget("__graphDock");
 
     configureDocks();
@@ -85,11 +86,33 @@ Synth::Synth(QWidget* parent):
 
     // component manager
     connect( 
-        componentManager_, &ComponentManager::componentAdded,
+        ComponentManager::instance(), &ComponentManager::componentAdded,
         this, &Synth::onComponentAdded
     );
+    connect(
+        ComponentManager::instance(), &ComponentManager::componentRenamed,
+        this, &Synth::onComponentRenamed
+    );
     
-    // graph to main
+    // group manager
+    connect(
+        GroupManager::instance(), &GroupManager::groupCreated,
+        this, &Synth::onComponentGroupCreated
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupUpdated,
+        this, &Synth::onComponentGroupUpdated
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupRemoved,
+        this, &Synth::onComponentGroupRemoved
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupRenamed, 
+        this, &Synth::onGroupRenamed
+    );
+    
+    // graph panel
     connect(
         graph_, &GraphPanel::requestShowParameters,
         this, &Synth::onShowParameters
@@ -105,67 +128,6 @@ Synth::Synth(QWidget* parent):
     connect(
         graph_, &GraphPanel::requestShowGroupModulation,
         this, &Synth::onShowGroupModulation
-    );
-    connect(
-        graph_, &GraphPanel::requestComponentRename,
-        this, &Synth::onRequestComponentRename
-    );
-    connect(
-        graph_, &GraphPanel::requestGroupRename, 
-        this, &Synth::onRequestGroupRename
-    );
-
-    // graph to group
-    connect(
-        graph_, &GraphPanel::requestGroupCreate,
-        groupManager_, &GroupManager::onRequestGroupCreate
-    );
-    connect(
-        graph_, &GraphPanel::requestGroupUpdate,
-        groupManager_, &GroupManager::onRequestGroupUpdate
-    );
-    connect(
-        graph_, &GraphPanel::requestGroupRemove,
-        groupManager_, &GroupManager::onRequestGroupRemove
-    );
-
-    // group to main
-    connect(
-        groupManager_, &GroupManager::groupCreated,
-        this, &Synth::onComponentGroupCreated
-    );
-    connect(
-        groupManager_, &GroupManager::groupUpdated,
-        this, &Synth::onComponentGroupUpdated
-    );
-    connect(
-        groupManager_, &GroupManager::groupRemoved,
-        this, &Synth::onComponentGroupRemoved
-    );
-
-    // group to graph
-    connect(
-        groupManager_, &GroupManager::groupCreated,
-        graph_, &GraphPanel::onComponentGroupCreated
-    );
-    connect(
-        groupManager_, &GroupManager::groupUpdated,
-        graph_, &GraphPanel::onComponentGroupUpdated
-    );
-    connect(
-        groupManager_, &GroupManager::groupRemoved,
-        graph_, &GraphPanel::onComponentGroupRemoved
-    );
-
-    // analysis
-    connect(
-        componentManager_, &ComponentManager::componentAdded,
-        analysisManager_, &AnalysisManager::onComponentAdded
-    );
-
-    connect(
-        componentManager_, &ComponentManager::componentRemoved,
-        analysisManager_, &AnalysisManager::onComponentRemoved
     );
 }
 
@@ -312,11 +274,11 @@ void Synth::configureDocks(){
     modulationDock_->close();
 
     // Analyzer Docks
-    for ( auto typ : analysisManager_->getAnalyzerTypes() ){
+    for ( auto typ : AnalysisManager::instance()->getAnalyzerTypes() ){
         QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(typ).name);
 
         auto dock = new KDDWQt::DockWidget("__analyzerDock_" + name);
-        dock->setWidget(analysisManager_->getAnalyzerWidget(typ));
+        dock->setWidget(AnalysisManager::instance()->getAnalyzerWidget(typ));
         
         dock->setTitle(name);
         dock->close();
@@ -664,7 +626,7 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
     auto desc = ComponentRegistry::getComponentDescriptor(typ); 
     QString name = QString::fromStdString(desc.name);
 
-    auto params = componentManager_->getParameters(componentId);
+    auto params = ComponentManager::instance()->getParameters(componentId);
     if ( params ){
         if ( params->hasDetailedEditor() ){
             createComponentDetailDock(componentId, params);
@@ -676,7 +638,7 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
         }
     }
     
-    auto modParams = componentManager_->getModulationParameters(componentId);
+    auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
     if ( modParams ){
         modulationPanel_->addContent(name, modParams);
         connect(modParams, &QObject::destroyed, this, [this, modParams](){
@@ -703,7 +665,7 @@ void Synth::onShowParameters(int componentId){
     }
 
     // otherwise, show generic parameters
-    auto params = componentManager_->getParameters(componentId);
+    auto params = ComponentManager::instance()->getParameters(componentId);
     if ( !params || !parameterPanel_->hasContent(params) ) return ;
 
     if ( parameterDock_->isHidden() ) parameterDock_->open() ;
@@ -711,17 +673,17 @@ void Synth::onShowParameters(int componentId){
 } 
 
 void Synth::onShowModulation(int componentId){
-    auto model = componentManager_->getModel(componentId);
+    auto model = ComponentManager::instance()->getModel(componentId);
     if ( !model ) return ;
     if ( model->getDescriptor().modulatableParameters.size() == 0 ) return ;
 
     if ( modulationDock_->isHidden() ) modulationDock_->open() ;
-    modulationPanel_->maximizeSection(componentManager_->getModulationParameters(componentId));
+    modulationPanel_->maximizeSection(ComponentManager::instance()->getModulationParameters(componentId));
 }
 
 void Synth::onShowGroupParameters(int groupId){
-    auto params = groupManager_->getParameters(groupId);
-    auto model = groupManager_->getModel(groupId);
+    auto params = GroupManager::instance()->getParameters(groupId);
+    auto model = GroupManager::instance()->getModel(groupId);
 
     if ( !params || !model ) return ;
 
@@ -739,7 +701,7 @@ void Synth::onShowGroupParameters(int groupId){
 }
 
 void Synth::onShowGroupModulation(int groupId){
-    auto modParams = groupManager_->getModulationParameters(groupId);
+    auto modParams = GroupManager::instance()->getModulationParameters(groupId);
     if ( !modParams ) return ;
 
     if ( modulationDock_->isHidden() ) modulationDock_->open() ;
@@ -747,7 +709,7 @@ void Synth::onShowGroupModulation(int groupId){
 }
 
 void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
-    auto m = groupManager_->getModel(groupId);
+    auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
 
     QString name = m->getName();
@@ -766,10 +728,10 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
     // loop through parameters and move content to group container
     bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
-        auto params = componentManager_->getParameters(componentId);
+        auto params = ComponentManager::instance()->getParameters(componentId);
         if ( params && ! params->hasDetailedEditor() ){
             if ( !paramAdded ){
-                groupManager_->setParameters(groupId, paramContent);
+                GroupManager::instance()->setParameters(groupId, paramContent);
                 parameterPanel_->addContent(name, paramContent);
                 connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
                     parameterPanel_->removeContent(paramContent);
@@ -779,10 +741,10 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
             parameterPanel_->moveContent(params, paramContent);
         }
 
-        auto modParams = componentManager_->getModulationParameters(componentId);
+        auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
         if ( modParams ){
             if ( !modAdded ){
-                groupManager_->setModulationParameters(groupId, modContent);
+                GroupManager::instance()->setModulationParameters(groupId, modContent);
                 modulationPanel_->addContent(name, modContent);
                 connect(modContent, &QObject::destroyed, this, [this, modContent](){
                     modulationPanel_->removeContent(modContent);
@@ -803,26 +765,26 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
 }
 
 void Synth::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
-    auto m = groupManager_->getModel(groupId);
+    auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
 
     // loop through parameters and promote all content to top-level
     for ( auto componentId : componentIds ){
-        auto params = componentManager_->getParameters(componentId);
-        auto modParams = componentManager_->getModulationParameters(componentId);
+        auto params = ComponentManager::instance()->getParameters(componentId);
+        auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
         parameterPanel_->promoteContent(params);
         modulationPanel_->promoteContent(modParams);
     }
 
-    groupManager_->removeContent(groupId);
+    GroupManager::instance()->removeContent(groupId);
 }
 
 void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
-    auto m = groupManager_->getModel(groupId);
+    auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
 
     // content widgets might not exist if no group elements had parameters
-    QWidget* paramContent = groupManager_->getParameters(groupId);
+    QWidget* paramContent = GroupManager::instance()->getParameters(groupId);
     bool newParamContent = false ;
     if ( !paramContent ){
         newParamContent = true ;
@@ -832,7 +794,7 @@ void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> compone
         paramLayout->setSpacing(1);
     }
 
-    auto modContent = groupManager_->getModulationParameters(groupId);
+    auto modContent = GroupManager::instance()->getModulationParameters(groupId);
     bool newModContent = false ;
     if ( !modContent ){
         newModContent = true ;
@@ -845,10 +807,10 @@ void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> compone
     // loop through parameters and move content to group container
     bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
-        auto params = componentManager_->getParameters(componentId);
+        auto params = ComponentManager::instance()->getParameters(componentId);
         if ( params && ! params->hasDetailedEditor() ){
             if ( newParamContent && !paramAdded ){
-                groupManager_->setParameters(groupId, paramContent);
+                GroupManager::instance()->setParameters(groupId, paramContent);
                 parameterPanel_->addContent(m->getName(), paramContent);
                 connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
                     parameterPanel_->removeContent(paramContent);
@@ -858,10 +820,10 @@ void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> compone
             parameterPanel_->moveContent(params, paramContent);
         }
 
-        auto modParams = componentManager_->getModulationParameters(componentId);
+        auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
         if ( modParams ){
             if ( newModContent && !modAdded ){
-                groupManager_->setModulationParameters(groupId, modContent);
+                GroupManager::instance()->setModulationParameters(groupId, modContent);
                 modulationPanel_->addContent(m->getName(), modContent);
                 connect(modContent, &QObject::destroyed, this, [this, modContent](){
                     modulationPanel_->removeContent(modContent);
@@ -881,64 +843,71 @@ void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> compone
     } 
 }
 
-void Synth::onRequestComponentRename(int componentId, QString name){
-    auto m = componentManager_->getModel(componentId);
-    if ( !m ) return ;
+void Synth::onComponentRenamed(int componentId){
+    auto m = ComponentManager::instance()->getModel(componentId);
 
-    m->setName(name);
-    
-    // graph node renames
+    if ( !m ){
+        SPDLOG_ERROR("Component Model for id {} does not exist.", componentId);
+        return ;
+    } 
+
+    // rename node
     auto n = graph_->getComponentNode(componentId);
     if ( n ){
-        n->onRename(name);
+        SPDLOG_DEBUG("renaming component node...");
+        n->onRename(m->getName());
     }
 
     // tell panels to update headers
-    auto paramContent = componentManager_->getParameters(componentId);
+    auto paramContent = ComponentManager::instance()->getParameters(componentId);
     if ( paramContent && parameterPanel_->hasContent(paramContent) ){
         auto paramSection = parameterPanel_->getSection(paramContent);
-        paramSection->setTitle(name);
+        if ( paramSection ) paramSection->setTitle(m->getName());
+    } else {
+        SPDLOG_DEBUG(
+            "not updating parameter panel. hasContent={}, contentInPanel={}",
+            fmt::ptr(paramContent), parameterPanel_->hasContent(paramContent)
+        );
     }
     
-    auto modContent = componentManager_->getModulationParameters(componentId);
+    auto modContent = ComponentManager::instance()->getModulationParameters(componentId);
     if ( modContent ){
         auto modSection = modulationPanel_->getSection(modContent);
-        modSection->setTitle(name);
+        if ( modSection ) modSection->setTitle(m->getName());
+    } else {
+        SPDLOG_DEBUG(
+            "not updating modulation panel. hasContent={}, contentInPanel={}",
+            fmt::ptr(modContent), modulationPanel_->hasContent(modContent)
+        );
     }
     
     // if the component has a detail view, update that dock
     if ( componentDetailDocks_.contains(componentId) ){
         auto dock = componentDetailDocks_.at(componentId);
-        if ( dock ) dock->setTitle(name);
+        if ( dock ) dock->setTitle(m->getName());
     }
-    
-    // update analyzer if relevant
-    analysisManager_->onComponentRename(componentId, name);
 }
 
-void Synth::onRequestGroupRename(int groupId, QString name){
-    auto m = groupManager_->getModel(groupId);
+void Synth::onGroupRenamed(int groupId){
+    auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
-
-    m->setName(name);
 
     // graph node renames
     auto n = graph_->getGroupNode(groupId);
     if ( n ){
-        n->onRename(name);
+        n->onRename(m->getName());
     }
 
     // tell panels to update headers
-    auto paramContent = groupManager_->getParameters(groupId);
+    auto paramContent = GroupManager::instance()->getParameters(groupId);
     if ( paramContent ){
         auto paramSection = parameterPanel_->getSection(paramContent);
-        paramSection->setTitle(name);
+        paramSection->setTitle(m->getName());
     }
     
-    
-    auto modContent = groupManager_->getModulationParameters(groupId);
+    auto modContent = GroupManager::instance()->getModulationParameters(groupId);
     if ( modContent ){
         auto modSection = modulationPanel_->getSection(modContent);
-        modSection->setTitle(name);
+        modSection->setTitle(m->getName());
     }
 }

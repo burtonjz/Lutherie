@@ -8,7 +8,6 @@
 - [Quick] Prevent modules from spawning on top of each other
 - [Quick] Launch KDDW/modern floating window for setup button
 - [Quick] Allow saving remembering audio/midi IDs in user config.
-- [Quick] Request rename when a node gets its unique name on graph, so parameters/other panels update properly
 - [Quick] fix UX oddities with the add component menu (auto highlight when one search item left, have search bar auto activate to allow immediate typing)
 - [Medium] Create application launcher (linux .desktop, single entry/exit scripts)
 - [Medium] Create better patch load menu (dedicated internal directory)

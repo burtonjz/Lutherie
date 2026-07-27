@@ -19,9 +19,7 @@
 #define __UI_SYNTH_HPP_
 
 #include "app/Setup.hpp"
-#include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
-#include "managers/AnalysisManager.hpp"
 #include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
 
@@ -35,8 +33,10 @@
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
-
 namespace KDDWQt = KDDockWidgets::QtWidgets ;
+
+// forward declarations
+class ComponentParameters ;
 
 class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
@@ -44,9 +44,6 @@ class Synth : public KDDWQt::MainWindow {
 private:
     Setup* setup_ ;
     GraphPanel* graph_ ;
-    ComponentManager* componentManager_ ;
-    GroupManager* groupManager_ ;
-    AnalysisManager* analysisManager_ ;
 
     // docks
     KDDWQt::DockWidget* graphDock_ ;
@@ -138,8 +135,8 @@ public slots:
     void onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds);
     void onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds);
 
-    void onRequestComponentRename(int componentId, QString name);
-    void onRequestGroupRename(int groupId, QString name);
+    void onComponentRenamed(int componentId);
+    void onGroupRenamed(int groupId);
 
 };
 

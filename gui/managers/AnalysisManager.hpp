@@ -35,8 +35,15 @@ private:
     QUdpSocket* udpSocket_ ;
     quint16 port_ ;
      
-public:
     explicit AnalysisManager(QObject* parent = nullptr);
+
+public:
+    static AnalysisManager* instance();
+
+    AnalysisManager(const AnalysisManager&) = delete ;
+    AnalysisManager& operator=(const AnalysisManager&) = delete ;
+    AnalysisManager(AnalysisManager&&) = delete ;
+    AnalysisManager& operator=(AnalysisManager&&) = delete ;
 
     void setPort(quint16 port);
 
@@ -49,7 +56,7 @@ private slots:
 public slots:
     void onComponentAdded(int componentId, ComponentType typ);
     void onComponentRemoved(int componentId);
-    void onComponentRename(int componentId, QString name);
+    void onComponentRename(int componentId);
 
 };
 

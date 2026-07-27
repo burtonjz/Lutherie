@@ -36,9 +36,15 @@ private:
     std::unordered_map<int, QWidget*> parameterContent_ ;
     std::unordered_map<int, QWidget*> modulationContent_ ;
 
-public:
     explicit GroupManager(QObject* parent = nullptr);
-    ~GroupManager();
+
+public:
+    static GroupManager* instance();
+
+    GroupManager(const GroupManager&) = delete ;
+    GroupManager& operator=(const GroupManager&) = delete ;
+    GroupManager(GroupManager&&) = delete ;
+    GroupManager& operator=(GroupManager&&) = delete ;
 
     GroupModel* getModel(int groupId) const ;
     GroupModel* getComponentGroup(int componentId) const ;
@@ -60,6 +66,7 @@ signals:
     void groupCreated(int groupId, const std::unordered_set<int>& componentIds, std::optional<json> deserialize = std::nullopt);
     void groupUpdated(int groupId, const std::unordered_set<int>& componentIds);
     void groupRemoved(int groupId, const std::unordered_set<int>& componentIds);
+    void groupRenamed(int groupId);
 
 };
 

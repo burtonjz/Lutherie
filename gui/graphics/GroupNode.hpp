@@ -20,6 +20,7 @@
 
 #include "graphics/GraphNode.hpp"
 #include "graphics/ComponentNode.hpp"
+#include "models/GroupModel.hpp"
 
 #include <QGraphicsItem>
 
@@ -27,11 +28,11 @@ class GroupNode : public GraphNode {
     Q_OBJECT
 
 private:
-    int groupId_ ; 
+    GroupModel* model_ ;
     std::vector<ComponentNode*> children_ ;
     
 public:
-    explicit GroupNode(int groupId, const QString& name, QGraphicsItem* parent = nullptr);
+    explicit GroupNode(GroupModel* model, QGraphicsItem* parent = nullptr);
 
     void add(ComponentNode* node);
     void remove(ComponentNode* node);
@@ -43,11 +44,10 @@ public:
     size_t getNumComponents() const ;
 
     int getId() const ; 
+    GroupModel* getModel() const ;
 
     json serialize() const override ;
-    // virtual void deserialize(const json& node) override ;
-
-    void requestRename(const QString& name ) override ;
+    virtual void deserialize(const json& node) override ;
 
 private:
     void addSockets(ComponentNode* node);
@@ -57,8 +57,6 @@ signals:
     // signal group events to connection renderer
     void SocketGrouped(SocketSpec spec);
     void SocketUngrouped(SocketSpec spec);
-
-    void requestGroupRename(int groupId, QString name);
 
 };
 

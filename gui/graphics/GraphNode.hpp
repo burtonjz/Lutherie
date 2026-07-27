@@ -62,8 +62,6 @@ public:
     const QString& getName() const { return name_ ; }
     QGraphicsTextItem* getNameItem() const { return titleText_ ; }
 
-    virtual void requestRename(const QString& name );
-
     void insertSockets(const std::vector<SocketSpec> specs );
 
     void hide();

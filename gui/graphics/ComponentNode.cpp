@@ -21,8 +21,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
-ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphicsItem* parent): 
-    GraphNode(name, parent),
+ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent): 
+    GraphNode(model->getName(), parent),
     model_(model),
     specs_()
 {
@@ -118,8 +118,7 @@ json ComponentNode::serialize() const {
 
 void ComponentNode::deserialize(const json& node){
     GraphNode::deserialize(node);
-}
-
-void ComponentNode::requestRename(const QString& name ){
-    emit requestComponentRename(model_->getId(), name);
+    if ( node.contains("name") && node.at("name").is_string() ){
+        model_->setName(QString::fromStdString(node.at("name")));
+    } 
 }

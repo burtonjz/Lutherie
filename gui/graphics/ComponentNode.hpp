@@ -36,7 +36,7 @@ private:
     std::vector<SocketSpec> specs_ ;
 
 public:
-    explicit ComponentNode(ComponentModel* model, const QString& name, QGraphicsItem* parent = nullptr);
+    explicit ComponentNode(ComponentModel* model, QGraphicsItem* parent = nullptr);
     ~ComponentNode() = default ;
 
     ComponentModel* getModel() const ;
@@ -44,11 +44,7 @@ public:
 
     json serialize() const override ;
     virtual void deserialize(const json& node) override ;
-
-    void requestRename(const QString& name ) override ;
-
-signals:
-    void requestComponentRename(int componentId, QString name);
+    
 };
 
 #endif // COMPONENT_NODE_HPP_

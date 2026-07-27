@@ -25,9 +25,7 @@
 #include <vector>
 
 #include "interfaces/ISocketLookup.hpp"
-#include "managers/ConnectionManager.hpp"
 #include "views/ConnectionRenderer.hpp"
-#include "managers/ComponentManager.hpp"
 #include "graphics/GraphNode.hpp"
 #include "graphics/GroupNode.hpp"
 #include "graphics/PeripheralNode.hpp"
@@ -39,8 +37,6 @@ class GraphPanel : public QGraphicsView, public ISocketLookup {
 private:
     QGraphicsScene* scene_ ;
     ConnectionRenderer* connectionRenderer_ ;
-    ConnectionManager* connectionManager_ ;
-    ComponentManager* componentManager_ ;
     
     std::vector<GraphNode*> nodes_ ;
     
@@ -55,7 +51,7 @@ private:
     static constexpr int MIDI_IN_DEVICE_ID   = 1 ;
 
 public:
-    explicit GraphPanel(ComponentManager* manager, QWidget* parent = nullptr);
+    explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
 
     // APIs
@@ -106,6 +102,7 @@ private:
     void startRename(GraphNode* node);
 
     bool isNodeNameAvailable(const QString& name, GraphNode* target = nullptr) const ;
+    void updateModelName(GraphNode* node, const QString& name);
 
 private slots:
     void onControlMessageReceived(const json& json);
@@ -137,9 +134,6 @@ signals:
     void requestShowModulation(int componentId);
     void requestShowGroupParameters(int groupId);
     void requestShowGroupModulation(int groupId);
-
-    void requestComponentRename(int componentId, QString name);
-    void requestGroupRename(int groupId, QString name);
 };
 
 #endif // GRAPH_PANEL_HPP_

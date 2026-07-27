@@ -31,8 +31,15 @@ private:
     std::vector<ConnectionRequest> connections_ ;
     ISocketLookup* socketLookup_ ;
 
-public:
     explicit ConnectionManager(QObject* parent = nullptr);
+
+public:
+    static ConnectionManager* instance();
+
+    ConnectionManager(const ConnectionManager&) = delete ;
+    ConnectionManager& operator=(const ConnectionManager&) = delete ;
+    ConnectionManager(ConnectionManager&&) = delete ;
+    ConnectionManager& operator=(ConnectionManager&&) = delete ;
 
     void loadConnection(const ConnectionRequest& req);
     std::vector<ParameterType> getModulationConnections(int componentId) const ;

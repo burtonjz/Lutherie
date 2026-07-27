@@ -34,6 +34,7 @@ const QString& GroupModel::getName() const {
 
 void GroupModel::setName(QString name){
     name_ = name ;
+    emit groupRenamed(id_);
 }
 
 void GroupModel::addComponent(int componentId){

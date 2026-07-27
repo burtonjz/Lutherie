@@ -33,10 +33,10 @@ private:
 public:
     static StateManager* instance();
 
-    StateManager(const StateManager&) = delete;
-    StateManager& operator=(const StateManager&) = delete;
-    StateManager(StateManager&&) = delete;
-    StateManager& operator=(StateManager&&) = delete;
+    StateManager(const StateManager&) = delete ;
+    StateManager& operator=(const StateManager&) = delete ;
+    StateManager(StateManager&&) = delete ;
+    StateManager& operator=(StateManager&&) = delete ;
 
     void setSetupAudioComplete(bool v);
     void setSetupMidiComplete(bool v);

@@ -16,6 +16,8 @@
  */
 
 #include "managers/AnalysisManager.hpp"
+#include "managers/ComponentManager.hpp"
+
 #include "config/Config.hpp"
 #include "meta/ComponentRegistry.hpp"
 
@@ -23,6 +25,11 @@
 #include "widgets/OscilloscopeWidget.hpp"
 
 #include <spdlog/spdlog.h>
+
+AnalysisManager* AnalysisManager::instance(){
+    static AnalysisManager manager ;
+    return &manager ;
+}
 
 AnalysisManager::AnalysisManager(QObject* parent):
     QObject(parent),
@@ -44,6 +51,15 @@ AnalysisManager::AnalysisManager(QObject* parent):
     connect(
         udpSocket_, &QUdpSocket::readyRead, 
         this, &AnalysisManager::onReadyRead
+    );
+    connect(
+        ComponentManager::instance(), &ComponentManager::componentAdded,
+        this, &AnalysisManager::onComponentAdded
+    );
+
+    connect(
+        ComponentManager::instance(), &ComponentManager::componentRemoved,
+        this, &AnalysisManager::onComponentRemoved
     );
 }
 
@@ -122,10 +138,13 @@ void AnalysisManager::onComponentRemoved(int componentId){
 
 }
 
-void AnalysisManager::onComponentRename(int componentId, QString name){
+void AnalysisManager::onComponentRename(int componentId){
     if ( !registeredComponents_.contains(componentId) ) return ;
 
     ComponentType typ = registeredComponents_.at(componentId);
 
-    analyzerWidgets_.at(typ)->renameLayer(componentId, name);
+    analyzerWidgets_.at(typ)->renameLayer(
+        componentId, 
+        ComponentManager::instance()->getModel(componentId)->getName()
+    );
 }

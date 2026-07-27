@@ -89,11 +89,14 @@ signals:
     void parameterValueChanged(ParameterType p, ParameterValue v) const ;
     void parameterRangeChanged(ParameterType p, ParameterValue min, ParameterValue max) const ;
     void collectionUpdated(const CollectionRequest& req);
+
     void modulationDepthChanged(int componentId, ParameterType p, double depth);
     void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
+
     void bufferUpdated(size_t channel);
     void upstreamBufferUpdated(size_t inboundChannel);
-        
+
+    void componentRenamed(int componentId);
 };
 
 #endif // COMPONENT_MODEL_HPP_

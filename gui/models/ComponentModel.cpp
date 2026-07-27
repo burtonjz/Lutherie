@@ -67,6 +67,7 @@ const QString& ComponentModel::getName() const {
 
 void ComponentModel::setName(QString name){
     name_ = name ;
+    emit componentRenamed(id_);
 }
 
 std::string ComponentModel::getFile() const {

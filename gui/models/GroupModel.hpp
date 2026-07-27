@@ -40,6 +40,10 @@ public:
     void removeComponent(int componentId);
     bool hasComponent(int componentId);
     const std::unordered_set<int>& getComponents() const ;
+
+signals:
+    void groupRenamed(int groupId);
+
 };
 
 #endif // GROUP_MODEL_HPP_

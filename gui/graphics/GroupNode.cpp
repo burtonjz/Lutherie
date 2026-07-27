@@ -19,9 +19,9 @@
 #include <QGraphicsScene>
 #include <spdlog/spdlog.h>
 
-GroupNode::GroupNode(int groupId, const QString& name, QGraphicsItem* parent):
-    GraphNode(name, parent),
-    groupId_(groupId)
+GroupNode::GroupNode(GroupModel* model, QGraphicsItem* parent):
+    GraphNode(model->getName(), parent),
+    model_(model)
 {
 }
 
@@ -67,8 +67,13 @@ size_t GroupNode::getNumComponents() const {
 }
 
 int GroupNode::getId() const {
-    return groupId_ ;
+    return model_->getId() ;
 }
+
+GroupModel* GroupNode::getModel() const {
+    return model_ ;
+}
+
 
 void GroupNode::addSockets(ComponentNode* node){
     for ( auto cSocket : node->getSockets() ){
@@ -110,7 +115,7 @@ void GroupNode::removeSockets(ComponentNode* node){
 json GroupNode::serialize() const {
     json msg = GraphNode::serialize();
     msg["node_type"] = "GroupNode" ;
-    msg["groupId"] = groupId_ ;
+    msg["groupId"] = model_->getId() ;
     auto& components = msg["componentIds"];
     for ( const auto& c : children_ ){
         components.push_back(c->getModel()->getId() );
@@ -119,6 +124,9 @@ json GroupNode::serialize() const {
     return msg ;
 }
 
-void GroupNode::requestRename(const QString& name ){
-    emit requestGroupRename(groupId_, name);
+void GroupNode::deserialize(const json& node){
+    GraphNode::deserialize(node);
+    if ( node.contains("name") && node.at("name").is_string() ){
+        model_->setName(QString::fromStdString(node.at("name")));
+    } 
 }

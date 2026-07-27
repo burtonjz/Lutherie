@@ -23,6 +23,12 @@
 #include <algorithm>
 #include <spdlog/spdlog.h>
 
+
+ConnectionManager* ConnectionManager::instance(){
+    static ConnectionManager manager ;
+    return &manager ;
+}
+
 ConnectionManager::ConnectionManager(QObject* parent): 
     QObject(parent)
 {
