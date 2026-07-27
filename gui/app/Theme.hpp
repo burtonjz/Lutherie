@@ -172,6 +172,8 @@ public:
     static constexpr qreal PIANO_ROLL_SELECTED_ALPHA           = 150 ;
     static constexpr qreal PIANO_ROLL_VELOCITY_UPDATE_PIXELS   = 3 ;
     
+    static constexpr int ANALYZER_FADE_DURATION_MS       = 120 ;
+    static constexpr int ANALYZER_STALE_DATA_DURATION_MS = 200 ;
 
     static constexpr int   SPECTRUM_MARGIN_LEFT      = 60 ;
     static constexpr int   SPECTRUM_MARGIN_RIGHT     = 20 ;

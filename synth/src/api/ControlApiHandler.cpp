@@ -353,7 +353,7 @@ json ControlApiHandler::loadPatch(const json& request){
         throw std::runtime_error("components array not properly defined");
     }
 
-    std::unordered_map<int,int> idMap ; // old id, new id
+    IdMap idMap ; // old id, new id
     if ( ! loadCreateComponent(response["components"], idMap) ){
         throw std::runtime_error("Error creating components when loading patch");
     }
@@ -1157,17 +1157,15 @@ bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){
     return false ;
 }
 
-bool ControlApiHandler::loadCreateComponent(const json& components, std::unordered_map<int,int>& idMap){
+bool ControlApiHandler::loadCreateComponent(const json& components, IdMap& idMap){
     json params ;
     ComponentId id ;
     json componentRequest ;
     json componentResponse ;
-    json parameterRequest ;
 
     bool success = true ;
     for ( const auto& component : components ){
         try {
-            params = component.at("parameters");
             id = component.at("id");
             componentRequest["action"] = "add_component" ;
             componentRequest["name"] = component.at("name") ;
@@ -1175,37 +1173,12 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
             sendApiResponse(componentResponse);
             idMap[id] = componentResponse["componentId"];
 
-            for ( const auto& [p, data] : params.items() ){
-                if ( ! data.contains("currentValue") ){
-                    continue ; // just has modulation
-                }
-                parameterRequest["action"] = "set_component_parameter" ;
-                parameterRequest["componentId"] = idMap[id] ;
-                parameterRequest["parameter"] = p ;
-                parameterRequest["value"] = data.at("currentValue") ;
-                auto parameterResponse = setParameter(parameterRequest);
-                sendApiResponse(parameterResponse);
+            if ( component.contains("parameters") ){
+                success = success && loadCreateComponentSetParameters(idMap.at(id), component.at("parameters"));
             }
 
             if ( component.contains("collection") ){
-                auto c = engine_->componentManager.getRaw(idMap[id]);
-                if ( !c ){
-                    SPDLOG_ERROR("cannot process collection request for a component that doesn't exist");
-                    success = false ;
-                    continue ;
-                }
-
-                ComponentDescriptor descriptor = ComponentRegistry::getComponentDescriptor(c->getType());
-                if ( !descriptor.hasCollection() ){
-                    SPDLOG_ERROR("cannot process collection request for a component that shouldn't have a collection");
-                    success = false ;
-                    continue ;
-                }
-                CollectionRequest req = component.at("collection");
-                req.componentId = idMap[id] ;
-                req.action = CollectionAction::ADD_ALL ;
-                auto resp = addCollectionValues(c,descriptor.getCollection(),req);
-                sendApiResponse(resp);
+                success = success && loadCreateComponentSetCollection(idMap.at(id), component.at("collection"));
             }
         } catch ( const std::exception& e ){
             SPDLOG_WARN("Error creating component: {}", std::string(e.what()));
@@ -1214,6 +1187,73 @@ bool ControlApiHandler::loadCreateComponent(const json& components, std::unorder
     }
 
     return success ;
+}
+
+bool ControlApiHandler::loadCreateComponentSetParameters(ComponentId id, const json& params){
+    bool success = true ;
+    try {
+        for ( const auto& [p, data] : params.items() ){
+            if ( data.contains("currentValue") ){
+                json parameterRequest ;
+                parameterRequest["action"] = "set_component_parameter" ;
+                parameterRequest["componentId"] = id ;
+                parameterRequest["parameter"] = p ;
+                parameterRequest["value"] = data.at("currentValue") ;
+                auto parameterResponse = setParameter(parameterRequest);
+                sendApiResponse(parameterResponse);
+                success = success && parameterResponse.at("status") == "success" ;
+            }
+
+            if ( data.contains("minimumValue") && data.contains("maximumValue") ){
+                json rangeRequest ;
+                rangeRequest["action"] = "set_parameter_range" ;
+                rangeRequest["componentId"] = id ;
+                rangeRequest["parameter"] = p ;
+                rangeRequest["minimum"] = data.at("minimumValue");
+                rangeRequest["maximum"] = data.at("maximumValue");
+                auto rangeResponse = setParameterValueRange(rangeRequest);
+                sendApiResponse(rangeResponse);
+                success = success && rangeResponse.at("status") == "success" ;
+            }
+        }
+    } catch (const std::exception& e){
+        SPDLOG_ERROR(e.what());
+        return false ;
+    }
+    
+    return success ;
+}
+
+bool ControlApiHandler::loadCreateComponentSetCollection(ComponentId id, const json& collection){
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        SPDLOG_ERROR("cannot process collection request for a component that doesn't exist");
+        return false ;
+    }
+
+    ComponentDescriptor descriptor = ComponentRegistry::getComponentDescriptor(c->getType());
+    if ( !descriptor.hasCollection() ){
+        SPDLOG_ERROR("cannot process collection request for a component that shouldn't have a collection");
+        return false ;
+    }
+
+    CollectionRequest req ;
+    try {
+        req = collection ;
+    } catch (const std::exception& e){
+        SPDLOG_ERROR(
+            "Could not parse parameter collection object {}. Error: {}",
+            collection.dump(), e.what()
+        );
+        return false ;
+    }
+    
+    req.componentId = id ;
+    req.action = CollectionAction::ADD_ALL ;
+    auto resp = addCollectionValues(c,descriptor.getCollection(),req);
+    sendApiResponse(resp);
+
+    return true ;
 }
 
 bool ControlApiHandler::loadConnectComponent(const json& connections){

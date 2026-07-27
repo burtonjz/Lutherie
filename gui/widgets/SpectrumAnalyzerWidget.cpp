@@ -32,13 +32,12 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     minDb_(Theme::SPECTRUM_MIN_DECIBEL),
     maxDb_(Theme::SPECTRUM_MAX_DECIBEL),
     updateTimer_(new QTimer(this)),
-    dataReady_(false)
+    fadeTimer_()
 {
     Config::load();
 
     sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
     smoothFactor_ = Config::get<float>("analysis.spectrum_analyzer.smooth_factor").value_or(0.7);
-    updateTimer_->setInterval(33); // ~30 FPS
 
     int footerY = height() - Theme::SPECTRUM_MARGIN_BOTTOM + 8 ;
     controls_->setGeometry(
@@ -48,8 +47,10 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
         Theme::SPECTRUM_MARGIN_BOTTOM - 12 
     );
 
+    updateTimer_->setInterval(33); // ~30 FPS
     connect(updateTimer_, &QTimer::timeout, this, &SpectrumAnalyzerWidget::onUpdateTimeout);
     updateTimer_->start();
+    fadeTimer_.start();
 }
 
 void SpectrumAnalyzerWidget::setFrequencyRange(float minHz, float maxHz) {
@@ -95,31 +96,36 @@ void SpectrumAnalyzerWidget::onData(int componentId, const float* data, size_t c
     float min = *std::min_element(data, data + count);
     float max = *std::max_element(data, data + count);
 
-    auto& smoothedData = layerData_.at(componentId);
+    auto& layer = layerData_.at(componentId);
 
-    if ( smoothedData.size() != count ){
+    if ( layer.data.size() != count ){
         // no smoothing, this is first packet
-        smoothedData.resize(count);
-        smoothedData.assign(data, data + count);
+        layer.data.resize(count);
+        layer.data.assign(data, data + count);
     } else {
         for ( size_t i = 0 ; i < count ; ++i ){
-            smoothedData[i] = smoothFactor_ * smoothedData[i] +
+            layer.data[i] = smoothFactor_ * layer.data[i] +
                 ( 1.0f - smoothFactor_ ) * data[i] ;
         }
     }
-
-    dataReady_ = true ;
+    layer.lastUpdate.restart();
 }
 
 void SpectrumAnalyzerWidget::onUpdateTimeout() {
-    if ( dataReady_ ) {
-        renderToCache() ;
-        dataReady_ = false ;
-    } 
     if ( !cachedFrame_.isNull() ){
+        // fade out analysis signal
+        auto elapsedMs = fadeTimer_.restart();
+        double decay = 1.0 - std::exp(-double(elapsedMs) / Theme::ANALYZER_FADE_DURATION_MS);
+        int alpha = std::clamp(int(decay * 255.0), 0, 255);
+
         QPainter fade(&cachedFrame_);
-        fade.fillRect(cachedFrame_.rect(), QColor(0,0,0,20));
+        fade.fillRect(
+            cachedFrame_.rect(), 
+            QColor(0, 0, 0, alpha)
+        );
     }
+
+    renderToCache() ;
     update(); 
 }
 
@@ -176,8 +182,12 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
 }
 
 void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
-    for ( auto& [id, data] : layerData_ ){
-        if ( data.empty() || !controls_->isLayerEnabled(id) ) continue ;
+    for ( auto& [id, layer] : layerData_ ){
+        if ( 
+            layer.data.empty() || 
+            !controls_->isLayerEnabled(id) ||
+            layer.lastUpdate.elapsed() > Theme::ANALYZER_STALE_DATA_DURATION_MS
+        ) continue ;
 
         // Create path for spectrum
         QPainterPath path ;
@@ -193,10 +203,10 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
             
             if ( freq < minFreq_ || freq > maxFreq_ ) continue ;
 
-            size_t bin = freqToBin(freq, data.size());
-            if ( bin >= data.size() ) continue ;
+            size_t bin = freqToBin(freq, layer.data.size());
+            if ( bin >= layer.data.size() ) continue ;
 
-            float db = std::max(minDb_, std::min(maxDb_, data[bin]));
+            float db = std::max(minDb_, std::min(maxDb_, layer.data[bin]));
             float y = dbToY(db);
 
             if ( firstPoint ){

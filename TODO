@@ -20,13 +20,12 @@
 - [Quick] Send Pitchbend Control to `PolyOscillator`
 - [Medium] develope glide mechanism for monophonic oscillator (possibly new oscillator component)
 - [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
+- [Medium] Add optional audio-rate "sync" input to oscillator; detect rising edge and reset wavetable phase ticker on trigger, for hard sync. *No new port/signal type needed — reuses existing Audio Signal input, since edge-detection-on-a-waveform is the same mechanism analog hard sync uses. Shelved the generic control-port/trigger system since this was the only real use case for it; revisit the generic system only if 2-3 more cases show up that can't be expressed as an edge on an audio-rate signal.*
 
 ### New Components
 - [Quick] `BufferReverser` -- flip a buffer and play in reverse (buffer in, buffer out)
 - [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
 - [Medium] `Arpeggiator` -- play series of notes relative to pressed notes in a loop (midi in, midi out)
-- [Big] `SpectralDrawer` -- Allow a user to build a spectrograph (buffer out)
-- [Big] `SpectralFilter` -- Spectrogram of input buffer, with option to filter out frequency bands (buffer in, buffer out) 
 
 ### New Patches
 - [Quick] basic all pass
@@ -39,8 +38,32 @@
 
 ## Day 2
 
-### Control Signals?
-- [Big] Create boolean control port signal/trigger system (status, phase-cycle-complete signal, phase reset trigger). Use orange control color. Need to think through how this might interact with MIDI controls and macro knobs. But certain internal parameters that aren't exposed through existing parameter system ( such as phase of an oscillator for a hard sync effect)
+### Peripheral Devices
+- *Sequencing note: build this before going deep on Spectral Signals below. Not a hard technical dependency for SpectralDrawer/SpectralFilter (those work fine on any buffer, e.g. a loaded file), but real vocal/mic material is the actual motivating use case for the spectral work, and audio input exercises realtime plumbing (device callback timing, block size, clock) that's better shaken out on its own before also debugging STFT hop-rate scheduling on top of it.*
+- [Big] Support Audio Input peripherals. Eagerly convert input to the audio output device's rate/blocksize (already treated as ground truth throughout the graph) at ingestion, so the rest of the graph only ever sees one uniform clock domain. Conversion (resample + re-block + jitter buffer) happens inside the peripheral component's implementation — no user-facing seam; component just presents a single `AudioSignal` output. Device selection / input gain are fine to expose; resampling internals are not.
+- [Big] Allow multiple MIDI peripheral devices
+- [Big] Support MIDI output peripherals
+
+### Spectral / Frequency-Domain Components
+- *Dependency: none of the existing component classes (Audio Signal / Audio Buffer) natively carry frequency-domain data. This needs a new data type before any spectral component can be built*
+- [Big] Define `SpectralBuffer` type (array of frames, each frame an array of complex bins, plus metadata: FFT size, hop size, window type, sample rate) for offline/non-causal use — full buffer available up front, all frames materialized and randomly accessible.
+- [Big] Define `SpectralStream` type — same per-frame content as `SpectralBuffer`, but emitted one frame per hop in realtime. Runs at hop-rate, not sample-rate, so the graph's scheduling/clock model needs to account for a non-audio-rate signal type.
+- [Medium] `Buffer -> SpectralBuffer` Translation Component (offline STFT)
+- [Medium] `SpectralBuffer -> Buffer` Translation Component (offline ISTFT)
+- [Medium] `AudioSignal -> SpectralStream` Translation Component (realtime STFT)
+- [Medium] `SpectralStream -> AudioSignal` Translation Component (realtime ISTFT)
+- Both STFT/ISTFT pairs should share one underlying engine (same window/hop/FFT math) — offline mode just runs it across all frames at once, realtime mode runs it one hop at a time.
+
+### New Components
+- [Quick] `Bitcrusher` -- reduce audio resolution ( audio in, audio out)
+- [Quick] `AudioSwitch` -- switch audio through output channel 0 or 1 (audio in, 2 audio out)
+- [Quick] `MidiSwitch` -- leverage midi channel system? (midi in, midi out) 
+- [Quick] `Quantizer` -- real time midi manipulation and routing (midi in, midi out)
+- [Quick] `MidiOffset` -- set offsets note values, velocity values (midi in, midi out)
+- [Medium] `PitchShifter` -- maybe buffer + real time versions? *Note: a PSOLA-based version (pitch-mark detection + grain windowing + overlap-add) may be buildable on top of existing/planned grain-OLA primitives without depending on the SpectralBuffer/SpectralStream work below — worth scoping separately from the spectral-domain pitch shifting.*
+- [Big] `SpectralDrawer` -- Allow a user to build a spectrograph (buffer out). *Depends on `SpectralBuffer` type + `Buffer -> SpectralBuffer` translation.*
+- [Big] `SpectralFilter` -- Spectrogram of input buffer, with option to filter out frequency bands (buffer in, buffer out). *Depends on `SpectralBuffer` type + STFT/ISTFT translation components. Magnitude-only edits (boost/cut bins, keep original phase) are safe/low-risk; anything that moves content in frequency or time will need phase-locking handling later.*
+- [Big] `Mixer` *note: investigate whether this should be a primary component or a configured GroupComponent (e.g., chained panners with some scalar controls or something)*
 
 ### Configuration / UX
 - [Quick] Allow group deletions, but with a warning pop-up
@@ -59,27 +82,16 @@
 - [Big] specialized widget for `BiquadFilter` that includes a graph representation for modifying parameters
 
 ### Macro Knobs (New Feature)
-- *Dependency: ControlConnection/ControlPort*
 - MacroControl is a panel with a basic graph node that contains outbound control ports.
 - Any component with controllable parameters gets an inbound Macro assignment slot, and a corresponding indicator on the parameter control widget indicating it is controlled.
-- Internally, it has a basic formula editor to convert the generic knob value towards whatever parameters it is connected to.
+- **Invariant:** each controllable parameter has at most one incoming control source at a time (macro OR MIDI CC, never both, no summing/priority scheme to build).
+- Macro's own 0-1 input can itself be driven by a MIDI CC, and a macro's output can drive a CC-mappable target — bidirectional, no new mechanism needed, just reuses the existing normalized-control-input pattern both ways.
+- Macro-to-macro chaining (one macro's child list containing another macro) explicitly deferred — turns evaluation into a DAG/cycle-detection problem for unclear payoff. Revisit only after single-level macros have been used for a while and the need is concrete.
+- Per-child mapping: formula editor, default template `clamp(m*x + b, 0, 1) ^ curve` (curve=1 is linear/default). Covers direction/inversion via negative `m`, and sweep shaping via `curve`, without a hardcoded log/exp preset list.
+- Assumes each child parameter's own normalized-to-real-value curve (e.g. log frequency mapping) already lives in that parameter's existing widget — macro mapping only ever operates in clean 0-1 space, doesn't duplicate unit conversion.
+- Decide clamp-vs-allow-overshoot behavior when formula output exceeds [0,1]; default to clamped, consider unclamped as an explicit opt-in later.
 - It also is capable of receiving modulation input.
-- The MacroKnob is also capable of receiving control input from MIDI (but probably not another MacroKnob)":TY
 
-### Peripheral Devices
-- [Big] Support Audio Input peripherals
-- [Big] Allow multiple MIDI peripheral devices
-- [Big] Support MIDI output peripherals
-
-### New Components
-- [Quick] `Bitcrusher` -- reduce audio resolution ( audio in, audio out)
-- [Quick] `AudioSwitch` -- switch audio through output channel 0 or 1 (audio in, 2 audio out)
-- [Quick] `MidiSwitch` -- leverage midi channel system? (midi in, midi out) 
-- [Quick] `Quantizer` -- real time midi manipulation and routing (midi in, midi out)
-- [Quick] `MidiOffset` -- set offsets note values, velocity values (midi in, midi out)
-- [Medium] `PitchShifter` -- maybe buffer + real time versions?
-- [Big] `Mixer` *note: investigate whether this should be a primary component or a configured GroupComponent (e.g., chained panners with some scalar controls or something)*
-  
 ---
 
 ## Backlog

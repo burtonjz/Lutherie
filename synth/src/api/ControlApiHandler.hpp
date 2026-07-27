@@ -29,7 +29,7 @@
 
 
 using json = nlohmann::json ;
-
+using IdMap = std::unordered_map<int,int> ;
 // forward declarations
 class Engine ;
 
@@ -122,7 +122,10 @@ private:
     json sendApiResponse(json& response, const std::string& err = "");
     
     // load functions
-    bool loadCreateComponent(const json& components, std::unordered_map<int,int>& idMap);
+    bool loadCreateComponent(const json& components, IdMap& idMap);
+    bool loadCreateComponentSetParameters(ComponentId id, const json& params);
+    bool loadCreateComponentSetCollection(ComponentId id, const json& collection);
+
     bool loadConnectComponent(const json& config);
     bool loadMidiControls(const json& controls);
     void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);

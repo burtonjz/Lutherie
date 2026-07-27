@@ -26,14 +26,19 @@
 #include <vector>
 #include <QPainter>
 #include <QTimer>
-
+#include <QElapsedTimer>
 
 class SpectrumAnalyzerWidget : public QWidget, public IAnalyzerWidget {
     Q_OBJECT
 
 private:
     GraphLayerControls* controls_ ;
-    std::unordered_map<int, std::vector<float>> layerData_ ;
+    
+    struct LayerData {
+        std::vector<float> data ;
+        QElapsedTimer lastUpdate ;
+    };
+    std::unordered_map<int, LayerData> layerData_ ;
 
     float smoothFactor_ ;
     float sampleRate_ ;
@@ -44,9 +49,8 @@ private:
     float minDb_ ;
     float maxDb_ ;
     
-    // Update throttling
-    QTimer *updateTimer_ ;
-    bool dataReady_ ;
+    QTimer* updateTimer_ ;
+    QElapsedTimer fadeTimer_ ;
 
     QImage cachedFrame_ ;
 

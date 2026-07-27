@@ -49,21 +49,17 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
             
             Hysteresis gives us a lag to the trigger to ensure we are actually crossing the value. That
             is, if we blip just under the threshold in our source signal and then cross over it again,
-            it will not count as the rising crossing that we're looking for.
+            it will not count as a candidate rising crossing. 
+            
+            We will find all candidate rising crossings and later determine which one is the most similar
+            to the last buffer (in order to stabilize the output signal if multiple crossings exist)
             */
             double recentMin = *std::min_element(captureBuffer_.begin(), captureBuffer_.end());
             double recentMax = *std::max_element(captureBuffer_.begin(), captureBuffer_.end());
             double triggerLevel = ( recentMin + recentMax ) / 2.0 ;
             double hysteresis = ( recentMax - recentMin ) * hysteresisRatio_ ; 
 
-            /*
-            STEP 2: as we continue to read through the source signal, we need to identify what sample we hit
-            our trigger on. However, depending on the frequency/nature of the source signal, this may not 
-            map cleanly to a whole number of samples. So we are going to interpolate to account for this.
-            */
-            bool triggered = false ;
-            double triggerInterp = 0.0 ; 
-
+            std::vector<double> candidates ;
             if ( (recentMax - recentMin) > silenceThreshold_ ){
                 bool armed = false ;
                 for ( size_t j = 1; j < searchRegion_; ++j ){
@@ -75,29 +71,44 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
                         captureBuffer_[j-1] < triggerLevel && 
                         captureBuffer_[j] >= triggerLevel 
                     ){
+                        // basic interpolation to get precise sample
                         double slope = captureBuffer_[j] - captureBuffer_[j-1];
                         double frac = (triggerLevel - captureBuffer_[j-1]) / slope ;
-                        triggerInterp = static_cast<double>(j) + frac ;
-                        triggered = true ;
-                        break ;
+                        candidates.push_back(static_cast<double>(j) + frac);
+                        armed = false ; // rearm to search for next candidate
                     }
                 }
-            } 
+            }
 
             /*
-            STEP 3: extract the interpolated window from the captured buffer.
+            STEP 2: for each candidate, extract its window and score against
+            the previously displayed window. Select the best match
             */
-            std::vector<float> window(windowSize_);
-            for ( size_t j = 0; j < windowSize_; ++j ){
-                double pos = triggerInterp + static_cast<double>(j);
-                size_t idx = static_cast<size_t>(pos);
-                double frac = pos - static_cast<double>(idx);
-                if ( idx + 1 < captureSize_ ){
-                    window[j] = static_cast<float>(
-                        captureBuffer_[idx] * (1.0 - frac) + captureBuffer_[idx + 1] * frac 
-                    );
+            bool triggered = false ;
+            std::vector<float> bestWindow ;
+            double bestScore = -2.0 ; // sentinal value, the score is bounded between -1 and 1
+            double secondBestScore = -2.0 ; 
+            [[maybe_unused]] double bestCandidatePos = 0.0 ;
+
+            auto& prev = prevWindow_[id];
+
+            for ( double candidate : candidates ){
+                auto window = extractWindow(candidate);
+
+                double score ;
+                if ( prev.size() == windowSize_ ){
+                    score = normalizedCrossCorrelation(window, prev);
                 } else {
-                    window[j] = static_cast<float>(captureBuffer_[idx]);
+                    score = 0.0 ;
+                }
+
+                if ( score > bestScore ){
+                    bestScore = score ;
+                    bestWindow = std::move(window);
+                    bestCandidatePos = candidate ;
+                    triggered = true ;
+                } else if ( score > secondBestScore ){
+                    secondBestScore = score ;
                 }
             }
 
@@ -106,9 +117,56 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
             the output until we do trigger (the ui will fade this on its own)
             */
             if ( triggered ){
-                AnalyticsEngine::instance()->send(window, id);
+                [[maybe_unused]] double margin = bestScore - secondBestScore ;
+                [[maybe_unused]] auto& lastPos = lastTriggerPos_[id];
+
+                SPDLOG_TRACE(
+                    "For componentId={}, oscilloscope has {} crossing candidates, chosen={:.1f} score={:.3f} margin={:.3f} deltaFromLast={:.1f}",
+                    id, candidates.size(), bestCandidatePos, bestScore, margin, bestCandidatePos - lastPos
+                );
+                AnalyticsEngine::instance()->send(bestWindow, id);
+                prevWindow_[id] = std::move(bestWindow);
             } 
             bufferPosition_ = 0 ;
         }
     }
+}
+
+std::vector<float> Oscilloscope::extractWindow(double triggerInterp){
+    std::vector<float> window(windowSize_);
+    for ( size_t j = 0; j < windowSize_; ++j ){
+        double pos = triggerInterp + static_cast<double>(j);
+        size_t idx = static_cast<size_t>(pos);
+        double frac = pos - static_cast<double>(idx);
+        if ( idx + 1 < captureSize_ ){
+            window[j] = static_cast<float>(
+                captureBuffer_[idx] * (1.0 - frac) + captureBuffer_[idx + 1] * frac
+            );
+        } else {
+            window[j] = static_cast<float>(captureBuffer_[idx]);
+        }
+    }
+    return window ;
+}
+
+double Oscilloscope::normalizedCrossCorrelation(const std::vector<float>& a, const std::vector<float>& b){
+    /*
+    This is a zero mean normalized cross-correlation, so DC offset won't affect the matching value
+    Instead it just matches the "shape" of the curve
+    */
+    double meanA = std::accumulate(a.begin(), a.end(), 0.0) / a.size();
+    double meanB = std::accumulate(b.begin(), b.end(), 0.0) / b.size();
+
+    double num = 0.0, denomA = 0.0, denomB = 0.0 ;
+    for ( size_t i = 0; i < a.size(); ++i ){
+        double da = a[i] - meanA ;
+        double db = b[i] - meanB ;
+        num += da * db ;
+        denomA += da * da ;
+        denomB += db * db ;
+    }
+
+    if ( denomA <= 0.0 || denomB <= 0.0 ) return 0.0 ; // flat signal, don't divide by 0
+
+    return num / std::sqrt(denomA * denomB);
 }

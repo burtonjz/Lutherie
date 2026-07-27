@@ -23,6 +23,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QResizeEvent>
+#include <spdlog/spdlog.h>
 
 OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     QWidget(parent),
@@ -32,7 +33,7 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     minAmp_(Theme::OSCILLOSCOPE_MIN_AMPLITUDE),
     maxAmp_(Theme::OSCILLOSCOPE_MAX_AMPLITUDE),
     updateTimer_(new QTimer(this)),
-    dataReady_(false)
+    fadeTimer_()
 {
     Config::load();
 
@@ -49,6 +50,7 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
 
     connect(updateTimer_, &QTimer::timeout, this, &OscilloscopeWidget::onUpdateTimeout);
     updateTimer_->start();
+    fadeTimer_.start();
 }
 
 void OscilloscopeWidget::setAmplitudeRange(float minAmp, float maxAmp){
@@ -85,24 +87,26 @@ void OscilloscopeWidget::toggleLayer(int componentId, bool enabled){
 void OscilloscopeWidget::onData(int componentId, const float* data, size_t count){
     if ( !controls_->isLayerPresent(componentId) ) return ;
 
-    auto& layerBuffer = layerData_.at(componentId);
-    layerBuffer.assign(data, data + count);
-
-    dataReady_ = true ;
+    auto& layer = layerData_.at(componentId);
+    layer.data.assign(data, data + count);
+    layer.lastUpdate.restart();
 }
 
 void OscilloscopeWidget::onUpdateTimeout(){
-    if ( dataReady_ ){
-        renderToCache();
-        dataReady_ = false ;
-    } 
-    
     if ( !cachedFrame_.isNull() ){
-        // phosphor fade regardless of new data input
+        // fade out analysis signal
+        auto elapsedMs = fadeTimer_.restart();
+        double decay = 1.0 - std::exp(-double(elapsedMs) / Theme::ANALYZER_FADE_DURATION_MS);
+        int alpha = std::clamp(int(decay * 255.0), 0, 255);
+
         QPainter fade(&cachedFrame_);
-        fade.fillRect(cachedFrame_.rect(), QColor(0, 0, 0, 10));
+        fade.fillRect(
+            cachedFrame_.rect(), 
+            QColor(0, 0, 0, alpha)
+        );
     }
     
+    renderToCache();
     update();
 }
 
@@ -164,15 +168,19 @@ void OscilloscopeWidget::drawGrid(QPainter& painter){
 }
 
 void OscilloscopeWidget::drawWaveform(QPainter& painter){
-    for ( auto& [id, data] : layerData_ ){
-        if ( data.empty() || !controls_->isLayerEnabled(id) ) continue ;
+    for ( auto& [id, layer] : layerData_ ){
+        if ( 
+            layer.data.empty() || 
+            !controls_->isLayerEnabled(id) ||
+            layer.lastUpdate.elapsed() > Theme::ANALYZER_STALE_DATA_DURATION_MS
+        ) continue ;
 
         QPainterPath path ;
         bool firstPoint = true ;
 
-        for ( size_t i = 0; i < data.size(); ++i ){
-            float x = sampleToX(i, data.size());
-            float y = amplitudeToY(std::clamp(data[i], minAmp_, maxAmp_));
+        for ( size_t i = 0; i < layer.data.size(); ++i ){
+            float x = sampleToX(i, layer.data.size());
+            float y = amplitudeToY(std::clamp(layer.data[i], minAmp_, maxAmp_));
 
             if ( firstPoint ){
                 path.moveTo(x, y);

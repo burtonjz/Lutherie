@@ -19,19 +19,27 @@
 #include "widgets/GraphLayerControls.hpp"
 
 #include <QWidget>
+#include <QTimer>
+#include <QElapsedTimer>
 
  class OscilloscopeWidget : public QWidget, public IAnalyzerWidget {
     Q_OBJECT
 private:
     GraphLayerControls* controls_ ;
-    std::unordered_map<int, std::vector<float>> layerData_ ;
+
+    struct LayerData {
+        std::vector<float> data ;
+        QElapsedTimer lastUpdate ;
+    };
+    std::unordered_map<int, LayerData> layerData_ ;
     float sampleRate_ ;
 
     float minAmp_ ;
     float maxAmp_ ;
     
     QTimer* updateTimer_ ;
-    bool dataReady_ ;
+    QElapsedTimer fadeTimer_ ;
+
     QImage cachedFrame_ ;
 
 public:

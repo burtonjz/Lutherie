@@ -32,11 +32,18 @@ private:
     double hysteresisRatio_ ;        // fraction of signal range (to ignore false triggers)
     double silenceThreshold_ ;       // min peak-to-peak to attempt trigger
     
+    std::unordered_map<ComponentId, std::vector<float>> prevWindow_ ;
+    std::unordered_map<ComponentId, double> lastTriggerPos_ ;
+
 public:
     Oscilloscope(ComponentId, OscilloscopeConfig cfg);
     ~Oscilloscope() = default ;
     
     void process(const double* data, size_t size, ComponentId id) override ;
+
+private:
+    std::vector<float> extractWindow(double triggerInterp);
+    double normalizedCrossCorrelation(const std::vector<float>& a, const std::vector<float>& b);
 
 };
 
