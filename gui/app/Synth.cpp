@@ -52,7 +52,6 @@ Synth::Synth(QWidget* parent):
         parent
     ),
     setup_(nullptr),
-    graph_(nullptr),
     parameterPanel_(new ControlPanel(this)),
     parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
     modulationPanel_(new ControlPanel(this)),
@@ -63,7 +62,6 @@ Synth::Synth(QWidget* parent):
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
 
-    graph_ = new GraphPanel(this);
     graphDock_ = new KDDWQt::DockWidget("__graphDock");
 
     configureDocks();
@@ -114,19 +112,19 @@ Synth::Synth(QWidget* parent):
     
     // graph panel
     connect(
-        graph_, &GraphPanel::requestShowParameters,
+        GraphPanel::instance(), &GraphPanel::requestShowParameters,
         this, &Synth::onShowParameters
     );
     connect(
-        graph_, &GraphPanel::requestShowModulation,
+        GraphPanel::instance(), &GraphPanel::requestShowModulation,
         this, &Synth::onShowModulation
     );
     connect(
-        graph_, &GraphPanel::requestShowGroupParameters,
+        GraphPanel::instance(), &GraphPanel::requestShowGroupParameters,
         this, &Synth::onShowGroupParameters
     );
     connect(
-        graph_, &GraphPanel::requestShowGroupModulation,
+        GraphPanel::instance(), &GraphPanel::requestShowGroupModulation,
         this, &Synth::onShowGroupModulation
     );
 }
@@ -258,7 +256,7 @@ void Synth::configureToolBar(){
 }
 
 void Synth::configureDocks(){
-    graphDock_->setWidget(graph_);
+    graphDock_->setWidget(GraphPanel::instance());
     graphDock_->setTitle("Connection Graph");
     addDockWidget(graphDock_, KDDW::Location_OnLeft);
 
@@ -322,7 +320,7 @@ QMenu* Synth::buildComponentMenu(){
             connect(
                 action, &QAction::triggered, 
                 this, [this, typ](){
-                    graph_->onComponentSelected(typ);
+                    GraphPanel::instance()->onComponentSelected(typ);
                 }
             );
         } else if ( desc.numSignalInputs > 0 && desc.numSignalOutputs > 0 ){
@@ -330,7 +328,7 @@ QMenu* Synth::buildComponentMenu(){
             connect(
                 action, &QAction::triggered, 
                 this, [this, typ](){
-                    graph_->onComponentSelected(typ);
+                    GraphPanel::instance()->onComponentSelected(typ);
                 }
             );
         }
@@ -339,7 +337,7 @@ QMenu* Synth::buildComponentMenu(){
             connect(
                 action, &QAction::triggered, 
                 this, [this, typ](){
-                    graph_->onComponentSelected(typ);
+                    GraphPanel::instance()->onComponentSelected(typ);
                 }
             );
         } else if ( desc.numMidiInputs > 0 && desc.numMidiOutputs > 0 ){
@@ -347,7 +345,7 @@ QMenu* Synth::buildComponentMenu(){
             connect(
                 action, &QAction::triggered, 
                 this, [this, typ](){
-                    graph_->onComponentSelected(typ);
+                    GraphPanel::instance()->onComponentSelected(typ);
                 }
             );
         }
@@ -356,7 +354,7 @@ QMenu* Synth::buildComponentMenu(){
             connect(
                 action, &QAction::triggered, 
                 this, [this, typ](){
-                    graph_->onComponentSelected(typ);
+                    GraphPanel::instance()->onComponentSelected(typ);
                 }
             );
         }
@@ -365,7 +363,7 @@ QMenu* Synth::buildComponentMenu(){
             connect(
                 action, &QAction::triggered,
                 this, [this, typ](){
-                    graph_->onComponentSelected(typ);
+                    GraphPanel::instance()->onComponentSelected(typ);
                 }
             );
         }
@@ -378,7 +376,7 @@ QMenu* Synth::buildComponentMenu(){
         QTimer::singleShot(0, search, [search](){ search->clear();});
         for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
             if ( componentName == desc.name ){
-                graph_->onComponentSelected(typ);
+                GraphPanel::instance()->onComponentSelected(typ);
                 return ;
             }    
         }
@@ -460,7 +458,7 @@ void Synth::onActionSetup(){
         setup_ = new Setup() ;
          connect(
             setup_, &Setup::audioChannelsUpdated,
-            graph_, &GraphPanel::onAudioChannelsUpdated
+            GraphPanel::instance(), &GraphPanel::onAudioChannelsUpdated
         );
         setup_->show();
     } else {
@@ -515,7 +513,7 @@ void Synth::onActionLoad(){
     
     QFile file(filePath);
     if ( !file.open(QIODevice::ReadOnly | QIODevice::Text) ) {
-        ToastNotification::show(graph_->scene(), graph_,
+        ToastNotification::show(GraphPanel::instance()->scene(), GraphPanel::instance(),
             "Filed to open file " + filePath + ": " + file.errorString()
         );
         return;
@@ -528,7 +526,7 @@ void Synth::onActionLoad(){
         saveData_ = json::parse(fileData.data());
         saveFilePath_ = filePath ;
     } catch (std::exception& e ){
-        ToastNotification::show(graph_->scene(), graph_, 
+        ToastNotification::show(GraphPanel::instance()->scene(), GraphPanel::instance(), 
             "Failed to load file " + filePath + ". Invalid json: " + e.what()
         );
         return ;
@@ -569,7 +567,7 @@ void Synth::onActionSaveAs(){
 }
 
 void Synth::performSave(){
-    saveData_["nodes"] = graph_->serializeNodes();
+    saveData_["nodes"] = GraphPanel::instance()->serializeNodes();
 
     QFile file(saveFilePath_);
     if (!file.open(QIODevice::WriteOnly)){
@@ -624,14 +622,19 @@ void Synth::onActionToggleModulationPanel(){
 
 void Synth::onComponentAdded(int componentId, ComponentType typ){
     auto desc = ComponentRegistry::getComponentDescriptor(typ); 
-    QString name = QString::fromStdString(desc.name);
+
+    ComponentModel* m = ComponentManager::instance()->getModel(componentId);
+    if ( !m ){
+        SPDLOG_ERROR("model does not exist for added component. Please investigate.");
+        return ;
+    }
 
     auto params = ComponentManager::instance()->getParameters(componentId);
     if ( params ){
         if ( params->hasDetailedEditor() ){
             createComponentDetailDock(componentId, params);
         } else {
-            parameterPanel_->addContent(name, params);
+            parameterPanel_->addContent(m->getName(), params);
             connect(params, &QObject::destroyed, this, [this, params](){
                 parameterPanel_->removeContent(params);
             });
@@ -640,7 +643,7 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
     
     auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
     if ( modParams ){
-        modulationPanel_->addContent(name, modParams);
+        modulationPanel_->addContent(m->getName(), modParams);
         connect(modParams, &QObject::destroyed, this, [this, modParams](){
             modulationPanel_->removeContent(modParams);
         });
@@ -852,7 +855,7 @@ void Synth::onComponentRenamed(int componentId){
     } 
 
     // rename node
-    auto n = graph_->getComponentNode(componentId);
+    auto n = GraphPanel::instance()->getComponentNode(componentId);
     if ( n ){
         SPDLOG_DEBUG("renaming component node...");
         n->onRename(m->getName());
@@ -893,7 +896,7 @@ void Synth::onGroupRenamed(int groupId){
     if ( !m ) return ;
 
     // graph node renames
-    auto n = graph_->getGroupNode(groupId);
+    auto n = GraphPanel::instance()->getGroupNode(groupId);
     if ( n ){
         n->onRename(m->getName());
     }

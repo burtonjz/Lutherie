@@ -20,8 +20,8 @@
 
 #include "app/Setup.hpp"
 #include "managers/GroupManager.hpp"
-#include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
+#include "types/ComponentType.hpp"
 
 #include <kddockwidgets/MainWindow.h>
 #include <QUiLoader>
@@ -37,13 +37,13 @@ namespace KDDWQt = KDDockWidgets::QtWidgets ;
 
 // forward declarations
 class ComponentParameters ;
+class ControlPanel ;
 
 class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
 
 private:
     Setup* setup_ ;
-    GraphPanel* graph_ ;
 
     // docks
     KDDWQt::DockWidget* graphDock_ ;

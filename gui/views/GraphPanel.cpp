@@ -44,6 +44,11 @@
 #include <QMenu>
 #include <QLineEdit>
 
+GraphPanel* GraphPanel::instance(){
+    static GraphPanel panel ;
+    return &panel ;
+}
+
 GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
     isDraggingConnection_(false)
@@ -76,11 +81,8 @@ GraphPanel::GraphPanel(QWidget* parent):
     // ComponentManager
     connect(
         ComponentManager::instance(), &ComponentManager::componentAdded,
-        this, [this](int componentId, ComponentType typ) {
-        QTimer::singleShot(0, this, [this, componentId, typ]() {
-            onComponentAdded(componentId, typ);
-        });
-    });
+        this, &GraphPanel::onComponentAdded
+    );
     connect(
         ComponentManager::instance(), &ComponentManager::componentRemoved,
         this, &GraphPanel::onComponentRemoved
@@ -114,10 +116,6 @@ GraphPanel::GraphPanel(QWidget* parent):
         GroupManager::instance(), &GroupManager::groupRemoved,
         this, &GraphPanel::onComponentGroupRemoved
     );
-}
-
-GraphPanel::~GraphPanel(){
-
 }
 
 void GraphPanel::setupScene(){

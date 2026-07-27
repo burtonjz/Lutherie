@@ -50,9 +50,15 @@ private:
     static constexpr int AUDIO_OUT_DEVICE_ID = 0 ;
     static constexpr int MIDI_IN_DEVICE_ID   = 1 ;
 
-public:
     explicit GraphPanel(QWidget* parent = nullptr);
-    ~GraphPanel();
+
+public:
+    static GraphPanel* instance();
+
+    GraphPanel(const GraphPanel&) = delete ;
+    GraphPanel& operator=(const GraphPanel&) = delete ;
+    GraphPanel(GraphPanel&&) = delete ;
+    GraphPanel& operator=(GraphPanel&&) = delete ;
 
     // APIs
     json serializeNodes() const ;
