@@ -62,7 +62,7 @@ public:
     void requestRemoveSocketConnections(SocketWidget* s);
     void requestRemoveSocket(SocketWidget* s);
 
-    void onComponentGroup(const std::unordered_set<int>& componentIds);
+    void onComponentGroup(const std::vector<int>& componentIds);
 
 private:
     void sendDragCableRequest();

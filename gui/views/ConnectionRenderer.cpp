@@ -175,7 +175,7 @@ bool ConnectionRenderer::socketIsRemovable(SocketWidget* s, bool request){
     return !hasConnection ;
 }
 
-void ConnectionRenderer::onComponentGroup(const std::unordered_set<int>& componentIds){
+void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
     for ( auto cable : cables_ ){
         SocketSpec fromSpec = cable->getFromSocket()->getSpec();
         SocketSpec toSpec = cable->getToSocket()->getSpec();

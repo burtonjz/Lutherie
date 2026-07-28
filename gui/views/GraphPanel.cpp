@@ -795,7 +795,7 @@ void GraphPanel::onComponentRemoved(int componentId){
     n->deleteLater();
 }
 
-void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds, std::optional<json> deserialized){
+void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> componentIds, std::optional<json> deserialized){
     auto* model = GroupManager::instance()->getModel(groupId);
     model->setName(QString("Group %1").arg(groupId));
 
@@ -817,7 +817,7 @@ void GraphPanel::onComponentGroupCreated(int groupId, std::unordered_set<int> co
     }
 }
 
-void GraphPanel::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
+void GraphPanel::onComponentGroupRemoved(int groupId, std::vector<int> componentIds){
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){
@@ -833,7 +833,7 @@ void GraphPanel::onComponentGroupRemoved(int groupId, std::unordered_set<int> co
     connectionRenderer_->onComponentGroup(componentIds);
 }
 
-void GraphPanel::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
+void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> componentIds){
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){
@@ -881,7 +881,12 @@ void GraphPanel::handleGroupEvent(){
         groupIds.push_back(g->getId());
     }
 
-    for ( const auto& c: getSelectedComponents() ){
+    // sort components by name for initial group
+    auto selected = getSelectedComponents();
+    sort(selected.begin(), selected.end(), [](const ComponentNode* a, const ComponentNode* b){
+        return a->getName() < b->getName();
+    });
+    for ( const auto& c: selected ){
         componentIds.push_back(c->getModel()->getId());
     }
 

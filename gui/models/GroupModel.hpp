@@ -19,7 +19,7 @@
 #define GROUP_MODEL_HPP_
 
 #include <QObject>
-#include <unordered_set>
+#include <vector>
 
 class GroupModel : public QObject {
     Q_OBJECT
@@ -27,7 +27,7 @@ class GroupModel : public QObject {
 private:
     int id_ ;
     QString name_ ;
-    std::unordered_set<int> componentIds_ ;
+    std::vector<int> componentIds_ ;
 
 public:
     GroupModel(int id, QString name = "");
@@ -39,7 +39,7 @@ public:
     void addComponent(int componentId);
     void removeComponent(int componentId);
     bool hasComponent(int componentId);
-    const std::unordered_set<int>& getComponents() const ;
+    const std::vector<int>& getComponents() const ;
 
 signals:
     void groupRenamed(int groupId);

@@ -131,9 +131,9 @@ public slots:
     void onShowGroupModulation(int groupId);
 
     // for framing groups in panels
-    void onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds);
-    void onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds);
-    void onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds);
+    void onComponentGroupCreated(int groupId, std::vector<int> componentIds);
+    void onComponentGroupRemoved(int groupId, std::vector<int> componentIds);
+    void onComponentGroupUpdated(int groupId, std::vector<int> componentIds);
 
     void onComponentRenamed(int componentId);
     void onGroupRenamed(int groupId);

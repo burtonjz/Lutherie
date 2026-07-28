@@ -21,7 +21,7 @@
 #include "models/GroupModel.hpp"
 
 #include <QObject>
-#include <unordered_set>
+#include <vector>
 #include <unordered_map>
 #include <nlohmann/json.hpp>
 
@@ -63,9 +63,9 @@ public slots:
     void onRequestGroupRemove(int groupId);
 
 signals:
-    void groupCreated(int groupId, const std::unordered_set<int>& componentIds, std::optional<json> deserialize = std::nullopt);
-    void groupUpdated(int groupId, const std::unordered_set<int>& componentIds);
-    void groupRemoved(int groupId, const std::unordered_set<int>& componentIds);
+    void groupCreated(int groupId, const std::vector<int>& componentIds, std::optional<json> deserialize = std::nullopt);
+    void groupUpdated(int groupId, const std::vector<int>& componentIds);
+    void groupRemoved(int groupId, const std::vector<int>& componentIds);
     void groupRenamed(int groupId);
 
 };

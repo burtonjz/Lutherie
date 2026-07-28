@@ -16,6 +16,7 @@
  */
 
 #include "models/GroupModel.hpp"
+#include <spdlog/spdlog.h>
 
 GroupModel::GroupModel(int id, QString name):
     id_(id),
@@ -38,17 +39,27 @@ void GroupModel::setName(QString name){
 }
 
 void GroupModel::addComponent(int componentId){
-    auto [ it, inserted ] = componentIds_.insert(componentId);
+    if ( hasComponent(componentId) ){
+        SPDLOG_WARN("componentId {} is already present in group model with id = {}",
+            componentId, id_
+        );
+        return ;
+    }
+    componentIds_.push_back(componentId);
 } 
 
 void GroupModel::removeComponent(int componentId){
-    componentIds_.erase(componentId);
+    componentIds_.erase(std::remove(
+        componentIds_.begin(), componentIds_.end(), componentId), 
+        componentIds_.end()
+    );
 } 
 
 bool GroupModel::hasComponent(int componentId){
-    return componentIds_.contains(componentId);
+    return std::find(componentIds_.begin(), componentIds_.end(), componentId) 
+        != componentIds_.end() ;
 }
 
-const std::unordered_set<int>& GroupModel::getComponents() const {
+const std::vector<int>& GroupModel::getComponents() const {
     return componentIds_ ;
 } 

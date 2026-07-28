@@ -711,7 +711,7 @@ void Synth::onShowGroupModulation(int groupId){
     modulationPanel_->maximizeSection(modParams);
 }
 
-void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> componentIds){
+void Synth::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
     auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
 
@@ -732,7 +732,7 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
     bool paramAdded = false, modAdded = false ;
     for ( auto componentId : componentIds ){
         auto params = ComponentManager::instance()->getParameters(componentId);
-        if ( params && ! params->hasDetailedEditor() ){
+        if ( params && !params->hasDetailedEditor() ){
             if ( !paramAdded ){
                 GroupManager::instance()->setParameters(groupId, paramContent);
                 parameterPanel_->addContent(name, paramContent);
@@ -767,7 +767,7 @@ void Synth::onComponentGroupCreated(int groupId, std::unordered_set<int> compone
     }
 }
 
-void Synth::onComponentGroupRemoved(int groupId, std::unordered_set<int> componentIds){
+void Synth::onComponentGroupRemoved(int groupId, std::vector<int> componentIds){
     auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
 
@@ -782,7 +782,7 @@ void Synth::onComponentGroupRemoved(int groupId, std::unordered_set<int> compone
     GroupManager::instance()->removeContent(groupId);
 }
 
-void Synth::onComponentGroupUpdated(int groupId, std::unordered_set<int> componentIds){
+void Synth::onComponentGroupUpdated(int groupId, std::vector<int> componentIds){
     auto m = GroupManager::instance()->getModel(groupId);
     if ( !m ) return ;
 
