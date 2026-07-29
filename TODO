@@ -22,7 +22,6 @@
 - [Medium] Add optional audio-rate "sync" input to oscillator; detect rising edge and reset wavetable phase ticker on trigger, for hard sync. *No new port/signal type needed — reuses existing Audio Signal input, since edge-detection-on-a-waveform is the same mechanism analog hard sync uses. Shelved the generic control-port/trigger system since this was the only real use case for it; revisit the generic system only if 2-3 more cases show up that can't be expressed as an edge on an audio-rate signal.*
 
 ### New Components
-- [Quick] `BufferReverser` -- flip a buffer and play in reverse (buffer in, buffer out)
 - [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
 - [Medium] `Arpeggiator` -- play series of notes relative to pressed notes in a loop (midi in, midi out)
 

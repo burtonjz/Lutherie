@@ -22,6 +22,7 @@
 #include "components/LinearFader.hpp"
 #include "components/Oscillator.hpp"
 #include "components/ADSREnvelope.hpp"
+#include "components/BufferReverser.hpp"
 #include "components/MonophonicFilter.hpp"
 #include "components/Multiply.hpp"
 #include "components/SpectrumAnalyzer.hpp"

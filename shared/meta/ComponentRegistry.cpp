@@ -194,7 +194,17 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 .collection = CollectionDescriptor::Grouped(ParameterType::SAMPLE, 2),
                 .numBufferInputs = 1,
                 .numBufferOutputs = 1,
-                .allowMultipleBufferConnections = false,
+                .allowMultipleBufferConnections = false
+            }
+        },
+        {
+            ComponentType::BufferReverser,
+            {
+                .name = "Buffer Reverser",
+                .type = ComponentType::BufferReverser,
+                .numBufferInputs = 1,
+                .numBufferOutputs = 1,
+                .allowMultipleBufferConnections = false
             }
         }
     };

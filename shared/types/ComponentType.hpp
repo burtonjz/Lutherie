@@ -35,7 +35,8 @@
     X(Panner) \
     X(FileBuffer) \
     X(BufferStreamer) \
-    X(Chopper)
+    X(Chopper) \
+    X(BufferReverser)
 
 /**
  * @brief enumeration of modulation source classes
