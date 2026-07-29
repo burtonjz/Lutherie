@@ -27,7 +27,7 @@ using json = nlohmann::json ;
 
 class Config {
 private:
-    static std::string configPath_ ;
+    static std::filesystem::path configPath_ ;
     static json configData_ ;
     static std::shared_mutex mutex_ ;
 

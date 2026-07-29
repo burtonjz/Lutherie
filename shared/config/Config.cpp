@@ -16,42 +16,76 @@
  */
 
 #include "Config.hpp"
+#include <fmt/format.h>
 #include <fstream>
 #include "filesystem"
 #include <linux/limits.h>
 #include <string_view>
 #include <mutex>
 #include <unistd.h>
+#include <spdlog/spdlog.h>
 
 #ifdef __APPLE__
     #include <mach-o/dyld.h>
 #endif
 
-std::string getExecutableDir(){ // TODO: this only works for linux currently
+std::filesystem::path getExecutableDir(){
+#ifdef __linux__
     char result[PATH_MAX];
-#ifdef __APPLE__
-    uint32_t size = sizeof(result);
-    if (_NSGetExecutablePath(result, &size) != 0) {
-        return {};
-    }
-    return std::filesystem::path(std::string(result)).parent_path().string();
-#else // LINUX
+
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    if (count == -1) {
-        return {};
+    SPDLOG_DEBUG("reading path to current executable...");
+
+    if ( count == -1 ){
+        throw std::runtime_error("Could not determine executable path");
     }
-    return std::filesystem::path(std::string(result, count)).parent_path().string();
+    
+    std::filesystem::path p(std::string(result, count));
+
+    SPDLOG_DEBUG("executable directory is {}", p.parent_path());
+    return p.parent_path();
+
+#elif defined(__APPLE__)
+
+    char result[PATH_MAX];
+    uint32_t size = sizeof(result);
+
+    if (_NSGetExecutablePath(result, &size) != 0)
+        throw std::runtime_error("Could not determine executable path");
+
+    return std::filesystem::canonical(result).parent_path();
+
+#else
+
+    throw std::runtime_error("Unsupported platform");
+
 #endif
 }
 
-std::string Config::configPath_ = std::filesystem::path(getExecutableDir()) / ".." / "shared" / "config.json" ;
+std::filesystem::path findConfig(){
+    auto exe = getExecutableDir();
+
+    // Development tree
+    auto dev = exe / ".." / "shared" / "config.json";
+    if (std::filesystem::exists(dev))
+        return std::filesystem::canonical(dev);
+
+    // Installed tree (configured by CMake)
+    auto installed = std::filesystem::path(LUTHERIE_DATA_DIR) / "config.json";
+    if (std::filesystem::exists(installed))
+        return installed;
+
+    throw std::runtime_error("Couldn't locate config.json");
+}
+
+std::filesystem::path Config::configPath_ = findConfig();
 json Config::configData_ ;
 std::shared_mutex Config::mutex_ ;
 
 void Config::load(){
     std::ifstream file(configPath_);
     if (!file.is_open()) {
-        throw std::runtime_error("Could not open config file: " + configPath_ );
+        throw std::runtime_error(fmt::format("Could not open config file: {}", configPath_.c_str()));
     }
 
     json temp;
@@ -65,7 +99,7 @@ void Config::save(){
     std::shared_lock readLock(mutex_);
     std::ofstream file(configPath_);
     if (!file.is_open()){
-        throw std::runtime_error("Could not open config file: " + configPath_ );
+        throw std::runtime_error(fmt::format("Could not open config file: {}", configPath_.c_str()));
     }
     file << configData_.dump(4);
 }

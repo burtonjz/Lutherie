@@ -9,17 +9,11 @@
 - [Quick] Launch KDDW/modern floating window for setup button
 - [Quick] Allow saving remembering audio/midi IDs in user config.
 - [Quick] fix UX oddities with the add component menu (auto highlight when one search item left, have search bar auto activate to allow immediate typing)
-- [Medium] Create application launcher (linux .desktop, single entry/exit scripts)
 - [Medium] Create better patch load menu (dedicated internal directory)
 - [Medium] hide/lock basic parameters (for simplifying patches)
 
 ### Component Improvements
-- [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
-- [Quick] allow saving an output buffer to audio file
-- [Quick] Send Pitchbend Control to `PolyOscillator`
-- [Medium] develop glide mechanism for monophonic oscillator (possibly new oscillator component)
 - [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
-- [Medium] Add optional audio-rate "sync" input to oscillator; detect rising edge and reset wavetable phase ticker on trigger, for hard sync. *No new port/signal type needed — reuses existing Audio Signal input, since edge-detection-on-a-waveform is the same mechanism analog hard sync uses. Shelved the generic control-port/trigger system since this was the only real use case for it; revisit the generic system only if 2-3 more cases show up that can't be expressed as an edge on an audio-rate signal.*
 
 ### New Components
 - [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
@@ -74,9 +68,13 @@
 - [Medium] Specialized Widgets in component groups should all be stacked together by default in one floating window
 
 ### Component Improvements
+- [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
+- [Quick] Send Pitchbend Control to `PolyOscillator`
+- [Medium] develop glide mechanism for monophonic oscillator (possibly new oscillator component)
 - [Medium] Move `FileBuffer` resampling to a separate thread; add a loading indicator
 - [Medium] "Arming" system for buffer loads so real-time audio isn't disrupted
 - [Medium] enhancements to `BufferStreamer`: add a reset control, loop control, midi control, and playback rate adjusters
+- [Medium] Add optional audio-rate "sync" input to oscillator; detect rising edge and reset wavetable phase ticker on trigger, for hard sync. *No new port/signal type needed — reuses existing Audio Signal input, since edge-detection-on-a-waveform is the same mechanism analog hard sync uses.
 - [Big] specialized widget for `BiquadFilter` that includes a graph representation for modifying parameters
 
 ### Macro Knobs (New Feature)

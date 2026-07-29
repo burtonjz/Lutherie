@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-project(synth)
-
 # set variables
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -64,27 +61,27 @@ add_custom_target(generate_components
 
 file(GLOB SRC "${SRC_DIR}/*.cpp" "${SRC_DIR}/*/*.cpp")
 
-add_executable(synth ${SRC} ${SRC_DIR}/configs/ComponentConfig.hpp ${SRC_DIR}/components/Components.hpp)
+add_executable(lutherie-backend ${SRC} ${SRC_DIR}/configs/ComponentConfig.hpp ${SRC_DIR}/components/Components.hpp)
 
 if(APPLE)
-    set_target_properties(synth PROPERTIES
+    set_target_properties(lutherie-backend PROPERTIES
         BUILD_RPATH "/opt/homebrew/lib"
         INSTALL_RPATH "/opt/homebrew/lib"
     )
 endif()
 
 # Make sure the config is generated before building
-add_dependencies(synth generate_configs)
-add_dependencies(synth generate_components)
+add_dependencies(lutherie-backend generate_configs)
+add_dependencies(lutherie-backend generate_components)
 
-target_include_directories(synth PRIVATE
+target_include_directories(lutherie-backend PRIVATE
     ${SRC_DIR}
     ${RTAUDIO_INCLUDE_DIRS}
     ${RTMIDI_INCLUDE_DIRS}
     ${SPDLOG_INCLUDE_DIRS}
 )
 
-target_link_libraries(synth PRIVATE 
+target_link_libraries(lutherie-backend PRIVATE 
     shared
     ${RTAUDIO_LIBRARIES}
     ${RTMIDI_LIBRARIES}
@@ -95,14 +92,18 @@ target_link_libraries(synth PRIVATE
     m
 )
 
-target_link_options(synth PRIVATE -pthread)
+target_link_options(lutherie-backend PRIVATE -pthread)
 
 if(UNIX AND NOT APPLE)
     # Linux-specific linker flags
-    target_link_options(synth PRIVATE
+    target_link_options(lutherie-backend PRIVATE
         -Wl,-Bstatic
         -Wl,-Bdynamic
         -Wl,--as-needed
     )
 endif()
 
+
+install(TARGETS lutherie-backend
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
