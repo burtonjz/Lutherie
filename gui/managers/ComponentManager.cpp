@@ -139,6 +139,15 @@ void ComponentManager::requestSetFile(int componentId, std::string path){
     ControlApiClient::instance()->sendMessage(obj);
 }
 
+void ComponentManager::requestSaveBuffer(int componentId, std::string path){
+    json obj ;
+    obj["action"] = "save_buffer" ;
+    obj["componentId"] = componentId ;
+    obj["path"] = path ;
+
+    ControlApiClient::instance()->sendMessage(obj);
+}
+
 ComponentModel* ComponentManager::getModel(int componentId) const {
     if ( !models_.contains(componentId) ){
         SPDLOG_WARN("No component model found with id = {}",componentId);

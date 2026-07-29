@@ -20,6 +20,7 @@
 
 #include "core/BaseComponent.hpp"
 
+#include <sndfile.h>
 #include <spdlog/spdlog.h>
 #include <vector>
 
@@ -64,6 +65,8 @@ public:
     
     const std::unordered_set<BufferConnection, BufferHash>& getInputs(size_t inp) const ;
     const std::unordered_set<BufferConnection, BufferHash>& getOutputs(size_t out) const ;
+
+    bool saveBuffer(std::string savePath);
         
 protected:
     virtual void onInputConnect();
@@ -71,6 +74,9 @@ protected:
     virtual void onInputUpdated();
 
     void notifyDownstream(size_t index);
+
+    size_t getMaxBufferFrames() const ;
+    std::vector<double> getInterleavedBuffers(const SF_INFO& info) const ;
         
 };
 

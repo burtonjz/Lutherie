@@ -59,6 +59,7 @@ public:
     void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
     void requestModelSync(int componentId);
     void requestSetFile(int componentId, std::string path);
+    void requestSaveBuffer(int componentId, std::string path);
 
     ComponentModel* getModel(int componentId) const ;
     ComponentParameters* getParameters(int componentId) const ;

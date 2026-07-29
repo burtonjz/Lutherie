@@ -69,6 +69,49 @@ size_t AudioBufferComponent::getNumOutputs() const {
     return nOutputs_ ;
 }
 
+bool AudioBufferComponent::saveBuffer(std::string savePath){
+    int saveFormat ;
+    if ( savePath.ends_with(".wav") ) saveFormat = SF_FORMAT_WAV | SF_FORMAT_DOUBLE ;
+    else if ( savePath.ends_with(".mp3") ) saveFormat = SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III ;
+    else if ( savePath.ends_with(".aiff") ) saveFormat = SF_FORMAT_AIFF | SF_FORMAT_DOUBLE ;
+    else {
+        SPDLOG_DEBUG("save path does not end with an expected file type. setting to wav");
+        savePath.append(".wav");
+        saveFormat = SF_FORMAT_WAV ;
+    }
+    
+    SF_INFO sfinfo{};
+    sfinfo.samplerate = static_cast<int>(sampleRate_);
+    sfinfo.channels   = static_cast<int>(nOutputs_);
+    sfinfo.format     = saveFormat ;
+
+    bool validFormat = sf_format_check(&sfinfo);
+    if ( !validFormat ){
+        SPDLOG_ERROR("sndfile formatting error. please investigate.");
+        return false ;
+    }
+
+    SNDFILE* file = sf_open(savePath.c_str(), SFM_WRITE, &sfinfo);
+    
+    if ( !file ){
+        SPDLOG_ERROR("Error opening file for write: {}", sf_strerror(nullptr));
+        return false ;
+    }
+
+    sfinfo.frames = static_cast<sf_count_t>(getMaxBufferFrames());
+    auto output = getInterleavedBuffers(sfinfo);
+
+    sf_count_t count = sf_write_double(
+        file, output.data(), 
+        sfinfo.frames * sfinfo.channels
+    );
+
+    sf_close(file);
+
+    SPDLOG_INFO("wrote {} samples to file {}", count, savePath);
+    return true ;
+}
+
 const std::unordered_set<BufferConnection, BufferHash>& AudioBufferComponent::getInputs(size_t inp) const {    
     assert( inp < nInputs_ );
     return inboundConnections_[inp] ;
@@ -93,4 +136,24 @@ void AudioBufferComponent::notifyDownstream(size_t channel){
     header.componentId = getId();
     header.channel = channel ;
     DataApiHandler::instance()->sendApiData(header, getBuffer(channel));
+}
+
+size_t AudioBufferComponent::getMaxBufferFrames() const {
+    size_t numFrames = 0 ;
+    for ( const auto& buf : buffers_ ){
+        if ( buf.size() > numFrames ){
+            numFrames = buf.size();
+        }
+    }
+    return numFrames ;
+}
+
+std::vector<double> AudioBufferComponent::getInterleavedBuffers(const SF_INFO& info) const {
+    std::vector<double> interleaved(info.frames * info.channels);
+    for ( sf_count_t frame = 0 ; frame < info.frames ; ++frame ){
+        for ( int channel = 0 ; channel < info.channels; ++channel ){
+            interleaved[frame * info.channels + channel] = buffers_[channel][frame];
+        }
+    }
+    return interleaved ;
 }

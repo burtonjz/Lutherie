@@ -68,6 +68,8 @@ void FileBuffer::loadWavBuffer(){
         SPDLOG_DEBUG("resampling audio for channel {}. Rate {} -> {}", i++, sfinfo.samplerate, sampleRate_);
         resample(ch, sfinfo.samplerate, sampleRate_);
     }
+
+    sf_close(file);
 }
 
 void FileBuffer::resample(std::vector<double>& buffer, int srcRate, int dstRate){

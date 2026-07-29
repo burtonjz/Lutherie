@@ -89,6 +89,7 @@ void ControlApiHandler::initialize(Engine* engine){
     handlers_["set_modulation_depth"] = [this](const json& request){ return setModulationDepth(request); };
     handlers_["get_file_path"] = [this](const json& request){ return getFilePath(request); };
     handlers_["set_file_path"] = [this](const json& request){ return setFilePath(request); };
+    handlers_["save_buffer"] = [this](const json& request){ return saveBuffer(request); };
     handlers_["get_buffer_data"] = [this](const json& request){ return getBufferData(request); };
     handlers_["midi_learn"] = [this](const json& request){ return midiLearn(request); };
     handlers_["get_midi_control"] = [this](const json& request){ return getMidiControl(request); };
@@ -1012,7 +1013,7 @@ json ControlApiHandler::getFilePath(const json& request){
 json ControlApiHandler::setFilePath(const json& request){
     json response = request ;
     ComponentId id = response.at("componentId");
-    std::string path =  response.at("path");
+    std::string path = response.at("path");
 
     FileComponent* c = engine_->componentManager.getFileComponent(id);
     if ( !c ){
@@ -1023,6 +1024,23 @@ json ControlApiHandler::setFilePath(const json& request){
     }
 
     c->setPath(path);
+    return response ;
+}
+
+json ControlApiHandler::saveBuffer(const json& request){
+    json response = request ;
+    ComponentId id = response.at("componentId");
+    std::string path = response.at("path");
+
+    AudioBufferComponent* c = engine_->componentManager.getBufferComponent(id);
+    if ( !c ){
+        throw std::runtime_error(fmt::format(
+            "Buffer component with id {} not found",
+            id
+        ));
+    }
+
+    c->saveBuffer(path);
     return response ;
 }
 

@@ -17,7 +17,7 @@
 - [Quick] Allow `BufferWaveform` samples per X Pixel to be updated via mouse scroll on widget
 - [Quick] allow saving an output buffer to audio file
 - [Quick] Send Pitchbend Control to `PolyOscillator`
-- [Medium] develope glide mechanism for monophonic oscillator (possibly new oscillator component)
+- [Medium] develop glide mechanism for monophonic oscillator (possibly new oscillator component)
 - [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
 - [Medium] Add optional audio-rate "sync" input to oscillator; detect rising edge and reset wavetable phase ticker on trigger, for hard sync. *No new port/signal type needed — reuses existing Audio Signal input, since edge-detection-on-a-waveform is the same mechanism analog hard sync uses. Shelved the generic control-port/trigger system since this was the only real use case for it; revisit the generic system only if 2-3 more cases show up that can't be expressed as an edge on an audio-rate signal.*
 
@@ -76,7 +76,7 @@
 ### Component Improvements
 - [Medium] Move `FileBuffer` resampling to a separate thread; add a loading indicator
 - [Medium] "Arming" system for buffer loads so real-time audio isn't disrupted
-- [Medium] enhancements to `BufferStreamer`: add a reset control, loop control, and midi control
+- [Medium] enhancements to `BufferStreamer`: add a reset control, loop control, midi control, and playback rate adjusters
 - [Big] specialized widget for `BiquadFilter` that includes a graph representation for modifying parameters
 
 ### Macro Knobs (New Feature)

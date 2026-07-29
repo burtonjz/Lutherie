@@ -588,12 +588,26 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
         socketMenu->addAction(showSocket);
     }
 
-    // other misc actions
+    // MISC ACTIONS
+
+    // rename
     QAction* rename = new QAction("Rename", &menu);
-    connect ( rename, &QAction::triggered, [this, node](){
+    connect (rename, &QAction::triggered, [this, node](){
         startRename(node);
     });
     menu.addAction(rename);
+
+    // export audio buffer
+    if ( ComponentNode* componentNode = dynamic_cast<ComponentNode*>(node) ){
+        const ComponentDescriptor& descriptor = componentNode->getModel()->getDescriptor();
+        if ( descriptor.numBufferOutputs > 0 ){
+            QAction* exportBuffer = new QAction("Export Buffer", &menu);
+            connect(exportBuffer, &QAction::triggered, [this, componentNode](){
+                requestSaveBuffer(componentNode->getModel()->getId());
+            });
+            menu.addAction(exportBuffer);
+        }
+    }
 
     menu.exec(QCursor::pos());
 }
@@ -680,6 +694,19 @@ void GraphPanel::startRename(GraphNode* node ){
         scene_->removeItem(proxy);
         proxy->deleteLater();
     });
+}
+
+void GraphPanel::requestSaveBuffer(int componentId){
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Buffer"),
+        QDir::homePath(),
+        tr("Audio Files (*.wav *.aiff *.mp3);;All Files (*)")
+    );
+    if (filePath.isEmpty()) {
+        return ; 
+    }
+    ComponentManager::instance()->requestSaveBuffer(componentId, filePath.toStdString());
 }
 
 void GraphPanel::wheelEvent(QWheelEvent* event){

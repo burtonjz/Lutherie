@@ -108,6 +108,7 @@ public:
     // file management
     json getFilePath(const json& request);
     json setFilePath(const json& request);
+    json saveBuffer(const json& request);
 
     // data api
     json getBufferData(const json& request);

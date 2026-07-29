@@ -106,6 +106,7 @@ private:
     void onNodeRightClicked(GraphNode* node);
     void onSocketRightClicked(SocketWidget* socket);
     void startRename(GraphNode* node);
+    void requestSaveBuffer(int componentId);
 
     bool isNodeNameAvailable(const QString& name, GraphNode* target = nullptr) const ;
     void updateModelName(GraphNode* node, const QString& name);
