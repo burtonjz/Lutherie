@@ -66,14 +66,14 @@ std::filesystem::path findConfig(){
     auto exe = getExecutableDir();
 
     // Development tree
-    auto dev = exe / ".." / "shared" / "config.json";
-    if (std::filesystem::exists(dev))
+    auto dev = exe / ".." / "shared" / "config.json" ;
+    if ( std::filesystem::exists(dev) )
         return std::filesystem::canonical(dev);
 
     // Installed tree (configured by CMake)
     auto installed = std::filesystem::path(LUTHERIE_DATA_DIR) / "config.json";
-    if (std::filesystem::exists(installed))
-        return installed;
+    if ( std::filesystem::exists(installed) )
+        return installed ;
 
     throw std::runtime_error("Couldn't locate config.json");
 }
@@ -84,7 +84,7 @@ std::shared_mutex Config::mutex_ ;
 
 void Config::load(){
     std::ifstream file(configPath_);
-    if (!file.is_open()) {
+    if ( !file.is_open() ) {
         throw std::runtime_error(fmt::format("Could not open config file: {}", configPath_.c_str()));
     }
 
