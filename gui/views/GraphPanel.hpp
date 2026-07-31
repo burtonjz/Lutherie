@@ -113,6 +113,8 @@ private:
     bool isNodeNameAvailable(const QString& name, GraphNode* target = nullptr) const ;
     void updateModelName(GraphNode* node, const QString& name);
 
+    QPointF getNewNodeSpawnPosition(const QRectF& item) const ;
+
 private slots:
     void onControlMessageReceived(const json& json);
     

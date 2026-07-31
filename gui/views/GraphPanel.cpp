@@ -739,6 +739,47 @@ void GraphPanel::updateModelName(GraphNode* node, const QString& name){
     } 
 }
 
+QPointF GraphPanel::getNewNodeSpawnPosition(const QRectF& item) const {
+    QRectF viewRect = mapToScene(viewport()->rect()).boundingRect();
+
+    QPointF candidatePos = viewRect.center();
+
+    if ( scene_->items(item, Qt::IntersectsItemShape).isEmpty() ){
+        return candidatePos ;
+    }
+
+    // otherwise, spiral search
+    const int step = 50 ;
+    const int maxIter = 100 ;
+
+    for ( int i = 1; i < maxIter; ++i ){
+        QPointF candidate = candidatePos ;
+        
+        int ring = ( i / 8 ) + 1 ;
+        int side = i % 8 ;
+        int dist = ring * step ;
+
+        switch(side){
+        case 0: candidate += QPointF(dist, 0); break ;
+        case 1: candidate += QPointF(-dist, 0); break ;
+        case 2: candidate += QPointF(0, dist); break ;
+        case 3: candidate += QPointF(0, -dist); break ;
+        case 4: candidate += QPointF(dist, dist); break ;
+        case 5: candidate += QPointF(-dist, dist); break ;
+        case 6: candidate += QPointF(dist, -dist); break ;
+        case 7: candidate += QPointF(-dist, -dist); break ;
+        }
+
+        QRectF bounds = item.translated(candidate);
+        if ( scene_->items(bounds, Qt::IntersectsItemShape).isEmpty() ){
+            return candidate ;
+        }
+    }
+
+    // just spawn at start if all else fails
+    return candidatePos ;
+}
+
 void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
     // Draw Grid
     painter->setPen(QPen(Theme::GRAPH_GRID_COLOR, 1));
@@ -807,7 +848,7 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
 
     setNodeConnections(n);
     n->addToScene(scene_);
-    n->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
+    n->setPos(getNewNodeSpawnPosition(n->boundingRect()));
 }
 
 void GraphPanel::onComponentRemoved(int componentId){

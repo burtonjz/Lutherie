@@ -5,7 +5,6 @@
 ## MVP Requirements
 
 ### Configuration / UX
-- [Quick] Prevent modules from spawning on top of each other
 - [Quick] Launch KDDW/modern floating window for setup button
 - [Quick] Allow saving remembering audio/midi IDs in user config.
 - [Quick] fix UX oddities with the add component menu (auto highlight when one search item left, have search bar auto activate to allow immediate typing)
@@ -98,6 +97,7 @@
 - [Medium] Analyzer nodes automatically group and reflect "channel" numbers. Maybe create a specialized Analyzer `GroupNode` which is capable of adding additional channels easily.
 - [Quick] show event (parameters, modulation, detail editors) needs not only to ensure visibility, but also tab to it if it's tabbed with other docks. Maybe a small little border highlight would be nice too.
 - [Quick] parameter range widget is limited by slider width, so needs to be adjusted to account for high range parameters (e.g., frequency)
+- [Quick] switching several UI objects to singletons (e.g., GraphPanel, manager classes) means using qt signals/slots are largely redundant. I should go through the code and switch those connections to normal public functions where possible.
 
 ### Misc / Infra
 - [Medium] Disperse `CollectionRequest` validation to the `CollectionDescriptor` (e.g. a validation function, which actions are supported). This will make a less complex validation function and enforce rules that unofficially exist in code.
