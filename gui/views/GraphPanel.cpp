@@ -775,7 +775,7 @@ void GraphPanel::onControlMessageReceived(const json& msg){
     if ( action == "get_audio_configuration" ){
         if ( msg.at("status") == "success" ){
             if ( msg.contains("output_channels") ){
-                onAudioChannelsUpdated(msg.at("output_channels"));
+                updatePeripheralAudioChannels(msg.at("output_channels"));
             }
         }
         return ;
@@ -1038,9 +1038,13 @@ void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
     }
 }
 
-void GraphPanel::onAudioChannelsUpdated(size_t numChannels){
+void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     auto sockets = audioOut_->getSockets();
     size_t oldSize = sockets.size();
+    SPDLOG_INFO(
+        "updating audio output from {} to {} channels", 
+        oldSize, numChannels
+    );
     if ( oldSize == numChannels ) return ;
 
     // new output peripheral has less channels

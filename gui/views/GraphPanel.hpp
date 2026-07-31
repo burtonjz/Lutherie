@@ -80,6 +80,8 @@ public:
     SocketWidget* findSocket(SocketSpec spec) const override ;
     SocketWidget* findSocketAt(const QPointF& scenePos) const override ;
 
+    void updatePeripheralAudioChannels(size_t numChannels);
+
 protected:
     void keyPressEvent(QKeyEvent* event) override ;
     void mousePressEvent(QMouseEvent* event) override ;
@@ -129,8 +131,6 @@ public slots:
     void onNodeZUpdate();
 
     void onDragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
-
-    void onAudioChannelsUpdated(size_t numChannels);
 
 signals:
     void requestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialized = std::nullopt );

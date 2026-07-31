@@ -458,7 +458,7 @@ void Synth::onActionSetup(){
         setup_ = new Setup() ;
          connect(
             setup_, &Setup::audioChannelsUpdated,
-            GraphPanel::instance(), &GraphPanel::onAudioChannelsUpdated
+            GraphPanel::instance(), &GraphPanel::updatePeripheralAudioChannels
         );
         setup_->show();
     } else {

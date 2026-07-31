@@ -290,6 +290,7 @@ json ControlApiHandler::setAudioDevice(const json& request){
     deviceId = response.at("device_id");
     
     if ( engine_->setAudioDeviceId(deviceId) ){
+        response["output_channels"] = engine_->signalController.getNumChannels();
         return response ;
     } else {
         throw std::runtime_error("failed to set audio device");

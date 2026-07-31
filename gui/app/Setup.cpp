@@ -19,6 +19,8 @@
 #include "managers/StateManager.hpp"
 #include "api/ControlApiClient.hpp"
 #include "ui_Setup.h"
+#include "views/GraphPanel.hpp"
+
 #include <spdlog/spdlog.h>
 
 Setup::Setup(QWidget* parent): 
@@ -44,7 +46,7 @@ Setup::Setup(QWidget* parent):
 
 Setup::~Setup()
 {
-    delete ui_;
+    delete ui_ ;
 }
 
 void Setup::populateSetupComboBox(QComboBox* box, const json& data){
@@ -85,6 +87,7 @@ void Setup::onControlMessageReceived(const json& json){
         QString status = QString::fromStdString(json["status"]);
         SPDLOG_DEBUG("set_audio_device return state: {}", status.toStdString());
         if ( status == "success" ){
+            GraphPanel::instance()->updatePeripheralAudioChannels(json["output_channels"]);
             StateManager::instance()->setSetupAudioComplete(true);
         }
         return ;
