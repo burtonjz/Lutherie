@@ -15,81 +15,63 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Config.hpp"
+#include "config/Config.hpp"
+#include "platform/AppPaths.hpp"
+
 #include <fmt/format.h>
 #include <fstream>
-#include "filesystem"
 #include <linux/limits.h>
 #include <string_view>
 #include <mutex>
 #include <unistd.h>
 #include <spdlog/spdlog.h>
 
-#ifdef __APPLE__
-    #include <mach-o/dyld.h>
-#endif
+json Config::getTemplateConfig(){
+    auto config = AppPaths::getAppResourceDir() / "config.json" ;
 
-std::filesystem::path getExecutableDir(){
-#ifdef __linux__
-    char result[PATH_MAX];
-
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    SPDLOG_DEBUG("reading path to current executable...");
-
-    if ( count == -1 ){
-        throw std::runtime_error("Could not determine executable path");
+    std::ifstream file(config);
+    if ( !file.is_open() ) {
+        throw std::runtime_error(fmt::format("Could not open config file: {}", config.c_str()));
     }
-    
-    std::filesystem::path p(std::string(result, count));
 
-    SPDLOG_DEBUG("executable directory is {}", p.parent_path());
-    return p.parent_path();
+    json out ;
+    file >> out ;
 
-#elif defined(__APPLE__)
-
-    char result[PATH_MAX];
-    uint32_t size = sizeof(result);
-
-    if (_NSGetExecutablePath(result, &size) != 0)
-        throw std::runtime_error("Could not determine executable path");
-
-    return std::filesystem::canonical(result).parent_path();
-
-#else
-
-    throw std::runtime_error("Unsupported platform");
-
-#endif
+    return out ;
 }
 
-std::filesystem::path findConfig(){
-    auto exe = getExecutableDir();
-
-    // Development tree
-    auto dev = exe / ".." / "shared" / "config.json" ;
-    if ( std::filesystem::exists(dev) )
-        return std::filesystem::canonical(dev);
-
-    // Installed tree (configured by CMake)
-    auto installed = std::filesystem::path(LUTHERIE_DATA_DIR) / "config.json";
-    if ( std::filesystem::exists(installed) )
-        return installed ;
-
-    throw std::runtime_error("Couldn't locate config.json");
-}
-
-std::filesystem::path Config::configPath_ = findConfig();
 json Config::configData_ ;
 std::shared_mutex Config::mutex_ ;
 
 void Config::load(){
-    std::ifstream file(configPath_);
-    if ( !file.is_open() ) {
-        throw std::runtime_error(fmt::format("Could not open config file: {}", configPath_.c_str()));
+    auto cfg = AppPaths::getUserConfigDir() / "config.json" ;
+
+    // make sure user config directory exists
+    if ( !fs::exists(cfg.parent_path()) ){
+        fs::create_directories(cfg.parent_path());
     }
 
-    json temp;
-    file >> temp;
+    // if the cfg file doesn't exist, let's copy the template
+    if ( !fs::exists(cfg) ){
+        SPDLOG_DEBUG(
+            "user config path does not yet exist, loading data from template"
+        );
+        json temp = getTemplateConfig();
+        {
+            std::unique_lock lock(mutex_);
+            configData_ = std::move(temp);
+        }
+        save(); // save immediately so we don't override pending changes with a second load call
+        return ;
+    }
+
+    std::ifstream file(cfg);
+    if ( !file.is_open() ) {
+        throw std::runtime_error(fmt::format("Could not open config file: {}", cfg.c_str()));
+    }
+
+    json temp ;
+    file >> temp ;
 
     std::unique_lock lock(mutex_);
     configData_ = std::move(temp);
@@ -97,9 +79,10 @@ void Config::load(){
 
 void Config::save(){
     std::shared_lock readLock(mutex_);
-    std::ofstream file(configPath_);
+    auto cfg = AppPaths::getUserConfigDir() / "config.json" ;
+    std::ofstream file(cfg);
     if (!file.is_open()){
-        throw std::runtime_error(fmt::format("Could not open config file: {}", configPath_.c_str()));
+        throw std::runtime_error(fmt::format("Could not open config file: {}", cfg.c_str()));
     }
     file << configData_.dump(4);
 }

@@ -9,11 +9,25 @@ pkg_check_modules(SPDLOG REQUIRED spdlog)
 
 file(GLOB SHARED_SRC "${CMAKE_CURRENT_SOURCE_DIR}/*/*.cpp")
 
+set(LUTHERIE_BUILD_RESOURCE_DIR "${CMAKE_BINARY_DIR}/resources")
+
+add_custom_target(copy_shared_resources ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources
+        ${LUTHERIE_BUILD_RESOURCE_DIR}
+)
+
 add_library(shared STATIC ${SHARED_SRC})
 
-target_compile_definitions(shared PUBLIC
-    LUTHERIE_DATA_DIR="${CMAKE_INSTALL_FULL_DATADIR}/lutherie"
-)
+if (LUTHERIE_DEVELOPMENT_BUILD)
+    target_compile_definitions(shared PUBLIC
+        LUTHERIE_RESOURCE_DIR="${CMAKE_BINARY_DIR}/resources"
+    )
+else()
+    target_compile_definitions(shared PUBLIC
+        LUTHERIE_RESOURCE_DIR="${CMAKE_INSTALL_FULL_DATADIR}/lutherie"
+    )
+endif()
 
 target_include_directories(shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SPDLOG_INCLUDE_DIRS})
 target_link_libraries(shared PUBLIC ${SPDLOG_LIBRARIES})
