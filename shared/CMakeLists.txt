@@ -33,8 +33,8 @@ endif()
 target_include_directories(shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SPDLOG_INCLUDE_DIRS})
 target_link_libraries(shared PUBLIC ${SPDLOG_LIBRARIES})
 
-install(FILES
-    config/config.json
+install(
+    DIRECTORY ${LUTHERIE_BUILD_RESOURCE_DIR}/
     DESTINATION ${CMAKE_INSTALL_DATADIR}/lutherie
 )
 

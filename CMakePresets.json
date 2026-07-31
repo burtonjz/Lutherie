@@ -1,0 +1,120 @@
+{
+    "version": 6,
+
+    "configurePresets": [
+        {
+            "name": "dev",
+            "displayName": "Development Debug Build",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/dev",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "LUTHERIE_DEVELOPMENT_BUILD": "ON"
+            }
+        },
+        {
+            "name": "release-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "LUTHERIE_DEVELOPMENT_BUILD": "OFF"
+            }
+        },
+        {
+            "name": "install",
+            "displayName": "Local Installation",
+            "inherits": "release-base",
+            "binaryDir": "${sourceDir}/build/install",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "/usr/local"
+            }
+        },
+        {
+            "name": "package",
+            "displayName": "Release Package",
+            "inherits": "release-base",
+            "binaryDir": "${sourceDir}/build/package",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/package/install"
+            }
+        }
+    ],
+
+    "buildPresets": [
+        {
+            "name": "dev",
+            "displayName": "Build Development",
+            "configurePreset": "dev"
+        },
+        {
+            "name": "install",
+            "displayName": "Build Local Install",
+            "configurePreset": "install"
+        },
+        {
+            "name": "package",
+            "displayName": "Build Release Package",
+            "configurePreset": "package"
+        },
+        {
+            "name": "package-install",
+            "displayName": "Install Package Staging",
+            "configurePreset": "package",
+            "targets": [
+                "install"
+            ]
+        },
+        {
+            "name": "local-install",
+            "displayName": "Install Locally",
+            "configurePreset": "install",
+            "targets": [
+                "install"
+            ]
+        }
+    ],
+
+    "packagePresets": [
+        {
+            "name": "release",
+            "displayName": "Create Release Package",
+            "configurePreset": "package"
+        }
+    ],
+
+    "workflowPresets": [
+        {
+            "name": "install",
+            "displayName": "Build and Install Locally",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "install"
+                },
+                {
+                    "type": "build",
+                    "name": "local-install"
+                }
+            ]
+        },
+        {
+            "name": "package",
+            "displayName": "Build Release Package",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "package"
+                },
+                {
+                    "type": "build",
+                    "name": "package-install"
+                },
+                {
+                    "type": "package",
+                    "name": "release"
+                }
+            ]
+        }
+    ]
+}
