@@ -104,7 +104,10 @@ fs::path getExecutableDir(){
 }
 
 fs::path AppPaths::getAppResourceDir(){
-    // Development tree
+#ifdef LUTHERIE_DEVELOPMENT_BUILD
+    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources"
+#endif 
+
     auto resource = fs::path(LUTHERIE_RESOURCE_DIR);
 
     if ( !fs::exists(resource) ){
@@ -115,8 +118,11 @@ fs::path AppPaths::getAppResourceDir(){
 }
 
 fs::path AppPaths::getUserConfigDir(){
-#ifdef __linux__
+#ifdef LUTHERIE_DEVELOPMENT_BUILD
+    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "config" ;
+#endif 
 
+#ifdef __linux__
     const char* xdg = std::getenv("XDG_AppPaths_HOME");
     if ( xdg ){
         return fs::path(xdg) / "lutherie" ;
@@ -159,6 +165,10 @@ fs::path AppPaths::getUserConfigDir(){
 }
 
 fs::path AppPaths::getUserDataDir(){
+#ifdef LUTHERIE_DEVELOPMENT_BUILD
+    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "data" ;
+#endif 
+
 #ifdef __linux__
     const char* xdg = std::getenv("XDG_DATA_HOME");
     if ( xdg ){
@@ -199,6 +209,10 @@ fs::path AppPaths::getUserDataDir(){
 
 
 fs::path AppPaths::getUserCacheDir(){
+#ifdef LUTHERIE_DEVELOPMENT_BUILD
+    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "cache" ;
+#endif 
+
 #ifdef __linux__
     const char* xdg = std::getenv("XDG_CACHE_HOME");
     if ( xdg ){

@@ -22,6 +22,7 @@ add_library(shared STATIC ${SHARED_SRC})
 if (LUTHERIE_DEVELOPMENT_BUILD)
     target_compile_definitions(shared PUBLIC
         LUTHERIE_RESOURCE_DIR="${CMAKE_BINARY_DIR}/resources"
+        LUTHERIE_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
     )
 else()
     target_compile_definitions(shared PUBLIC
