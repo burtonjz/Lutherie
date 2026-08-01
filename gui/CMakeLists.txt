@@ -64,14 +64,12 @@ target_compile_definitions(lutherie-gui PRIVATE
     SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
 )
 
-include(GNUInstallDirs)
-
 install(TARGETS lutherie-gui
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 # Bundle Qt only on platforms where applications are expected to be self-contained.
-if(WIN32 OR APPLE)
+if(LUTHERIE_DEPLOY_QT)
     qt_generate_deploy_app_script(
         TARGET lutherie-gui
         OUTPUT_SCRIPT deploy_script
