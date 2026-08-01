@@ -25,7 +25,11 @@
 // Program Entry Point
 int main() {
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
+#ifdef LUTHERIE_DEVELOPMENT_BUILD
     spdlog::set_level(spdlog::level::debug);
+#else
+    spdlog::set_level(spdlog::level::info);
+#endif
     SPDLOG_INFO("RtAudio version: " + RtAudio::getVersion());
     SPDLOG_INFO("RtMidi version: " + RtMidi::getVersion());
     Config::load();

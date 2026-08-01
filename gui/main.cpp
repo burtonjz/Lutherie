@@ -37,7 +37,11 @@ int main(int argc, char *argv[]){
     // format logger
     auto logger = spdlog::default_logger();
     logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
-    logger->set_level(spdlog::level::debug);
+#ifdef LUTHERIE_DEVELOPMENT_BUILD
+    spdlog::set_level(spdlog::level::debug);
+#else
+    spdlog::set_level(spdlog::level::info);
+#endif
 
 #ifdef __linux__
     qputenv("QT_QPA_PLATFORM","xcb"); // remove this when wayland/gnome/docking support matures

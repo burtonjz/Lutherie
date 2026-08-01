@@ -1,10 +1,7 @@
 # set variables
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Compiler flags
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -Wall -Wextra -Wpedantic -ffast-math")
 add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 
