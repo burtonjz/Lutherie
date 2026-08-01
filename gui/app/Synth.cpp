@@ -27,6 +27,7 @@
 #include "graphics/ToastNotification.hpp"
 #include "app/Theme.hpp"
 #include "widgets/ComponentParameters.hpp"
+#include "platform/AppPaths.hpp"
 
 #include <kddockwidgets/DockWidget.h>
 #include <kddockwidgets/core/FloatingWindow.h>
@@ -500,10 +501,12 @@ void Synth::onEngineStatusChange(bool status){
 }
 
 void Synth::onActionLoad(){
+    auto dir = AppPaths::getUserDataDir() / "patches" ;
+    if ( !fs::exists(dir) ) fs::create_directories(dir);
     QString filePath = QFileDialog::getOpenFileName(
         this,
         tr("Load Configuration"),
-        QDir::homePath(),
+        dir.c_str(),
         tr("JSON Files (*.json);;All Files (*)")
     );
 
@@ -548,10 +551,12 @@ void Synth::onActionSave(){
 }
 
 void Synth::onActionSaveAs(){
+    auto dir = AppPaths::getUserDataDir() / "patches" ;
+    if ( !fs::exists(dir) ) fs::create_directories(dir);
     QString filePath = QFileDialog::getSaveFileName(
         this,
         tr("Save Configuration"),
-        QDir::homePath(),
+        dir.c_str(),
         tr("JSON Files (*.json);;All Files (*)")
     );
 

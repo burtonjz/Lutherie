@@ -57,9 +57,16 @@ target_include_directories(lutherie-gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_compile_definitions(lutherie-gui PRIVATE
-    SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
-)
+if ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+    target_compile_definitions(lutherie-gui PUBLIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
+        DEBUG_BUILD
+    )
+else ()
+    target_compile_definitions(lutherie-gui PUBLIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
+    )
+endif ()
 
 install(TARGETS lutherie-gui
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

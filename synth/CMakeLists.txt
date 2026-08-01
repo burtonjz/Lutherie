@@ -3,7 +3,6 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -Wall -Wextra -Wpedantic -ffast-math")
-add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(PkgConfig REQUIRED)
@@ -66,6 +65,17 @@ if(APPLE)
         INSTALL_RPATH "/opt/homebrew/lib"
     )
 endif()
+
+if ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+    target_compile_definitions(lutherie-backend PUBLIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
+        DEBUG_BUILD
+    )
+else ()
+    target_compile_definitions(lutherie-backend PUBLIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
+    )
+endif ()
 
 # Make sure the config is generated before building
 add_dependencies(lutherie-backend generate_configs)

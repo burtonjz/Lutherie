@@ -18,14 +18,13 @@
 #include "platform/AppPaths.hpp"
 #include <spdlog/spdlog.h>
 
-
 #ifdef __APPLE__
     #include <mach-o/dyld.h>
 #endif
 
 #ifdef _WIN32
-#include <windows.h>
-#include <shlobj.h>
+    #include <windows.h>
+    #include <shlobj.h>
 #endif
 
 fs::path getExecutableDir(){
@@ -41,7 +40,7 @@ fs::path getExecutableDir(){
 
     fs::path p(std::string(result, count));
 
-    SPDLOG_DEBUG("executable directory is {}", p.parent_path());
+    SPDLOG_DEBUG("executable directory is {}", p.parent_path().c_str());
     return p.parent_path();
 
 #elif defined(__APPLE__)
@@ -104,8 +103,8 @@ fs::path getExecutableDir(){
 }
 
 fs::path AppPaths::getAppResourceDir(){
-#ifdef LUTHERIE_DEVELOPMENT_BUILD
-    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources"
+#ifdef DEBUG_BUILD
+    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" ;
 #endif 
 
     auto resource = fs::path(LUTHERIE_RESOURCE_DIR);
@@ -118,7 +117,7 @@ fs::path AppPaths::getAppResourceDir(){
 }
 
 fs::path AppPaths::getUserConfigDir(){
-#ifdef LUTHERIE_DEVELOPMENT_BUILD
+#ifdef DEBUG_BUILD
     return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "config" ;
 #endif 
 
@@ -165,7 +164,7 @@ fs::path AppPaths::getUserConfigDir(){
 }
 
 fs::path AppPaths::getUserDataDir(){
-#ifdef LUTHERIE_DEVELOPMENT_BUILD
+#ifdef DEBUG_BUILD
     return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "data" ;
 #endif 
 
@@ -209,7 +208,7 @@ fs::path AppPaths::getUserDataDir(){
 
 
 fs::path AppPaths::getUserCacheDir(){
-#ifdef LUTHERIE_DEVELOPMENT_BUILD
+#ifdef DEBUG_BUILD
     return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "cache" ;
 #endif 
 

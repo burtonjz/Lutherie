@@ -15,16 +15,19 @@ add_custom_target(copy_shared_resources ALL
 
 add_library(shared STATIC ${SHARED_SRC})
 
-if (LUTHERIE_DEVELOPMENT_BUILD)
+if ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     target_compile_definitions(shared PUBLIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
         LUTHERIE_RESOURCE_DIR="${CMAKE_BINARY_DIR}/resources"
         LUTHERIE_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        DEBUG_BUILD
     )
-else()
+else ()
     target_compile_definitions(shared PUBLIC
+        SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO
         LUTHERIE_RESOURCE_DIR="${CMAKE_INSTALL_FULL_DATADIR}/lutherie"
     )
-endif()
+endif ()
 
 target_include_directories(shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SPDLOG_INCLUDE_DIRS})
 target_link_libraries(shared PUBLIC ${SPDLOG_LIBRARIES})

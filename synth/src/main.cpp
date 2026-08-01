@@ -25,7 +25,7 @@
 // Program Entry Point
 int main() {
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
-#ifdef LUTHERIE_DEVELOPMENT_BUILD
+#ifdef DEBUG_BUILD
     spdlog::set_level(spdlog::level::debug);
 #else
     spdlog::set_level(spdlog::level::info);
