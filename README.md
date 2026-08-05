@@ -41,7 +41,7 @@ Lutherie is a standalone modular synthesis environment where you can create, con
 
 **Platform Support**: Linux (currently)
 
-The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designed to be extensible to other platforms.
+The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designed to be extensible to other platforms, but usage is experimental and currently not well tested.
 
 ## Prerequisites
 
@@ -57,32 +57,41 @@ The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designe
 - Audio system (ALSA, JACK, Pipewire)
 - MIDI device (virtual keyboards are supported)
 
-## Installation
+## Installation and Startup
 
 ```bash
-git clone https://github.com/burtonjz/Lutherie.git
-cd Lutherie
+## Requirements
+- CMake 3.25+
+- Ninja
 
-cmake -S . -B build
-cd build
-make
+## Quick install (from source)
+cmake --workflow --preset install [-DCMAKE_INSTALL_PREFIX=/opt/myapp]
+
+## Build a release package
+cmake --workflow --preset package
+# Output: build/package/<package-name>
+
+## Manual/advanced build
+cmake --preset dev        # debug build
+cmake --build --preset dev
+
+# execute (assuming install prefix is in path)
+lutherie
+
+# execute dev ()
+./build/dev/synth/lutherie-backend # backend engine
+./build/dev/gui/lutherie-gui # Qt6 front end
 ```
 
-## Usage
+if the front end Qt6 environment is not desired, basic usage of the backend engine is available through `./debug/control-client.py`, which can be used in conjunction with a list of JSON api requests, some examples in that directory.
 
-```bash
-# run backend executable
-./build/synth/synth
-
-# in another terminal, run front end executable
-./build/gui/gui
-```
+## Basic Usage
 
 1. **Launch Application**: Start Lutherie
 2. **Configure Hardware output/input**: Select your audio output device and midi input device through the setup menu.
 3. **Create Components**: Add audio, modulation, midi, and/or buffer components
 4. **Draw Connections**: Click and drag to connect module outputs to parameter inputs
-5. **Edit Configuration**: Open up panels to adjust parameters and modulation controls
+5. **Edit Configuration**: Open up panels to adjust parameters and modulation controls. Right click parameters to adjust their limits or apply midi automations.
 6. **Play**: Hit play to start the audio loop, and use your MIDI controller or computer keyboard to play your custom synthesizer!
 
 ## Project Structure
