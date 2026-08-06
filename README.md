@@ -1,6 +1,21 @@
 # Lutherie 
 
-A fully modular synthesizer application that lets you build any synthesizer you want through a flexible, connection-based architecture.
+Lutherie is a fully modular synthesizer application. The inspiration behind this project was multifaceted:
+
+In my experience with software synthesizers, you either get sleek interfaces with all the details abstracted away into a couple of macro knobs, where you aren't quite sure what they do but they sound sick right out the gate. Or you get a UI modeled after a popular synth from before I was born — complete with all the design decisions that were necessarily hamstrung by limited hardware real estate. I guess now there's a third group too, where someone AI-slops together some nonsense.
+
+I'm not knocking either of the first two, but I find that I learn best by building something from the ground up, then abstracting away complexity as I learn. So I started building Lutherie: a standalone digital audio workshop designed around the unix philosophy of small, single-purpose components. Every building block, whether it's in the signal space or the buffered audio space, is the same kind of building block, able to interact with each other in unique ways.
+
+The engine itself is capable of running headless, behind a documented JSON API over local sockets. The provided GUI is simply the default client for it. This allows for the backend engine to be fully controllable in low-level spaces. The GUI gets to be fully dedicated towards presenting all the complexity, while also giving users the ability to abstract it away. Component grouping, connection manipulations, parameter management, and modulation settings all allow for implementation details to be hidden or exposed to the user. Feedback in the form of analysis graphs is also available. This all gets saved into patches that allow any creation to be dropped back into the project. 
+
+<figure>
+  <img src="assets/images/readme-gui.png" alt="Lutherie GUI showing an 8-oscillator additive synth patch with live oscilloscope and spectrum analyzer">
+  <figcaption><i>An 8-oscillator additive synth, each oscillator has a hidden gain control mapped to sliders on my hardware midi controller, with 4 harmonics currently silenced</i></figcaption>
+</figure>
+
+As Lutherie continues to mature, backend development will be focused on providing new components and functionality to the engine. Notably, frequency-domain processing (FFT/IFFT, spectral filtering, bin-level manipulation) as a first class citizen along with signal and buffer components will be a big focus. Conversely, frontend development will remain focused on exposing sensible visuals for each component, connection, and control, while looking for opportunities to provide user-defined abstractions to allow simplified presentations. Check out [TODO](TODO) for some questionably formatted development plans.
+
+This is a learning project. I am not a trained DSP Engineer. I am just a guy whose curiosity and love of music has led him to spend less time as a musician and more time as an engineer. Feedback and suggestions are welcome and appreciated!
 
 ## License
 
@@ -20,12 +35,6 @@ This project uses:
 - libsamplerate (BSD 2-Clause)
  
 See [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) for complete license information.
-
-## Overview
-
-Lutherie is a standalone modular synthesis environment where you can create, connect, and configure components to design custom synthesizers.
-
-![User Interface](assets/images/readme-gui.png)
 
 ## Features
 
