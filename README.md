@@ -48,9 +48,13 @@ The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designe
 ### Build Dependencies
 - C++20 or later
 - Qt6 development libraries
+- KDDockWidgets 
 - RtAudio
 - RtMidi
-- CMake
+- KissFFT
+- spdlog
+- libsndfile
+- libsamplerate
 
 ### Runtime Requirements
 - Linux operating system
@@ -65,14 +69,14 @@ The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designe
 - Ninja
 
 ## Quick install (from source)
-cmake --workflow --preset install [-DCMAKE_INSTALL_PREFIX=/opt/myapp]
+cmake --workflow --preset install [-DCMAKE_INSTALL_PREFIX=/opt/]
 
 ## Build a release package
 cmake --workflow --preset package
 # Output: build/package/<package-name>
 
 ## Manual/advanced build
-cmake --preset dev        # debug build
+cmake --preset dev
 cmake --build --preset dev
 
 # execute (assuming install prefix is in path)
@@ -98,16 +102,14 @@ if the front end Qt6 environment is not desired, basic usage of the backend engi
 
 ```
 Lutherie/
+├── docs/         # document library
+├── debug/        # debug/testing python client with action scripts
 ├── gui/          # Qt6 frontend application
-├── synth/        # backend synthesis engine
+├── launcher/     # single executable
 ├── shared/       # shared definitions and configurations
+├── synth/        # backend synthesis engine
+
 ```
-
-## Development
-
-### Adding New Components
-
-See [Adding Components](docs/adding-components.md)
 
 ## Acknowledgments
 
