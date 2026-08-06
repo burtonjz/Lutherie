@@ -71,10 +71,10 @@ public:
 
     // all handlers are listeners so that they can chain operations if desired. 
     // The below functions can be overridded to provide specialized operations when cascading events downwards
-    void onKeyPressed(const ActiveNote* note, bool rePressed = false) override ;
-    void onKeyReleased(ActiveNote anote) override ;
-    void onKeyOff(ActiveNote anote) override ;
-    void onPitchbend(uint16_t pitchbend) override ;
+    virtual void onKeyPressed(const ActiveNote* note, bool rePressed = false) override ;
+    virtual void onKeyReleased(ActiveNote anote) override ;
+    virtual void onKeyOff(ActiveNote anote) override ;
+    virtual void onPitchbend(uint16_t pitchbend) override ;
         
     // handler functions for root-level midi input from midi state
     void handleKeyPressed(const MidiNote note);

@@ -29,7 +29,7 @@ ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);
     parameters_->add<ParameterType::TRIGGER>(cfg.trigger, false);
 
-    requiredParams_ = {
+    expectedParams_ = {
         ModulationParameter::MIDI_NOTE, 
         ModulationParameter::INITIAL_VALUE
     };

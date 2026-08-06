@@ -46,7 +46,7 @@ inline bool operator<(const ModulationTarget& a, const ModulationTarget& b){
 */
 class ModulatorComponent : public virtual BaseComponent {
 protected:
-    std::set<ModulationParameter> requiredParams_ ; 
+    std::set<ModulationParameter> expectedParams_ ; 
     std::set<ModulationTarget> modulated_ ; 
 
     void addModulationTarget(ModulationTarget t){
@@ -64,8 +64,8 @@ public:
 
     virtual double modulate(double value, ModulationData* mData ) const = 0 ;
 
-    virtual const std::set<ModulationParameter>& getRequiredModulationParameters() const {
-        return requiredParams_ ;
+    const std::set<ModulationParameter>& getRequiredModulationParameters() const {
+        return expectedParams_ ;
     }
     
     virtual ModulatorRange getModulatorRange() const {
