@@ -21,6 +21,7 @@
 void MidiEventListener::addHandler(MidiEventHandler* handler){
     if ( std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end() ) return ;
     handlers_.push_back(handler);
+    onHandlerAdded();
 }
 
 void MidiEventListener::removeHandler(MidiEventHandler* handler){
@@ -28,10 +29,15 @@ void MidiEventListener::removeHandler(MidiEventHandler* handler){
     if ( it != handlers_.end() ){
         handlers_.erase(it);
     }
+    onHandlerRemoved();
 }
 
 std::vector<MidiEventHandler*> MidiEventListener::getHandlers() const {
     return handlers_ ;
+}
+
+size_t MidiEventListener::getNumHandlers() const {
+    return handlers_.size();
 }
 
 void MidiEventListener::onKeyPressed([[maybe_unused]] const ActiveNote* note, [[maybe_unused]] bool repress){
@@ -45,3 +51,6 @@ void MidiEventListener::onPitchbend([[maybe_unused]] uint16_t pitchbend ){
 
 // void MidiEventListener::onMidiControlEvent(MidiControlMessage messageType, uint8_t value){
 // }
+
+void MidiEventListener::onHandlerAdded(){}
+void MidiEventListener::onHandlerRemoved(){}

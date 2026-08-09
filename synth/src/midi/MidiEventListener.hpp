@@ -37,12 +37,17 @@ public:
     virtual ~MidiEventListener() = default ;
 
     std::vector<MidiEventHandler*> getHandlers() const ;
+    size_t getNumHandlers() const ;
 
     virtual void onKeyPressed(const ActiveNote* note, bool rePress = false) ;
     virtual void onKeyReleased(ActiveNote anote) ; 
     virtual void onKeyOff(ActiveNote anote) ;
     virtual void onPitchbend(uint16_t pitchbend );
     // virtual void onMidiControlEvent(MidiControlMessage messageType, uint8_t value);
+
+    // observer functions for responding to connection events
+    virtual void onHandlerAdded();
+    virtual void onHandlerRemoved();
     
 };
 

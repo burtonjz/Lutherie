@@ -181,9 +181,11 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Buffer Streamer",
                 .type = ComponentType::BufferStreamer,
-                .controllableParameters = {ParameterType::STATUS},
+                .modulatableParameters = {ParameterType::PLAYBACK_RATE},
+                .controllableParameters = {ParameterType::STATUS, ParameterType::LOOP, ParameterType::PLAYBACK_RATE},
                 .numSignalOutputs = 1,
-                .numBufferInputs = 1
+                .numBufferInputs = 1,
+                .numMidiInputs = 1
             }
         },
         {

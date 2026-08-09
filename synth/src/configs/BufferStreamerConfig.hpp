@@ -28,10 +28,10 @@ class BufferStreamer ;
 
 // define default configuration
 struct BufferStreamerConfig {
-    bool enabled = true ;
+    double playback = 1.0 ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BufferStreamerConfig, enabled) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BufferStreamerConfig, playback) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::BufferStreamer>{ 
     using type = BufferStreamer ;

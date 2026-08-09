@@ -135,13 +135,14 @@ public:
     void setValue(const ParameterValue& value, bool block = false) override ;
 };
 
-class StatusWidget : public ParameterWidget {
+class BoolWidget : public ParameterWidget {
 private:
     QLabel* label_ ;
     SwitchWidget* toggle_ ;
+    ParameterType param_ ;
 
 public:
-    explicit StatusWidget(QWidget* parent = nullptr);
+    explicit BoolWidget(ParameterType p, QWidget* parent = nullptr);
 
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;

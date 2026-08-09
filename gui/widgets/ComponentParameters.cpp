@@ -103,14 +103,15 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     case ParameterType::TRIGGER:
         w = new MonophonicTriggerBehaviorWidget(this);
         break ;
-    case ParameterType::STATUS:
-        w = new StatusWidget(this);
-        break ;
     case ParameterType::DELAY:
         w = new DelayWidget(this);
         break ;
     case ParameterType::DETUNE:
         w = new DetuneWidget(this);
+        break ;
+    case ParameterType::STATUS:
+    case ParameterType::LOOP:
+        w = new BoolWidget(p, this);
         break ;
     default:
         w = new SliderWidget(p, this);

@@ -593,9 +593,10 @@ void MonophonicTriggerBehaviorWidget::setValue(const ParameterValue& value, bool
 ================== STATUS ===============
 =========================================
 */
-StatusWidget::StatusWidget(QWidget* parent):
+BoolWidget::BoolWidget(ParameterType p, QWidget* parent):
     label_(nullptr),
-    toggle_(nullptr)
+    toggle_(nullptr),
+    param_(p)
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -604,7 +605,7 @@ StatusWidget::StatusWidget(QWidget* parent):
 
     // label
     label_ = new QLabel(QString::fromStdString(
-        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::STATUS, name))
+        std::string(GET_PARAMETER_TRAIT_MEMBER(p, name))
     ));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
@@ -622,17 +623,16 @@ StatusWidget::StatusWidget(QWidget* parent):
     connect(toggle_, &QAbstractButton::toggled, this, &ParameterWidget::valueChanged);
 }
 
-ParameterType StatusWidget::getType() const {
-    return ParameterType::STATUS ;
+ParameterType BoolWidget::getType() const {
+    return param_ ;
 }
 
-ParameterValue StatusWidget::getValue() const {
+ParameterValue BoolWidget::getValue() const {
     return toggle_->isChecked();
 }
 
-void StatusWidget::setValue(const ParameterValue& value, bool block){
-    using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::STATUS);
-    auto status = std::get<ValueType>(value);
+void BoolWidget::setValue(const ParameterValue& value, bool block){
+    bool status = std::get<bool>(value);
 
     QSignalBlocker blocker(toggle_);
     if ( !block ) blocker.unblock();

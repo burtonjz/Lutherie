@@ -56,7 +56,7 @@ Several existing parameter widgets may be helpful to reference / borrow from whe
 | Widget | Use Case |
 |---|---|
 | `WaveformWidget` / `FilterTypeWidget` | Enum-like selection rendered as a dropdown (`QComboBox`) rather than a range |
-| `StatusWidget` | Boolean on/off, rendered as a toggle switch instead of a 0/1 slider |
+| `BoolWidget` | Boolean on/off, rendered as a toggle switch instead of a 0/1 slider |
 | `DelayWidget` | A numeric value with an alternate display unit (samples ↔ ms) and its own conversion UI |
 | `DetuneWidget` | A single logical value that's actually edited as two combined sub-controls (harmonic + fine detune) |
 

@@ -86,8 +86,13 @@ public:
     
     void processEvents();
     void tick(float dt);
+
     virtual void onTick([[maybe_unused]] float dt); // for adding custom tick actions to child objects
 
+    // responding to connection events
+    virtual void onListenerAdded();
+    virtual void onListenerRemoved();
+    
 protected:
     void reset();
     virtual void onReset();

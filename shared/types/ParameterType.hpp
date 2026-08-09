@@ -72,7 +72,9 @@ To add a ParameterType, the following is required:
     X(SCALE_NOTE) \
     X(SCALE_TYPE) \
     X(TRIGGER) \
-    X(SAMPLE)
+    X(SAMPLE) \
+    X(LOOP) \
+    X(PLAYBACK_RATE)
 
 /**
  * @brief types of parameters that might exist within any given module
@@ -611,6 +613,39 @@ template <> struct ParameterTraits<ParameterType::SAMPLE>{
     static constexpr size_t uiPrecision = 0 ; // num decimals
     static constexpr bool supportRangeUpdate = false ;
 };
+
+template <> struct ParameterTraits<ParameterType::LOOP>{
+    using ValueType = bool ;
+    static constexpr std::string_view name = "loop" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 1 ;
+    static constexpr float defaultValue = 0 ;
+    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
+        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
+        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
+        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
+    }};
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
+};
+
+template <> struct ParameterTraits<ParameterType::PLAYBACK_RATE>{
+    using ValueType = float ;
+    static constexpr std::string_view name = "playback rate" ;
+    static constexpr float minimum = 0.05 ;
+    static constexpr float maximum = 8.0 ;
+    static constexpr float defaultValue = 1.0 ;
+    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
+        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
+        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
+        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
+    }};
+
+    static constexpr size_t uiPrecision = 2 ; // num decimals
+    static constexpr bool supportRangeUpdate = true ;
+};
+
 
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime

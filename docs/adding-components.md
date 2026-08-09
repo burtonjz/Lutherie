@@ -159,7 +159,7 @@ in these functions, it is generally expected that the function queries its own p
 
 ### 5.5. MidiEventHandler Requirements
 
-The following overrides are not strictly defined, but each override is generally available in order to provide any needed management functionality.
+The following overrides are not strictly necessary, but each override is generally available in order to provide any needed management functionality.
 
 |Function|Required|Description|
 |---|---|---|
@@ -169,12 +169,14 @@ The following overrides are not strictly defined, but each override is generally
 | void onPitchbend(uint16_t pitchbend) override | No | default behavior pushes a pitchbend control event into the outbound queue |
 | bool shouldKillNote(const ActiveNote& anote) const | No | default behavior determines that a note is killed as soon as an inbound note_off event is received. Overriding this allows for the component to hold on to a note longer than its default lifecycle. |
 | void onTick(float dt) | No | By default, this function does nothing. MIDI events tick once per received audio buffer (on hot path), and this allows us to define behavior that needs to trigger on specific timing |
-| void onReset() | No | prior to a reset event (clearing out existing midi notes), perform any additional cleanup that may need to occur |
+| void onReset() | No | prior to a reset event (clearing out existing midi notes), perform any additional cleanup that may need to occur. Default no-op |
+| void onListenerAdded() const | No | response to a connection added event. Default no-op |
+| void onListenerRemoved() const | No | respond to a connection removed event. Default no-op |
 
 
 ### 5.6. MidiEventListener Requirements
 
-The following overrides are available to a component class in order to respond to MIDI events. By default, these are do-nothing operations:
+The following overrides are available to a component class in order to respond to MIDI events. By default, these are no-op:
 
 |Function|Description|
 |---|---|
@@ -182,6 +184,8 @@ The following overrides are available to a component class in order to respond t
 | void onKeyReleased(ActiveNote anote) | respond to a key release event |
 | void onKeyOff(ActiveNote anote) | respond to a key off event |
 | void onPitchbend(uint16_t pitchbend ) | respond to a pitchbend event |
+| void onHandlerAdded() const | response to a connection added event |
+| void onHandlerRemoved() const | respond to a connection removed event |
 ---
 
 ## 6. Register the Component Descriptor

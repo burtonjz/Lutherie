@@ -49,7 +49,7 @@ void FileBuffer::loadWavBuffer(){
     std::vector<double> interleaved(sfinfo.frames * sfinfo.channels);
     sf_count_t count = sf_readf_double(file, interleaved.data(), sfinfo.frames);
 
-    buffers_.assign(sfinfo.channels, std::vector<double>(sfinfo.frames));
+    buffers_.assign(2, std::vector<double>(sfinfo.frames));
 
     // de-interleave buffers and force to two channels
     for ( sf_count_t frame = 0; frame < count ; ++frame){

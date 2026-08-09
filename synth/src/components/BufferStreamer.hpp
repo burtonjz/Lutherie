@@ -20,17 +20,24 @@
 
 #include "core/AudioBufferComponent.hpp"
 #include "core/AudioSignalComponent.hpp"
+#include "midi/MidiEventListener.hpp"
 #include "configs/BufferStreamerConfig.hpp"
 
-class BufferStreamer : public AudioBufferComponent, public AudioSignalComponent {
+class BufferStreamer : public AudioBufferComponent, public AudioSignalComponent, public MidiEventListener {
 private:
-    size_t bufferPos_ ;
+    double bufferPos_ ;
+    bool midiTriggerMode_ = false ;
 
 public:
     BufferStreamer(ComponentId id, BufferStreamerConfig cfg);
 
     void calculateSample() override ;
     void onParameterChanged([[maybe_unused]] ParameterType p, bool isCollection = false) override ;
+
+    void onKeyPressed(const ActiveNote* note, bool repress = false) override ;
+    void onHandlerAdded() override ;
+    void onHandlerRemoved() override ;
+    void onInputUpdated() override ;
 };
 
 #endif // BUFFER_STREAMER_HPP_

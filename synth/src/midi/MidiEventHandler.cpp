@@ -64,6 +64,7 @@ void MidiEventHandler::addListener(MidiEventListener* listener){
     if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;
     listeners_.push_back(listener);
     listener->addHandler(this);
+    onListenerAdded();
 }
 
 void MidiEventHandler::removeListener(MidiEventListener* listener){
@@ -71,6 +72,7 @@ void MidiEventHandler::removeListener(MidiEventListener* listener){
     if ( it != listeners_.end() ){
         listener->removeHandler(this);
         listeners_.erase(it);
+        onListenerRemoved();
     }
 }
 
@@ -213,5 +215,6 @@ void MidiEventHandler::reset(){
     processEvents();
 }
 
-void MidiEventHandler::onReset(){
-}
+void MidiEventHandler::onReset(){}
+void MidiEventHandler::onListenerAdded(){}
+void MidiEventHandler::onListenerRemoved(){}
