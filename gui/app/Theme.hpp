@@ -73,6 +73,8 @@ public:
     static const QColor PIANO_ROLL_GRID_SECONDARY ;
     static QColor pianoRollVelocityColor(uint8_t velocity);
 
+    static const QColor MIDI_FILTER_TINT_COLOR ;
+
     static const QColor SWITCH_WIDGET_ON_COLOR ;
     static const QColor SWITCH_WIDGET_OFF_COLOR ;
     static const QColor SWITCH_WIDGET_THUMB_COLOR_ON ;

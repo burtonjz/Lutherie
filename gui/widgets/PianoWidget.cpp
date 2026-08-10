@@ -42,13 +42,14 @@ bool PianoWidget::isWhiteNote(uint8_t pitch) const {
 }
 
 QRect PianoWidget::getNoteDimensions(uint8_t pitch) const {
-    int pos = static_cast<int>((127 - pitch) * Theme::PIANO_KEY_THICKNESS);
     if ( isVertical_ ){
+        int pos = static_cast<int>((127 - pitch) * Theme::PIANO_KEY_THICKNESS);
         return {
             0, pos,
             keyWidth_, keyHeight_ 
         };
     } else {
+        int pos = static_cast<int>((pitch) * Theme::PIANO_KEY_THICKNESS);
         return {
             pos, 0,
             keyWidth_, keyHeight_
@@ -56,42 +57,49 @@ QRect PianoWidget::getNoteDimensions(uint8_t pitch) const {
     }
 }
 
+uint8_t PianoWidget::pitchAt(const QPoint& pos) const {
+    int pitchPos = isVertical() ? pos.y() : pos.x();
+    int step = static_cast<int>(Theme::PIANO_KEY_THICKNESS);
+    if ( step <= 0 ) return 128 ;
+
+    int pitch = isVertical_ 
+        ? 127 - pitchPos / step
+        : pitchPos / step ;
+    
+    if ( pitch < 0 || pitch > 127 ) return 128 ;
+    return pitch ;
+}
+
 void PianoWidget::paintEvent(QPaintEvent*){
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
     for ( uint8_t note = 0; note < 128; ++note ){
-        int x, y, xPad, yPad ;
-        if ( isVertical_ ){
-            x = 0 ;
-            xPad = Theme::PIANO_KEY_LABEL_PAD / 2 ;
-            y = yPad = (127 - note) * Theme::PIANO_KEY_THICKNESS ;
-        } else {
-            x = xPad = (127 - note) * Theme::PIANO_KEY_THICKNESS ;
-            y = 0 ;
-            yPad = Theme::PIANO_KEY_LABEL_PAD / 2 ;
-        }
+        QRect keyRect = getNoteDimensions(note);
+        
+        QColor keyColor = isWhiteNote(note) 
+            ? Theme::PIANO_ROLL_KEY_WHITE 
+            : Theme::PIANO_ROLL_KEY_BLACK ;
 
-        QColor keyColor ;
-        if ( isWhiteNote(note) ){
-            keyColor = Theme::PIANO_ROLL_KEY_WHITE ;
-        } else {
-            keyColor = Theme::PIANO_ROLL_KEY_BLACK ;
-        }
-        p.fillRect(x,y,keyWidth_, keyHeight_, keyColor);
+        p.fillRect(keyRect, keyColor);
         p.setPen(Theme::PIANO_ROLL_KEY_BORDER);
-        p.drawRect(x,y,keyWidth_, keyHeight_);
+        p.drawRect(keyRect);
 
         // draw some note names
         if ( note % 12 == 0 ){
+            int xPad = isVertical_ ? Theme::PIANO_KEY_LABEL_PAD / 2 : 0 ;
+            int yPad = isVertical_ ? 0 : Theme::PIANO_KEY_LABEL_PAD / 2 ;
+
+            QRect labelRect(
+                keyRect.x() + xPad,
+                keyRect.y() + yPad,
+                keyRect.width() - textPadW_,
+                keyRect.height() - textPadH_
+            );
+
             p.setPen(Theme::PIANO_ROLL_KEY_LABEL);
             p.drawText(
-                QRect(
-                    xPad,yPad, 
-                    keyWidth_ - textPadW_, 
-                    keyHeight_ - textPadH_
-                ),
-                Qt::AlignCenter,
+                labelRect, Qt::AlignCenter,
                 QString("C%1").arg(note / 12 - 1)
             );
         }

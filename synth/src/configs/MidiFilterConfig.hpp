@@ -28,11 +28,10 @@ class MidiFilter ;
 
 // define default configuration
 struct MidiFilterConfig {
-    uint8_t max = 127 ;
-    uint8_t min = 0 ;
+    bool enabled = true ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiFilterConfig, max, min) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiFilterConfig, enabled) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::MidiFilter>{ 
     using type = MidiFilter ;

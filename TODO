@@ -11,9 +11,6 @@
 - [Medium] Create better patch load menu (dedicated internal directory)
 - [Medium] hide/lock basic parameters (for simplifying patches)
 
-### Component Improvements
-- [Medium] Specialized widget for `MidiFilter` (horizontal piano roll, highlight pass-through key ranges).
-
 ### New Components
 - [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
 - [Medium] `Arpeggiator` -- play series of notes relative to pressed notes in a loop (midi in, midi out)

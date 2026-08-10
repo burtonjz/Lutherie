@@ -40,6 +40,7 @@ public:
 
     bool isWhiteNote(uint8_t pitch) const ;
     QRect getNoteDimensions(uint8_t pitch) const ;
+    uint8_t pitchAt(const QPoint& pos) const ;
 
     bool isVertical() const ;
     void setVertical(bool vertical);

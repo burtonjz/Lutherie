@@ -76,7 +76,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Midi Filter",
                 .type = ComponentType::MidiFilter,
-                .collection = CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE, 2),
+                .collection = CollectionDescriptor::Independent(ParameterType::MIDI_VALUE),
                 .numMidiInputs = 1,
                 .numMidiOutputs = 1,
                 .canModulate = false

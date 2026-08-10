@@ -101,6 +101,8 @@ QColor Theme::pianoRollVelocityColor(uint8_t velocity){
     return result ;
 }
 
+const QColor Theme::MIDI_FILTER_TINT_COLOR = QColor(60, 60, 60, 220);
+
 // switch button
 const QColor Theme::SWITCH_WIDGET_ON_COLOR        = QColor(213, 137, 54);
 const QColor Theme::SWITCH_WIDGET_OFF_COLOR       = QColor(45, 52, 56);

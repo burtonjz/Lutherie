@@ -18,8 +18,10 @@
 #include "widgets/ComponentParameters.hpp"
 #include "app/Theme.hpp"
 #include "types/ComponentType.hpp"
+
 #include "widgets/BufferChopper.hpp"
 #include "widgets/PianoRollWidget.hpp"
+#include "widgets/MidiFilterWidget.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -157,6 +159,19 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
             pianoRoll, &PianoRollWidget::onParameterChanged
         );
         return pianoRoll ;
+    }
+    case ComponentType::MidiFilter:
+    {
+        auto* scroll = new QScrollArea();
+        scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        scroll->verticalScrollBar()->setEnabled(false);
+        scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
+        MidiFilterWidget* filter = new MidiFilterWidget(model_);
+        scroll->setWidget(filter);
+        scroll->setWidgetResizable(true);
+        scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        return scroll ;
     }
     case ComponentType::Chopper:
     {

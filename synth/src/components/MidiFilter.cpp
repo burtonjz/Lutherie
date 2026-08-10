@@ -3,10 +3,10 @@
 #include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
 
-MidiFilter::MidiFilter(ComponentId id, MidiFilterConfig cfg):
+MidiFilter::MidiFilter(ComponentId id, [[maybe_unused]] MidiFilterConfig cfg):
     BaseComponent(id, ComponentType::MidiFilter)
 {
-    parameters_->addCollection<ParameterType::MIDI_VALUE>({cfg.min, cfg.max});
+    parameters_->addCollection<ParameterType::MIDI_VALUE>({});
 }
 
 void MidiFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
@@ -25,12 +25,8 @@ void MidiFilter::onKeyReleased(ActiveNote anote){
 
 bool MidiFilter::passNote(uint8_t midi) const {
     auto c = parameters_->getCollection<ParameterType::MIDI_VALUE>();
-    bool passNote = true ;
-    for ( size_t i = 0 ; i < c->size() - 1 ; i += 2 ){
-        passNote = passNote 
-            && midi >= c->getValue(i)
-            && midi <= c->getValue(i+1);
-        if ( !passNote ) break ;
+    for ( const auto& idx : c->getIndices() ){
+        if ( c->getValue(idx) == midi ) return true ;
     }
-    return passNote ;
+    return false ;
 }

@@ -697,8 +697,11 @@ void PianoRollWidget::handleCollectionRemove(const CollectionRequest& req){
         
     auto it = notes_.find(index);
     if ( it == notes_.end() ){
-        SPDLOG_DEBUG("received request to delete note with index {}, but element is not in map", 
-            index);
+        SPDLOG_WARN(
+            "received request to delete note with index {}, "
+            "but element is not in map", 
+            index
+        );
         return ;
     }
 
@@ -714,10 +717,10 @@ void PianoRollWidget::handleCollectionAddAll(const CollectionRequest& req){
         return ;
     }
 
-    auto pitchStr   = GET_PARAMETER_TRAIT_MEMBER(ParameterType::MIDI_VALUE, name);
-    auto velocityStr= GET_PARAMETER_TRAIT_MEMBER(ParameterType::VELOCITY, name);
-    auto startStr   = GET_PARAMETER_TRAIT_MEMBER(ParameterType::START_POSITION, name);
-    auto durationStr= GET_PARAMETER_TRAIT_MEMBER(ParameterType::DURATION, name);
+    const auto& pitchStr   = GET_PARAMETER_TRAIT_MEMBER(ParameterType::MIDI_VALUE, name);
+    const auto& velocityStr= GET_PARAMETER_TRAIT_MEMBER(ParameterType::VELOCITY, name);
+    const auto& startStr   = GET_PARAMETER_TRAIT_MEMBER(ParameterType::START_POSITION, name);
+    const auto& durationStr= GET_PARAMETER_TRAIT_MEMBER(ParameterType::DURATION, name);
 
     if ( 
         !req.value->contains(pitchStr)    ||
@@ -749,7 +752,6 @@ void PianoRollWidget::handleCollectionAddAll(const CollectionRequest& req){
 
 void PianoRollWidget::handleCollectionGetAll(const CollectionRequest& req){
     // clear out existing notes to resync
-    
     for(auto it = notes_.begin(); it != notes_.end(); ){
         it->second->deleteLater() ;
         it = notes_.erase(it);

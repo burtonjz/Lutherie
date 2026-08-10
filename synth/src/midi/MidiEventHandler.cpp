@@ -142,8 +142,11 @@ void MidiEventHandler::handleKeyPressed(const MidiNote note){
 void MidiEventHandler::handleKeyReleased(const MidiNote note){
     auto anote = notes_[note.getMidiNote()] ;
     if ( ! isNoteActive(note.getMidiNote()) ){
-        SPDLOG_WARN("Received release event for midi note {}, but that note is not currently active."
-            "This may be intentionally caused by a child class implementation.", note.getMidiNote());
+        SPDLOG_DEBUG(
+            "Received release event for inactive midi note {}."
+            "this is likely intentional (e.g., midi filter ignoring press event)",
+            note.getMidiNote()
+        );
     }
     anote.note = note ;
     onKeyReleased(anote);
