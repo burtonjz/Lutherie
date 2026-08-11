@@ -27,6 +27,7 @@ class BufferStreamer : public AudioBufferComponent, public AudioSignalComponent,
 private:
     double bufferPos_ ;
     bool midiTriggerMode_ = false ;
+    double midiVelocity_ = 1.0 ;
 
 public:
     BufferStreamer(ComponentId id, BufferStreamerConfig cfg);

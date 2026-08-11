@@ -72,7 +72,11 @@ void BufferStreamer::calculateSample(){
          
         // Horner's method to optimize polynomial evaluation
         // c3 * frac^3 + c2 * frac^2 + c1 * frac + c0 ;
-        value += ((c3 * frac + c2) * frac + c1) * frac + c0 ;
+        double val = ((c3 * frac + c2) * frac + c1) * frac + c0 ;
+        if ( midiTriggerMode_ ){
+            val *= midiVelocity_ ;
+        }
+        value +=  val ;
     }
     setBufferValue(0, value);
 
@@ -96,6 +100,7 @@ void BufferStreamer::onParameterChanged([[maybe_unused]] ParameterType p, [[mayb
 void BufferStreamer::onKeyPressed([[maybe_unused]] const ActiveNote* note,[[maybe_unused]] bool repress){
     // irrespective of which key, reset
     bufferPos_ = 0.0 ;
+    midiVelocity_ = note->note.getMidiVelocity() / 127.0 ;
 }
 
 void BufferStreamer::onHandlerAdded(){
