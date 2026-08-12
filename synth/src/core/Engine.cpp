@@ -454,7 +454,7 @@ uint32_t Engine::getAudioDeviceId() const {
     return selectedAudioOutput_ ;
 }
 
-bool Engine::setAudioDeviceId(uint32_t deviceId){
+bool Engine::setAudioDeviceId(uint32_t deviceId, bool preferred){
     if ( audioRunning_ ){
         SPDLOG_ERROR("cannot set audio device while engine is running");
         return false ;
@@ -471,6 +471,10 @@ bool Engine::setAudioDeviceId(uint32_t deviceId){
     SPDLOG_INFO("audio device id set to {}.", deviceId);
     selectedAudioOutput_ = deviceId ;
     audioSet_ = true ;
+
+    if ( preferred ){
+        Config::set("audio.preferred_device_id", deviceId);
+    }
 
     size_t numChannels ;
     if ( it->outputChannels == 0 || it->outputChannels > 8 ){
@@ -489,7 +493,7 @@ int Engine::getMidiDeviceId() const {
     return selectedMidiPort_;
 }
 
-bool Engine::setMidiDeviceId(int deviceId){
+bool Engine::setMidiDeviceId(int deviceId, bool preferred){
     if ( midiRunning_ ){
         SPDLOG_ERROR("cannot set midi device while engine is running");
         return false ;
@@ -504,6 +508,10 @@ bool Engine::setMidiDeviceId(int deviceId){
     SPDLOG_INFO("midi device id set to {}.", deviceId);
     selectedMidiPort_ = deviceId ;
     midiSet_ = true ;
+
+    if ( preferred ){
+        Config::set("midi.preferred_device_id", deviceId);
+    }
 
     return true ;
 }

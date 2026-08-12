@@ -93,13 +93,10 @@ int main(int argc, char *argv[]){
     Theme::applyDarkTheme();
     
     // initiate TCP clients
-    ControlApiClient::instance() ; 
-    DataApiClient::instance();
-
-    Synth* synth = new Synth() ;
-
     ControlApiClient::instance()->connectToBackend();
     DataApiClient::instance()->connectToBackend();
+
+    Synth* synth = new Synth() ;
     
     synth->showMaximized();
 

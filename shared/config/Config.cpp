@@ -78,6 +78,7 @@ void Config::load(){
 }
 
 void Config::save(){
+    SPDLOG_DEBUG("saving user config");
     std::shared_lock readLock(mutex_);
     auto cfg = AppPaths::getUserConfigDir() / "config.json" ;
     std::ofstream file(cfg);
@@ -88,23 +89,29 @@ void Config::save(){
 }
 
 void Config::set(const std::string& dottedKey, const json& value){
-    std::unique_lock lock(mutex_);
+    {
+        std::unique_lock lock(mutex_);
 
-    // parse dotted json key, e.g., server.port -> json['server']['port']
-    std::string_view keyView = dottedKey ;
-    json* jsonPtr = &configData_ ;
+        // parse dotted json key, e.g., server.port -> json['server']['port']
+        std::string_view keyView = dottedKey ;
+        json* jsonPtr = &configData_ ;
 
-    while (!keyView.empty()) {
-        size_t dotPos = keyView.find('.');
-        std::string_view segment = keyView.substr(0,dotPos);
+        while (!keyView.empty()) {
+            size_t dotPos = keyView.find('.');
+            std::string_view segment = keyView.substr(0,dotPos);
 
-        if (dotPos == std::string_view::npos) {
-            // all dots have been parsed, assign value
-            (*jsonPtr)[std::string(segment)] = value ;
-        } else {
-            // not at end dot, set the JSON pointer to the next level up
-            std::string keyStr(segment) ;
-            jsonPtr = &(*jsonPtr)[keyStr] ; 
-        }   
+            if (dotPos == std::string_view::npos) {
+                // all dots have been parsed, assign value
+                (*jsonPtr)[std::string(segment)] = value ;
+                break ;
+            } else {
+                // not at end dot, set the JSON pointer to the next level up
+                std::string keyStr(segment) ;
+                jsonPtr = &(*jsonPtr)[keyStr] ; 
+                keyView.remove_prefix(dotPos + 1);
+            }   
+        }
     }
+
+    save();
 }

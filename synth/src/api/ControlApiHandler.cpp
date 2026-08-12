@@ -284,12 +284,11 @@ json ControlApiHandler::getMidiDevices(const json& request){
 
 json ControlApiHandler::setAudioDevice(const json& request){
     json response = request ;
-    int deviceId ;
-    std::string err ;
     
-    deviceId = response.at("device_id");
+    int deviceId = response.at("device_id");
+    bool preferred = response.at("preferred");
     
-    if ( engine_->setAudioDeviceId(deviceId) ){
+    if ( engine_->setAudioDeviceId(deviceId, preferred) ){
         response["output_channels"] = engine_->signalController.getNumChannels();
         return response ;
     } else {
@@ -308,11 +307,11 @@ json ControlApiHandler::getAudioConfig(const json& request){
 
 json ControlApiHandler::setMidiDevice(const json& request){
     json response = request ;
-    int deviceId ;
     
-    deviceId = response.at("device_id");
+    int deviceId = response.at("device_id");
+    bool preferred = response.at("preferred");
 
-    if ( engine_->setMidiDeviceId(deviceId) ){
+    if ( engine_->setMidiDeviceId(deviceId, preferred) ){
         return response ;
     } else {
         throw std::runtime_error("failed to set MIDI device");

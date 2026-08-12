@@ -21,6 +21,8 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QAbstractSocket>
+#include <QTimer>
+
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
@@ -31,6 +33,9 @@ class ControlApiClient : public QObject {
 private:
     QTcpSocket* socket_ ;
     QByteArray buffer_ ;
+    std::vector<json> queuedRequests_ ;
+    QTimer* reconnectTimer_ ;
+    int reconnectAttempts_ = 0 ;
 
     explicit ControlApiClient(QObject* parent = nullptr);
     ~ControlApiClient() = default ;
@@ -43,13 +48,19 @@ public:
     ControlApiClient& operator=(ControlApiClient&&) = delete ;
 
     void connectToBackend();
-    void sendMessage(const json& j);
+    bool sendMessage(const json& j);
+    bool isConnected() const ;
+
+private:
+    void scheduleReconnect();
+    void flushQueue();
 
 signals:
     void connected();
     void disconnected();
     void dataReceived(const json& j);
     void errorOccurred(const QString &error);
+    void reconnectFailed();
 
 private slots:
     void onReadyRead();

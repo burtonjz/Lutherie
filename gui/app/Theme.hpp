@@ -128,6 +128,16 @@ public:
 
     static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
 
+    // peripheral config
+    static constexpr const char* SETUP_WINDOW_LABEL    = "Peripheral Device Configuration" ;
+    static constexpr const char* SETUP_AUDIO_LABEL     = "Select Audio Device" ;
+    static constexpr const char* SETUP_MIDI_LABEL      = "Select MIDI Device" ;
+    static constexpr const char* SETUP_PREFERRED_LABEL = "Preferred" ;
+    static constexpr const char* SETUP_CONFIRM_TEXT    = "Confirm" ;
+
+    static constexpr int API_NUM_RECONNECT_ATTEMPTS = 5 ;
+    static constexpr int API_RECONNECT_DELAY_MS     = 500 ;
+
     static constexpr int TOOLBAR_HEIGHT = 32 ;
 
     static constexpr int   GRAPH_DOUBLE_CLICK_MS    = 300 ;

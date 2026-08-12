@@ -5,8 +5,6 @@
 ## MVP Requirements
 
 ### Configuration / UX
-- [Quick] Launch KDDW/modern floating window for setup button
-- [Quick] Allow saving remembering audio/midi IDs in user config.
 - [Quick] fix UX oddities with the add component menu (auto highlight when one search item left, have search bar auto activate to allow immediate typing)
 - [Medium] Create better patch load menu (dedicated internal directory)
 - [Medium] hide/lock basic parameters (for simplifying patches)

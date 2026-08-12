@@ -20,7 +20,9 @@
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
 #include "managers/AnalysisManager.hpp"
+#include "views/PeripheralConfig.hpp"
 #include "views/GraphPanel.hpp"
+#include "views/ControlPanel.hpp"
 #include "api/ControlApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "config/Config.hpp"
@@ -52,7 +54,11 @@ Synth::Synth(QWidget* parent):
         {KDDockWidgets::MainWindowOption_None}, 
         parent
     ),
-    setup_(nullptr),
+    peripheralConfigDock_(new KDDWQt::DockWidget(
+        "__peripheralConfigDock", 
+        KDDockWidgets::DockWidgetOption_NotDockable
+    )),
+    graphDock_(new KDDWQt::DockWidget("__graphDock")),
     parameterPanel_(new ControlPanel(this)),
     parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
     modulationPanel_(new ControlPanel(this)),
@@ -63,74 +69,15 @@ Synth::Synth(QWidget* parent):
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
 
-    graphDock_ = new KDDWQt::DockWidget("__graphDock");
-
     configureDocks();
     configureMenu();
     configureToolBar();
 
-    // ==============================
-    // ======== CONNECTIONS =========
-    // ==============================
-
-    // api client
-    connect(
-        ControlApiClient::instance(), &ControlApiClient::connected, 
-        this, &Synth::onApiConnected
-    );
-    connect(
-        ControlApiClient::instance(), &ControlApiClient::dataReceived, 
-        this, &Synth::onControlMessageReceived
-    );
-
-    // component manager
-    connect( 
-        ComponentManager::instance(), &ComponentManager::componentAdded,
-        this, &Synth::onComponentAdded
-    );
-    connect(
-        ComponentManager::instance(), &ComponentManager::componentRenamed,
-        this, &Synth::onComponentRenamed
-    );
-    
-    // group manager
-    connect(
-        GroupManager::instance(), &GroupManager::groupCreated,
-        this, &Synth::onComponentGroupCreated
-    );
-    connect(
-        GroupManager::instance(), &GroupManager::groupUpdated,
-        this, &Synth::onComponentGroupUpdated
-    );
-    connect(
-        GroupManager::instance(), &GroupManager::groupRemoved,
-        this, &Synth::onComponentGroupRemoved
-    );
-    connect(
-        GroupManager::instance(), &GroupManager::groupRenamed, 
-        this, &Synth::onGroupRenamed
-    );
-    
-    // graph panel
-    connect(
-        GraphPanel::instance(), &GraphPanel::requestShowParameters,
-        this, &Synth::onShowParameters
-    );
-    connect(
-        GraphPanel::instance(), &GraphPanel::requestShowModulation,
-        this, &Synth::onShowModulation
-    );
-    connect(
-        GraphPanel::instance(), &GraphPanel::requestShowGroupParameters,
-        this, &Synth::onShowGroupParameters
-    );
-    connect(
-        GraphPanel::instance(), &GraphPanel::requestShowGroupModulation,
-        this, &Synth::onShowGroupModulation
-    );
+    makeExternalConnections();
 }
 
 Synth::~Synth(){
+    PeripheralConfig::destroy();
 }
 
 void Synth::configureMenu(){
@@ -212,9 +159,9 @@ void Synth::configureToolBar(){
     toolBar_->setFixedHeight(Theme::TOOLBAR_HEIGHT);
     toolBar_->setMovable(false);
 
-    actionSetup_ = new QAction("Setup", this);
-    actionSetup_->setMenuRole(QAction::NoRole);
-    toolBar_->addAction(actionSetup_);
+    actionPeripheralConfig_ = new QAction("Setup", this);
+    actionPeripheralConfig_->setMenuRole(QAction::NoRole);
+    toolBar_->addAction(actionPeripheralConfig_);
 
     actionStart_ = new QAction("Start", this);
     actionStart_->setMenuRole(QAction::NoRole);
@@ -243,8 +190,8 @@ void Synth::configureToolBar(){
         this, &Synth::onEngineStatusChange
     );
     connect(
-        actionSetup_, &QAction::triggered, 
-        this, &Synth::onActionSetup
+        actionPeripheralConfig_, &QAction::triggered, 
+        this, &Synth::onActionPeripheralConfig
     );
     connect(
         actionStart_, &QAction::triggered, 
@@ -257,6 +204,15 @@ void Synth::configureToolBar(){
 }
 
 void Synth::configureDocks(){
+    peripheralConfigDock_->setWidget(PeripheralConfig::instance());
+    peripheralConfigDock_->setTitle(Theme::SETUP_WINDOW_LABEL);
+    connect(
+        PeripheralConfig::instance(), &PeripheralConfig::completed,
+        this, [this](){
+            peripheralConfigDock_->close();
+        }
+    );
+
     graphDock_->setWidget(GraphPanel::instance());
     graphDock_->setTitle("Connection Graph");
     addDockWidget(graphDock_, KDDW::Location_OnLeft);
@@ -283,6 +239,64 @@ void Synth::configureDocks(){
         dock->close();
         analyzerDocks_[typ] = dock ;
     }
+}
+
+void Synth::makeExternalConnections(){
+    // api client
+    connect(
+        ControlApiClient::instance(), &ControlApiClient::connected, 
+        this, &Synth::onApiConnected
+    );
+    connect(
+        ControlApiClient::instance(), &ControlApiClient::dataReceived, 
+        this, &Synth::onControlMessageReceived
+    );
+
+    // component manager
+    connect( 
+        ComponentManager::instance(), &ComponentManager::componentAdded,
+        this, &Synth::onComponentAdded
+    );
+    connect(
+        ComponentManager::instance(), &ComponentManager::componentRenamed,
+        this, &Synth::onComponentRenamed
+    );
+    
+    // group manager
+    connect(
+        GroupManager::instance(), &GroupManager::groupCreated,
+        this, &Synth::onComponentGroupCreated
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupUpdated,
+        this, &Synth::onComponentGroupUpdated
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupRemoved,
+        this, &Synth::onComponentGroupRemoved
+    );
+    connect(
+        GroupManager::instance(), &GroupManager::groupRenamed, 
+        this, &Synth::onGroupRenamed
+    );
+    
+    // graph panel
+    connect(
+        GraphPanel::instance(), &GraphPanel::requestShowParameters,
+        this, &Synth::onShowParameters
+    );
+    connect(
+        GraphPanel::instance(), &GraphPanel::requestShowModulation,
+        this, &Synth::onShowModulation
+    );
+    connect(
+        GraphPanel::instance(), &GraphPanel::requestShowGroupParameters,
+        this, &Synth::onShowGroupParameters
+    );
+    connect(
+        GraphPanel::instance(), &GraphPanel::requestShowGroupModulation,
+        this, &Synth::onShowGroupModulation
+    );
 }
 
 QMenu* Synth::buildComponentMenu(){
@@ -416,11 +430,6 @@ void Synth::createComponentDetailDock(int componentId, ComponentParameters* para
     );
 }
 
-void Synth::closeEvent(QCloseEvent* event){
-    if ( setup_ ) setup_->close() ;
-    event->accept();
-}
-
 void Synth::onApiConnected(){
 }
 
@@ -454,18 +463,11 @@ void Synth::onControlMessageReceived(const json& j){
     }
 }
 
-void Synth::onActionSetup(){
-    if ( !setup_ ){
-        setup_ = new Setup() ;
-         connect(
-            setup_, &Setup::audioChannelsUpdated,
-            GraphPanel::instance(), &GraphPanel::updatePeripheralAudioChannels
-        );
-        setup_->show();
+void Synth::onActionPeripheralConfig(){
+    if ( peripheralConfigDock_->isOpen() ){
+        peripheralConfigDock_->close();
     } else {
-        if (!setup_->isVisible()){
-            setup_->show();
-        }
+        peripheralConfigDock_->open();
     }
 }
 
@@ -494,10 +496,8 @@ void Synth::onEngineStatusChange(bool status){
     StateManager::instance()->setRunning(status);
     actionStart_->setVisible(!status);
     actionStop_->setVisible(status);
-    actionSetup_->setDisabled(status);
-    if ( status && setup_ ){
-        setup_->close();
-    }
+    actionPeripheralConfig_->setDisabled(status);
+    peripheralConfigDock_->close();
 }
 
 void Synth::onActionLoad(){

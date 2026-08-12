@@ -1,49 +1,52 @@
 {
+    "analysis": {
+        "oscilloscope": {
+            "buffer_size": 3624,
+            "hysteresis_ratio": 0.1,
+            "search_region": 2600,
+            "silence_threshold": 0.01,
+            "window_size": 1024
+        },
+        "port": 54322,
+        "ring_buffer_size": 480000,
+        "spectrum_analyzer": {
+            "buffer_size": 4096,
+            "smooth_factor": 0.7
+        }
+    },
+    "audio": {
+        "buffer_size": 256,
+        "preferred_device_id": -1,
+        "sample_rate": 48000
+    },
+    "midi": {
+        "preferred_device_id": -1
+    },
+    "modulation": {
+        "max_depth": 2
+    },
+    "oscillator": {
+        "NOISE": {
+            "auto_gain": 0.8
+        },
+        "SAW": {
+            "auto_gain": 0.7
+        },
+        "SINE": {
+            "auto_gain": 1.0
+        },
+        "SQUARE": {
+            "auto_gain": 0.6
+        },
+        "TRIANGLE": {
+            "auto_gain": 1.0
+        },
+        "expected_voices": 12,
+        "wavetable_size": 8196
+    },
     "server": {
         "address": "127.0.0.1",
         "control_port": 12345,
         "data_port": 12346
-    },
-    "audio": {
-        "sample_rate": 48000,
-        "buffer_size": 256
-    }, 
-    "oscillator": {
-        "wavetable_size": 8196,
-        "expected_voices": 12,
-        "SINE":{
-            "auto_gain": 1.0
-        },
-        "SQUARE":{
-            "auto_gain": 0.6
-        },
-        "TRIANGLE":{
-            "auto_gain": 1.0
-        },
-        "SAW":{
-            "auto_gain": 0.7
-        },
-        "NOISE":{
-            "auto_gain": 0.8
-        }
-    },
-    "modulation": {
-        "max_depth": 2        
-    },
-    "analysis":{
-        "ring_buffer_size": 480000,
-        "port": 54322,
-        "oscilloscope" : {
-            "buffer_size": 3624,
-            "window_size": 1024,
-            "search_region": 2600,
-            "hysteresis_ratio": 0.1,
-            "silence_threshold": 0.01
-        },
-        "spectrum_analyzer" : {
-            "smooth_factor": 0.7,
-            "buffer_size": 4096
-        }
     }
 }
-

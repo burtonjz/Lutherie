@@ -211,6 +211,7 @@ void Theme::applyDarkTheme() {
             padding: 5px 15px;
             border-radius: 3px;
             border: 1px solid %5;
+            background-color: %3;
         }
         QPushButton:hover {
             border-color: %1;

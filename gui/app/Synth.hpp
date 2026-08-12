@@ -18,9 +18,6 @@
 #ifndef __UI_SYNTH_HPP_
 #define __UI_SYNTH_HPP_
 
-#include "app/Setup.hpp"
-#include "managers/GroupManager.hpp"
-#include "views/ControlPanel.hpp"
 #include "types/ComponentType.hpp"
 
 #include <kddockwidgets/MainWindow.h>
@@ -43,9 +40,9 @@ class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
 
 private:
-    Setup* setup_ ;
-
     // docks
+    KDDWQt::DockWidget* peripheralConfigDock_ ;
+
     KDDWQt::DockWidget* graphDock_ ;
 
     ControlPanel* parameterPanel_ ;
@@ -73,7 +70,7 @@ private:
     QAction* actionShowModulationPanel_ ;
 
     // toolbar 
-    QAction* actionSetup_ ;
+    QAction* actionPeripheralConfig_ ;
     QAction* actionStart_ ;
     QAction* actionStop_ ;
 
@@ -84,13 +81,12 @@ public:
     Synth(QWidget* parent = nullptr);
     ~Synth();
 
-protected:
-    void closeEvent(QCloseEvent* event) override ;
-
 private:
     void configureMenu();
     void configureToolBar();
     void configureDocks();
+    void makeExternalConnections();
+
     QMenu* buildComponentMenu();
 
     void createComponentDetailDock(int componentId, ComponentParameters* params);
@@ -106,7 +102,7 @@ private slots:
     void onEngineStatusChange(bool status);
 
     // tool bar menu actions
-    void onActionSetup();
+    void onActionPeripheralConfig();
     void onActionStart();
     void onActionStop();
 

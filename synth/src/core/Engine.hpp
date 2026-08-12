@@ -124,11 +124,11 @@ public:
     
     const std::vector<RtAudio::DeviceInfo> getAvailableAudioDevices() const ;
     uint32_t getAudioDeviceId() const ;
-    bool setAudioDeviceId(uint32_t deviceId);
+    bool setAudioDeviceId(uint32_t deviceId, bool preferred = false);
 
     const std::map<int,std::string> getAvailableMidiDevices() const ;
     int getMidiDeviceId() const ;
-    bool setMidiDeviceId(int deviceId);
+    bool setMidiDeviceId(int deviceId, bool preferred = false);
     
     // Connection Management
     bool handleMidiConnection(ConnectionRequest connection);

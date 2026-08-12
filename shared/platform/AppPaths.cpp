@@ -104,7 +104,7 @@ fs::path getExecutableDir(){
 
 fs::path AppPaths::getAppResourceDir(){
 #ifdef DEBUG_BUILD
-    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" ;
+    return fs::path(LUTHERIE_SOURCE_DIR) / "build" / "dev" / "resources" ;
 #endif 
 
     auto resource = fs::path(LUTHERIE_RESOURCE_DIR);
@@ -118,7 +118,7 @@ fs::path AppPaths::getAppResourceDir(){
 
 fs::path AppPaths::getUserConfigDir(){
 #ifdef DEBUG_BUILD
-    return fs::path(LUTHERIE_SOURCE_DIR) / "shared" / "resources" / "config" ;
+    return fs::path(LUTHERIE_SOURCE_DIR) / "build" / "dev" / "resources" / "config" ;
 #endif 
 
 #ifdef __linux__
