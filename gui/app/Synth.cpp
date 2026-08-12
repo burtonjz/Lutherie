@@ -205,6 +205,7 @@ void Synth::configureToolBar(){
 
 void Synth::configureDocks(){
     peripheralConfigDock_->setWidget(PeripheralConfig::instance());
+    peripheralConfigDock_->resize(PeripheralConfig::instance()->minimumSizeHint());
     peripheralConfigDock_->setTitle(Theme::SETUP_WINDOW_LABEL);
     connect(
         PeripheralConfig::instance(), &PeripheralConfig::completed,
@@ -418,6 +419,7 @@ void Synth::createComponentDetailDock(int componentId, ComponentParameters* para
         componentId
     ));
     dock->setWidget(params);
+    dock->resize(params->sizeHint());
     dock->setTitle(params->getModel()->getName());
     componentDetailDocks_[componentId] = dock ;
 
