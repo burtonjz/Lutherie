@@ -169,8 +169,6 @@ void PeripheralConfig::attemptAutoSetup(){
     int audioId = Config::get<int>("audio.preferred_device_id").value_or(-1);
     int midiId = Config::get<int>("midi.preferred_device_id").value_or(-1);
 
-    SPDLOG_DEBUG("audioId={}, midiId={}", audioId, midiId);
-
     if ( audioId != -1 ){
         int idx = audioComboBox_->findData(audioId);
         if ( idx == -1 ){
