@@ -89,7 +89,7 @@ protected:
     void wheelEvent(QWheelEvent* event) override ;
     void mouseMoveEvent(QMouseEvent* event) override ;
     void mouseReleaseEvent(QMouseEvent* event) override ;
-    void contextMenuEvent(QContextMenuEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override ;
 
 private:
     void setupScene() ;

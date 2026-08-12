@@ -128,6 +128,8 @@ public:
 
     static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
 
+    static constexpr int COMPONENT_MENU_NUM_QUICK_RESULTS = 3 ;
+    
     // peripheral config
     static constexpr const char* SETUP_WINDOW_LABEL    = "Peripheral Device Configuration" ;
     static constexpr const char* SETUP_AUDIO_LABEL     = "Select Audio Device" ;

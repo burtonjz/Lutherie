@@ -45,6 +45,7 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QToolBar>
+#include <QShortcut>
 
 namespace KDDW   = KDDockWidgets ;
 
@@ -175,11 +176,17 @@ void Synth::configureToolBar(){
     toolBar_->addAction(actionStop_);
 
     // component menu
-    QMenu* componentMenu = buildComponentMenu();
+    componentMenu_ = buildComponentMenu();
+    QAction* addComponentAction = new QAction("Add Component", this);
+    addComponentAction->setShortcut(QKeySequence("Ctrl+K"));
+    connect(addComponentAction, &QAction::triggered, this, [this](){
+        componentMenu_->popup(QCursor::pos());
+    });
+
     QToolButton* addComponent = new QToolButton(this);
-    addComponent->setText("Add Component");
-    addComponent->setMenu(componentMenu);
+    addComponent->setDefaultAction(addComponentAction);
     addComponent->setPopupMode(QToolButton::InstantPopup);
+    addComponent->setMenu(componentMenu_);
     toolBar_->addWidget(addComponent);
 
     addToolBar(Qt::TopToolBarArea, toolBar_);
@@ -303,106 +310,124 @@ void Synth::makeExternalConnections(){
 QMenu* Synth::buildComponentMenu(){
     QMenu* menu = new QMenu(this);
 
-    QStringList componentNames ;
-    for ( const auto& [typ, descriptor] : ComponentRegistry::getAllComponentDescriptors() ){
-        componentNames.append(QString::fromStdString(descriptor.name));
-    }
-
     QLineEdit* search = new QLineEdit(menu);
-    search->setPlaceholderText("Search...");
+    search->setPlaceholderText("Search name or tag...");
     search->setClearButtonEnabled(true);
-
-    QCompleter* completer = new QCompleter(componentNames, search);
-    completer->setCaseSensitivity(Qt::CaseInsensitive);
-    completer->setFilterMode(Qt::MatchContains);
-    search->setCompleter(completer);
-
     QWidgetAction* searchAction = new QWidgetAction(menu);
     searchAction->setDefaultWidget(search);
     menu->addAction(searchAction);
     menu->addSeparator();
 
-    // submenus
-    QMenu* sigGen = menu->addMenu("Signal Generators");
-    QMenu* sigProc = menu->addMenu("Signal Processors");
-    QMenu* midiGen = menu->addMenu("MIDI Generators");
-    QMenu* midiProc = menu->addMenu("MIDI Processors");
-    QMenu* modulator = menu->addMenu("Modulators");
-    QMenu* analyzer = menu->addMenu("Analyzers");
-    
+    // query for tags and component names
+    std::map<std::string, std::vector<ComponentType>> tagMap ;
+    QStringList allComponents ;
     for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
-        if ( desc.numSignalInputs == 0 && desc.numSignalOutputs > 0 ){
-            QAction* action = sigGen->addAction(QString::fromStdString(desc.name));
-            connect(
-                action, &QAction::triggered, 
-                this, [this, typ](){
-                    GraphPanel::instance()->onComponentSelected(typ);
-                }
-            );
-        } else if ( desc.numSignalInputs > 0 && desc.numSignalOutputs > 0 ){
-            QAction* action = sigProc->addAction(QString::fromStdString(desc.name));
-            connect(
-                action, &QAction::triggered, 
-                this, [this, typ](){
-                    GraphPanel::instance()->onComponentSelected(typ);
-                }
-            );
+        for (const auto& tag : desc.allTags()) {
+            tagMap[tag].push_back(typ);
         }
-        if ( desc.numMidiInputs == 0 && desc.numMidiOutputs > 0 ){
-            QAction* action = midiGen->addAction(QString::fromStdString(desc.name));
-            connect(
-                action, &QAction::triggered, 
-                this, [this, typ](){
-                    GraphPanel::instance()->onComponentSelected(typ);
-                }
-            );
-        } else if ( desc.numMidiInputs > 0 && desc.numMidiOutputs > 0 ){
-            QAction* action = midiProc->addAction(QString::fromStdString(desc.name));
-            connect(
-                action, &QAction::triggered, 
-                this, [this, typ](){
-                    GraphPanel::instance()->onComponentSelected(typ);
-                }
-            );
-        }
-        if ( desc.canModulate ){
-            QAction* action = modulator->addAction(QString::fromStdString(desc.name));
-            connect(
-                action, &QAction::triggered, 
-                this, [this, typ](){
-                    GraphPanel::instance()->onComponentSelected(typ);
-                }
-            );
-        }
-        if ( desc.isAnalyzer() ){
-            QAction* action = analyzer->addAction(QString::fromStdString(desc.name));
-            connect(
-                action, &QAction::triggered,
-                this, [this, typ](){
-                    GraphPanel::instance()->onComponentSelected(typ);
-                }
-            );
+        allComponents.push_back(QString::fromStdString(desc.name));
+    }
+
+    // create autocomplete
+    QCompleter* completer = new QCompleter(allComponents, search);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    completer->setCompletionMode(QCompleter::InlineCompletion);
+    search->setCompleter(completer);
+
+    // quick-results pool (once we filter down to a couple items)
+    componentMenuQuickAction_.clear();
+    for ( int i = 0 ; i < Theme::COMPONENT_MENU_NUM_QUICK_RESULTS; ++i ){
+        QAction* a = menu->addAction("");
+        a->setVisible(false);
+        connect(
+            a, &QAction::triggered, this, [a](){
+                ComponentType typ = static_cast<ComponentType>(a->data().toInt());
+                GraphPanel::instance()->onComponentSelected(typ);
+            }
+        );
+        componentMenuQuickAction_.push_back(a);
+    }
+    QAction* quickActionSeparator = menu->addSeparator();
+    quickActionSeparator->setVisible(false);
+
+    // loop through each tag, create submenus and actions
+    for ( const auto& [tag, _] : tagMap){
+        QMenu* submenu = menu->addMenu(QString::fromStdString(tag));
+        tagMenu_[tag] = submenu ;
+
+        std::vector<ComponentType> types = tagMap.at(tag);
+        std::sort(types.begin(), types.end(), [](ComponentType a, ComponentType b){
+            return ComponentRegistry::getComponentDescriptor(a).name
+                < ComponentRegistry::getComponentDescriptor(b).name ;
+        });
+
+        for ( const auto& typ : types ){
+            const auto& desc = ComponentRegistry::getComponentDescriptor(typ);
+            QAction* action = submenu->addAction(QString::fromStdString(desc.name));
+            actionType_[action] = typ ;
+            connect(action, &QAction::triggered, this, [typ](){
+                GraphPanel::instance()->onComponentSelected(typ);
+            });
         }
     }
 
-    // completer connections
-    connect(
-        completer, QOverload<const QString&>::of(&QCompleter::activated),
-        this, [search, this](const QString& componentName){
-        QTimer::singleShot(0, search, [search](){ search->clear();});
-        for ( const auto& [typ, desc] : ComponentRegistry::getAllComponentDescriptors() ){
-            if ( componentName == desc.name ){
-                GraphPanel::instance()->onComponentSelected(typ);
-                return ;
-            }    
+    // live filtering menus/actions based on the tags/names
+    // also populates a "quick results" section for convenience
+    connect(search, &QLineEdit::textChanged, this, [this, quickActionSeparator](const QString& text){
+        visibleType_.clear();
+
+        int numMatches = 0 ;
+        for ( const auto& [tag, menu ] : tagMenu_ ){
+            bool tagMatches = text.isEmpty() || QString::fromStdString(tag).contains(text, Qt::CaseInsensitive);
+
+            bool anyVisible = false ;
+            for (QAction* action : menu->actions()) {
+                bool visible = tagMatches || action->text().contains(text, Qt::CaseInsensitive);
+                if ( visible ){
+                    const auto [_, inserted] = visibleType_.insert(actionType_[action]);
+                    if ( !inserted ) continue ;
+                    if ( numMatches < Theme::COMPONENT_MENU_NUM_QUICK_RESULTS ){
+                        componentMenuQuickAction_.at(numMatches)->setText(action->text());
+                        componentMenuQuickAction_.at(numMatches)->setData(action->data());
+                    }
+                    numMatches++ ;
+                } 
+                action->setVisible(visible);
+                anyVisible |= visible ;
+            }
+            menu->menuAction()->setVisible(anyVisible);
         }
-        SPDLOG_DEBUG(
-            "component add completer did not match a component name: {}", 
-            componentName.toStdString()
-        );
+
+        if ( numMatches <= Theme::COMPONENT_MENU_NUM_QUICK_RESULTS ){
+            for ( int i = 0; i < Theme::COMPONENT_MENU_NUM_QUICK_RESULTS; ++i ){
+                if ( i < numMatches ) componentMenuQuickAction_.at(i)->setVisible(true);
+                else componentMenuQuickAction_.at(i)->setVisible(false);
+            }
+            quickActionSeparator->setVisible(true);
+        } else {
+            for ( auto* a : componentMenuQuickAction_ ){
+                a->setVisible(false);
+            }
+            quickActionSeparator->setVisible(false);
+        }
     });
 
-    connect(menu, &QMenu::aboutToShow, search, &QLineEdit::clear);
+    // enter: select component if one distinct match
+    connect(
+        search, &QLineEdit::returnPressed, this, [menu, this](){
+            if ( visibleType_.size() == 1 ){
+                ComponentType typ = *visibleType_.begin();
+                menu->close();
+                GraphPanel::instance()->onComponentSelected(typ);
+            }
+        }
+    );
+
+    connect(
+        menu, &QMenu::aboutToShow, 
+        search, [search](){ 
+            search->clear(); search->setFocus(); 
+    });
     return menu ;
 }
 

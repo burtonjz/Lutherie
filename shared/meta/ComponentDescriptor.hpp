@@ -75,6 +75,25 @@ struct ComponentDescriptor {
     bool shouldShowModulationParameters() const {
         return modulatableParameters.size() > 0 ;
     }
+
+    std::vector<std::string> tags = {}; // optional user-defined tags
+    std::vector<std::string> allTags() const {
+        std::vector<std::string> t = tags ;
+
+        auto classify = [&](size_t in, size_t out, const char* domain){
+            if ( in == 0 && out > 0) t.push_back(std::string(domain) + " Source");
+            else if (in > 0 && out == 0) t.push_back(std::string(domain) + " Sink");
+            else if (in > 0 && out > 0) t.push_back(std::string(domain) + " Processor");
+        };
+        classify(numSignalInputs, numSignalOutputs, "Signal");
+        classify(numBufferInputs, numBufferOutputs, "Buffer");
+        classify(numMidiInputs, numMidiOutputs, "MIDI");
+
+        if ( canModulate ) t.push_back("Modulator");
+        if ( isAnalyzer() ) t.push_back("Analyzer");
+
+        return t ;
+    }
 };
 
 #endif // __SHARED_COMPONENT_DESCRIPTOR_HPP_

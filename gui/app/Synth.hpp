@@ -77,6 +77,13 @@ private:
     QMenuBar* menuBar_ ;
     QToolBar* toolBar_ ;
 
+    // for component filtering
+    QMenu* componentMenu_ ;
+    std::map<std::string, QMenu*> tagMenu_ ;
+    std::map<QAction*, ComponentType> actionType_ ;
+    std::set<ComponentType> visibleType_ ;
+    std::vector<QAction*> componentMenuQuickAction_ ;
+
 public:
     Synth(QWidget* parent = nullptr);
     ~Synth();
