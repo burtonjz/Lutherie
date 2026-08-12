@@ -33,8 +33,10 @@
 #include "core/ComponentFactory.hpp"
 
 #include <nlohmann/json.hpp> 
+#include <filesystem>
 
 using json = nlohmann::json ;
+namespace fs = std::filesystem ;
 
 class Engine {
 public:
@@ -146,6 +148,9 @@ public:
 
 private:
     void getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+
+    void initializeUserResourceFolder();
+    json readJsonFile(const fs::path& path);
 
 };
 

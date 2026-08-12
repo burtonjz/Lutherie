@@ -29,6 +29,7 @@
 #include "midi/MidiController.hpp"
 #include "dsp/detune.hpp"
 #include "dsp/math.hpp"
+#include "platform/AppPaths.hpp"
 
 #include <chrono>
 #include <csignal>
@@ -39,6 +40,7 @@
 #include <thread>
 #include <unistd.h>
 #include <spdlog/spdlog.h>
+#include <fstream>
 
 // Static members
 std::atomic<bool> Engine::stop_flag{false};
@@ -120,6 +122,9 @@ void Engine::initialize(){
         DataApiHandler::instance()->start();
     });    
 
+    initializeUserResourceFolder();
+
+    // this thread just sleeps until we're done running
     while ( !stop_flag && controlApiRunning_ ){
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
@@ -797,9 +802,6 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
     return true ;
 }
 
-// ============================================================================
-// SERIALIZATION
-// ============================================================================
 json Engine::serialize() const {
     json output ;
 
@@ -822,4 +824,72 @@ json Engine::serialize() const {
     output["midi_controls"] = MidiControlRouter::instance()->serialize();
 
     return output ;
+}
+
+void Engine::initializeUserResourceFolder(){
+    auto appPatchDir = AppPaths::getAppResourceDir() / "data" / "patches" ;
+    auto userPatchDir = AppPaths::getUserDataDir() / "patches" ;
+
+    SPDLOG_INFO("checking user resources and adding any new standard patches...");
+
+    int numAdded = 0 ;
+    int numUpdated = 0 ;
+    fs::create_directories(userPatchDir);
+    for ( const auto& entry : fs::directory_iterator(appPatchDir) ){
+        if ( entry.path().extension() != ".json" ) continue ;
+        json appJson ;
+        try {
+            appJson = readJsonFile(entry.path());
+        } catch ( const std::exception& e ){
+            SPDLOG_ERROR("error opening {}: {}", entry.path().c_str(), e.what());
+            continue ;
+        }
+
+        int version = 0 ;
+        if ( appJson.contains("version") && appJson.at("version").is_number() ){
+            version = appJson.contains("version");
+        }
+
+        auto userFile = userPatchDir / entry.path().filename() ;
+        if ( !fs::exists(userFile) ){
+            fs::copy(entry.path(), userFile);
+            numAdded++ ;
+            continue ;
+        }
+        
+        json userJson ;
+        try {
+            userJson = readJsonFile(userFile);
+        } catch ( const std::exception& e ){
+            SPDLOG_ERROR("error opening {}: {}", userFile.c_str(), e.what());
+            continue ;
+        }
+        
+        if ( !userJson.contains("version") || !userJson.at("version").is_number() ){
+            SPDLOG_WARN(
+                "existing user patch '{}' has naming conflict with incoming template. Will not overwrite.",
+                userFile.filename().c_str()
+            );
+            continue ;
+        }
+        if ( version > userJson.at("version") ){
+            numUpdated++ ;
+            fs::copy(entry.path(), userFile, fs::copy_options::overwrite_existing);
+            continue ;
+        }
+    }
+    SPDLOG_INFO("Done. Added: {}; Updated: {}", numAdded, numUpdated);
+}
+
+json Engine::readJsonFile(const fs::path& path){
+    std::ifstream file(path)      ;
+    if ( !file.is_open() ){
+        if ( !file.is_open() ) {
+            throw std::runtime_error(fmt::format("Could not open file: {}", path.c_str()));
+        }
+    }
+
+    json out ;
+    file >> out ;
+    return out ;
 }
