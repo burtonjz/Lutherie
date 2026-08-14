@@ -20,8 +20,12 @@
 #include "api/ControlApiHandler.hpp"
 #include "midi/MidiControlRouter.hpp"
 
-ComponentManager::ComponentManager(MidiController* midiCtrl):
-    midiController_(midiCtrl)
+ComponentManager* ComponentManager::instance(){
+    static ComponentManager manager ;
+    return &manager ;
+}
+
+ComponentManager::ComponentManager()
 {}
 
 BaseComponent* ComponentManager::getRaw(ComponentId id) const {
@@ -121,7 +125,7 @@ void ComponentManager::runParameterModulation(){
     }
 }
 
-void ComponentManager::runAnalyzers(){
+void ComponentManager::flushAnalyzers(){
     for ( auto id : analyzers_ ){
         auto a = getAnalyzer(id);
         a->flush();
@@ -181,50 +185,16 @@ void ComponentManager::getComponentConnections(ComponentId id, std::vector<Conne
 void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     SPDLOG_DEBUG("getting signal connections for component id = {}", id);
 
-    AudioSignalComponent* module = getSignalComponent(id);
-    Analyzer* analyzer = getAnalyzer(id);
+    AudioSignalComponent* component = getSignalComponent(id);
 
-    if ( !module && !analyzer ){
-        SPDLOG_DEBUG("cannot get signal connections for component with id = {}. It is not an analyzer or module.", id);
+    if ( !component ){
+        SPDLOG_DEBUG("cannot get signal connections for component with id = {}. It is not audio signal component.", id);
         return ;
-    }
-
-    // Case 1: Analyzer
-    if ( analyzer ){
-        for ( const auto& [m, idx] : analyzer->getSources() ){
-            ConnectionRequest req ;
-            req.outboundID = m->getId();
-            req.outboundIdx = idx ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-
-            req.inboundID = id ;
-            req.inboundIdx = 0 ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            
-            requests.push_back(req);
-        }
-        return ;
-    } 
-    
-    // Case 2: signal component
-
-    // check if module is connected to any analyzer
-    for ( const auto& [a, idx] : module->getAnalyzers() ){
-        if ( a ){
-            ConnectionRequest req ;
-            req.outboundID = id ;
-            req.outboundIdx = idx ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            req.inboundID = a->getId() ;
-            req.inboundIdx = 0 ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            requests.push_back(req);
-        }
     }
 
     // signal inputs
-    for ( size_t i = 0; i < module->getNumInputs(); ++i ){
-        for ( const auto& conn : module->getInputs(i) ){
+    for ( size_t i = 0; i < component->getNumInputs(); ++i ){
+        for ( const auto& conn : component->getInputs(i) ){
             if ( !conn.component ) continue ;
             ConnectionRequest req ;
             req.inboundID = id ;
@@ -238,8 +208,8 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
     }
     
     // signal outputs
-    for ( size_t i = 0; i < module->getNumOutputs(); ++i ){
-        for ( const auto& conn : module->getOutputs(i) ){
+    for ( size_t i = 0; i < component->getNumOutputs(); ++i ){
+        for ( const auto& conn : component->getOutputs(i) ){
             if ( !conn.component ) continue ;
             ConnectionRequest req ;
             req.inboundID = conn.component->getId() ;

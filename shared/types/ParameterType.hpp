@@ -74,7 +74,8 @@ To add a ParameterType, the following is required:
     X(TRIGGER) \
     X(SAMPLE) \
     X(LOOP) \
-    X(PLAYBACK_RATE)
+    X(PLAYBACK_RATE) \
+    X(RECORD)
 
 /**
  * @brief types of parameters that might exist within any given module
@@ -646,6 +647,21 @@ template <> struct ParameterTraits<ParameterType::PLAYBACK_RATE>{
     static constexpr bool supportRangeUpdate = true ;
 };
 
+template <> struct ParameterTraits<ParameterType::RECORD>{
+    using ValueType = bool ;
+    static constexpr std::string_view name = "record" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 1 ;
+    static constexpr float defaultValue = 0 ;
+    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
+        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
+        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
+        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
+    }};
+
+    static constexpr size_t uiPrecision = 0 ; // num decimals
+    static constexpr bool supportRangeUpdate = false ;
+};
 
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime

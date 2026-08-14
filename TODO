@@ -4,9 +4,13 @@
 
 ## MVP Requirements
 
+### workflow / safety
+- [Medium] RCU snapshot for SignalChain to properly handle concurrency
+  
 ### New Components
 - [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
 - [Medium] `Arpeggiator` -- play series of notes relative to pressed notes in a loop (midi in, midi out)
+- [Medium] `VirtualKeyboard` -- play virtual midi keyboard real time.
 
 ### New Patches
 - [Quick] basic all pass
@@ -20,7 +24,6 @@
 ## Day 2
 
 ### Peripheral Devices
-- *Sequencing note: build this before going deep on Spectral Signals below. Not a hard technical dependency for SpectralDrawer/SpectralFilter (those work fine on any buffer, e.g. a loaded file), but real vocal/mic material is the actual motivating use case for the spectral work, and audio input exercises realtime plumbing (device callback timing, block size, clock) that's better shaken out on its own before also debugging STFT hop-rate scheduling on top of it.*
 - [Big] Support Audio Input peripherals. Eagerly convert input to the audio output device's rate/blocksize (already treated as ground truth throughout the graph) at ingestion, so the rest of the graph only ever sees one uniform clock domain. Conversion (resample + re-block + jitter buffer) happens inside the peripheral component's implementation — no user-facing seam; component just presents a single `AudioSignal` output. Device selection / input gain are fine to expose; resampling internals are not.
 - [Big] Allow multiple MIDI peripheral devices
 - [Big] Support MIDI output peripherals

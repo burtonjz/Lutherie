@@ -19,6 +19,7 @@
 #define __HPP_ALL_COMPONENTS_
 
 #include "components/PolyOscillator.hpp"
+#include "components/StreamRecorder.hpp"
 #include "components/LinearFader.hpp"
 #include "components/Oscillator.hpp"
 #include "components/ADSREnvelope.hpp"

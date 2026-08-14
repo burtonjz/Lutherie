@@ -17,11 +17,15 @@
 
 #include "midi/MidiController.hpp"
 #include "midi/MidiCommand.hpp"
+#include "midi/MidiState.hpp"
                   
 #include <spdlog/spdlog.h>
 #include <cmath>
 
-// static functions
+MidiController* MidiController::instance(){
+    static MidiController controller ;
+    return &controller ;
+}
 
 void MidiController::computePitchbendScaleFactor(){
     float shiftValue ;
@@ -33,8 +37,7 @@ void MidiController::computePitchbendScaleFactor(){
 
 std::array<double,16384> MidiController::pitchbendScaleFactor_ ;
 
-MidiController::MidiController(MidiState* state):
-    state_(state)
+MidiController::MidiController()
 {}
 
 void MidiController::initialize(){
@@ -57,9 +60,8 @@ void MidiController::tick(float dt){
     }
 }
 
-void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *message, void *userData){
-    MidiController* self = static_cast<MidiController*>(userData);
-    self->processMessage(deltaTime, message);    
+void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *message, [[maybe_unused]] void *userData){
+    MidiController::instance()->processMessage(deltaTime, message);    
 }
 
 void MidiController::processMessage([[maybe_unused]] double deltaTime, std::vector<unsigned char> *message){    
@@ -68,25 +70,25 @@ void MidiController::processMessage([[maybe_unused]] double deltaTime, std::vect
 
     switch(command){
         case MidiCommand::MIDI_CMD_NOTE_OFF:
-            state_->processMsgNoteOff((*message)[1],(*message)[2]);
+            MidiState::instance()->processMsgNoteOff((*message)[1],(*message)[2]);
             break ;
         case MidiCommand::MIDI_CMD_NOTE_ON:
-            state_->processMsgNoteOn((*message)[1],(*message)[2]);
+            MidiState::instance()->processMsgNoteOn((*message)[1],(*message)[2]);
             break ;
         case MidiCommand::MIDI_CMD_NOTE_PRESSURE:
-            state_->processMsgNotePressure((*message)[1],(*message)[2]);
+            MidiState::instance()->processMsgNotePressure((*message)[1],(*message)[2]);
             break ;
         case MidiCommand::MIDI_CMD_CONTROL:
-            state_->processMsgControl((*message)[1],(*message)[2]);
+            MidiState::instance()->processMsgControl((*message)[1],(*message)[2]);
             break ;
         case MidiCommand::MIDI_CMD_PROGRAM:
-            state_->processMsgProgram((*message)[1]);
+            MidiState::instance()->processMsgProgram((*message)[1]);
             break ;
         case MidiCommand::MIDI_CMD_CHANNEL_PRESSURE:
-            state_->processMsgChannelPressure((*message)[1]);
+            MidiState::instance()->processMsgChannelPressure((*message)[1]);
             break ;
         case MidiCommand::MIDI_CMD_PITCHBEND:
-            state_->processMsgPitchbend(((*message)[2] << 7 ) | (*message)[1] );
+            MidiState::instance()->processMsgPitchbend(((*message)[2] << 7 ) | (*message)[1] );
             break ;
         default:
             break ;

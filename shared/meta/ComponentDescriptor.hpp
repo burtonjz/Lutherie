@@ -51,8 +51,7 @@ struct ComponentDescriptor {
     bool isMidiHandler() const { return numMidiOutputs > 0 ; }
     bool isMidiListener() const { return numMidiInputs > 0 ; }
     bool isAnalyzer() const { 
-        return numSignalInputs > 0 && numSignalOutputs == 0 
-            && numBufferInputs == 0 && numBufferOutputs == 0 ;
+        return numSignalInputs > 0 && numSignalOutputs == 0 ;
     }
 
     bool hasCollection() const {

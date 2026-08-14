@@ -30,6 +30,9 @@
 #include "dsp/detune.hpp"
 #include "dsp/math.hpp"
 #include "platform/AppPaths.hpp"
+#include "signal/SignalController.hpp"
+#include "core/ComponentManager.hpp"
+#include "midi/MidiState.hpp"
 
 #include <chrono>
 #include <csignal>
@@ -52,11 +55,6 @@ void Engine::signalHandler(int signum){
 
 // Constructor
 Engine::Engine():
-    // publically available interfaces
-    componentManager(&midiController),
-    componentFactory(&componentManager),
-    signalController(&componentManager), 
-    midiController(&midiState_),
     // thread state flags
     controlApiRunning_(false),
     dataApiRunning_(false),
@@ -74,14 +72,13 @@ Engine::Engine():
     midiIn_(),
     availableMidiDevices_(),
     selectedMidiPort_(-1),
-    midiState_(),
     midiDefaultHandler_()
 {
     ControlApiHandler::instance()->initialize(this);
     DataApiHandler::instance()->initialize(this);
 
     registerBaseMidiHandler(&midiDefaultHandler_);
-    midiController.addHandler(&midiDefaultHandler_);
+    MidiController::instance()->addHandler(&midiDefaultHandler_);
     signal(SIGINT, Engine::signalHandler);
 
     dsp::initializeDetuneLUT();
@@ -235,7 +232,7 @@ void Engine::midiLoop(){
     int deviceId = getMidiDeviceId();
     if (deviceId >= 0){
         midiIn_.openPort(deviceId);
-        midiIn_.setCallback(&MidiController::onMidiEvent, static_cast<void*>(&midiController));
+        midiIn_.setCallback(&MidiController::onMidiEvent);
         midiIn_.ignoreTypes(false, false, false);
         SPDLOG_INFO("Listening for MIDI input on device id {}", deviceId);
     }
@@ -282,7 +279,7 @@ void Engine::audioLoop(){
     }
     
     parameters.deviceId = deviceInfo.ID ;
-    parameters.nChannels = signalController.getNumChannels();
+    parameters.nChannels = SignalController::instance()->getNumChannels();
     
     parameters.firstChannel = 0 ;
     
@@ -364,23 +361,23 @@ int Engine::audioCallback(
     double* buffer = static_cast<double*>(outputBuffer);
     
     // Check if we should still be running
-    if (!engine->audioRunning_ || !engine->engineRunning_){
+    if ( !engine->audioRunning_ || !engine->engineRunning_ ){
         // Fill buffer with silence and signal to stop
         std::fill_n(buffer, nBufferFrames, 0.0);
-        return 1; // Non-zero signals stream should stop
+        return 1 ; 
     }
 
     float bufferDt = nBufferFrames / static_cast<float>(engine->getSampleRate());
-    engine->midiController.tick(bufferDt);
+    MidiController::instance()->tick(bufferDt);
     for (unsigned int i = 0; i < nBufferFrames; ++i){
-        engine->componentManager.runParameterModulation();
-        auto [output, outputSize] = engine->signalController.processFrame();
+        ComponentManager::instance()->runParameterModulation();
+        auto [output, outputSize] = SignalController::instance()->processFrame();
         for ( unsigned int j = 0 ; j < outputSize ; ++j ){
             *buffer++ = dsp::fastAtan(output[j]);
         }
     }
     
-    engine->componentManager.runAnalyzers();
+    ComponentManager::instance()->flushAnalyzers();
     
     return 0;
 }
@@ -421,14 +418,14 @@ void Engine::audioCleanup(RtAudio* dac, RtAudioErrorType error){
 void Engine::setup(){
     sampleRate_ = Config::get<unsigned int>("audio.sample_rate").value();
     
-    midiController.initialize();
-    signalController.updateProcessingGraph();
+    MidiController::instance()->initialize();
+    SignalController::instance()->updateProcessingGraph();
 }
 
 void Engine::destroy(){
-    componentManager.reset();
-    signalController.reset();
-    midiState_.reset();
+    ComponentManager::instance()->reset();
+    SignalController::instance()->reset();
+    MidiState::instance()->reset();
 }
 
 // ============================================================================
@@ -441,10 +438,6 @@ RtAudio* Engine::getDac(){
 
 RtMidiIn* Engine::getMidiIn(){
     return &midiIn_;
-}
-
-MidiController* Engine::getMidiController(){
-    return &midiController;
 }
 
 MidiEventHandler* Engine::getDefaultMidiHandler(){
@@ -489,7 +482,7 @@ bool Engine::setAudioDeviceId(uint32_t deviceId, bool preferred){
         numChannels = it->outputChannels ;
     }
 
-    signalController.setNumChannels(numChannels);
+    SignalController::instance()->setNumChannels(numChannels);
 
     return true ;
 }
@@ -538,11 +531,11 @@ bool Engine::handleMidiConnection(ConnectionRequest request){
     BaseComponent* outbound = nullptr ;
 
     if ( request.inboundID.has_value() ){
-        inbound = componentManager.getRaw(request.inboundID.value());
+        inbound = ComponentManager::instance()->getRaw(request.inboundID.value());
     }
 
     if ( request.outboundID.has_value() ){
-        outbound = componentManager.getMidiHandler(request.outboundID.value());
+        outbound = ComponentManager::instance()->getMidiHandler(request.outboundID.value());
     }
     
     // Case 1: inbound and outbound components both exist
@@ -601,7 +594,7 @@ bool Engine::registerBaseMidiHandler(MidiEventHandler* handler){
         SPDLOG_WARN("specified midi handler is a null pointer. Unable to register.");
         return false;
     }
-    midiState_.addHandler(handler);
+    MidiState::instance()->addHandler(handler);
     return true;
 }
 
@@ -610,60 +603,43 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
         SPDLOG_WARN("Specified midi handler is a null pointer. Unable to unregister.");
         return false;
     }
-    midiState_.removeHandler(handler);
+    MidiState::instance()->removeHandler(handler);
     return true;
 }
 
 bool Engine::handleSignalConnection(ConnectionRequest request){
     AudioSignalComponent* inbound = nullptr ;
     AudioSignalComponent* outbound = nullptr ;
-    Analyzer* analyzer = nullptr ;
 
-    // inbound component can be module, analyzer, or peripheral
-    analyzer = componentManager.getAnalyzer(request.inboundID.value_or(-1));
-    inbound = componentManager.getSignalComponent(request.inboundID.value_or(-1));
+    // inbound component can be a normal signal component or peripheral device
+    inbound = ComponentManager::instance()->getSignalComponent(request.inboundID.value_or(-1));
     
     // outbound can be module only
-    outbound = componentManager.getSignalComponent(request.outboundID.value_or(-1));
+    outbound = ComponentManager::instance()->getSignalComponent(request.outboundID.value_or(-1));
 
     // Case 1: if outbound is a peripheral
-    if ( ! request.outboundID.has_value() ){
+    if ( !request.outboundID.has_value() ){
         SPDLOG_WARN("receiving audio from an peripheral source is not yet supported.");
         return false ;
     }
 
     // Case 2: if inbound is a peripheral
-    if ( ! request.inboundID.has_value() ){
+    if ( !request.inboundID.has_value() ){
         if ( request.remove ){
-            signalController.unregisterSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
+            SignalController::instance()->unregisterSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
             return true ;
         }
-        signalController.registerSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
+        SignalController::instance()->registerSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
         return true ;
     }
 
-    // Case 3: analyzer inbound
-    if ( analyzer ){
-        if ( outbound ){
-            if ( request.remove ){
-                analyzer->disconnectInput(outbound, request.outboundIdx.value());
-            } else {
-                analyzer->connectInput(outbound, request.outboundIdx.value());
-            }
-            return true ;
-        } else {
-            SPDLOG_WARN("analyzer component defined but outbound module invalid. Cannot connect");
-            return false ;
-        }
-    }
-
-    // Case 4: module to module
+    // Case 3: inbound and outbound are components
     if ( request.remove ){
-        signalController.disconnect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
+        SignalController::instance()->disconnect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
         return true ;
     }
 
-    signalController.connect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
+    SignalController::instance()->connect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
     return true ;
 }
 
@@ -671,8 +647,8 @@ bool Engine::handleBufferConnection(ConnectionRequest request){
     AudioBufferComponent* inbound = nullptr ;
     AudioBufferComponent* outbound = nullptr ;
     
-    inbound = componentManager.getBufferComponent(request.inboundID.value_or(-1));
-    outbound = componentManager.getBufferComponent(request.outboundID.value_or(-1));
+    inbound = ComponentManager::instance()->getBufferComponent(request.inboundID.value_or(-1));
+    outbound = ComponentManager::instance()->getBufferComponent(request.outboundID.value_or(-1));
     
     if ( !inbound ){
         SPDLOG_WARN("Inbound component with id {} is not valid.");
@@ -717,17 +693,17 @@ std::vector<ConnectionRequest> Engine::getComponentConnections(ComponentId id) c
 }
 
 void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
-    componentManager.getComponentConnections(id, requests);
+    ComponentManager::instance()->getComponentConnections(id, requests);
     getPeripheralConnections(id, requests);
 };
 
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
     // check if module is a sink
-    AudioSignalComponent* m = componentManager.getSignalComponent(id);
+    AudioSignalComponent* m = ComponentManager::instance()->getSignalComponent(id);
 
     if ( m ){
-        for ( size_t i = 0; i < signalController.getNumChannels(); ++i ){
-            for ( const auto& conn : signalController.getSinks(i)){
+        for ( size_t i = 0; i < SignalController::instance()->getNumChannels(); ++i ){
+            for ( const auto& conn : SignalController::instance()->getSinks(i)){
                 if ( m == conn.component ){
                     ConnectionRequest req ;
                     req.outboundID = id ;
@@ -742,10 +718,10 @@ void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequ
     }
     
     // midi peripherals are registered to midi state or to the default midi handler
-    MidiEventHandler* handler = componentManager.getMidiHandler(id);
-    MidiEventListener* listener = componentManager.getMidiListener(id);
+    MidiEventHandler* handler = ComponentManager::instance()->getMidiHandler(id);
+    MidiEventListener* listener = ComponentManager::instance()->getMidiListener(id);
     if ( handler ){
-        auto handlers = midiState_.getHandlers();
+        auto handlers = MidiState::instance()->getHandlers();
         if ( std::find(handlers.begin(), handlers.end(), handler) != handlers.end() ){
             ConnectionRequest req ;
             req.inboundID = id ;
@@ -772,8 +748,8 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
         return false ;
     }
 
-    ModulatorComponent* modulator = componentManager.getModulator(request.outboundID.value());
-    BaseComponent* component = componentManager.getRaw(request.inboundID.value());
+    ModulatorComponent* modulator = ComponentManager::instance()->getModulator(request.outboundID.value());
+    BaseComponent* component = ComponentManager::instance()->getRaw(request.inboundID.value());
 
     if (!modulator || !component ){
         SPDLOG_ERROR("valid modulator or component not found.");;
@@ -796,7 +772,7 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
     
     // stateful modulators need to be in the signal processing graph
     if ( dynamic_cast<AudioSignalComponent*>(modulator) ){
-        signalController.updateProcessingGraph();
+        SignalController::instance()->updateProcessingGraph();
     }
 
     return true ;
@@ -806,11 +782,11 @@ json Engine::serialize() const {
     json output ;
 
     // COMPONENTS
-    output["components"] = componentManager.serializeComponents();
+    output["components"] = ComponentManager::instance()->serializeComponents();
 
     // CONNECTIONS
     std::vector<ConnectionRequest> connections ;
-    for ( auto id : componentManager.getComponentIds() ){
+    for ( auto id : ComponentManager::instance()->getComponentIds() ){
         getComponentConnections(id, connections);
     }
     std::set<ConnectionRequest> unique(connections.begin(), connections.end());

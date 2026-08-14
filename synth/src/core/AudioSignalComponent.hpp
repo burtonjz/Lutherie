@@ -18,12 +18,9 @@
 #ifndef __MODULE_HPP_
 #define __MODULE_HPP_
 
-#include <cmath>
 #include <cstddef>
 #include <cstring>
 #include <memory>
-#include <algorithm>
-#include <set>
 
 #include "core/BaseComponent.hpp"
 #include "config/Config.hpp"
@@ -36,7 +33,7 @@ class Analyzer ;
 
 struct SignalConnection {
     AudioSignalComponent* component ; // connecting module
-    size_t index ; // buffer index 
+    size_t index ; // buffer index (channel)
 
     bool operator==(const SignalConnection& other) const {
         return component == other.component && index == other.index ;
@@ -49,6 +46,8 @@ struct ConnectionHash {
     }
 };
 
+using SignalConnectionSet = std::unordered_set<SignalConnection, ConnectionHash> ;
+
 class AudioSignalComponent : public virtual BaseComponent {
 protected:
     size_t bufferIndex_ ;
@@ -58,135 +57,49 @@ protected:
     double sampleRate_ ;
     std::size_t bufferSize_ ;
 
-    std::vector<std::unordered_set<SignalConnection, ConnectionHash>> signalInputs_ ;
-    std::vector<std::unordered_set<SignalConnection, ConnectionHash>> signalOutputs_ ;
+    std::vector<SignalConnectionSet> signalInputs_ ;
+    std::vector<SignalConnectionSet> signalOutputs_ ;
     std::vector<std::unique_ptr<double[]>> buffers_ ;
 
-    std::set<std::pair<Analyzer*, size_t>> toAnalyzer_ ;
-
 public:
-    AudioSignalComponent(size_t in, size_t out):
-        bufferIndex_(0),
-        nInputs_(in),
-        nOutputs_(out),
-        signalInputs_(in),
-        signalOutputs_(out),
-        buffers_(out)
-    {
-        Config::load();
-        sampleRate_ = Config::get<double>("audio.sample_rate").value();
-        bufferSize_ = Config::get<size_t>("audio.buffer_size").value();
-
-        for ( size_t i = 0; i < out; ++i){
-            buffers_[i] = std::make_unique<double[]>(bufferSize_);
-        }
-    }
-    
+    AudioSignalComponent(size_t in, size_t out);
     virtual ~AudioSignalComponent() = default ;
 
-    void setBufferIndex(size_t index){
-        bufferIndex_ = index ;
-    }
+    void setBufferIndex(size_t index);
     
-    virtual void calculateSample(){}
+    virtual void calculateSample();
 
-    double getCurrentSample(size_t output) const {
-        assert( output < nOutputs_ );
-        return buffers_[output][bufferIndex_];
-    }
+    double getCurrentSample(size_t output) const ;
+    double getLastSample(size_t output) const ;
 
-    double getLastSample(size_t output) const {
-        assert( output < nOutputs_ );
-        return buffers_[output][(bufferIndex_ + bufferSize_ - 1) % bufferSize_ ];
-    }
+    virtual void clearBuffer();
 
-    virtual void clearBuffer(){
-        for ( auto& buf : buffers_ ){
-            std::fill(buf.get(), buf.get() + bufferSize_, 0.0);
-        }
-    }
+    const double* data(size_t output = 0) const ;
+    std::size_t size() const ;
 
-    const double* data(size_t output = 0) const {
-        assert( output < nOutputs_ );
-        return buffers_[output].get() ;
-    }
+    size_t getNumInputs() const ;
+    size_t getNumOutputs() const ;
 
-    std::size_t size() const {
-        return bufferSize_ ;
-    }
+    void connectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput);
+    void disconnectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput);
 
-    size_t getNumInputs() const {
-        return nInputs_ ;
-    }
+    const SignalConnectionSet& getInputs(size_t inp) const ;
+    const SignalConnectionSet& getOutputs(size_t out) const ;
 
-    size_t getNumOutputs() const {
-        return nOutputs_ ;
-    }
+    virtual void tick();
 
-    void connectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput){
-        assert( input < nInputs_ );
-        assert( sourceOutput < source->nOutputs_ );
-        signalInputs_[input].insert({source, sourceOutput});
-        source->signalOutputs_[sourceOutput].insert({this, input});
-    }
+    virtual bool isGenerative() const ;
+    virtual bool isPolyphonic() const ;
 
-    void disconnectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput){
-        assert ( input < nInputs_ );
-        assert ( sourceOutput < source->nOutputs_ );
-        signalInputs_[input].erase({source, sourceOutput});
-        source->signalOutputs_[sourceOutput].erase({this, input});
-    }
-
-    const std::set<std::pair<Analyzer*, size_t>>& getAnalyzers() const {
-        return toAnalyzer_ ;
-    }
-
-    const std::unordered_set<SignalConnection, ConnectionHash>& getInputs(size_t inp) const {    
-        assert( inp < nInputs_ );
-        return signalInputs_[inp] ;
-    }
-
-    const std::unordered_set<SignalConnection, ConnectionHash>& getOutputs(size_t out) const {
-        assert( out < nOutputs_ );
-        return signalOutputs_[out] ;
-    }
-
-    virtual void tick(){
-        bufferIndex_ = std::fmod(bufferIndex_ + 1, bufferSize_);
-    }
-
-    virtual bool isGenerative() const { return false; }
-    virtual bool isPolyphonic() const { return false; }
+    virtual void onInputConnect();
+    virtual void onInputDisconnect();
     
 protected:
-    double aggregateInputs(size_t idx) const {
-        assert( idx < nInputs_ );
-        double sum = 0.0 ;
-        for ( const auto& conn : signalInputs_[idx] ){
-            sum += conn.component->getLastSample(conn.index);
-        }
-        return sum ;
-    }
-
-    void setBufferValue(size_t idx, double val){
-        assert( idx < nOutputs_ );
-        buffers_[idx][bufferIndex_] = val ;
-    }
-
-    void connectAnalyzer(Analyzer* a, size_t idx){
-        toAnalyzer_.insert({a, idx});
-    }
-
-    void disconnectAnalyzer(Analyzer* a, size_t idx){
-        toAnalyzer_.erase({a, idx});
-    }
-    friend class Analyzer ;
+    double aggregateInputs(size_t idx = 0) const ;
+    void setBufferValue(size_t idx, double val);
 };
 
 
-inline void to_json(json& j, const SignalConnection& conn){
-    j["componentId"] = conn.component->getId() ;
-    j["index"] = conn.index ;
-};
+inline void to_json(json& j, const SignalConnection& conn);
 
 #endif // __MODULE_HPP_

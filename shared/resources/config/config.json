@@ -1,5 +1,7 @@
 {
     "analysis": {
+        "port": 54322,
+        "ring_buffer_size": 480000,
         "oscilloscope": {
             "buffer_size": 3624,
             "hysteresis_ratio": 0.1,
@@ -7,11 +9,12 @@
             "silence_threshold": 0.01,
             "window_size": 1024
         },
-        "port": 54322,
-        "ring_buffer_size": 480000,
         "spectrum_analyzer": {
             "buffer_size": 4096,
             "smooth_factor": 0.7
+        },
+        "stream_recorder": {
+            "buffer_size": 4096
         }
     },
     "audio": {
@@ -48,5 +51,6 @@
         "address": "127.0.0.1",
         "control_port": 12345,
         "data_port": 12346
-    }
+    },
+    "version": 1
 }

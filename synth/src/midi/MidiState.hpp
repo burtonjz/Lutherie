@@ -18,12 +18,9 @@
 #ifndef __MIDI_STATE_HPP_
 #define __MIDI_STATE_HPP_
 
-#include "containers/RTMap.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiNote.hpp"
-#include "midi/MidiControlRouter.hpp"
 
-#include <algorithm>
 #include <spdlog/spdlog.h>
 
 class MidiState {
@@ -32,86 +29,33 @@ private:
     KeyMap notes_ ;
     float pitchbend_ ;
 
+    MidiState();
+
 public:
-    MidiState():
-        handlers_(),
-        notes_(),
-        pitchbend_(0.0f)
-    {}
+    static MidiState* instance();
 
-    void addHandler(MidiEventHandler* handler){
-        if (std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end()) return ;
-        handlers_.push_back(handler);
-    }
+    MidiState(const MidiState&) = delete ;
+    MidiState& operator=(const MidiState&) = delete ;
+    MidiState(MidiState&&) = delete ;
+    MidiState& operator=(MidiState&&) = delete ;
 
-    void removeHandler(MidiEventHandler* handler){
-        auto it = std::find(handlers_.begin(), handlers_.end(), handler);
-        if ( it != handlers_.end() ){
-            handlers_.erase(it);
-        }
-    }
-
-    const std::vector<MidiEventHandler*>& getHandlers() const {
-        return handlers_ ;
-    }
+    void addHandler(MidiEventHandler* handler);
+    void removeHandler(MidiEventHandler* handler);
+    const std::vector<MidiEventHandler*>& getHandlers() const ;
     
     // getters/setters
-    const MidiNote* getNote(int midiNote){
-        auto it = notes_.find(midiNote);        
-        if ( it == notes_.end() ) return nullptr ;
-        return &notes_[midiNote] ;
-    }
+    const MidiNote* getNote(int midiNote);
 
     // processing messages
-    void processMsgNoteOn(int midiNote, int velocity){
-        SPDLOG_DEBUG("Processing NOTE_ON event. MidiNote={}, Velocity={}", midiNote, velocity);
-        notes_[midiNote].setMidiNote(midiNote);
-        notes_[midiNote].setMidiVelocity(velocity);
-        notes_[midiNote].setStatus(true);
-        for ( auto* h : handlers_ ){
-            h->handleKeyPressed(notes_[midiNote]);
-        }
-    }
+    void processMsgNoteOn(int midiNote, int velocity);
+    void processMsgNoteOff(int midiNote, int velocity);
+    void processMsgPitchbend(float pitchbend);
+    void processMsgNotePressure([[maybe_unused]] int midiNote, [[maybe_unused]] int pressure);
+    void processMsgControl(int ctrlID, int ctrlValue);
+    void processMsgProgram([[maybe_unused]] int program);
+    void processMsgChannelPressure([[maybe_unused]] int pressure);
 
-    void processMsgNoteOff(int midiNote, int velocity){
-        SPDLOG_DEBUG("Processing NOTE_OFF event. MidiNote={}, Velocity={}", midiNote, velocity);
-        notes_[midiNote].setStatus(false);
-        for ( auto* h : handlers_ ){
-            h->handleKeyReleased(notes_[midiNote]);
-        }
-        notes_.erase(midiNote);
-    }
-
-    void processMsgPitchbend(float pitchbend){
-        SPDLOG_DEBUG("Processing PITCHBEND event. pitchbend={}", pitchbend);
-        pitchbend_ = pitchbend ;
-        for ( auto* h : handlers_ ){
-            h->handlePitchbend(pitchbend_);
-        }
-    }
-
-    void processMsgNotePressure([[maybe_unused]] int midiNote, [[maybe_unused]] int pressure){
-
-    }
-
-    void processMsgControl(int ctrlID, int ctrlValue){
-        SPDLOG_DEBUG("Processing CONTROL event. identifier={}, value={}", ctrlID, ctrlValue);
-        MidiControlRouter::instance()->handleEvent(ctrlID, ctrlValue);
-    }
-
-    void processMsgProgram([[maybe_unused]] int program){
-
-    }
-
-    void processMsgChannelPressure([[maybe_unused]] int pressure){
-
-    }
-
-    void reset(){
-        handlers_.clear();
-        notes_.clear();
-        pitchbend_ = 0.0f ;
-    }
+    void reset();
 
 };
 

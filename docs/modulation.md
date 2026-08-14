@@ -142,7 +142,7 @@ Every `BaseComponent::setParameterModulation` / `setParameterDepthModulation` ca
 
 - cleaning up modulation on a `remove_component` event, which needs to clean up all connections prior to removal.
 - GUI indicators (e.g., highlighting that a particular modulation is active)
-- if the modulator is an `AudioSignalComponent` (i.e., stateful, audio-rate dependant modulator, like `Oscillator`), we also track the modulator so it can be injected into the signal graph, which allows it to stay up-to-date even though its not in the normal audio signal chain. See [SignalController::updateProcessingGraph()](../synth/src/signal/SignalController.hpp) for implementation details.
+- if the modulator is an `AudioSignalComponent` (i.e., stateful, audio-rate dependant modulator, like `Oscillator`), we also track the modulator so it can be injected into the signal graph, which allows it to stay up-to-date even though its not in the normal audio signal chain. See [SignalController::updateProcessingGraph()](../synth/src/signal/SignalController::instance()->hpp) for implementation details.
  
 ---
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __COMPONENT_FACTORY_HPP_
-#define __COMPONENT_FACTORY_HPP_
+#ifndef STREAM_RECORDER_HPP_
+#define STREAM_RECORDER_HPP_
 
-#include "core/ComponentManager.hpp"
-#include "types/ComponentType.hpp"
+#include "core/AudioBufferComponent.hpp"
+#include "dsp/Analyzer.hpp"
+#include "configs/StreamRecorderConfig.hpp"
 
-#include <string>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json ;
-
-class ComponentFactory {
+class StreamRecorder : public AudioBufferComponent, public Analyzer {
 public:
-    static ComponentId createFromJson(ComponentType type, const std::string& name, const json& j );
+    StreamRecorder(ComponentId id, StreamRecorderConfig cfg);
+
+    void process(const double* data, size_t size, ComponentId id) override ;
+    void onParameterChanged(ParameterType p, bool isCollection = false) override ;
 };
 
-#endif // __COMPONENT_FACTORY_HPP_
+#endif // STREAM_RECORDER_HPP_

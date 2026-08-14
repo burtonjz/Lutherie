@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __COMPONENT_FACTORY_HPP_
-#define __COMPONENT_FACTORY_HPP_
+#ifndef STREAM_RECORDER_CONFIG_HPP_
+#define STREAM_RECORDER_CONFIG_HPP_
 
-#include "core/ComponentManager.hpp"
 #include "types/ComponentType.hpp"
-
-#include <string>
 #include <nlohmann/json.hpp>
+
 
 using json = nlohmann::json ;
 
-class ComponentFactory {
-public:
-    static ComponentId createFromJson(ComponentType type, const std::string& name, const json& j );
+// forward declare class
+class StreamRecorder ;
+
+// define default configuration
+struct StreamRecorderConfig {
+    bool enabled = true ; // placeholder to produce valid json struct
 };
 
-#endif // __COMPONENT_FACTORY_HPP_
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(StreamRecorderConfig, enabled) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::StreamRecorder>{ 
+    using type = StreamRecorder ;
+    using config = StreamRecorderConfig ;
+};
+
+#endif // STREAM_RECORDER_CONFIG_HPP_

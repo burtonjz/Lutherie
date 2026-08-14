@@ -20,7 +20,8 @@
 #include <spdlog/spdlog.h>
 
 Oscilloscope::Oscilloscope(ComponentId id, [[maybe_unused]] OscilloscopeConfig cfg):
-    Analyzer(id, ComponentType::Oscilloscope),
+    BaseComponent(id, ComponentType::Oscilloscope),
+    Analyzer(),
     captureBuffer_(),
     bufferPosition_(0),
     sampleRate_(Config::get<double>("audio.sample_rate").value()),
@@ -31,6 +32,14 @@ Oscilloscope::Oscilloscope(ComponentId id, [[maybe_unused]] OscilloscopeConfig c
     silenceThreshold_(Config::get<double>("analysis.oscilloscope.silence_threshold").value())
 {
     captureBuffer_.resize(captureSize_);
+}
+
+void Oscilloscope::onInputConnect(){
+    collecting_ = true ;
+}
+
+void Oscilloscope::onInputDisconnect(){
+    collecting_ = signalInputs_.size() > 0 ;
 }
 
 void Oscilloscope::process(const double* data, size_t size, ComponentId id){

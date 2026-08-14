@@ -40,6 +40,8 @@ public:
     ~Oscilloscope() = default ;
     
     void process(const double* data, size_t size, ComponentId id) override ;
+    void onInputConnect() override ;
+    void onInputDisconnect() override ;
 
 private:
     std::vector<float> extractWindow(double triggerInterp);

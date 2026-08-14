@@ -37,6 +37,7 @@
 #include "configs/BufferStreamerConfig.hpp"
 #include "configs/ChopperConfig.hpp"
 #include "configs/BufferReverserConfig.hpp"
+#include "configs/StreamRecorderConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

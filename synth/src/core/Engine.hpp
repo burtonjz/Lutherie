@@ -24,11 +24,8 @@
 #include <rtmidi/RtMidi.h>
 #include <rtaudio/RtAudio.h>
 
-#include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "requests/ConnectionRequest.hpp"
-#include "midi/MidiState.hpp"
-#include "signal/SignalController.hpp"
 #include "core/ComponentManager.hpp"
 #include "core/ComponentFactory.hpp"
 
@@ -39,13 +36,6 @@ using json = nlohmann::json ;
 namespace fs = std::filesystem ;
 
 class Engine {
-public:
-    // publically available controllers
-    ComponentManager componentManager ;
-    ComponentFactory componentFactory ;
-    SignalController signalController ;
-    MidiController midiController ;
-
 private:
     // Thread entry points
     void midiLoop();
@@ -87,7 +77,6 @@ private:
     std::map<int, std::string> availableMidiDevices_ ;
     int selectedMidiPort_ ;
     
-    MidiState midiState_ ;
     MidiEventHandler midiDefaultHandler_ ;
     
     double sampleRate_ ;
@@ -120,7 +109,6 @@ public:
     
     RtAudio* getDac();
     RtMidiIn* getMidiIn();
-    MidiController* getMidiController();
     MidiEventHandler* getDefaultMidiHandler();
     int getSampleRate() const ;
     

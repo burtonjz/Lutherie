@@ -101,6 +101,7 @@ All Components must inherit from `BaseComponent`. It is generally expected that 
 |ModulatorComponent|ModulatorComponent()| outbound modulation | specifies a unique path for modulation output to be read by Parameter objects. |
 |MidiEventHandler|MidiEventHandler()| outbound MIDI | allows component to manage and manipulate an incoming stream of midi information. Note: all handlers are listeners, as they receive midi states from a centralized object. |
 |MidiEventListener|MidiEventListener()| inbound MIDI | allows a component to respond to midi signals. |
+|Analyzer|Analyzer()|inbound audio signal only| inherits from AudioSignalComponent, audio sink with outbound UDP data sends. |
 
 Most new components will only inherit from one of these. "Converter" components (i.e., components responsible for manipulating data/connection type) are a notable exception -- however, only 1 designated "converter" component should be defined for cases where the input/output combo changes. For example, `BufferStreamer` is responsible for converting an `AudioBufferComponent` to a `AudioSignalComponent`, and so no other component should fulfill that role.  
 
@@ -123,6 +124,7 @@ Generally speaking, [BaseComponent](../synth/src/core/BaseComponent.hpp) functio
 | void onRemoveParameterModulation(ParameterType p) | any additional operations required during a parameter modulation removal event |
 | void onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d ) | any additional operations required during a parameter depth modulation event |
 | void onRemoveParameterDepthModulation(ParameterType p) | any additional operations required during a parameter depth modulation removal event |
+| void onParameterChanged(ParameterType p, bool isCollection) | register itself as a `ParameterListener`, allowing custom behavior whenever the instantaneous (modulated) value changes |
 
 ### 5.2. AudioSignalComponent Requirements
 
@@ -132,8 +134,8 @@ All overrideable functions have "do-nothing" defaults, so not defining "required
 |---|---|---|
 |void calculateSample()| Yes | calculate a sample value and set it for the buffer. This is the value that will get set to the current index of the internal buffer |
 |void tick()| No | perform any per-sample operations required by your class. You **must** call the base implementation in order to ensure the parent class buffer is properly ticked. |
-|void connectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput)| No | by default, this handles the connection logic, but it can be extended to do custom operations. If overridden, you **must** call the base implementation. |
-|void disconnectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput)| No | by default, this handles the connection logic, but it can be extended to do custom operations. If overridden, you **must** call the base implementation. |
+|void onInputConnect()| No | update internal state after an input connect event |
+|void onInputDisconnect()| No | update internal state after an input disconnect event |
 
 ### 5.3. AudioBufferComponent Requirements
 
@@ -187,6 +189,20 @@ The following overrides are available to a component class in order to respond t
 | void onHandlerAdded() const | response to a connection added event |
 | void onHandlerRemoved() const | respond to a connection removed event |
 ---
+
+### 5.7 Analyzer Requirements
+
+`Analyzer` components are a specialization of the `AudioSignalComponent`, where it has 1 audio input and 0 audio outputs. Built in is functionality for collecting and processing audio signal data, and flushing it through a UDP analysis port to provide real-time visualization to the client application.
+
+All AudioSignalComponent overrides are valid to override here except for `calculateSample`. 
+
+The collection state is defined through the `collecting_` boolean. By default, this is turned off for this class. Generally, this variable can be toggled based on `AudioSignalComponent` overrideable events, such as responding to a parameter change or connection event.
+
+The below are additional overrides available to analyzers.
+
+| Function | Description | 
+| --- | --- |
+| virtual void process(const double* data, size_t size, ComponentId id) | called on the analysis thread. Only requirement is the final output must be sent via `AnalyticsEngine::instance()->send(const std::vector<float>& output, int componentId)` |
 
 ## 6. Register the Component Descriptor
 

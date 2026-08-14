@@ -1,5 +1,4 @@
 #include "core/ComponentFactory.hpp"
-
 #include "configs/ComponentConfig.hpp"
 #include "components/Components.hpp"
 
@@ -7,14 +6,10 @@
     case ComponentType::Type: \
         return store_->create<ComponentType::Type>(name,  j.get<Type##Config>());
 
-ComponentFactory::ComponentFactory(ComponentManager* store):
-    store_(store)
-{}
-
 ComponentId ComponentFactory::createFromJson(ComponentType type, const std::string& name, const json& j ){
     switch(type){
         #define X(NAME) \
-            case ComponentType::NAME: return store_->create<ComponentType::NAME>(name, j.get<NAME##Config>());
+            case ComponentType::NAME: return ComponentManager::instance()->create<ComponentType::NAME>(name, j.get<NAME##Config>());
             COMPONENT_TYPE_LIST
         #undef X
     default: 

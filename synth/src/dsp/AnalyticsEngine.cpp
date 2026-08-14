@@ -17,6 +17,9 @@
 
 #include "dsp/AnalyticsEngine.hpp"
 #include "config/Config.hpp"
+#include "dsp/AnalysisContext.hpp"
+#include "core/ComponentManager.hpp"
+
 #include <cstring>
 #include <spdlog/spdlog.h>
 
@@ -33,8 +36,7 @@ AnalyticsEngine::AnalyticsEngine():
 #ifdef _WIN32
     , wsaInitialized_(false)
 #endif
-{
-}
+{}
 
 AnalyticsEngine::~AnalyticsEngine(){
     stop();
@@ -49,30 +51,7 @@ void AnalyticsEngine::stop(){
     closeSocket();
 }
 
-void AnalyticsEngine::registerComponent(int componentId, ComponentType typ, std::function<void(const double*, size_t, int id)> func){
-    std::lock_guard<std::mutex> lock(contextsMutex_);
-    if ( contexts_.contains(componentId) ) return ;
-    
-    auto size = Config::get<unsigned int>("analysis.ring_buffer_size").value_or(480000);
-    size_t scratchSize ;
-    switch(typ){
-    case ComponentType::SpectrumAnalyzer:
-        scratchSize = Config::get<int>("analysis.spectrum_analyzer.buffer_size").value();
-        break ;
-    case ComponentType::Oscilloscope:
-        scratchSize = Config::get<int>("analysis.oscilloscope.buffer_size").value();
-        break ;
-    default:
-        SPDLOG_WARN("unknown component type {} registered with analytics engine. Unknown buffer size");
-        scratchSize = 0 ;
-        break ;
-    }
-    contexts_.emplace(componentId, std::make_unique<AnalysisContext>(size,scratchSize,std::move(func)));
-}
 
-void AnalyticsEngine::unregisterComponent(int componentId){
-    pendingRemove_.insert(componentId);
-}
 
 void AnalyticsEngine::initSocket() {
 #ifdef _WIN32
@@ -122,29 +101,21 @@ void AnalyticsEngine::closeSocket() {
 #endif
 }
 
-void AnalyticsEngine::push(const double* data, size_t count, int componentId){
-    std::lock_guard<std::mutex> lock(contextsMutex_);
-    auto it = contexts_.find(componentId);
-    if ( it == contexts_.end() ) return ;
-
-    it->second->buffer.push(data, count);
-}
-
 void AnalyticsEngine::processContexts(){
-    std::lock_guard<std::mutex> lock(contextsMutex_);
+    auto ids = ComponentManager::instance()->getAnalyzerIds();
 
-    // resolve pending unregisterations
-    for ( int id : pendingRemove_ ){
-        contexts_.erase(id);
-    }
-    pendingRemove_.clear();
+    
+    for ( const auto& id : ids ){
+        Analyzer* a = ComponentManager::instance()->getAnalyzer(id);
+        if ( !a ) continue ;
+        AnalysisContext* ctx = a->getAnalysisContext();
+        if ( !ctx ) continue ;
 
-    for ( auto& [id, ctx] : contexts_ ){
         size_t count = ctx->buffer.pop(ctx->scratch.data(), ctx->scratch.size());
         if ( count > 0 ){
             ctx->processFunc(ctx->scratch.data(), count, id);
         }
-    } 
+    }
 }
 
 void AnalyticsEngine::send(const std::vector<float>& output, int componentId) {

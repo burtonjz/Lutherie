@@ -113,6 +113,9 @@ public:
     static const QColor DOCKING_SEGMENT_PEN_COLOR ;
     static const QColor DOCKING_SEGMENT_BRUSH_COLOR ;
     static const QColor DOCKING_SEGMENT_HOVERED_COLOR ;  
+
+    static const QColor RECORD_ICON_RECORDING_COLOR ;
+    static const QColor RECORD_ICON_STOP_COLOR ;
     
     // Apply theme to application
     static void applyDarkTheme();
@@ -129,7 +132,7 @@ public:
     static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
 
     static constexpr int COMPONENT_MENU_NUM_QUICK_RESULTS = 3 ;
-    
+
     // peripheral config
     static constexpr const char* SETUP_WINDOW_LABEL    = "Peripheral Device Configuration" ;
     static constexpr const char* SETUP_AUDIO_LABEL     = "Select Audio Device" ;
@@ -170,6 +173,9 @@ public:
     static constexpr qreal PARAMETER_WIDGET_WIDTH   = 120 ;
     static constexpr qreal PARAMETER_WIDGET_MARGINS = 20 ;
     static constexpr int   PARAMETER_GRID_N_COLS    = 2 ;
+
+    static constexpr int   RECORD_BUTTON_ICON_WIDTH  = 20 ;
+    static constexpr int   RECORD_BUTTON_ICON_HEIGHT = 20 ;
 
     static constexpr qreal COMPONENT_DETAIL_COLLECTION_ROW_SPACING     = 2 ;
     static constexpr qreal COMPONENT_DETAIL_COLLECTION_WIDGET_SPACING  = 8 ;

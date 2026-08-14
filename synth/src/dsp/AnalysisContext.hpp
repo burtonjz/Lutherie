@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,20 +15,26 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __COMPONENT_FACTORY_HPP_
-#define __COMPONENT_FACTORY_HPP_
+#ifndef ANALYSIS_CONTEXT_HPP_
+#define ANALYSIS_CONTEXT_HPP_
 
-#include "core/ComponentManager.hpp"
-#include "types/ComponentType.hpp"
+#include "containers/LockFreeRingBuffer.hpp"
+#include <functional>
 
-#include <string>
-#include <nlohmann/json.hpp>
+struct AnalysisContext {
+    LockFreeRingBuffer<double> buffer ;
+    std::function<void(const double*, size_t, int)> processFunc ;
+    std::vector<double> scratch ;
 
-using json = nlohmann::json ;
-
-class ComponentFactory {
-public:
-    static ComponentId createFromJson(ComponentType type, const std::string& name, const json& j );
+    AnalysisContext(
+        size_t bufferSize,
+        size_t scratchSize,
+        std::function<void(const double*, size_t, int)> func
+    ) :
+        buffer(bufferSize),
+        processFunc(std::move(func)),
+        scratch(scratchSize)
+    {}
 };
 
-#endif // __COMPONENT_FACTORY_HPP_
+#endif // ANALYSIS_CONTEXT_HPP_

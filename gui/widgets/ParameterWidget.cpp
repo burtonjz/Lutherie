@@ -642,6 +642,88 @@ void BoolWidget::setValue(const ParameterValue& value, bool block){
 
 /*
 =========================================
+================= RECORD ================
+=========================================
+*/
+RecordWidget::RecordWidget(QWidget* parent):
+    btn_(new QPushButton(this)),
+    recordIcon_(makeRecordStopIcon(true)),
+    stopIcon_(makeRecordStopIcon(false))
+{
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
+
+    // create status toggle
+    btn_->setIcon(makeRecordStopIcon(true));
+    btn_->setFixedSize(Theme::PARAMETER_WIDGET_WIDTH, Theme::PARAMETER_WIDGET_WIDTH);
+    btn_->setIconSize(QSize(
+        Theme::RECORD_BUTTON_ICON_WIDTH,
+        Theme::RECORD_BUTTON_ICON_HEIGHT
+    ));
+    btn_->setIcon(recordIcon_);
+    layout->addWidget(btn_);
+ 
+    // connections
+    connect(btn_, &QPushButton::toggled, this, [this](bool checked){
+        btn_->setIcon(checked ? recordIcon_ : stopIcon_);
+        btn_->setToolTip(checked ? "Start Recording" : "Stop Recording");
+        emit ParameterWidget::valueChanged();
+    });
+}
+
+ParameterType RecordWidget::getType() const {
+    return ParameterType::RECORD ;
+}
+
+ParameterValue RecordWidget::getValue() const {
+    return btn_->isChecked();
+}
+
+void RecordWidget::setValue(const ParameterValue& value, bool block){
+    bool status = std::get<bool>(value);
+
+    QSignalBlocker blocker(btn_);
+    if ( !block ) blocker.unblock();
+
+    btn_->setChecked(status);
+    btn_->setIcon(status ? recordIcon_ : stopIcon_);
+    btn_->setToolTip(status ? "Start Recording" : "Stop Recording");
+}
+
+QIcon RecordWidget::makeRecordStopIcon(bool record){
+    QPixmap pixmap(
+        Theme::RECORD_BUTTON_ICON_WIDTH,
+        Theme::RECORD_BUTTON_ICON_HEIGHT
+    );
+    pixmap.fill(Qt::transparent);
+
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+
+    float marginX = Theme::RECORD_BUTTON_ICON_WIDTH  / 6.0 ;
+    float marginY = Theme::RECORD_BUTTON_ICON_HEIGHT / 6.0 ;
+    QRectF rect(
+        marginX, marginY,
+        Theme::RECORD_BUTTON_ICON_WIDTH - 2 * marginX,
+        Theme::RECORD_BUTTON_ICON_HEIGHT - 2 * marginY
+    );
+
+    if ( record ){
+        painter.setBrush(Theme::RECORD_ICON_RECORDING_COLOR);
+        painter.drawEllipse(rect);
+    } else {
+        painter.setBrush(Theme::RECORD_ICON_STOP_COLOR);
+        painter.drawRoundedRect(rect, 2, 2);
+    }
+
+    return QIcon(pixmap);
+}
+
+/*
+=========================================
 ================= SLIDER =================
 =========================================
 */

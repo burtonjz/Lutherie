@@ -22,7 +22,8 @@
 #include <spdlog/spdlog.h>
 
 SpectrumAnalyzer::SpectrumAnalyzer(ComponentId id, [[maybe_unused]] SpectrumAnalyzerConfig cfg):
-    Analyzer(id, ComponentType::SpectrumAnalyzer),
+    BaseComponent(id, ComponentType::SpectrumAnalyzer),
+    Analyzer(),
     fftSize_(Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value()),
     bufferPosition_(0)
 {
@@ -40,6 +41,15 @@ SpectrumAnalyzer::~SpectrumAnalyzer(){
         fftConfig_ = nullptr ;
     }
 }
+
+void SpectrumAnalyzer::onInputConnect(){
+    collecting_ = true ;
+}
+
+void SpectrumAnalyzer::onInputDisconnect(){
+    collecting_ = signalInputs_.size() > 0 ;
+}
+
 
 void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
     if ( !fftConfig_ ) return ;

@@ -112,12 +112,12 @@ bool AudioBufferComponent::saveBuffer(std::string savePath){
     return true ;
 }
 
-const std::unordered_set<BufferConnection, BufferHash>& AudioBufferComponent::getInputs(size_t inp) const {    
+const BufferConnectionSet& AudioBufferComponent::getInputs(size_t inp) const {    
     assert( inp < nInputs_ );
     return inboundConnections_[inp] ;
 }
 
-const std::unordered_set<BufferConnection, BufferHash>& AudioBufferComponent::getOutputs(size_t out) const {
+const BufferConnectionSet& AudioBufferComponent::getOutputs(size_t out) const {
     assert( out < nOutputs_ );
     return outboundConnections_[out] ;
 }

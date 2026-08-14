@@ -17,84 +17,59 @@
 
 #include "dsp/Analyzer.hpp"
 #include "dsp/AnalyticsEngine.hpp"
+#include "dsp/AnalysisContext.hpp"
+#include "meta/ComponentRegistry.hpp"
 #include "core/AudioSignalComponent.hpp"
 
- Analyzer::Analyzer(ComponentId id, ComponentType typ):
-    BaseComponent(id, typ),
-    buffer_(nullptr),
-    sources_()
+Analyzer::Analyzer():
+    AudioSignalComponent(1,0),
+    analysisBuffer_(),
+    context_(nullptr)
 {
-    Config::load();
-    sampleRate_ = Config::get<double>("audio.sample_rate").value();
-    bufferSize_ = Config::get<size_t>("audio.buffer_size").value();
+    analysisBuffer_ = std::make_unique<double[]>(bufferSize_);
+    createAnalysisContext();
+}
 
-    buffer_ = std::make_unique<double[]>(bufferSize_);
+Analyzer::~Analyzer(){
+    delete context_ ;
+};
 
-    AnalyticsEngine::instance()->registerComponent(
-        getId(),
-        getType(),
+void Analyzer::calculateSample(){
+    double input ;
+    if ( collecting_ ){
+        input = aggregateInputs(0);
+    } else {
+        input = 0.0 ;
+    }
+    analysisBuffer_[bufferIndex_] = input ;
+}
+
+AnalysisContext* Analyzer::getAnalysisContext() const {
+    return context_ ;
+}
+
+void Analyzer::createAnalysisContext(){
+    int size = Config::get<int>("analysis.ring_buffer_size").value_or(480000);
+
+    std::string scratchKey = ComponentRegistry::getComponentDescriptor(type_).name ;
+    std::transform(
+        scratchKey.begin(), scratchKey.end(), 
+        scratchKey.begin(), [](unsigned char c){
+            if ( std::isspace(c) ) return '_' ;
+            return static_cast<char>(std::tolower(c));
+    });
+    scratchKey = "analysis."  + scratchKey + ".buffer_size" ;
+    size_t scratchSize = Config::get<int>(scratchKey).value_or(4096);
+
+    context_ = new AnalysisContext(size, scratchSize,
         [this](const double* data, size_t size, ComponentId id){
             process(data, size, id);
         }
     );
 }
 
-Analyzer::~Analyzer(){
-    AnalyticsEngine::instance()->unregisterComponent(getId());
-};
-
-void Analyzer::aggregateInputs(){
-    for ( auto [s, index] : sources_ ){
-        auto sBuf = s->data(index);
-        std::transform(
-            sBuf, sBuf + bufferSize_,
-            buffer_.get(), buffer_.get(), std::plus<double>{}
-        );                
-    }
-}
-
-void Analyzer::clearBuffer(){
-    std::fill(buffer_.get(), buffer_.get() + bufferSize_, 0.0);
-}
-
-const double* Analyzer::data() const {
-    return buffer_.get() ;
-}
-
-std::size_t Analyzer::size() const {
-    return bufferSize_ ;
-}
-
-void Analyzer::connectInput(AudioSignalComponent* source, size_t index){
-    if ( !source ) return ;
-
-    auto s = std::make_pair(source, index);
-
-    auto it = std::find(sources_.begin(), sources_.end(), s);
-    if ( it != sources_.end() ) return ; 
-
-    sources_.push_back(s);
-    source->connectAnalyzer(this, index);
-}
-
-void Analyzer::disconnectInput(AudioSignalComponent* source, size_t index){
-    if ( !source ) return ;
-
-    auto s = std::make_pair(source, index);
-
-    auto it = std::find(sources_.begin(), sources_.end(), s);
-    if ( it == sources_.end() ) return ;
-
-    sources_.erase(it);
-    source->disconnectAnalyzer(this, index);
-}
-
 void Analyzer::flush(){
-    clearBuffer();
-    aggregateInputs();
-    AnalyticsEngine::instance()->push(data(), size(), getId());
-}
-
-const std::vector<std::pair<AudioSignalComponent*, size_t>>& Analyzer::getSources() const {    
-    return sources_ ;
+    if ( !collecting_ ) return ;
+    auto* buf = analysisBuffer_.get();
+    context_->buffer.push(buf, bufferSize_);
 }

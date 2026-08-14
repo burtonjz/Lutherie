@@ -20,43 +20,36 @@
 #define ANALYZER_HPP_
 
 #include "core/BaseComponent.hpp"
-
+#include "core/AudioSignalComponent.hpp"
 
 #include <cstddef>
 #include <cstring>
-#include <memory>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
 
-class Analyzer : public BaseComponent {
+struct AnalysisContext ;
+class Analyzer : public AudioSignalComponent {
 protected:
-    double sampleRate_ ;
-    size_t bufferSize_ ;
-    std::unique_ptr<double[]> buffer_ ;
-    std::vector<std::pair<AudioSignalComponent*, size_t>> sources_ ;
+    std::unique_ptr<double[]> analysisBuffer_ ;
+    AnalysisContext* context_ ;
+    bool collecting_ = false ;
 
 public:
-    Analyzer(ComponentId id, ComponentType typ);
-
-    virtual void process(const double* data, size_t size, ComponentId id) = 0 ;
-    
+    Analyzer();
     ~Analyzer();
 
-    void aggregateInputs();
-
-    void clearBuffer();
-
-    const double* data() const ;
-
-    std::size_t size() const ;
-
-    void connectInput(AudioSignalComponent* source, size_t index);
-    void disconnectInput(AudioSignalComponent* source, size_t index);
+    /**
+     * @brief define how raw data should be processed and pushed through analysis engine
+     */
+    virtual void process(const double* data, size_t size, ComponentId id) = 0 ;
 
     void flush();
+    void calculateSample() override ;
+    AnalysisContext* getAnalysisContext() const ;
 
-    const std::vector<std::pair<AudioSignalComponent*, size_t>>& getSources() const ;
+private:
+    void createAnalysisContext();
 };
 
 

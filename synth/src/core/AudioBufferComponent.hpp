@@ -41,13 +41,15 @@ struct BufferHash {
     }
 };
 
+using BufferConnectionSet = std::unordered_set<BufferConnection, BufferHash> ;
+
 class AudioBufferComponent: public virtual BaseComponent {
 protected:
     size_t nInputs_ ;
     size_t nOutputs_ ;
     
-    std::vector<std::unordered_set<BufferConnection, BufferHash>> inboundConnections_ ;
-    std::vector<std::unordered_set<BufferConnection, BufferHash>> outboundConnections_ ;
+    std::vector<BufferConnectionSet> inboundConnections_ ;
+    std::vector<BufferConnectionSet> outboundConnections_ ;
     std::vector<std::vector<double>> buffers_ ;
 
     double sampleRate_ ;
@@ -63,8 +65,8 @@ public:
     size_t getNumInputs() const ;
     size_t getNumOutputs() const ;
     
-    const std::unordered_set<BufferConnection, BufferHash>& getInputs(size_t inp) const ;
-    const std::unordered_set<BufferConnection, BufferHash>& getOutputs(size_t out) const ;
+    const BufferConnectionSet& getInputs(size_t inp) const ;
+    const BufferConnectionSet& getOutputs(size_t out) const ;
 
     bool saveBuffer(std::string savePath);
         

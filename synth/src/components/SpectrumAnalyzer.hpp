@@ -36,6 +36,8 @@ public:
     ~SpectrumAnalyzer();
     
     void process(const double* data, size_t size, ComponentId id) override ;
+    void onInputConnect() override ;
+    void onInputDisconnect() override ;
 
 };
 

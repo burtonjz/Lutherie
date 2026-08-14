@@ -28,6 +28,7 @@
 #include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
 #include "midi/MidiControlRouter.hpp"
+#include "signal/SignalController.hpp"
 
 #include <netinet/in.h>
 #include <string>
@@ -289,7 +290,7 @@ json ControlApiHandler::setAudioDevice(const json& request){
     bool preferred = response.at("preferred");
     
     if ( engine_->setAudioDeviceId(deviceId, preferred) ){
-        response["output_channels"] = engine_->signalController.getNumChannels();
+        response["output_channels"] = SignalController::instance()->getNumChannels();
         return response ;
     } else {
         throw std::runtime_error("failed to set audio device");
@@ -300,7 +301,7 @@ json ControlApiHandler::getAudioConfig(const json& request){
     json response = request ;
 
     response["device_id"] = engine_->getAudioDeviceId();
-    response["output_channels"] = engine_->signalController.getNumChannels();
+    response["output_channels"] = SignalController::instance()->getNumChannels();
 
     return response ;
 }
@@ -386,7 +387,7 @@ json ControlApiHandler::addComponent(const json& request){
     name = response.at("name");
     type = ComponentRegistry::getComponentDescriptor(name).type ;
 
-    ComponentId id = engine_->componentFactory.createFromJson(type, name, getDefaultConfig(type));
+    ComponentId id = ComponentFactory::createFromJson(type, name, getDefaultConfig(type));
     response["componentId"] = id ;
 
     return response ;
@@ -398,7 +399,7 @@ json ControlApiHandler::removeComponent(const json& request){
 
     id = response.at("componentId");
     
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error("component not found.");
     }
@@ -418,7 +419,7 @@ json ControlApiHandler::removeComponent(const json& request){
         throw std::runtime_error("at least one component connection could not be removed.");
     }
 
-    engine_->componentManager.remove(id);
+    ComponentManager::instance()->remove(id);
     return response ;    
 }
 
@@ -427,12 +428,12 @@ json ControlApiHandler::syncComponent(const json& request){
 
     int componentId = response.at("componentId");
     
-    auto c = engine_->componentManager.getRaw(componentId);
+    auto c = ComponentManager::instance()->getRaw(componentId);
     if ( !c ){
         throw std::runtime_error(fmt::format("could not find component with id {}", componentId));
     }
 
-    response["data"] = engine_->componentManager.serializeComponent(c);
+    response["data"] = ComponentManager::instance()->serializeComponent(c);
     return response ;
 }
 
@@ -462,7 +463,7 @@ json ControlApiHandler::getParameter(const json& request){
     ComponentId id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -479,7 +480,7 @@ json ControlApiHandler::setParameter(const json& request){
     ComponentId id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -502,7 +503,7 @@ json ControlApiHandler::getParameterDefault(const json& request){
     ComponentId id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
     
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -519,7 +520,7 @@ json ControlApiHandler::setParameterDefault(const json& request){
     ComponentId id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -539,7 +540,7 @@ json ControlApiHandler::getParameterValueRange(const json& request){
     ComponentId id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -558,7 +559,7 @@ json ControlApiHandler::setParameterValueRange(const json& request){
     ComponentId id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -582,7 +583,7 @@ json ControlApiHandler::resetParameter(const json& request){
     ComponentId id = request.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -598,7 +599,7 @@ json ControlApiHandler::parseCollectionRequest(const json& request){
     json response = request ;
     ComponentId id = request.at("componentId");
 
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id = {} not found for parameter request",
@@ -886,7 +887,7 @@ json ControlApiHandler::getModulationStrategy(const json& request){
     ParameterType p = stringToParameter(request.at("parameter"));
     json response = request ;
 
-    auto component = engine_->componentManager.getRaw(id);
+    auto component = ComponentManager::instance()->getRaw(id);
     if (!component){
         throw std::runtime_error(fmt::format(
             "Could not find component with id = {}",
@@ -915,7 +916,7 @@ json ControlApiHandler::setModulationStrategy(const json& request){
     ModulationStrategy s = static_cast<ModulationStrategy>(request.at("strategy"));
     json response = request ;
 
-    auto component = engine_->componentManager.getRaw(id);
+    auto component = ComponentManager::instance()->getRaw(id);
     if (!component){
         throw std::runtime_error(fmt::format(
             "Could not find component with id = {}",
@@ -942,7 +943,7 @@ json ControlApiHandler::getModulationDepth(const json& request){
     ComponentId id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
 
-    auto component = engine_->componentManager.getRaw(id);
+    auto component = ComponentManager::instance()->getRaw(id);
     if ( !component ){
         throw std::runtime_error(fmt::format(
             "Could not find component with id = {}",
@@ -973,7 +974,7 @@ json ControlApiHandler::setModulationDepth(const json& request){
     double depth = request.at("depth");
     json response = request ;
 
-    auto component = engine_->componentManager.getRaw(id);
+    auto component = ComponentManager::instance()->getRaw(id);
     if (!component){
         throw std::runtime_error(fmt::format("Could not find component with id = {}", id));
     }
@@ -997,7 +998,7 @@ json ControlApiHandler::getFilePath(const json& request){
     json response = request ;
     ComponentId id = response.at("componentId");
 
-    FileComponent* c = engine_->componentManager.getFileComponent(id);
+    FileComponent* c = ComponentManager::instance()->getFileComponent(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "File component with id {} not found",
@@ -1015,7 +1016,7 @@ json ControlApiHandler::setFilePath(const json& request){
     ComponentId id = response.at("componentId");
     std::string path = response.at("path");
 
-    FileComponent* c = engine_->componentManager.getFileComponent(id);
+    FileComponent* c = ComponentManager::instance()->getFileComponent(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "File component with id {} not found",
@@ -1032,7 +1033,7 @@ json ControlApiHandler::saveBuffer(const json& request){
     ComponentId id = response.at("componentId");
     std::string path = response.at("path");
 
-    AudioBufferComponent* c = engine_->componentManager.getBufferComponent(id);
+    AudioBufferComponent* c = ComponentManager::instance()->getBufferComponent(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Buffer component with id {} not found",
@@ -1050,7 +1051,7 @@ json ControlApiHandler::getBufferData(const json& request){
     size_t channel = response.at("channel");
 
 
-    AudioBufferComponent* c = engine_->componentManager.getBufferComponent(id);
+    AudioBufferComponent* c = ComponentManager::instance()->getBufferComponent(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Buffer component with id {} not found",
@@ -1096,7 +1097,7 @@ json ControlApiHandler::getMidiControl(const json& request){
     ComponentId id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
 
-    BaseComponent* c = engine_->componentManager.getRaw(id);
+    BaseComponent* c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id {} not found",
@@ -1125,7 +1126,7 @@ json ControlApiHandler::setMidiControl(const json& request){
     ParameterType p = stringToParameter(request.at("parameter"));
     uint8_t ctrl = request.at("value");
 
-    BaseComponent* c = engine_->componentManager.getRaw(id);
+    BaseComponent* c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Component with id {} not found",
@@ -1243,7 +1244,7 @@ bool ControlApiHandler::loadCreateComponentSetParameters(ComponentId id, const j
 }
 
 bool ControlApiHandler::loadCreateComponentSetCollection(ComponentId id, const json& collection){
-    auto c = engine_->componentManager.getRaw(id);
+    auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         SPDLOG_ERROR("cannot process collection request for a component that doesn't exist");
         return false ;

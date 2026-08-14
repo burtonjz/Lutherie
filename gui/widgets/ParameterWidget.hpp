@@ -26,6 +26,7 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QToolButton>
+#include <QPushButton>
 
 // base class
 class ParameterWidget : public QWidget {
@@ -147,6 +148,24 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
+};
+
+class RecordWidget : public ParameterWidget {
+private:
+    QPushButton* btn_ ;
+    QIcon recordIcon_ ;
+    QIcon stopIcon_ ;
+
+public:
+    explicit RecordWidget(QWidget* parent = nullptr);
+
+    ParameterType getType() const override ;
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
+
+private:
+    QIcon makeRecordStopIcon(bool record);
+
 };
 
 class SliderWidget : public ParameterWidget {

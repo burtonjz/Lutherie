@@ -179,8 +179,9 @@ void BufferWaveform::rebuild(){
     for ( size_t i = 0 ; i < buf.size(); i += samplesPerPixel_ ){
         size_t end = std::min(i + samplesPerPixel_, buf.size());
 
-        auto itMin = std::min_element(buf.begin() + i, buf.begin() + end);
-        auto itMax = std::max_element(buf.begin() + i, buf.begin() + end);
+        auto [itMin, itMax] = std::minmax_element(
+            buf.begin() + i, buf.begin() + end
+        );
 
         voltages_.push_back({*itMin, *itMax});
     }

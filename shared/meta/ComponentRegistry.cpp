@@ -208,6 +208,16 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 .numBufferOutputs = 1,
                 .allowMultipleBufferConnections = false
             }
+        },
+        {
+            ComponentType::StreamRecorder,
+            {
+                .name = "Stream Recorder",
+                .type = ComponentType::StreamRecorder,
+                .controllableParameters = {ParameterType::RECORD},
+                .numSignalInputs = 1,
+                .numBufferOutputs = 1
+            }
         }
     };
 

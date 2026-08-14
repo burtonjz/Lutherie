@@ -21,7 +21,6 @@
 #include <set>
 #include <array>
 
-#include "midi/MidiState.hpp"
 #include "midi/MidiEventHandler.hpp"
 
 constexpr float CONFIG_PITCHBEND_MAX_SHIFT = 2 ;
@@ -30,12 +29,17 @@ constexpr float CONFIG_PITCHBEND_MAX_SHIFT = 2 ;
 
 class MidiController {
 private:
-    MidiState* state_ ;
     std::set<MidiEventHandler*> handlers_ ;
        
+    MidiController();
 
 public:
-    MidiController(MidiState* state);
+    static MidiController* instance();
+
+    MidiController(const MidiController&) = delete ;
+    MidiController& operator=(const MidiController&) = delete ;
+    MidiController(MidiController&&) = delete ;
+    MidiController& operator=(MidiController&&) = delete ;
 
     void initialize() ;
 

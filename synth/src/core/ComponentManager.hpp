@@ -44,8 +44,6 @@ using json = nlohmann::json ;
 
 class ComponentManager {
 private:
-    MidiController* midiController_ ;
-
     int nextID_ = 0 ;
     std::unordered_map<ComponentId, std::unique_ptr<BaseComponent>> components_ ;
     
@@ -59,8 +57,15 @@ private:
     std::unordered_set<ComponentId> analyzers_ ;
     std::unordered_set<ComponentId> fileComponents_ ;
 
+    explicit ComponentManager();
+
 public:
-    ComponentManager(MidiController* midiCtrl);
+    static ComponentManager* instance();
+
+    ComponentManager(const ComponentManager&) = delete ;
+    ComponentManager& operator=(const ComponentManager&) = delete ;
+    ComponentManager(ComponentManager&&) = delete ;
+    ComponentManager& operator=(ComponentManager&&) = delete ;
 
     template<ComponentType T>
     ComponentId create([[maybe_unused]] const std::string& name, ComponentConfig_t<T> cfg) {        
@@ -76,7 +81,7 @@ public:
         if ( descriptor.isMidiListener() ) midiListeners_.insert(id);
         if ( descriptor.isMidiHandler() ){
             midiHandlers_.insert(id);
-            midiController_->addHandler(getMidiHandler(id));
+            MidiController::instance()->addHandler(getMidiHandler(id));
         } 
         if ( descriptor.isAnalyzer() ){
             analyzers_.insert(id);
@@ -126,7 +131,7 @@ public:
      */
     void runParameterModulation();
 
-    void runAnalyzers();
+    void flushAnalyzers();
 
     // saving / loading
     json serializeComponent(BaseComponent* c) const ;

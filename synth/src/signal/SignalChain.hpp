@@ -30,81 +30,32 @@
 
 class SignalChain {
 private:
-    using OutboundNode = std::unordered_set<SignalConnection, ConnectionHash>;
-    std::map<size_t, OutboundNode> outboundNodes_ ; // key=channel
+    // true peripheral output sinks. key = peripheral output channel
+    std::map<size_t, SignalConnectionSet> sinks_ ; 
+    
+    // topographical calculation sinks that don't contribute to a peripheral channel output
+    // e.g., analysis, audio -> buffer
+    SignalConnectionSet pseudoSinks_ ; 
+    
     std::vector<AudioSignalComponent*> topologicalOrder_ ;
     std::unordered_set<AudioSignalComponent*> visited_  ;
-
     std::unordered_set<AudioSignalComponent*> modulatorOnly_ ;
 
 public:
-    SignalChain():
-        outboundNodes_()
-    {
-    }
+    SignalChain();
 
-    void allocateOutputChannels(size_t numChannels){
-        SPDLOG_DEBUG("allocating {} peripheral output channels", numChannels);
-        for ( size_t i = 0 ; i < numChannels ; ++i ){
-            if ( !outboundNodes_.contains(i) ){
-                outboundNodes_[i];
-            }
-        }
-    }
+    void allocateOutputChannels(size_t numChannels);
+    const std::vector<AudioSignalComponent*>& getSignalComponentChain() const ;
+    const SignalConnectionSet& getSinks(size_t channel) const ;
 
-    std::vector<AudioSignalComponent*>& getSignalComponentChain(){
-        return topologicalOrder_ ;
-    }
+    void addSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx);
+    void removeSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx);
 
-    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks(size_t channel) const {
-        if ( !outboundNodes_.contains(channel) ){
-            SPDLOG_ERROR("channel {} requested but outbound nodes only has {} allocated", channel, outboundNodes_.size());
-        }
-        assert(outboundNodes_.contains(channel));
-        return outboundNodes_.at(channel);
-    }
+    void addPseudoSink(AudioSignalComponent* component, size_t channel);
+    void removePseudoSink(AudioSignalComponent* component, size_t channel);
 
-    void addSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx){
-        if (!outbound){
-            SPDLOG_WARN("Not adding a nullptr as a sink.");
-            return ;
-        }
-        if ( outboundIdx > outbound->getNumOutputs() ){
-            SPDLOG_WARN("outbound index out of bounds for module. Cannot add requested sink.");
-            return ;
-        }
-        
-        outboundNodes_[inboundIdx].insert({outbound, outboundIdx});
-    }
-
-    void removeSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx){
-        if ( !outbound || outboundIdx > outbound->getNumOutputs() ){
-            SPDLOG_WARN("outbound index out of bounds for specified module. Cannot remove sink.");
-            return ; 
-        }
-
-        outboundNodes_[inboundIdx].erase({outbound, outboundIdx});
-    }
-
-    void calculateTopologicalOrder(){
-        visited_.clear();
-        topologicalOrder_.clear();
-        
-        // global post-order depth-first search
-        for ( const auto& [channel, connections]: outboundNodes_ ){
-            for ( const auto conn : connections ){
-                topologicalSort(conn.component, visited_, topologicalOrder_);
-            }
-        }
-    }
-
-    void reset(){
-        outboundNodes_.clear();
-        visited_.clear();
-        topologicalOrder_.clear();
-    }
-
-    
+    void calculateTopologicalOrder();
+    void reset();
 
 private:
     /**
@@ -118,25 +69,7 @@ private:
         AudioSignalComponent* module, 
         std::unordered_set<AudioSignalComponent*>& visited,
         std::vector<AudioSignalComponent*>& result    
-    ){
-        if (visited.count(module)) return ;
-        visited.insert(module);
-
-        // Process stateful modulators in signal chain (e.g., Oscillator)
-        for (AudioSignalComponent* m : module->getModulationInputs() ){
-            topologicalSort(m, visited, result);
-        }
-
-        // Now process normal signal chain
-        for ( size_t i = 0; i < module->getNumInputs(); ++i ){
-            for ( const auto& conn : module->getInputs(i)){
-                topologicalSort(conn.component, visited, result);
-            }
-        }
-        
-        result.push_back(module); // post-order traversal (only insert once all inputs are  visited)
-    }
-
+    );
 };
 
 #endif // __SIGNAL_CHAIN_HPP_
