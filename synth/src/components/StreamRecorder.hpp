@@ -19,10 +19,10 @@
 #define STREAM_RECORDER_HPP_
 
 #include "core/AudioBufferComponent.hpp"
-#include "dsp/Analyzer.hpp"
+#include "core/AudioProbe.hpp"
 #include "configs/StreamRecorderConfig.hpp"
 
-class StreamRecorder : public AudioBufferComponent, public Analyzer {
+class StreamRecorder : public AudioBufferComponent, public AudioProbe {
 public:
     StreamRecorder(ComponentId id, StreamRecorderConfig cfg);
 

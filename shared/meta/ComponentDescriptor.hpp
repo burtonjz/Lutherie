@@ -50,7 +50,7 @@ struct ComponentDescriptor {
     bool isModulator() const { return canModulate ; }
     bool isMidiHandler() const { return numMidiOutputs > 0 ; }
     bool isMidiListener() const { return numMidiInputs > 0 ; }
-    bool isAnalyzer() const { 
+    bool isAudioProbe() const { 
         return numSignalInputs > 0 && numSignalOutputs == 0 ;
     }
 
@@ -89,7 +89,7 @@ struct ComponentDescriptor {
         classify(numMidiInputs, numMidiOutputs, "MIDI");
 
         if ( canModulate ) t.push_back("Modulator");
-        if ( isAnalyzer() ) t.push_back("Analyzer");
+        if ( isAudioProbe() ) t.push_back("AudioProbe");
 
         return t ;
     }

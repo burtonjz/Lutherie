@@ -35,10 +35,6 @@ DataApiHandler* DataApiHandler::instance(){
     return s_instance ;
 }
 
-void DataApiHandler::initialize(Engine* engine){
-    engine_ = engine ;
-}
-
 void DataApiHandler::start(){
     int serverPort = Config::get<int>("server.data_port").value();
 

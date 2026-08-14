@@ -75,9 +75,9 @@ MidiEventListener* ComponentManager::getMidiListener(ComponentId id) const {
     return dynamic_cast<MidiEventListener*>(getRaw(id));
 }
 
-Analyzer* ComponentManager::getAnalyzer(ComponentId id) const {
-    if ( analyzers_.find(id) == analyzers_.end() ) return nullptr ;
-    return dynamic_cast<Analyzer*>(getRaw(id));
+AudioProbe* ComponentManager::getAudioProbe(ComponentId id) const {
+    if ( audioProbes_.find(id) == audioProbes_.end() ) return nullptr ;
+    return dynamic_cast<AudioProbe*>(getRaw(id));
 }
 
 FileComponent* ComponentManager::getFileComponent(ComponentId id) const {
@@ -89,8 +89,8 @@ const std::unordered_set<ComponentId>& ComponentManager::getMidiListenerIds() co
     return midiListeners_ ;
 }
 
-const std::unordered_set<ComponentId>& ComponentManager::getAnalyzerIds() const {
-    return analyzers_ ;
+const std::unordered_set<ComponentId>& ComponentManager::getAudioProbeIds() const {
+    return audioProbes_ ;
 }
 
 const std::unordered_set<ComponentId>& ComponentManager::getFileComponentIds() const {
@@ -103,7 +103,7 @@ void ComponentManager::remove(ComponentId id){
     midiListeners_.erase(id);
     modulators_.erase(id);
     audioSignals_.erase(id);
-    analyzers_.erase(id);
+    audioProbes_.erase(id);
     components_.erase(id);
 }
 
@@ -114,7 +114,7 @@ void ComponentManager::reset(){
     midiListeners_.clear();
     modulators_.clear();
     audioSignals_.clear();
-    analyzers_.clear();
+    audioProbes_.clear();
 }
 
 void ComponentManager::runParameterModulation(){
@@ -125,9 +125,9 @@ void ComponentManager::runParameterModulation(){
     }
 }
 
-void ComponentManager::flushAnalyzers(){
-    for ( auto id : analyzers_ ){
-        auto a = getAnalyzer(id);
+void ComponentManager::flushAudioProbes(){
+    for ( auto id : audioProbes_ ){
+        auto a = getAudioProbe(id);
         a->flush();
     }
 }

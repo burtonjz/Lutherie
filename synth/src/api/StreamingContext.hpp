@@ -15,18 +15,18 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ANALYSIS_CONTEXT_HPP_
-#define ANALYSIS_CONTEXT_HPP_
+#ifndef STREAMING_CONTEXT_HPP_
+#define STREAMING_CONTEXT_HPP_
 
 #include "containers/LockFreeRingBuffer.hpp"
 #include <functional>
 
-struct AnalysisContext {
+struct StreamingContext {
     LockFreeRingBuffer<double> buffer ;
     std::function<void(const double*, size_t, int)> processFunc ;
     std::vector<double> scratch ;
 
-    AnalysisContext(
+    StreamingContext(
         size_t bufferSize,
         size_t scratchSize,
         std::function<void(const double*, size_t, int)> func
@@ -37,4 +37,4 @@ struct AnalysisContext {
     {}
 };
 
-#endif // ANALYSIS_CONTEXT_HPP_
+#endif // STREAMING_CONTEXT_HPP_

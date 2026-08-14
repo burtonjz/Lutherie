@@ -18,10 +18,10 @@
 #ifndef OSCILLOSCOPE_COMPONENT_HPP_
 #define OSCILLOSCOPE_COMPONENT_HPP_
 
-#include "dsp/Analyzer.hpp"
+#include "core/AudioProbe.hpp"
 #include "configs/OscilloscopeConfig.hpp"
 
-class Oscilloscope : public Analyzer {
+class Oscilloscope : public AudioProbe {
 private:
     std::vector<double> captureBuffer_ ;
     size_t bufferPosition_ ;

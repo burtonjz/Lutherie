@@ -15,45 +15,56 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "dsp/AnalyticsEngine.hpp"
+#include "api/StreamingApiHandler.hpp"
 #include "config/Config.hpp"
-#include "dsp/AnalysisContext.hpp"
+#include "api/StreamingContext.hpp"
 #include "core/ComponentManager.hpp"
+#include "core/Engine.hpp"
 
 #include <cstring>
 #include <spdlog/spdlog.h>
 
-AnalyticsEngine* AnalyticsEngine::instance(){
-    static AnalyticsEngine* s_instance = nullptr ;
+StreamingApiHandler* StreamingApiHandler::instance(){
+    static StreamingApiHandler* s_instance = nullptr ;
     if ( !s_instance ){
-        s_instance = new AnalyticsEngine();
+        s_instance = new StreamingApiHandler();
     }
     return s_instance ;
 }
 
-AnalyticsEngine::AnalyticsEngine():
+StreamingApiHandler::StreamingApiHandler():
     udpSocket_(INVALID_SOCKET)
 #ifdef _WIN32
     , wsaInitialized_(false)
 #endif
 {}
 
-AnalyticsEngine::~AnalyticsEngine(){
-    stop();
-}
 
-void AnalyticsEngine::start(){
+void StreamingApiHandler::start(){
     initSocket();
-    SPDLOG_INFO("AnalyticsEngine started on UDP port {}", udpSocket_);
+
+    SPDLOG_INFO("StreamingApiHandler started on UDP port {}", udpSocket_);
+    
+    
+
+    while (!Engine::stop_flag){
+        StreamingApiHandler::instance()->processContexts();
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    }
+    
+    StreamingApiHandler::instance()->stop();
+    SPDLOG_INFO("Stream thread stopping");
+
 }
 
-void AnalyticsEngine::stop(){
+void StreamingApiHandler::stop(){
     closeSocket();
 }
 
 
 
-void AnalyticsEngine::initSocket() {
+void StreamingApiHandler::initSocket() {
+    Config::load();
 #ifdef _WIN32
     if ( !wsaInitialized_ ) {
         WSADATA wsaData;
@@ -83,7 +94,7 @@ void AnalyticsEngine::initSocket() {
 #endif
 }
 
-void AnalyticsEngine::closeSocket() {
+void StreamingApiHandler::closeSocket() {
     if (udpSocket_ != INVALID_SOCKET) {
 #ifdef _WIN32
         closesocket(udpSocket_);
@@ -101,14 +112,13 @@ void AnalyticsEngine::closeSocket() {
 #endif
 }
 
-void AnalyticsEngine::processContexts(){
-    auto ids = ComponentManager::instance()->getAnalyzerIds();
+void StreamingApiHandler::processContexts(){
+    auto ids = ComponentManager::instance()->getAudioProbeIds();
 
-    
     for ( const auto& id : ids ){
-        Analyzer* a = ComponentManager::instance()->getAnalyzer(id);
+        AudioProbe* a = ComponentManager::instance()->getAudioProbe(id);
         if ( !a ) continue ;
-        AnalysisContext* ctx = a->getAnalysisContext();
+        StreamingContext* ctx = a->getStreamingContext();
         if ( !ctx ) continue ;
 
         size_t count = ctx->buffer.pop(ctx->scratch.data(), ctx->scratch.size());
@@ -118,7 +128,7 @@ void AnalyticsEngine::processContexts(){
     }
 }
 
-void AnalyticsEngine::send(const std::vector<float>& output, int componentId) {
+void StreamingApiHandler::send(const std::vector<float>& output, int componentId) {
     if ( udpSocket_ == INVALID_SOCKET ){
         return ;
     }

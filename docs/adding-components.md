@@ -101,7 +101,7 @@ All Components must inherit from `BaseComponent`. It is generally expected that 
 |ModulatorComponent|ModulatorComponent()| outbound modulation | specifies a unique path for modulation output to be read by Parameter objects. |
 |MidiEventHandler|MidiEventHandler()| outbound MIDI | allows component to manage and manipulate an incoming stream of midi information. Note: all handlers are listeners, as they receive midi states from a centralized object. |
 |MidiEventListener|MidiEventListener()| inbound MIDI | allows a component to respond to midi signals. |
-|Analyzer|Analyzer()|inbound audio signal only| inherits from AudioSignalComponent, audio sink with outbound UDP data sends. |
+|AudioProbe|AudioProbe()|inbound audio signal only| inherits from AudioSignalComponent, audio sink with outbound UDP data sends. |
 
 Most new components will only inherit from one of these. "Converter" components (i.e., components responsible for manipulating data/connection type) are a notable exception -- however, only 1 designated "converter" component should be defined for cases where the input/output combo changes. For example, `BufferStreamer` is responsible for converting an `AudioBufferComponent` to a `AudioSignalComponent`, and so no other component should fulfill that role.  
 
@@ -190,19 +190,19 @@ The following overrides are available to a component class in order to respond t
 | void onHandlerRemoved() const | respond to a connection removed event |
 ---
 
-### 5.7 Analyzer Requirements
+### 5.7 AudioProbe Requirements
 
-`Analyzer` components are a specialization of the `AudioSignalComponent`, where it has 1 audio input and 0 audio outputs. Built in is functionality for collecting and processing audio signal data, and flushing it through a UDP analysis port to provide real-time visualization to the client application.
+`AudioProbe` components are a specialization of the `AudioSignalComponent`, where it has 1 audio input and 0 audio outputs. Built in is functionality for collecting and processing audio signal data, and flushing it through a UDP stream port to provide real-time visualization to the client application.
 
 All AudioSignalComponent overrides are valid to override here except for `calculateSample`. 
 
 The collection state is defined through the `collecting_` boolean. By default, this is turned off for this class. Generally, this variable can be toggled based on `AudioSignalComponent` overrideable events, such as responding to a parameter change or connection event.
 
-The below are additional overrides available to analyzers.
+The below are additional overrides available to AudioProbes.
 
 | Function | Description | 
 | --- | --- |
-| virtual void process(const double* data, size_t size, ComponentId id) | called on the analysis thread. Only requirement is the final output must be sent via `AnalyticsEngine::instance()->send(const std::vector<float>& output, int componentId)` |
+| virtual void process(const double* data, size_t size, ComponentId id) | called through the streaming api. Only requirement is the final output must be sent via `StreamingApiHandler::instance()->send(const std::vector<float>& output, int componentId)` |
 
 ## 6. Register the Component Descriptor
 

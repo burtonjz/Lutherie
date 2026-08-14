@@ -27,7 +27,6 @@ class Engine ;
 
 class DataApiHandler {
 private:
-    Engine* engine_ ;
     std::unordered_set<int> clientSockets_ ;
 
     DataApiHandler();
@@ -38,8 +37,6 @@ public:
     DataApiHandler& operator=(const DataApiHandler&) = delete ;
     DataApiHandler(DataApiHandler&&) = delete ;
     DataApiHandler& operator=(DataApiHandler&&) = delete ;
-
-    void initialize(Engine* engine);
 
     void start();
     void onClientConnection(int clientSock);

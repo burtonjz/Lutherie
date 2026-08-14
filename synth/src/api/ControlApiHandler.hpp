@@ -30,13 +30,10 @@
 
 using json = nlohmann::json ;
 using IdMap = std::unordered_map<int,int> ;
-// forward declarations
-class Engine ;
 
 class ControlApiHandler {
 private:
     using HandlerFunc = std::function<json(const json& request)>;
-    Engine* engine_ ;
     std::unordered_map<std::string, HandlerFunc> handlers_ ;
     std::unordered_set<int> clientSockets_ ;
 
@@ -48,8 +45,6 @@ public:
     ControlApiHandler& operator=(const ControlApiHandler&) = delete ;
     ControlApiHandler(ControlApiHandler&&) = delete ;
     ControlApiHandler& operator=(ControlApiHandler&&) = delete ;
-
-    void initialize(Engine* engine);
 
     void start();
 

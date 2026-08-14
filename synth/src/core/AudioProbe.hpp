@@ -16,8 +16,8 @@
  */
 
 
-#ifndef ANALYZER_HPP_
-#define ANALYZER_HPP_
+#ifndef AUDIO_PROBE_HPP_
+#define AUDIO_PROBE_HPP_
 
 #include "core/BaseComponent.hpp"
 #include "core/AudioSignalComponent.hpp"
@@ -28,16 +28,16 @@
 
 using json = nlohmann::json ;
 
-struct AnalysisContext ;
-class Analyzer : public AudioSignalComponent {
+struct StreamingContext ;
+class AudioProbe : public AudioSignalComponent {
 protected:
     std::unique_ptr<double[]> analysisBuffer_ ;
-    AnalysisContext* context_ ;
+    StreamingContext* context_ ;
     bool collecting_ = false ;
 
 public:
-    Analyzer();
-    ~Analyzer();
+    AudioProbe();
+    ~AudioProbe();
 
     /**
      * @brief define how raw data should be processed and pushed through analysis engine
@@ -46,11 +46,11 @@ public:
 
     void flush();
     void calculateSample() override ;
-    AnalysisContext* getAnalysisContext() const ;
+    StreamingContext* getStreamingContext() const ;
 
 private:
-    void createAnalysisContext();
+    void createStreamingContext();
 };
 
 
-#endif // ANALYZER_HPP_
+#endif // AUDIO_PROBE_HPP_

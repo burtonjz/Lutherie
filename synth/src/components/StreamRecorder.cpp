@@ -17,12 +17,12 @@
 
 #include "components/StreamRecorder.hpp"
 #include "params/ParameterMap.hpp"
-#include "dsp/AnalyticsEngine.hpp"
+#include "api/StreamingApiHandler.hpp"
 
 StreamRecorder::StreamRecorder(ComponentId id, [[maybe_unused]] StreamRecorderConfig cfg):
     BaseComponent(id, ComponentType::StreamRecorder),
     AudioBufferComponent(0,1),
-    Analyzer()
+    AudioProbe()
 {
     parameters_->add<ParameterType::RECORD>(false, false);
     parameters_->getParameter(ParameterType::RECORD)->addListener(this);
@@ -33,7 +33,7 @@ void StreamRecorder::onParameterChanged(ParameterType p, [[maybe_unused]] bool i
 
     collecting_ = parameters_->getParameter<ParameterType::RECORD>()->getValue();
     SPDLOG_DEBUG("collecting_ set to {}", collecting_);
-    
+
     if ( !collecting_ && AudioBufferComponent::buffers_[0].size() > 0 ){
         notifyDownstream(0);
     }
@@ -42,7 +42,7 @@ void StreamRecorder::onParameterChanged(ParameterType p, [[maybe_unused]] bool i
 void StreamRecorder::process(const double* data, size_t size, ComponentId id){
     std::vector<float> output(size) ;
     std::copy(data, data + size, output.data());
-    AnalyticsEngine::instance()->send(output, id);
+    StreamingApiHandler::instance()->send(output, id);
 
     // also stash into internal buffer
     auto& internalBuffer = AudioBufferComponent::buffers_[0];

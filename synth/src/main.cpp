@@ -33,6 +33,8 @@ int main() {
     SPDLOG_INFO("RtAudio version: " + RtAudio::getVersion());
     SPDLOG_INFO("RtMidi version: " + RtMidi::getVersion());
     Config::load();
-    Engine engine ;
-    engine.initialize();
+    Engine::instance()->initialize();
+    
+    // cleanup
+    Engine::instance()->shutdown();
 }

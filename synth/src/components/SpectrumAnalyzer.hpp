@@ -18,13 +18,13 @@
 #ifndef SPECTRUM_ANALYZER_COMPONENT_HPP_
 #define SPECTRUM_ANALYZER_COMPONENT_HPP_
 
-#include "dsp/Analyzer.hpp"
+#include "core/AudioProbe.hpp"
 #include "configs/SpectrumAnalyzerConfig.hpp"
 
 // forward declarations
 class kiss_fft_state ;
 
-class SpectrumAnalyzer : public Analyzer {
+class SpectrumAnalyzer : public AudioProbe {
 private:
     size_t fftSize_ ;
     std::vector<double> fftBuffer_ ;

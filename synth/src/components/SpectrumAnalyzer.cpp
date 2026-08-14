@@ -16,14 +16,14 @@
  */
 
 #include "components/SpectrumAnalyzer.hpp"
-#include "dsp/AnalyticsEngine.hpp"
+#include "api/StreamingApiHandler.hpp"
 
 #include <kissfft/kiss_fft.h>
 #include <spdlog/spdlog.h>
 
 SpectrumAnalyzer::SpectrumAnalyzer(ComponentId id, [[maybe_unused]] SpectrumAnalyzerConfig cfg):
     BaseComponent(id, ComponentType::SpectrumAnalyzer),
-    Analyzer(),
+    AudioProbe(),
     fftSize_(Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value()),
     bufferPosition_(0)
 {
@@ -86,7 +86,7 @@ void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
                 magnitudes[j] = 20.0 * std::log10(magnitude);
             }
 
-            AnalyticsEngine::instance()->send(magnitudes, id);
+            StreamingApiHandler::instance()->send(magnitudes, id);
 
             // 50% overlap
             std::memmove(fftBuffer_.data(),

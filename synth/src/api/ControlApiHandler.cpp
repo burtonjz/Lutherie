@@ -39,9 +39,6 @@
 #include <unordered_map>
 #include <spdlog/spdlog.h>
 
-ControlApiHandler::ControlApiHandler()
-{}
-
 ControlApiHandler* ControlApiHandler::instance(){
     static ControlApiHandler* s_instance = nullptr ;
     if ( !s_instance ){
@@ -50,9 +47,7 @@ ControlApiHandler* ControlApiHandler::instance(){
     return s_instance ;
 }
 
-void ControlApiHandler::initialize(Engine* engine){
-    engine_ = engine ;
-
+ControlApiHandler::ControlApiHandler(){
     // register api handler functions
     handlers_["get_audio_devices"] = [this](const json& request){ return getAudioDevices(request); };
     handlers_["set_audio_device"] = [this](const json& request){ return setAudioDevice(request); };
@@ -260,7 +255,7 @@ const std::unordered_set<int>& ControlApiHandler::getOpenClientSockets() const {
 
 json ControlApiHandler::getAudioDevices(const json& request){
     json response = request ;
-    for ( const auto& dev : engine_->getAvailableAudioDevices() ){
+    for ( const auto& dev : Engine::instance()->getAvailableAudioDevices() ){
         json j = {
             {"id", dev.ID},
             {"name", dev.name}
@@ -273,7 +268,7 @@ json ControlApiHandler::getAudioDevices(const json& request){
 
 json ControlApiHandler::getMidiDevices(const json& request){
     json response = request ;
-    for ( const auto& [id, name] : engine_->getAvailableMidiDevices() ){
+    for ( const auto& [id, name] : Engine::instance()->getAvailableMidiDevices() ){
         json j = {
             {"id", id},
             {"name", name}
@@ -289,7 +284,7 @@ json ControlApiHandler::setAudioDevice(const json& request){
     int deviceId = response.at("device_id");
     bool preferred = response.at("preferred");
     
-    if ( engine_->setAudioDeviceId(deviceId, preferred) ){
+    if ( Engine::instance()->setAudioDeviceId(deviceId, preferred) ){
         response["output_channels"] = SignalController::instance()->getNumChannels();
         return response ;
     } else {
@@ -300,7 +295,7 @@ json ControlApiHandler::setAudioDevice(const json& request){
 json ControlApiHandler::getAudioConfig(const json& request){
     json response = request ;
 
-    response["device_id"] = engine_->getAudioDeviceId();
+    response["device_id"] = Engine::instance()->getAudioDeviceId();
     response["output_channels"] = SignalController::instance()->getNumChannels();
 
     return response ;
@@ -312,7 +307,7 @@ json ControlApiHandler::setMidiDevice(const json& request){
     int deviceId = response.at("device_id");
     bool preferred = response.at("preferred");
 
-    if ( engine_->setMidiDeviceId(deviceId, preferred) ){
+    if ( Engine::instance()->setMidiDeviceId(deviceId, preferred) ){
         return response ;
     } else {
         throw std::runtime_error("failed to set MIDI device");
@@ -326,12 +321,12 @@ json ControlApiHandler::setState(const json& request){
     state = response.at("state");
     
     if ( state == "run" ){
-        engine_->run();
+        Engine::instance()->run();
         return response ;
     }
 
     if ( state == "stop" ){
-        engine_->stop();
+        Engine::instance()->stop();
         return response ;
     }
 
@@ -340,7 +335,7 @@ json ControlApiHandler::setState(const json& request){
 
 json ControlApiHandler::getConfiguration(const json& request){
     json response = request ;
-    response["data"] = engine_->serialize();
+    response["data"] = Engine::instance()->serialize();
     return response ;
 }
 
@@ -406,7 +401,7 @@ json ControlApiHandler::removeComponent(const json& request){
 
     // query each subsystem and remove connections, if exist
     bool allRemoved = true ;
-    auto connections = engine_->getComponentConnections(id);
+    auto connections = Engine::instance()->getComponentConnections(id);
     for ( auto c : connections ){
         c.remove = true ;
         json j = c ;
@@ -1164,13 +1159,13 @@ json ControlApiHandler::setMidiControl(const json& request){
 
 bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )
-        return engine_->handleMidiConnection(request);
+        return Engine::instance()->handleMidiConnection(request);
     if ( request.inboundSocket == SocketType::SignalInbound && request.outboundSocket == SocketType::SignalOutbound )
-        return engine_->handleSignalConnection(request);
+        return Engine::instance()->handleSignalConnection(request);
     if ( request.inboundSocket == SocketType::BufferInbound && request.outboundSocket == SocketType::BufferOutbound )
-        return engine_->handleBufferConnection(request);
+        return Engine::instance()->handleBufferConnection(request);
     if ( request.inboundSocket == SocketType::ModulationInbound && request.outboundSocket == SocketType::ModulationOutbound )
-        return engine_->handleModulationConnection(request);
+        return Engine::instance()->handleModulationConnection(request);
 
     SPDLOG_WARN("WARN: socket params are incompatible. No connection will be made");
     return false ;

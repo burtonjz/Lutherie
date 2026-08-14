@@ -23,10 +23,11 @@
 #include "core/AudioBufferComponent.hpp"
 #include "core/ModulatorComponent.hpp"
 #include "core/FileComponent.hpp"
-
-#include "dsp/Analyzer.hpp"
-#include "midi/MidiController.hpp"
+#include "core/AudioProbe.hpp"
 #include "midi/MidiEventHandler.hpp"
+#include "midi/MidiEventListener.hpp"
+
+#include "midi/MidiController.hpp"
 
 #include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
@@ -54,7 +55,7 @@ private:
     std::unordered_set<ComponentId> modulators_ ;
     std::unordered_set<ComponentId> audioSignals_ ;
     std::unordered_set<ComponentId> audioBuffers_ ;
-    std::unordered_set<ComponentId> analyzers_ ;
+    std::unordered_set<ComponentId> audioProbes_ ;
     std::unordered_set<ComponentId> fileComponents_ ;
 
     explicit ComponentManager();
@@ -83,8 +84,8 @@ public:
             midiHandlers_.insert(id);
             MidiController::instance()->addHandler(getMidiHandler(id));
         } 
-        if ( descriptor.isAnalyzer() ){
-            analyzers_.insert(id);
+        if ( descriptor.isAudioProbe() ){
+            audioProbes_.insert(id);
         }
         if ( descriptor.hasFile ){
             fileComponents_.insert(id);
@@ -111,7 +112,7 @@ public:
     ModulatorComponent* getModulator(ComponentId id) const ;
     MidiEventHandler* getMidiHandler(ComponentId id) const ;
     MidiEventListener* getMidiListener(ComponentId id) const ;
-    Analyzer* getAnalyzer(ComponentId id) const ;
+    AudioProbe* getAudioProbe(ComponentId id) const ;
     FileComponent* getFileComponent(ComponentId id) const ;
 
     const std::unordered_set<ComponentId>& getComponentIds() const ;
@@ -119,7 +120,7 @@ public:
     const std::unordered_set<ComponentId>& getModulatorIds() const ;
     const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
     const std::unordered_set<ComponentId>& getMidiListenerIds() const ;
-    const std::unordered_set<ComponentId>& getAnalyzerIds() const ;
+    const std::unordered_set<ComponentId>& getAudioProbeIds() const ;
     const std::unordered_set<ComponentId>& getFileComponentIds() const ;
 
     void remove(ComponentId id);
@@ -131,7 +132,7 @@ public:
      */
     void runParameterModulation();
 
-    void flushAnalyzers();
+    void flushAudioProbes();
 
     // saving / loading
     json serializeComponent(BaseComponent* c) const ;

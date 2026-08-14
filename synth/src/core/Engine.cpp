@@ -16,7 +16,7 @@
  */
 
 #include "core/Engine.hpp"
-#include "dsp/AnalyticsEngine.hpp"
+#include "api/StreamingApiHandler.hpp"
 #include "config/Config.hpp"
 #include "api/ControlApiHandler.hpp"
 #include "api/DataApiHandler.hpp"
@@ -45,7 +45,12 @@
 #include <spdlog/spdlog.h>
 #include <fstream>
 
-// Static members
+
+Engine* Engine::instance(){
+    static Engine engine ;
+    return &engine ;
+}
+
 std::atomic<bool> Engine::stop_flag{false};
 
 void Engine::signalHandler(int signum){
@@ -58,10 +63,10 @@ Engine::Engine():
     // thread state flags
     controlApiRunning_(false),
     dataApiRunning_(false),
+    streamApiRunning_(false),
     engineRunning_(false),
     midiRunning_(false),
     audioRunning_(false),
-    analysisRunning_(false),
     // audio 
     dac_(),
     audioSet_(false),
@@ -74,19 +79,11 @@ Engine::Engine():
     selectedMidiPort_(-1),
     midiDefaultHandler_()
 {
-    ControlApiHandler::instance()->initialize(this);
-    DataApiHandler::instance()->initialize(this);
-
     registerBaseMidiHandler(&midiDefaultHandler_);
     MidiController::instance()->addHandler(&midiDefaultHandler_);
     signal(SIGINT, Engine::signalHandler);
 
     dsp::initializeDetuneLUT();
-}
-
-// Destructor - ensure clean shutdown
-Engine::~Engine() {
-    shutdown();
 }
 
 // ============================================================================
@@ -119,6 +116,11 @@ void Engine::initialize(){
         DataApiHandler::instance()->start();
     });    
 
+    streamApiRunning_ = true ;
+    streamApiThread_ = std::thread([&](){
+        StreamingApiHandler::instance()->start();
+    });
+
     initializeUserResourceFolder();
 
     // this thread just sleeps until we're done running
@@ -139,12 +141,11 @@ void Engine::run(){
     
     setup();
     
-    engineRunning_ = true;
+    engineRunning_ = true ;
     
     // start threads
     midiThread_ = std::thread(&Engine::midiLoop, this);
-    audioThread_ = std::thread(&Engine::audioLoop, this);
-    analysisThread_ = std::thread(&Engine::analysisLoop, this);
+    audioThread_ = std::thread(&Engine::audioLoop, this); 
     
     SPDLOG_INFO("Engine running with 3 worker threads.");
 }
@@ -160,10 +161,9 @@ void Engine::stop(){
     SPDLOG_INFO("Stopping engine...");
     
     // Signal all threads to stop
-    engineRunning_ = false;
-    audioRunning_ = false;
-    midiRunning_ = false;
-    analysisRunning_ = false;
+    engineRunning_ = false ;
+    audioRunning_ = false ;
+    midiRunning_ = false ;
     
     // Unlock before joining to avoid deadlock
     lock.unlock();
@@ -178,11 +178,6 @@ void Engine::stop(){
     if (midiThread_.joinable()){
         SPDLOG_INFO("Waiting for MIDI thread...");
         midiThread_.join();
-    }
-    
-    if (analysisThread_.joinable()){
-        SPDLOG_INFO("Waiting for analysis thread...");
-        analysisThread_.join();
     }
     
     stopMidi();
@@ -202,15 +197,21 @@ void Engine::shutdown(){
     stop_flag = true ;
     controlApiRunning_ = false ;
     dataApiRunning_ = false ;
+    streamApiRunning_ = false ;
     
-    if (controlApiThread_.joinable()){
+    if ( controlApiThread_.joinable() ){
         SPDLOG_INFO("Waiting for Control API thread...");
         controlApiThread_.join();
     }
 
-    if (dataApiThread_.joinable()){
+    if ( dataApiThread_.joinable() ){
         SPDLOG_INFO("Waiting for Data API thread...");
         dataApiThread_.join();
+    }
+
+    if ( streamApiThread_.joinable() ){
+        SPDLOG_INFO("Waiting for Streaming API thread...");
+        streamApiThread_.join();
     }
     
     SPDLOG_INFO("Engine shutdown complete");
@@ -332,22 +333,6 @@ void Engine::audioLoop(){
     SPDLOG_INFO("Audio thread stopping");
 }
 
-void Engine::analysisLoop(){
-    SPDLOG_INFO("Analysis thread started");
-    analysisRunning_ = true ;
-    
-    Config::load();
-    AnalyticsEngine::instance()->start();
-
-    while ( analysisRunning_ && engineRunning_ ){
-        AnalyticsEngine::instance()->processContexts();
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    }
-    
-    AnalyticsEngine::instance()->stop();
-    SPDLOG_INFO("Analysis thread stopping");
-}
-
 // ============================================================================
 // AUDIO CALLBACK (runs in audio thread context)
 // ============================================================================
@@ -377,7 +362,7 @@ int Engine::audioCallback(
         }
     }
     
-    ComponentManager::instance()->flushAnalyzers();
+    ComponentManager::instance()->flushAudioProbes();
     
     return 0;
 }

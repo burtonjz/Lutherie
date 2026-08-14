@@ -16,12 +16,12 @@
  */
 
 #include "components/Oscilloscope.hpp"
-#include "dsp/AnalyticsEngine.hpp"
+#include "api/StreamingApiHandler.hpp"
 #include <spdlog/spdlog.h>
 
 Oscilloscope::Oscilloscope(ComponentId id, [[maybe_unused]] OscilloscopeConfig cfg):
     BaseComponent(id, ComponentType::Oscilloscope),
-    Analyzer(),
+    AudioProbe(),
     captureBuffer_(),
     bufferPosition_(0),
     sampleRate_(Config::get<double>("audio.sample_rate").value()),
@@ -133,7 +133,7 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
                     "For componentId={}, oscilloscope has {} crossing candidates, chosen={:.1f} score={:.3f} margin={:.3f} deltaFromLast={:.1f}",
                     id, candidates.size(), bestCandidatePos, bestScore, margin, bestCandidatePos - lastPos
                 );
-                AnalyticsEngine::instance()->send(bestWindow, id);
+                StreamingApiHandler::instance()->send(bestWindow, id);
                 prevWindow_[id] = std::move(bestWindow);
             } 
             bufferPosition_ = 0 ;

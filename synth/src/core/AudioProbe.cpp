@@ -15,26 +15,26 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "dsp/Analyzer.hpp"
-#include "dsp/AnalyticsEngine.hpp"
-#include "dsp/AnalysisContext.hpp"
+#include "core/AudioProbe.hpp"
+#include "api/StreamingApiHandler.hpp"
+#include "api/StreamingContext.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "core/AudioSignalComponent.hpp"
 
-Analyzer::Analyzer():
+AudioProbe::AudioProbe():
     AudioSignalComponent(1,0),
     analysisBuffer_(),
     context_(nullptr)
 {
     analysisBuffer_ = std::make_unique<double[]>(bufferSize_);
-    createAnalysisContext();
+    createStreamingContext();
 }
 
-Analyzer::~Analyzer(){
+AudioProbe::~AudioProbe(){
     delete context_ ;
 };
 
-void Analyzer::calculateSample(){
+void AudioProbe::calculateSample(){
     double input ;
     if ( collecting_ ){
         input = aggregateInputs(0);
@@ -44,11 +44,11 @@ void Analyzer::calculateSample(){
     analysisBuffer_[bufferIndex_] = input ;
 }
 
-AnalysisContext* Analyzer::getAnalysisContext() const {
+StreamingContext* AudioProbe::getStreamingContext() const {
     return context_ ;
 }
 
-void Analyzer::createAnalysisContext(){
+void AudioProbe::createStreamingContext(){
     int size = Config::get<int>("analysis.ring_buffer_size").value_or(480000);
 
     std::string scratchKey = ComponentRegistry::getComponentDescriptor(type_).name ;
@@ -59,16 +59,21 @@ void Analyzer::createAnalysisContext(){
             return static_cast<char>(std::tolower(c));
     });
     scratchKey = "analysis."  + scratchKey + ".buffer_size" ;
-    size_t scratchSize = Config::get<int>(scratchKey).value_or(4096);
+    auto scratchSize = Config::get<int>(scratchKey);
+    if ( !scratchSize.has_value() ){
+        SPDLOG_DEBUG(
+            "Could not find key {} in config."
+        );
+    }
 
-    context_ = new AnalysisContext(size, scratchSize,
+    context_ = new StreamingContext(size, scratchSize.value_or(4096),
         [this](const double* data, size_t size, ComponentId id){
             process(data, size, id);
         }
     );
 }
 
-void Analyzer::flush(){
+void AudioProbe::flush(){
     if ( !collecting_ ) return ;
     auto* buf = analysisBuffer_.get();
     context_->buffer.push(buf, bufferSize_);

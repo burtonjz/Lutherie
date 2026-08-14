@@ -40,7 +40,6 @@ private:
     // Thread entry points
     void midiLoop();
     void audioLoop();
-    void analysisLoop();
     
     // Setup/teardown
     void setup();
@@ -52,19 +51,20 @@ private:
     // Thread management
     std::thread controlApiThread_ ;
     std::thread dataApiThread_ ;
+    std::thread streamApiThread_ ;
     std::thread midiThread_ ;
     std::thread audioThread_ ;
-    std::thread analysisThread_ ;
+    
     
     // Thread control flags (atomic for thread-safe access)
     std::atomic<bool> controlApiRunning_ ;
     std::atomic<bool> dataApiRunning_ ;
+    std::atomic<bool> streamApiRunning_ ;
+    
     std::atomic<bool> engineRunning_ ;
     std::atomic<bool> midiRunning_ ;
     std::atomic<bool> audioRunning_ ;
-    std::atomic<bool> analysisRunning_ ;
     std::mutex stateMutex_ ;
-    
     
     RtAudio dac_ ;
 
@@ -81,10 +81,15 @@ private:
     
     double sampleRate_ ;
 
+    explicit Engine();
+
 public:
-    // Constructor & Destructor
-    Engine();
-    ~Engine();
+    static Engine* instance();
+
+    Engine(const Engine&) = delete ;
+    Engine& operator=(const Engine&) = delete ;
+    Engine(Engine&&) = delete ;
+    Engine& operator=(Engine&&) = delete ;
     
     // Main state functions
     void initialize();

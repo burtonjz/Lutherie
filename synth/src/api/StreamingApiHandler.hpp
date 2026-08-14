@@ -40,11 +40,11 @@
     typedef int SOCKET ;
 #endif
 
-struct AnalysisContext ;
+struct StreamingContext ;
 
-class AnalyticsEngine {
+class StreamingApiHandler {
 private:
-    static AnalyticsEngine* instance_ ;
+    static StreamingApiHandler* instance_ ;
     
     // UDP SOCKET VARIABLES
 #ifdef _WIN32
@@ -53,13 +53,15 @@ private:
     SOCKET udpSocket_ ;
     struct sockaddr_in destAddr_ ;
 
-public:
-    static AnalyticsEngine* instance();
+    StreamingApiHandler();
 
-    AnalyticsEngine(const AnalyticsEngine&) = delete ;
-    AnalyticsEngine& operator=(const AnalyticsEngine&) = delete ;
-    AnalyticsEngine(AnalyticsEngine&&) = delete ;
-    AnalyticsEngine& operator=(AnalyticsEngine&&) = delete ;
+public:
+    static StreamingApiHandler* instance();
+
+    StreamingApiHandler(const StreamingApiHandler&) = delete ;
+    StreamingApiHandler& operator=(const StreamingApiHandler&) = delete ;
+    StreamingApiHandler(StreamingApiHandler&&) = delete ;
+    StreamingApiHandler& operator=(StreamingApiHandler&&) = delete ;
 
     void start();
     void stop();
@@ -67,10 +69,6 @@ public:
     void processContexts();
 
     void send(const std::vector<float>& output, int componentId);
-    
-private:
-    AnalyticsEngine();
-    ~AnalyticsEngine();
     
     void initSocket();
     void closeSocket();
