@@ -2,7 +2,13 @@
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -Wall -Wextra -Wpedantic -ffast-math")
+option(LUTHERIE_NATIVE_ARCH "Use -march=native (local builds only)" OFF)
+if(LUTHERIE_NATIVE_ARCH)
+    add_compile_options(-march=native)
+else()
+    add_compile_options(-march=x86-64-v3)
+endif()
+add_compile_options(-O3  -Wall -Wextra -Wpedantic -ffast-math)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(PkgConfig REQUIRED)

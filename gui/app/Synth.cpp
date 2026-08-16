@@ -125,8 +125,10 @@ void Synth::configureMenu(){
         });
     }
 
-    auto* menuTools = menuBar()->addMenu("Tools");
-    auto* menuHelp = menuBar()->addMenu("Help");
+    // auto* menuTools = 
+    menuBar()->addMenu("Tools");
+    // auto* menuHelp = 
+    menuBar()->addMenu("Help");
 
     // connections
     connect(
@@ -682,7 +684,7 @@ void Synth::onComponentAdded(int componentId, ComponentType typ){
     }
 }
 
-void Synth::onComponentRemoved(int componentId){
+void Synth::onComponentRemoved([[maybe_unused]] int componentId){
     /* 
     parameter/modulation dock children are cleaned up off the "destroyed" signal of the 
     content widgets, so nothing needed here unless we introduce additional removal tasks

@@ -199,7 +199,7 @@ void GraphNode::positionSockets(QPointF newPos){
 
     // left
     qreal height = Theme::COMPONENT_HEIGHT ;
-    for ( int i = 0; i < leftSockets_.size(); ++i ){
+    for ( size_t i = 0; i < leftSockets_.size(); ++i ){
         if ( leftSockets_[i]->isVisible() ){
             qreal ypos = Theme::SOCKET_WIDGET_MARGIN + 
                 i * Theme::SOCKET_WIDGET_SPACING ;
@@ -213,7 +213,7 @@ void GraphNode::positionSockets(QPointF newPos){
     }
 
     // right
-    for ( int i = 0; i < rightSockets_.size(); ++i ){
+    for ( size_t i = 0; i < rightSockets_.size(); ++i ){
         if ( rightSockets_[i]->isVisible() ){
             qreal ypos = Theme::SOCKET_WIDGET_MARGIN + 
                 i * Theme::SOCKET_WIDGET_SPACING ;
@@ -231,7 +231,7 @@ void GraphNode::positionSockets(QPointF newPos){
         ( Theme::COMPONENT_WIDTH - Theme::SOCKET_WIDGET_MARGIN * 2 ) / 
         Theme::SOCKET_WIDGET_SPACING ;
     int count = 0 ;
-    for ( int i = 0; i < bottomSockets_.size(); ++i ){
+    for ( size_t i = 0; i < bottomSockets_.size(); ++i ){
         if ( bottomSockets_[i]->isVisible() ){
             int col = count % socketsPerHorizontalRow ;
             int row = count / socketsPerHorizontalRow ;
@@ -247,7 +247,7 @@ void GraphNode::positionSockets(QPointF newPos){
 
     // top
     count = 0 ;
-    for ( int i = 0; i < topSockets_.size(); ++i ){
+    for ( size_t i = 0; i < topSockets_.size(); ++i ){
         if ( topSockets_[i]->isVisible() ){
             int col = count % socketsPerHorizontalRow ;
             int row = count / socketsPerHorizontalRow ;

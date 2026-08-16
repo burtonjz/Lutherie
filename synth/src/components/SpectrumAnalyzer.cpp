@@ -25,7 +25,10 @@ SpectrumAnalyzer::SpectrumAnalyzer(ComponentId id, [[maybe_unused]] SpectrumAnal
     BaseComponent(id, ComponentType::SpectrumAnalyzer),
     AudioProbe(),
     fftSize_(Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value()),
-    bufferPosition_(0)
+    bufferPosition_(0),
+    smoothFactor_(Config::get<float>("analysis.spectrum_analyzer.smooth_factor").value()),
+    magnitudeHistory_(fftSize_ / 2, 0.0f),
+    framesAveraged_(Config::get<int>("analysis.spectrum_analyzer.frames_averaged").value())
 {
     fftBuffer_.resize(fftSize_);
     fftConfig_ = kiss_fft_alloc(fftSize_, 0, nullptr, nullptr);
@@ -79,10 +82,15 @@ void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
             // calculate magnitudes
             std::vector<float> magnitudes(fftSize_ / 2);
             for (size_t j = 0; j < fftSize_ / 2; ++j){
-                kiss_fft_scalar real = fftOutput[j].r;
-                kiss_fft_scalar imag = fftOutput[j].i;
+                kiss_fft_scalar real = fftOutput[j].r ;
+                kiss_fft_scalar imag = fftOutput[j].i ;
                 float magnitude = std::sqrt(real * real + imag * imag);
                 magnitude = std::max(magnitude, 1e-10f) / (fftSize_ / 2.0);
+
+                // smooth linear magnitude 
+                magnitudeHistory_[j] = smoothFactor_ * magnitudeHistory_[j] + (1.0f - smoothFactor_) * magnitude ;
+
+                // convert to db
                 magnitudes[j] = 20.0 * std::log10(magnitude);
             }
 

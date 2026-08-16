@@ -37,7 +37,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         });
     }
     
-    for ( int i = 0; i < d.numSignalInputs; ++i ){
+    for ( size_t i = 0; i < d.numSignalInputs; ++i ){
         specs_.push_back({
             .type        = SocketType::SignalInbound, 
             .name        = QString("Audio Input %1").arg(i+1), 
@@ -46,7 +46,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         });
     }
 
-    for ( int i = 0; i < d.numBufferInputs; ++i ){
+    for ( size_t i = 0; i < d.numBufferInputs; ++i ){
         specs_.push_back({
             .type        = SocketType::BufferInbound, 
             .name        = QString("Buffer Input %1").arg(i+1), 
@@ -55,7 +55,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         });
     }
 
-    for ( int i = 0; i < d.numMidiInputs; ++i ){
+    for ( size_t i = 0; i < d.numMidiInputs; ++i ){
         specs_.push_back({
             .type = SocketType::MidiInbound, 
             .name = QString("MIDI Input %1").arg(i+1),
@@ -63,7 +63,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         });
     }
 
-    for ( int i = 0; i < d.numSignalOutputs; ++i ){
+    for ( size_t i = 0; i < d.numSignalOutputs; ++i ){
         specs_.push_back({
             .type = SocketType::SignalOutbound, 
             .name = QString("Audio Output %1").arg(i+1), 
@@ -72,7 +72,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         });
     }
 
-    for ( int i = 0; i < d.numBufferOutputs; ++i ){
+    for ( size_t i = 0; i < d.numBufferOutputs; ++i ){
         specs_.push_back({
             .type = SocketType::BufferOutbound, 
             .name = QString("Buffer Output %1").arg(i+1), 
@@ -81,7 +81,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         });
     }
 
-    for ( int i = 0; i < d.numMidiOutputs; ++i ){
+    for ( size_t i = 0; i < d.numMidiOutputs; ++i ){
         specs_.push_back({
             .type = SocketType::MidiOutbound, 
             .name = QString("MIDI Output %1").arg(i+1),

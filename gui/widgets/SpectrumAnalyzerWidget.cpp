@@ -37,7 +37,6 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     Config::load();
 
     sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
-    smoothFactor_ = Config::get<float>("analysis.spectrum_analyzer.smooth_factor").value_or(0.7);
 
     int footerY = height() - Theme::SPECTRUM_MARGIN_BOTTOM + 8 ;
     controls_->setGeometry(
@@ -48,7 +47,10 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     );
 
     updateTimer_->setInterval(33); // ~30 FPS
-    connect(updateTimer_, &QTimer::timeout, this, &SpectrumAnalyzerWidget::onUpdateTimeout);
+    connect(
+        updateTimer_, &QTimer::timeout, 
+        this, &SpectrumAnalyzerWidget::onUpdateTimeout
+    );
     updateTimer_->start();
     fadeTimer_.start();
 }
@@ -93,21 +95,11 @@ void SpectrumAnalyzerWidget::toggleLayer(int componentId, bool enabled){
 void SpectrumAnalyzerWidget::onData(int componentId, const float* data, size_t count){
     if ( !controls_->isLayerPresent(componentId) ) return ;
 
-    float min = *std::min_element(data, data + count);
-    float max = *std::max_element(data, data + count);
-
     auto& layer = layerData_.at(componentId);
 
-    if ( layer.data.size() != count ){
-        // no smoothing, this is first packet
-        layer.data.resize(count);
-        layer.data.assign(data, data + count);
-    } else {
-        for ( size_t i = 0 ; i < count ; ++i ){
-            layer.data[i] = smoothFactor_ * layer.data[i] +
-                ( 1.0f - smoothFactor_ ) * data[i] ;
-        }
-    }
+    layer.data.resize(count);
+    layer.data.assign(data, data + count);
+
     layer.lastUpdate.restart();
 }
 
@@ -189,24 +181,35 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
             layer.lastUpdate.elapsed() > Theme::ANALYZER_STALE_DATA_DURATION_MS
         ) continue ;
 
-        // Create path for spectrum
         QPainterPath path ;
         bool firstPoint = true ;
         
         int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
-        int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
 
         int sampleInterval = Theme::SPECTRUM_PIXEL_RESOLUTION ;
         for ( int px = 0 ; px < plotWidth; px += sampleInterval ){
-            float x = Theme::SPECTRUM_MARGIN_LEFT + px ;
-            float freq = xToFreq(x);
-            
-            if ( freq < minFreq_ || freq > maxFreq_ ) continue ;
+            float xLeft  = Theme::SPECTRUM_MARGIN_LEFT + px ;
+            float xRight = Theme::SPECTRUM_MARGIN_LEFT + px + sampleInterval ;
 
-            size_t bin = freqToBin(freq, layer.data.size());
-            if ( bin >= layer.data.size() ) continue ;
+            float freqLeft  = xToFreq(xLeft);
+            float freqRight = xToFreq(xRight);
 
-            float db = std::max(minDb_, std::min(maxDb_, layer.data[bin]));
+            if ( freqRight < minFreq_ || freqLeft > maxFreq_ ) continue ;
+
+            size_t binLeft  = freqToBin(freqLeft,  layer.data.size());
+            size_t binRight = freqToBin(freqRight, layer.data.size());
+
+            binLeft  = std::min(binLeft,  layer.data.size() - 1);
+            binRight = std::min(binRight, layer.data.size() - 1);
+            if ( binRight < binLeft ) binRight = binLeft ;
+
+            float peakDb = layer.data[binLeft];
+            for ( size_t bin = binLeft + 1 ; bin <= binRight ; ++bin ){
+                peakDb = std::max(peakDb, layer.data[bin]);
+            }
+
+            float db = std::max(minDb_, std::min(maxDb_, peakDb));
+            float x = xLeft ;
             float y = dbToY(db);
 
             if ( firstPoint ){
@@ -217,7 +220,6 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
             }
         }
         
-        // Draw the spectrum line
         painter.setPen(QPen(controls_->layerColor(id), 2));
         painter.drawPath(path);
     }

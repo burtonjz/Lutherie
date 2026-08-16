@@ -33,9 +33,9 @@ class GraphNode ; // forward declaration
 
 struct SocketSpec {
     SocketType type ;
-    QString name ;
-    std::optional<int> componentId ;
-    std::optional<size_t> idx ;
+    QString name = "" ;
+    std::optional<int> componentId = std::nullopt ;
+    std::optional<size_t> idx = std::nullopt ;
 
     bool operator==(const SocketSpec& other){
         return other.type == type &&

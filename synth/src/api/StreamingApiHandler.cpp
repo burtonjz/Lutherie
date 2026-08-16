@@ -43,10 +43,11 @@ StreamingApiHandler::StreamingApiHandler():
 void StreamingApiHandler::start(){
     initSocket();
 
-    SPDLOG_INFO("StreamingApiHandler started on UDP port {}", udpSocket_);
+    SPDLOG_INFO(
+        "Streaming API started, sending UDP to 127.0.0.1:{} (fd={})",
+        ntohs(destAddr_.sin_port), udpSocket_
+    );
     
-    
-
     while (!Engine::stop_flag){
         StreamingApiHandler::instance()->processContexts();
         std::this_thread::sleep_for(std::chrono::milliseconds(30));

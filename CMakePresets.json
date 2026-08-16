@@ -8,7 +8,8 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/dev",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "LUTHERIE_NATIVE_ARCH": "ON"
             }
         },
         {
@@ -25,7 +26,8 @@
             "inherits": "release-base",
             "binaryDir": "${sourceDir}/build/install",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "/usr/local"
+                "CMAKE_INSTALL_PREFIX": "/usr/local",
+                "LUTHERIE_NATIVE_ARCH": "ON"
             }
         },
         {

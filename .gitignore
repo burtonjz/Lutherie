@@ -4,3 +4,5 @@
 build
 virtual-midi-notes
 install
+.ipynb_checkpoints
+udp_capture

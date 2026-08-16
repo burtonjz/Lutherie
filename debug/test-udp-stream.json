@@ -1,0 +1,26 @@
+[
+    {
+        "action": "add_component", 
+        "name": "Oscillator"
+    },
+    {
+        "action": "add_component", 
+        "name": "Spectrum Analyzer"
+    },
+    {
+        "action": "create_connection",
+        "inbound": {"componentId": 1, "index": 0, "socketType": "Signal Inbound"},
+        "outbound": {"componentId": 0, "index": 0, "socketType": "Signal Outbound"}
+    },
+    {
+        "action":"set_parameter",
+        "componentId":0,
+        "parameter":"waveform",
+        "value":3
+    },
+    {
+        "action": "set_state", 
+        "state": "run"
+    }
+
+]

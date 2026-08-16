@@ -91,7 +91,6 @@ void GroupNode::addSockets(ComponentNode* node){
 }
 
 void GroupNode::removeSockets(ComponentNode* node){
-    auto& specs = node->getSpecs();
     sockets_.erase(
         std::remove_if(
             sockets_.begin(), sockets_.end(),

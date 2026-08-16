@@ -827,7 +827,7 @@ void GraphPanel::onComponentSelected(ComponentType type){
     ComponentManager::instance()->requestAddComponent(type);
 }
 
-void GraphPanel::onComponentAdded(int componentId, ComponentType type){
+void GraphPanel::onComponentAdded(int componentId, [[maybe_unused]] ComponentType type){
     auto* m = ComponentManager::instance()->getModel(componentId);
 
     if ( !m ){

@@ -27,8 +27,8 @@ void ToastNotification::show(QGraphicsScene* scene, QGraphicsView* view, const Q
 
 ToastNotification::ToastNotification(const QString& message):
         QGraphicsItem(nullptr),
-        message_(message),
-        opacity_(1.0f)
+        opacity_(1.0f),
+        message_(message)
 {
     setZValue(9999);
     

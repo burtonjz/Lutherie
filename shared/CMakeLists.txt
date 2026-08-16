@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -O2 -ffast-math")
+add_compile_options(-Wall -Wextra -Wpedantic -O2 -ffast-math)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SPDLOG REQUIRED spdlog)

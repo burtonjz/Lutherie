@@ -53,7 +53,7 @@ void DataApiClient::onReadyRead(){
 
     while ( true ){
         // Wait until the full header is available
-        const size_t headerSize = sizeof(DataDescriptor);
+        qsizetype headerSize = sizeof(DataDescriptor);
         if ( readBuffer_.size() < headerSize ){
             return ;
         }
@@ -65,8 +65,8 @@ void DataApiClient::onReadyRead(){
             sizeof(DataDescriptor)
         );
         
-        const size_t dataSize = header.size ;
-        const size_t totalSize = headerSize + dataSize ;
+        const qsizetype dataSize = header.size ;
+        const qsizetype totalSize = headerSize + dataSize ;
 
         // Wait until the entire payload is available
         if ( readBuffer_.size() < totalSize ){

@@ -199,7 +199,6 @@ QPainterPath ConnectionCable::createBezierPath(const QPointF& start, const QPoin
     
     // Calculate control points for a nice curved cable
     qreal dx = end.x() - start.x();
-    qreal dy = end.y() - start.y();
     
     // Make curves more pronounced for longer distances
     qreal controlOffset = std::max(50.0, std::abs(dx) * 0.5);
@@ -340,7 +339,7 @@ QPainterPath ConnectionCable::createAdaptiveBezierPath(const QPointF& start, con
 
     // add arrows to path
     size_t nArrows = path.length() / 100 ;
-    for (int i = 0; i < nArrows ; ++i ){
+    for ( size_t i = 0; i < nArrows ; ++i ){
         double perc = static_cast<double>(i) / nArrows ;
         if ( perc > 0 && perc < 100 ){
             drawCableArrow(path, perc);

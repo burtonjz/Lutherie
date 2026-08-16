@@ -3,6 +3,15 @@ if(POLICY CMP0207)
     cmake_policy(SET CMP0207 NEW)
 endif()
 
+# Compiler flags
+option(LUTHERIE_NATIVE_ARCH "Use -march=native (local builds only)" OFF)
+if(LUTHERIE_NATIVE_ARCH)
+    add_compile_options(-march=native)
+else()
+    add_compile_options(-march=x86-64-v3)
+endif()
+add_compile_options(-O3  -Wall -Wextra -Wpedantic)
+
 find_package(Qt6 6.5 REQUIRED COMPONENTS
     Core
     Widgets

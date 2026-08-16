@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
     KDDW::Config::self().setDropIndicatorAllowedFunc(
     [](KDDW::DropLocation location,
        const KDDW::Core::DockWidget::List& source,
-       const KDDW::Core::DockWidget::List& target,
+       [[maybe_unused]] const KDDW::Core::DockWidget::List& target,
        KDDW::Core::DropArea* ) -> bool
     {
         const bool isControlPanel = std::any_of(

@@ -40,7 +40,6 @@ private:
     };
     std::unordered_map<int, LayerData> layerData_ ;
 
-    float smoothFactor_ ;
     float sampleRate_ ;
     
     // Display ranges
