@@ -231,7 +231,7 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     font.setPointSize(9);
     painter.setFont(font);
     
-    int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
+    // int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
     
     // Y-axis labels (dB)

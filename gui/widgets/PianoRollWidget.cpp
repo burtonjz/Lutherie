@@ -29,6 +29,7 @@
 
 PianoRollWidget::PianoRollWidget(ComponentModel* model, QWidget* parent):
     CollectionWidget(model, parent),
+    layout_(new QHBoxLayout(this)),
     pianoScroll_(new QScrollArea(this)),
     piano_(new PianoWidget(this)),
     pianoContainer_(new QWidget(this)),
@@ -36,10 +37,9 @@ PianoRollWidget::PianoRollWidget(ComponentModel* model, QWidget* parent):
     pianoLayout_(new QVBoxLayout(pianoContainer_)),
     rollScroll_(new QScrollArea(this)),
     roll_(new ContentWidget(this)),
-    layout_(new QHBoxLayout(this)),
-    totalBeats_(16.0f),
     notes_(),
-    selectedNotes_()
+    selectedNotes_(),
+    totalBeats_(16.0f)
 {
     layout_->setContentsMargins(0,0,0,0);
     layout_->setSpacing(0);
@@ -157,6 +157,7 @@ void PianoRollWidget::contentMouseMove(QMouseEvent* e){
             startSelectionBox(pos);
         }
     }
+        return ;
     default:
         updateCursor(pos);
         return ;
@@ -245,11 +246,11 @@ void PianoRollWidget::contentKeyRelease(QKeyEvent* e){
     }
 }
 
-void PianoRollWidget::contentLeave(QEvent* e){
+void PianoRollWidget::contentLeave([[maybe_unused]] QEvent* e){
     unsetCursor();
 }
 
-void PianoRollWidget::paintContent(QWidget* target, QPaintEvent* event){
+void PianoRollWidget::paintContent(QWidget* target, [[maybe_unused]] QPaintEvent* event){
     QPainter p(target);
 
     // vertical beats

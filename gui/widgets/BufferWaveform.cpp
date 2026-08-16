@@ -27,12 +27,12 @@
 
 BufferWaveform::BufferWaveform(ComponentModel* model, size_t channel, QWidget* parent):
     CollectionWidget(model, parent),
+    channel_(channel),
     model_(nullptr),
     upstream_(false),
+    plotWidth_(Theme::WAVEFORM_MIN_PLOT_WIDTH),
     minVolt_(-1.0),
     maxVolt_(1.0),
-    plotWidth_(Theme::WAVEFORM_MIN_PLOT_WIDTH),
-    channel_(channel),
     samplesPerPixel_(1),
     totalNumSamples_(0),
     voltages_(),
@@ -75,7 +75,7 @@ void BufferWaveform::setUpstream(bool upstream){
     rebuild();
 }
 
-void BufferWaveform::updateCollection(const CollectionRequest& req){
+void BufferWaveform::updateCollection([[maybe_unused]] const CollectionRequest& req){
 }
 
 void BufferWaveform::paintEvent(QPaintEvent* event){
@@ -204,11 +204,6 @@ void BufferWaveform::renderToCache(){
 }
 
 void BufferWaveform::drawWaveform(QPainter& painter){
-    double midY = height() 
-        - Theme::WAVEFORM_MARGIN_BOTTOM
-        - Theme::WAVEFORM_MARGIN_TOP ;
-    double startX = Theme::WAVEFORM_MARGIN_LEFT ;
-
     QPainterPath path ;
     const size_t n = voltages_.size();
     if ( n < 2 ) return ; // 0 case, also can't draw with only one bucket
@@ -236,9 +231,6 @@ void BufferWaveform::drawWaveform(QPainter& painter){
 }
 
 void BufferWaveform::drawGrid(QPainter& painter){
-    int plotWidth = width() - Theme::WAVEFORM_MARGIN_LEFT - Theme::WAVEFORM_MARGIN_RIGHT ;
-    int plotHeight = height() - Theme::WAVEFORM_MARGIN_TOP - Theme::WAVEFORM_MARGIN_BOTTOM ;
-
     QFont textFont = font() ;
     textFont.setPixelSize(Theme::WAVEFORM_GRID_FONT_SIZE);
     painter.setFont(textFont);
@@ -257,7 +249,7 @@ void BufferWaveform::drawGrid(QPainter& painter){
         // -0.5 to account for line width
         painter.drawLine( 
             QPointF(Theme::WAVEFORM_MARGIN_LEFT, y - 0.5),
-            QPointF(Theme::WAVEFORM_MARGIN_LEFT + plotWidth, y - 0.5)
+            QPointF(Theme::WAVEFORM_MARGIN_LEFT + plotWidth_, y - 0.5)
         );
         painter.drawText(5, y + fontYAdjust, 
             QString("%1 V").arg(volt, 0, 'f', 1)

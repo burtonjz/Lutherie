@@ -22,7 +22,7 @@
 #include <QScrollArea>
 #include <QCloseEvent>
 
-GroupEditor::GroupEditor(const QString& name, KDDWQt::MainWindow* mainWindow):
+GroupEditor::GroupEditor(const QString& name):
     KDDWQt::DockWidget(name),
     container_(new QWidget()),
     params_(),
@@ -54,7 +54,6 @@ void GroupEditor::addComponent(ComponentModel* model){
     int id = model->getId();
 
     if ( params_.contains(id) ) return ;
-    int count = params_.size() ;
 
     params_[id] = new ComponentParameters(model, container_);
 

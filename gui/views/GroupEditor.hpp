@@ -42,7 +42,7 @@ private:
     QPushButton* closeButton_ ;
 
 public:
-    explicit GroupEditor(const QString& name, KDDWQt::MainWindow* mainWindow);
+    explicit GroupEditor(const QString& name);
 
     QString getName() const ;
     void setName(const QString& name);

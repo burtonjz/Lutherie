@@ -205,7 +205,6 @@ void OscilloscopeWidget::drawLabels(QPainter& painter){
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
 
     // Y-axis amplitude labels
-    float dAmp = (Theme::OSCILLOSCOPE_MAX_AMPLITUDE - Theme::OSCILLOSCOPE_MIN_AMPLITUDE) / 5.0 ;
     for ( float amp : Theme::OSCILLOSCOPE_AMPLITUDE_LABELS ){
         int y = static_cast<int>(amplitudeToY(amp));
         QString label = QString::number(amp, 'f', 2);

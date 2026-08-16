@@ -26,8 +26,8 @@ CollapsibleEditor::CollapsibleEditor(QString title, QWidget* content, QWidget* p
     header_(new QWidget(this)),
     headerLine_(new QFrame(this)),
     expandButton_(new QToolButton(header_)),
-    content_(content),
     titleLabel_(new QLabel(this)),
+    content_(content),
     collapsed_(false)
 {
     content_->setParent(this);

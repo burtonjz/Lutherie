@@ -32,10 +32,10 @@
 ComponentParameters::ComponentParameters(ComponentModel* model, QWidget* parent):
     QWidget(parent),
     model_(model),
-    mainLayout_(new QVBoxLayout(this)),
-    paramLayout_(new QGridLayout()),
     detailedEditor_(nullptr),
-    fileSelector_(nullptr)
+    fileSelector_(nullptr),
+    mainLayout_(new QVBoxLayout(this)),
+    paramLayout_(new QGridLayout())
 {
     auto d = model_->getDescriptor();
     detailedEditor_ = createDetailedEditor(d.type);

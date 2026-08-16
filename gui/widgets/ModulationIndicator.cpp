@@ -40,7 +40,7 @@ bool ModulationIndicator::isActive() const {
     return active_ ; 
 }
 
-void ModulationIndicator::paintEvent(QPaintEvent* e){
+void ModulationIndicator::paintEvent([[maybe_unused]] QPaintEvent* e){
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     

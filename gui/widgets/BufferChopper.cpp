@@ -229,7 +229,7 @@ void BufferChopper::updateDrag(QPointF pos){
     update();
 }
 
-void BufferChopper::finishDrag(QPointF pos){
+void BufferChopper::finishDrag([[maybe_unused]] QPointF pos){
     isDragging_ = false ;
 
     if ( dragStart_ ){
@@ -244,9 +244,6 @@ void BufferChopper::finishDrag(QPointF pos){
 }
 
 void BufferChopper::sendCollectionUpdate(){
-    float startPosX = sampleToX(startSample_);
-    float endPosX = sampleToX(endSample_);
-
     json val({startSample_,endSample_});
     CollectionRequest req = {
         .action = CollectionAction::SET,

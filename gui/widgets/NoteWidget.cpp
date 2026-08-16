@@ -27,8 +27,8 @@ NoteWidget::NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float en
     velocity_(velocity),
     startBeat_(start),
     endBeat_(end),
-    selected_(false),
     noteName_(midi2str(midiNote)),
+    selected_(false),
     label_(new QLabel(noteName_, this))
 { 
     label_->setMargin(4);

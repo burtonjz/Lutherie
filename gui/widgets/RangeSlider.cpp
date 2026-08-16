@@ -263,7 +263,7 @@ void RangeSlider::updateDrag(QPointF pos){
     update();
 }
 
-void RangeSlider::finishDrag(QPointF pos){
+void RangeSlider::finishDrag([[maybe_unused]] QPointF pos){
     isDragging_ = false ;
     emit rangeUpdated(lower_, higher_);
 }

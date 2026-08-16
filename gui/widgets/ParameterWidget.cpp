@@ -52,7 +52,7 @@ std::pair<double, double> ParameterWidget::getRange() const {
     };
 }
 
-void ParameterWidget::setRange(const ParameterValue& min, const ParameterValue& max, bool block){
+void ParameterWidget::setRange([[maybe_unused]] const ParameterValue& min, [[maybe_unused]] const ParameterValue& max, [[maybe_unused]] bool block){
 }
 
 void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
@@ -90,7 +90,6 @@ void ParameterWidget::contextMenuEvent(QContextMenuEvent *event){
         editRange->addAction(rangeAction);
     }
     
-    QAction* editMidiControl = new QAction("Edit MIDI control", &menu);
     QMenu* editMidi = menu.addMenu("Edit MIDI Control");
     QWidget* midiWidget = createMidiLearn(editMidi);
     QWidgetAction* midiAction = new QWidgetAction(editMidi);
@@ -181,8 +180,8 @@ DelayWidget::DelayWidget(QWidget* parent):
     unitToggle_(new QToolButton()),
     valueLabel_(nullptr),
     minSamples_(0),
-    maxSamples_(0),
     minMs_(0),
+    maxSamples_(0),
     maxMs_(0)
 {
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
@@ -252,7 +251,7 @@ void DelayWidget::setRange(const ParameterValue& min, const ParameterValue& max,
     }
 }
 
-void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
+void DelayWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
     auto* edit = new QLineEdit(this);
     edit->setAlignment(Qt::AlignCenter);
     edit->setText(QString::number(knob_->value()));
@@ -399,6 +398,7 @@ void DelayWidget::updateDisplay(){
 =========================================
 */
 WaveformWidget::WaveformWidget(QWidget* parent):
+    ParameterWidget(parent),
     label_(nullptr),
     waveforms_(nullptr)
 {
@@ -462,6 +462,7 @@ void WaveformWidget::setValue(const ParameterValue& value, bool block){
 =========================================
 */
 FilterTypeWidget::FilterTypeWidget(QWidget* parent):
+    ParameterWidget(parent),
     label_(nullptr),
     type_(nullptr)
 {
@@ -528,6 +529,7 @@ void FilterTypeWidget::setValue(const ParameterValue& value, bool block){
 =========================================
 */
 MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent):
+    ParameterWidget(parent),
     label_(nullptr),
     type_(nullptr)
 {
@@ -594,6 +596,7 @@ void MonophonicTriggerBehaviorWidget::setValue(const ParameterValue& value, bool
 =========================================
 */
 BoolWidget::BoolWidget(ParameterType p, QWidget* parent):
+    ParameterWidget(parent),
     label_(nullptr),
     toggle_(nullptr),
     param_(p)
@@ -646,6 +649,7 @@ void BoolWidget::setValue(const ParameterValue& value, bool block){
 =========================================
 */
 RecordWidget::RecordWidget(QWidget* parent):
+    ParameterWidget(parent),
     btn_(new QPushButton(this)),
     recordIcon_(makeRecordStopIcon(true)),
     stopIcon_(makeRecordStopIcon(false))
@@ -813,7 +817,7 @@ void SliderWidget::setRange(const ParameterValue& min, const ParameterValue& max
     if ( block ) updateDisplay();
 }
 
-void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
+void SliderWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
     auto s2v = [this](int v){ return v * std::pow(10, -1.0 * precision_);};
 
     auto* edit = new QLineEdit(this);
