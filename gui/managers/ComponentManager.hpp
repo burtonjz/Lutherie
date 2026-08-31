@@ -25,7 +25,7 @@
 #include "widgets/ComponentParameters.hpp"
 #include "widgets/ModulationParameters.hpp"
 #include "requests/ConnectionRequest.hpp"
-#include "requests/DataDescriptor.hpp"
+#include "requests/DataApiHeader.hpp"
 
 #include <kddockwidgets/MainWindow.h>
 #include <QObject>
@@ -79,7 +79,7 @@ private:
 
 public slots:
     void onControlMessageReceived(const json& msg);
-    void onDataMessageReceived(DataDescriptor header, std::vector<double> buffer);
+    void onDataMessageReceived(DataApiHeader header, std::vector<double> buffer);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onParameterRangeEdited(int componentId, ParameterType p, ParameterValue min, ParameterValue max);
     void onParameterMidiEdited(int componentId, ParameterType p, uint8_t ctrl);

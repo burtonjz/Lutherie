@@ -115,6 +115,9 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     case ParameterType::LOOP:
         w = new BoolWidget(p, this);
         break ;
+    case ParameterType::RECORD:
+        w = new RecordWidget(this);
+        break ;
     default:
         w = new SliderWidget(p, this);
         break ;
@@ -185,6 +188,20 @@ QWidget* ComponentParameters::createDetailedEditor(ComponentType t){
         scroll->setWidgetResizable(true);
         scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         model_->requestBufferData(model_->getId(), 0);
+        return scroll ;
+    }
+    case ComponentType::StreamRecorder:
+    case ComponentType::FileBuffer:
+    case ComponentType::BufferReverser:
+    {
+        auto* scroll = new QScrollArea();
+        scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        scroll->verticalScrollBar()->setEnabled(false);
+
+        BufferWaveform* wf = new BufferWaveform(model_, 0);
+        scroll->setWidget(wf);
+        scroll->setWidgetResizable(true);
+        scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         return scroll ;
     }
     default:

@@ -19,7 +19,7 @@
 #include "managers/StateManager.hpp"
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
-#include "managers/AnalysisManager.hpp"
+#include "api/StreamApiClient.hpp"
 #include "views/PeripheralConfig.hpp"
 #include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
@@ -79,6 +79,7 @@ Synth::Synth(QWidget* parent):
 
 Synth::~Synth(){
     PeripheralConfig::destroy();
+    StreamApiClient::instance()->destroy();
 }
 
 void Synth::configureMenu(){
@@ -239,11 +240,11 @@ void Synth::configureDocks(){
     modulationDock_->close();
 
     // Analyzer Docks
-    for ( auto typ : AnalysisManager::instance()->getAnalyzerTypes() ){
+    for ( auto typ : StreamApiClient::instance()->getAnalyzerTypes() ){
         QString name = QString::fromStdString(ComponentRegistry::getComponentDescriptor(typ).name);
 
         auto dock = new KDDWQt::DockWidget("__analyzerDock_" + name);
-        dock->setWidget(AnalysisManager::instance()->getAnalyzerWidget(typ));
+        dock->setWidget(StreamApiClient::instance()->getAnalyzerWidget(typ));
         
         dock->setTitle(name);
         dock->close();

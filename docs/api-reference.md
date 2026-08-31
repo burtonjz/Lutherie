@@ -242,7 +242,7 @@ The Data API is **push-only**: clients connect and receive a stream of binary me
 
 ### 3.1 Wire format
 
-Each message is a fixed header immediately followed by a raw `double[]` payload, with no delimiter — length is derived from the header. See `./shared/requests/DataDescriptor.hpp` for the header definition.
+Each message is a fixed header immediately followed by a raw `double[]` payload, with no delimiter — length is derived from the header. See `./shared/requests/DataApiHeader.hpp` for the header definition.
 
 Because messages have no boundary marker beyond the declared `size`, clients **must** read exactly `HEADER_SIZE` bytes, then exactly `size` bytes, looping on partial `recv()` (TCP gives no message-boundary guarantee) — see `recv_exact()` in `./debug/control-client.py` for a reference implementation.
 

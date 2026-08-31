@@ -18,10 +18,8 @@
 #ifndef DATA_API_HANDLER_HPP_
 #define DATA_API_HANDLER_HPP_
 
-#include "requests/DataDescriptor.hpp"
-
+#include "requests/DataApiHeader.hpp"
 #include <unordered_set>
-#include <vector>
 
 class Engine ;
 
@@ -40,7 +38,7 @@ public:
 
     void start();
     void onClientConnection(int clientSock);
-    void sendApiData(DataDescriptor header, const std::vector<double>& data);
+    void sendApiData(DataApiHeader header, const double* data, const size_t size);
 
 private:
     bool sendAll(int sock, const uint8_t* data, std::size_t len);

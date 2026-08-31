@@ -94,7 +94,11 @@ void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
                 magnitudes[j] = 20.0 * std::log10(magnitude);
             }
 
-            StreamingApiHandler::instance()->send(magnitudes, id);
+            DataApiHeader header = {
+                .componentId = static_cast<uint32_t>(id),
+                .channel = 0
+            };
+            StreamingApiHandler::instance()->send(header, magnitudes.data(), magnitudes.size());
 
             // 50% overlap
             std::memmove(fftBuffer_.data(),

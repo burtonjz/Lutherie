@@ -61,6 +61,11 @@ public:
     bool hasBuffer(size_t channel) const ;
     const std::vector<double>& getBuffer(size_t channel) const ;
     void setBuffer(size_t channel, std::vector<double> buffer);
+    
+    /*
+    Only used for udp live updating, not registered analyzers (see StreamApiClient.hpp for more details)
+    */
+    void appendBuffer(size_t channel, const float* data, size_t count);
 
     bool hasUpstreamBuffer(size_t channel) const ;
     const std::vector<double>& getUpstreamBuffer(size_t channel) const ;

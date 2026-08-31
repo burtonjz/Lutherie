@@ -32,7 +32,6 @@ void StreamRecorder::onParameterChanged(ParameterType p, [[maybe_unused]] bool i
     if ( p != ParameterType::RECORD ) return ;
 
     collecting_ = parameters_->getParameter<ParameterType::RECORD>()->getValue();
-    SPDLOG_DEBUG("collecting_ set to {}", collecting_);
 
     if ( !collecting_ && AudioBufferComponent::buffers_[0].size() > 0 ){
         notifyDownstream(0);
@@ -40,12 +39,18 @@ void StreamRecorder::onParameterChanged(ParameterType p, [[maybe_unused]] bool i
 }
 
 void StreamRecorder::process(const double* data, size_t size, ComponentId id){
+    DataApiHeader header = {
+        .componentId = static_cast<uint32_t>(id),
+        .channel = 0
+    };
+
+    // convert down to float for stream
     std::vector<float> output(size) ;
     std::copy(data, data + size, output.data());
-    StreamingApiHandler::instance()->send(output, id);
+
+    StreamingApiHandler::instance()->send(header, output.data(), output.size());
 
     // also stash into internal buffer
     auto& internalBuffer = AudioBufferComponent::buffers_[0];
     internalBuffer.insert(internalBuffer.end(), data, data + size);
-    SPDLOG_DEBUG("internal buffer appended {} samples. new size: {}", size, internalBuffer.size() );
 }

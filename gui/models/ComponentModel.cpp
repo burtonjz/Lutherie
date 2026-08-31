@@ -95,6 +95,17 @@ void ComponentModel::setBuffer(size_t channel, std::vector<double> buffer){
     emit bufferUpdated(channel);
 }
 
+void ComponentModel::appendBuffer(size_t channel, const float* data, size_t count){
+    if ( !buffers_.contains(channel) ){
+        buffers_[channel] = std::vector<double>(data, data + count);
+        return ;
+    }
+
+    auto& buf = buffers_.at(channel);
+    buf.insert(buf.end(), data, data + count);
+    emit bufferUpdated(channel);
+}
+
 bool ComponentModel::hasUpstreamBuffer(size_t channel) const {
     if ( !upstream_.contains(channel) ) return false ;
 

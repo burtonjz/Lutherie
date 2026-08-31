@@ -498,7 +498,7 @@ void ComponentManager::onControlMessageReceived(const json& msg){
     }
 }
 
-void ComponentManager::onDataMessageReceived(DataDescriptor header, std::vector<double> buffer){
+void ComponentManager::onDataMessageReceived(DataApiHeader header, std::vector<double> buffer){
     auto* model = getModel(header.componentId);
     if ( !model ){
         SPDLOG_WARN("no model with component id {} is available.", header.componentId); 

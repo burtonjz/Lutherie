@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "managers/AnalysisManager.hpp"
+#include "api/StreamApiClient.hpp"
 #include "managers/ComponentManager.hpp"
 
 #include "config/Config.hpp"
@@ -26,12 +26,14 @@
 
 #include <spdlog/spdlog.h>
 
-AnalysisManager* AnalysisManager::instance(){
-    static AnalysisManager manager ;
-    return &manager ;
+StreamApiClient* StreamApiClient::instance(){
+    if ( !instance_ ){
+        instance_ = new StreamApiClient();
+    }
+    return instance_ ;
 }
 
-AnalysisManager::AnalysisManager(QObject* parent):
+StreamApiClient::StreamApiClient(QObject* parent):
     QObject(parent),
     analyzerWidgets_(),
     registeredComponents_(),
@@ -40,7 +42,7 @@ AnalysisManager::AnalysisManager(QObject* parent):
 {
     setPort(port_);
 
-    // create child widgets
+    // stream client maintains analyzer widgets directly
     analyzerWidgets_[ComponentType::SpectrumAnalyzer] =
         new SpectrumAnalyzerWidget();
 
@@ -50,20 +52,20 @@ AnalysisManager::AnalysisManager(QObject* parent):
     // connections
     connect(
         udpSocket_, &QUdpSocket::readyRead, 
-        this, &AnalysisManager::onReadyRead
+        this, &StreamApiClient::onReadyRead
     );
     connect(
         ComponentManager::instance(), &ComponentManager::componentAdded,
-        this, &AnalysisManager::onComponentAdded
+        this, &StreamApiClient::onComponentAdded
     );
 
     connect(
         ComponentManager::instance(), &ComponentManager::componentRemoved,
-        this, &AnalysisManager::onComponentRemoved
+        this, &StreamApiClient::onComponentRemoved
     );
 }
 
-void AnalysisManager::setPort(quint16 port){
+void StreamApiClient::setPort(quint16 port){
     if ( udpSocket_->state() == QAbstractSocket::BoundState ){
         udpSocket_->close();
     }
@@ -77,14 +79,14 @@ void AnalysisManager::setPort(quint16 port){
     }
 }
 
-QWidget* AnalysisManager::getAnalyzerWidget(ComponentType typ) const {
+QWidget* StreamApiClient::getAnalyzerWidget(ComponentType typ) const {
     if ( analyzerWidgets_.contains(typ) ){
         return dynamic_cast<QWidget*>(analyzerWidgets_.at(typ));
     }
     return nullptr ;
 }   
 
-std::vector<ComponentType> AnalysisManager::getAnalyzerTypes() const {
+std::vector<ComponentType> StreamApiClient::getAnalyzerTypes() const {
     std::vector<ComponentType> output ;
     for ( const auto& [key, _] : analyzerWidgets_ ){
         output.push_back(key);
@@ -92,31 +94,46 @@ std::vector<ComponentType> AnalysisManager::getAnalyzerTypes() const {
     return output ;
 }
 
-void AnalysisManager::onReadyRead(){
+void StreamApiClient::destroy(){
+    while ( instance_->analyzerWidgets_.size() > 0 ){
+        auto it = instance_->analyzerWidgets_.begin();
+        delete it->second ;
+        instance_->analyzerWidgets_.erase(it->first);
+    }
+    delete instance_ ;
+    instance_ = nullptr ;
+}
+
+void StreamApiClient::onReadyRead(){
+    static const qsizetype headerSize = sizeof(DataApiHeader);
     while ( udpSocket_->hasPendingDatagrams() ){
         QByteArray datagram ;
 
         datagram.resize(udpSocket_->pendingDatagramSize());
         udpSocket_->readDatagram(datagram.data(), datagram.size());
 
-        // parse incoming data.
-        // header int32 component id, then array of floats
-        int32_t componentId ;
-        std::memcpy(&componentId, datagram.data(), sizeof(int32_t));
-        const float* data = reinterpret_cast<const float*>(datagram.data() + sizeof(int32_t));
-        size_t count = (datagram.size() - sizeof(int32_t)) / sizeof(float);
+        DataApiHeader header ;
+        std::memcpy(&header, datagram.data(), headerSize);
 
-        if ( !registeredComponents_.contains(componentId) ) return ;
+        const float* data = reinterpret_cast<const float*>(datagram.data() + headerSize);
+        size_t count = (datagram.size() - headerSize) / sizeof(float);
 
-        ComponentType typ = registeredComponents_.at(componentId);
+        // if it's a registered analyzer component
+        if ( registeredComponents_.contains(header.componentId) ){
+            ComponentType typ = registeredComponents_.at(header.componentId);
+            if ( !analyzerWidgets_.contains(typ) ) return ;
+            analyzerWidgets_.at(typ)->onData(header.componentId, data, count);
+            return ;
+        }
 
-        if ( !analyzerWidgets_.contains(typ) ) return ;
-
-        analyzerWidgets_.at(typ)->onData(componentId, data, count);
+        // otherwise, just append the data to the relevant component model
+        auto* model = ComponentManager::instance()->getModel(header.componentId);
+        if ( !model ) return ;
+        model->appendBuffer(header.channel, data, count);
     }
 }
 
-void AnalysisManager::onComponentAdded(int componentId, ComponentType typ){
+void StreamApiClient::onComponentAdded(int componentId, ComponentType typ){
     if ( registeredComponents_.contains(componentId) ) return ;
     if ( !analyzerWidgets_.contains(typ) ) return ;
 
@@ -127,7 +144,7 @@ void AnalysisManager::onComponentAdded(int componentId, ComponentType typ){
     );
 }
 
-void AnalysisManager::onComponentRemoved(int componentId){
+void StreamApiClient::onComponentRemoved(int componentId){
     if ( !registeredComponents_.contains(componentId) ) return ;
     
     ComponentType typ = registeredComponents_.at(componentId);
@@ -138,7 +155,7 @@ void AnalysisManager::onComponentRemoved(int componentId){
 
 }
 
-void AnalysisManager::onComponentRename(int componentId){
+void StreamApiClient::onComponentRename(int componentId){
     if ( !registeredComponents_.contains(componentId) ) return ;
 
     ComponentType typ = registeredComponents_.at(componentId);

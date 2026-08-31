@@ -18,7 +18,7 @@
 #ifndef DATA_API_CLIENT_HPP_
 #define DATA_API_CLIENT_HPP_
 
-#include "requests/DataDescriptor.hpp"
+#include "requests/DataApiHeader.hpp"
 
 #include <QObject>
 #include <QTcpSocket>
@@ -47,7 +47,7 @@ public:
 signals:
     void connected();
     void disconnected();
-    void dataReceived(DataDescriptor header, std::vector<double> buffer);
+    void dataReceived(DataApiHeader header, std::vector<double> buffer);
     void errorOccurred(const QString &error);
 
 private slots:

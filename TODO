@@ -3,18 +3,13 @@
 ---
 
 ## MVP Requirements
-
-### workflow / safety
-- [Medium] RCU snapshot for SignalChain to properly handle concurrency
   
-### New Components
-- [Medium] `StreamRecorder`  -- convert audio stream to buffer (audio in, buffer out)
+### New Component
 - [Medium] `Arpeggiator` -- play series of notes relative to pressed notes in a loop (midi in, midi out)
 - [Medium] `VirtualKeyboard` -- play virtual midi keyboard real time.
 
 ### New Patches
 - [Quick] basic all pass
-- [Quick] basic comb filter
 - [Quick] basic reverb
 - [Quick] example supersaw
 - [Quick] example additive synthesis
@@ -23,6 +18,9 @@
 
 ## Day 2
 
+### workflow / safety
+- [Medium] RCU snapshot for SignalChain to properly handle concurrency
+  
 ### Peripheral Devices
 - [Big] Support Audio Input peripherals. Eagerly convert input to the audio output device's rate/blocksize (already treated as ground truth throughout the graph) at ingestion, so the rest of the graph only ever sees one uniform clock domain. Conversion (resample + re-block + jitter buffer) happens inside the peripheral component's implementation — no user-facing seam; component just presents a single `AudioSignal` output. Device selection / input gain are fine to expose; resampling internals are not.
 - [Big] Allow multiple MIDI peripheral devices
@@ -48,7 +46,8 @@
 - [Big] `SpectralDrawer` -- Allow a user to build a spectrograph (buffer out). *Depends on `SpectralBuffer` type + `Buffer -> SpectralBuffer` translation.*
 - [Big] `SpectralFilter` -- Spectrogram of input buffer, with option to filter out frequency bands (buffer in, buffer out). *Depends on `SpectralBuffer` type + STFT/ISTFT translation components. Magnitude-only edits (boost/cut bins, keep original phase) are safe/low-risk; anything that moves content in frequency or time will need phase-locking handling later.*
 - [Big] `Mixer` *note: investigate whether this should be a primary component or a configured GroupComponent (e.g., chained panners with some scalar controls or something)*
-
+- [Big] `FrequencyResponse` -- primarily for use with filters, allow for a frequency response difference between two signals (audio + buffer versions?)
+ 
 ### Configuration / UX
 - [Quick] Allow group deletions, but with a warning pop-up
 - [Quick] "Open editor" button on docked `ComponentParameters` (and node right-click menu) to launch specialized widget as a floating KDDW dock 

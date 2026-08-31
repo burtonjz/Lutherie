@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ANALYSIS_MANAGER_HPP_
-#define ANALYSIS_MANAGER_HPP_
+#ifndef STREAM_API_CLIENT_HPP_
+#define STREAM_API_CLIENT_HPP_
 
 #include "types/ComponentType.hpp"
 #include "interfaces/IAnalyzerWidget.hpp"
@@ -25,7 +25,7 @@
 #include <QUdpSocket>
 
 
-class AnalysisManager: public QObject {
+class StreamApiClient: public QObject {
     Q_OBJECT
 
 private:
@@ -35,19 +35,22 @@ private:
     QUdpSocket* udpSocket_ ;
     quint16 port_ ;
      
-    explicit AnalysisManager(QObject* parent = nullptr);
+    explicit StreamApiClient(QObject* parent = nullptr);
+    static inline StreamApiClient* instance_ = nullptr ;
 
 public:
-    static AnalysisManager* instance();
+    static StreamApiClient* instance();
 
-    AnalysisManager(const AnalysisManager&) = delete ;
-    AnalysisManager& operator=(const AnalysisManager&) = delete ;
-    AnalysisManager(AnalysisManager&&) = delete ;
-    AnalysisManager& operator=(AnalysisManager&&) = delete ;
+    static void destroy();
+
+    StreamApiClient(const StreamApiClient&) = delete ;
+    StreamApiClient& operator=(const StreamApiClient&) = delete ;
+    StreamApiClient(StreamApiClient&&) = delete ;
+    StreamApiClient& operator=(StreamApiClient&&) = delete ;
 
     void setPort(quint16 port);
 
-    QWidget* getAnalyzerWidget(ComponentType typ) const;
+    QWidget* getAnalyzerWidget(ComponentType typ) const ;
     std::vector<ComponentType> getAnalyzerTypes() const ;
 
 private slots:
@@ -60,4 +63,4 @@ public slots:
 
 };
 
-#endif // ANALYSIS_MANAGER_HPP_
+#endif // STREAM_API_CLIENT_HPP_

@@ -133,7 +133,11 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
                     "For componentId={}, oscilloscope has {} crossing candidates, chosen={:.1f} score={:.3f} margin={:.3f} deltaFromLast={:.1f}",
                     id, candidates.size(), bestCandidatePos, bestScore, margin, bestCandidatePos - lastPos
                 );
-                StreamingApiHandler::instance()->send(bestWindow, id);
+                DataApiHeader header = {
+                    .componentId = static_cast<uint32_t>(id),
+                    .channel = 0
+                };
+                StreamingApiHandler::instance()->send(header, bestWindow.data(), bestWindow.size());
                 prevWindow_[id] = std::move(bestWindow);
             } 
             bufferPosition_ = 0 ;

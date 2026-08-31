@@ -1,0 +1,361 @@
+{
+  "components": [
+    {
+      "id": 7,
+      "name": "Spectrum Analyzer"
+    },
+    {
+      "id": 6,
+      "name": "Spectrum Analyzer"
+    },
+    {
+      "id": 5,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": -1.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.49799999594688416,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": -1.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.45899999141693115,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": -1.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "Delay",
+      "parameters": {
+        "delay": {
+          "currentValue": 100,
+          "defaultValue": 0,
+          "maximumValue": 5000,
+          "minimumValue": 0,
+          "modulatable": true
+        },
+        "gain": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 1,
+      "name": "Delay",
+      "parameters": {
+        "delay": {
+          "currentValue": 5,
+          "defaultValue": 0,
+          "maximumValue": 5000,
+          "minimumValue": 0,
+          "modulatable": true
+        },
+        "gain": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 0,
+      "name": "Oscillator",
+      "parameters": {
+        "amplitude": {
+          "currentValue": 0.075,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        },
+        "frequency": {
+          "currentValue": 200.0,
+          "defaultValue": 440.0,
+          "maximumValue": 23760.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        },
+        "gain": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 1,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 1,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 2,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 3,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 2,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 4,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 1,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 3,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 4,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 6,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 7,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    }
+  ],
+  "midi_controls": null,
+  "nodes": [
+    {
+      "deviceId": 1,
+      "hidden_sockets": null,
+      "name": "MIDI Input Device",
+      "node_type": "PeripheralNode",
+      "xpos": -589.0,
+      "ypos": 246.0
+    },
+    {
+      "deviceId": 0,
+      "hidden_sockets": null,
+      "name": "Audio Output Device",
+      "node_type": "PeripheralNode",
+      "xpos": 683.615,
+      "ypos": -86.47999999999999
+    },
+    {
+      "componentId": 0,
+      "hidden_sockets": null,
+      "name": "Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": -472.0,
+      "ypos": -75.5
+    },
+    {
+      "componentId": 1,
+      "hidden_sockets": null,
+      "name": "Feedforward Delay",
+      "node_type": "ComponentNode",
+      "xpos": -245.42749999999987,
+      "ypos": -245.92749999999998
+    },
+    {
+      "componentId": 2,
+      "hidden_sockets": null,
+      "name": "Feedback Delay",
+      "node_type": "ComponentNode",
+      "xpos": 320.875,
+      "ypos": 90.36249999999998
+    },
+    {
+      "componentId": 3,
+      "hidden_sockets": null,
+      "name": "Feedback Gain",
+      "node_type": "ComponentNode",
+      "xpos": 535.7649999999999,
+      "ypos": 90.03249999999997
+    },
+    {
+      "componentId": 4,
+      "hidden_sockets": null,
+      "name": "Feedforward Gain",
+      "node_type": "ComponentNode",
+      "xpos": -54.222500000000025,
+      "ypos": -248.61999999999995
+    },
+    {
+      "componentId": 5,
+      "hidden_sockets": null,
+      "name": "Add",
+      "node_type": "ComponentNode",
+      "xpos": 143.08499999999992,
+      "ypos": -77.36625
+    },
+    {
+      "componentId": 6,
+      "name": "OscillatorSpectrum",
+      "node_type": "ComponentNode",
+      "xpos": 392.22499999999985,
+      "ypos": -364.34875
+    },
+    {
+      "componentId": 7,
+      "name": "CombSpectrum",
+      "node_type": "ComponentNode",
+      "xpos": 369.7424999999999,
+      "ypos": -273.09624999999994
+    },
+    {
+      "componentIds": [
+        7,
+        6
+      ],
+      "groupId": 0,
+      "hidden_sockets": null,
+      "name": "Spectrum Analyzer",
+      "node_type": "GroupNode",
+      "xpos": 719.4399999999999,
+      "ypos": 399.395
+    }
+  ]
+}

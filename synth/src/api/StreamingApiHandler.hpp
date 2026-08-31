@@ -16,12 +16,10 @@
  */
 
 
-#ifndef ANALYTICS_ENGINE_HPP_
-#define ANALYTICS_ENGINE_HPP_
+#ifndef STREAMING_API_HANDLER_HPP_
+#define STREAMING_API_HANDLER_HPP_
 
-
-#include <vector>
-#include <kissfft/kiss_fft.h>
+#include "requests/DataApiHeader.hpp"
 
 // Cross-platform socket includes
 #ifdef _WIN32
@@ -68,11 +66,11 @@ public:
     
     void processContexts();
 
-    void send(const std::vector<float>& output, int componentId);
+    void send(DataApiHeader header, const float* data, const size_t size);
     
     void initSocket();
     void closeSocket();
  
 };
 
-#endif // ANALYTICS_ENGINE_HPP_
+#endif // STREAMING_API_HANDLER_HPP_

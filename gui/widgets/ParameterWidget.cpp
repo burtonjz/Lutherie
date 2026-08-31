@@ -656,23 +656,26 @@ RecordWidget::RecordWidget(QWidget* parent):
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
-    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
 
     // create status toggle
-    btn_->setIcon(makeRecordStopIcon(true));
-    btn_->setFixedSize(Theme::PARAMETER_WIDGET_WIDTH, Theme::PARAMETER_WIDGET_WIDTH);
+    btn_->setFixedSize(
+        Theme::RECORD_BUTTON_ICON_WIDTH * 1.5, 
+        Theme::RECORD_BUTTON_ICON_HEIGHT * 1.5
+    );
+    btn_->setCheckable(true);
+    btn_->setChecked(false);
+    btn_->setIcon(recordIcon_);
     btn_->setIconSize(QSize(
         Theme::RECORD_BUTTON_ICON_WIDTH,
         Theme::RECORD_BUTTON_ICON_HEIGHT
     ));
-    btn_->setIcon(recordIcon_);
+
     layout->addWidget(btn_);
  
     // connections
     connect(btn_, &QPushButton::toggled, this, [this](bool checked){
-        btn_->setIcon(checked ? recordIcon_ : stopIcon_);
-        btn_->setToolTip(checked ? "Start Recording" : "Stop Recording");
+        btn_->setIcon(checked ? stopIcon_ : recordIcon_);
+        btn_->setToolTip(checked ? "Stop Recording" : "Start Recording");
         emit ParameterWidget::valueChanged();
     });
 }
@@ -686,14 +689,18 @@ ParameterValue RecordWidget::getValue() const {
 }
 
 void RecordWidget::setValue(const ParameterValue& value, bool block){
-    bool status = std::get<bool>(value);
+    bool checked = std::get<bool>(value);
 
     QSignalBlocker blocker(btn_);
     if ( !block ) blocker.unblock();
 
-    btn_->setChecked(status);
-    btn_->setIcon(status ? recordIcon_ : stopIcon_);
-    btn_->setToolTip(status ? "Start Recording" : "Stop Recording");
+    btn_->setChecked(checked);
+
+    // just sanity check to keep icon in sync even if signal blocked.
+    if ( block ){
+        btn_->setIcon(checked ? stopIcon_ : recordIcon_);
+        btn_->setToolTip(checked ? "Stop Recording" : "Start Recording");
+    }
 }
 
 QIcon RecordWidget::makeRecordStopIcon(bool record){

@@ -129,15 +129,17 @@ void DataApiHandler::onClientConnection(int sock){
     close(sock);
 }
 
-void DataApiHandler::sendApiData(DataDescriptor header, const std::vector<double>& data){
-    static_assert(sizeof(DataDescriptor) == 16, "DataDescriptor size changed -- check for padding before memcpy");
+void DataApiHandler::sendApiData(DataApiHeader header, const double* data, const size_t size){
+    static const size_t headerSize = sizeof(DataApiHeader);
+    static_assert(headerSize == 16, "DataApiHeader size changed -- check for padding before memcpy");
 
-    header.size = static_cast<uint64_t>(data.size() * sizeof(double));
+    header.size = static_cast<uint64_t>(size * sizeof(double));
 
-    std::vector<uint8_t> buffer(sizeof(DataDescriptor) + header.size);
-    std::memcpy(buffer.data(), &header, sizeof(DataDescriptor));
+    // send header, then data as double
+    std::vector<uint8_t> buffer(headerSize + header.size);
+    std::memcpy(buffer.data(), &header, headerSize);
     if ( header.size > 0 ){
-        std::memcpy(buffer.data() + sizeof(DataDescriptor), data.data(), header.size);
+        std::memcpy(buffer.data() + headerSize, data, header.size);
     }
 
     for ( const auto& sock : clientSockets_ ){

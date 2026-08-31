@@ -15,16 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef DATA_DESCRIPTOR_HPP_
-#define DATA_DESCRIPTOR_HPP_
+#ifndef DATA_API_HEADER_HPP_
+#define DATA_API_HEADER_HPP_
 
 #include <cstdint>
 #include <string>
 
-struct DataDescriptor {
+struct DataApiHeader {
     uint32_t componentId ;
     uint32_t channel ;
-    uint64_t size ;
+    uint64_t size = 0 ;
 
     std::string toString() const {
         return std::to_string(componentId) 
@@ -35,18 +35,18 @@ struct DataDescriptor {
         return std::hash<std::string>()(toString());
     }
 
-    bool operator==(const DataDescriptor& other) const {
+    bool operator==(const DataApiHeader& other) const {
         return componentId == other.componentId && 
             channel == other.channel ;
     }
 };
 
 struct DataDescriptorHash {
-    std::size_t operator()(const DataDescriptor& desc) const {
+    std::size_t operator()(const DataApiHeader& desc) const {
         return desc.hash() ;
     }
 };
 
-static_assert(sizeof(DataDescriptor) == 16);
+static_assert(sizeof(DataApiHeader) == 16);
 
-#endif // DATA_DESCRIPTOR_HPP_
+#endif // DATA_API_HEADER_HPP_

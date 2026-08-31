@@ -132,10 +132,12 @@ void AudioBufferComponent::notifyDownstream(size_t channel){
             conn.component->onInputUpdated();
         }
     }
-    DataDescriptor header ;
-    header.componentId = getId();
-    header.channel = channel ;
-    DataApiHandler::instance()->sendApiData(header, getBuffer(channel));
+    DataApiHeader header = {
+        .componentId = static_cast<uint32_t>(getId()),
+        .channel = static_cast<uint32_t>(channel)
+    };
+    const auto& buf = getBuffer(channel);
+    DataApiHandler::instance()->sendApiData(header, buf.data(), buf.size());
 }
 
 size_t AudioBufferComponent::getMaxBufferFrames() const {

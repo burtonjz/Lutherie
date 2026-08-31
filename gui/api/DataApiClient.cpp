@@ -17,7 +17,7 @@
 
 #include "api/DataApiClient.hpp"
 #include "config/Config.hpp"
-#include "requests/DataDescriptor.hpp"
+#include "requests/DataApiHeader.hpp"
 
 #include <spdlog/spdlog.h>
 #include <string>
@@ -49,20 +49,20 @@ void DataApiClient::connectToBackend(){
 // slot functions
 
 void DataApiClient::onReadyRead(){
+    static const qsizetype headerSize = sizeof(DataApiHeader);
     readBuffer_.append(socket_->readAll());
 
     while ( true ){
         // Wait until the full header is available
-        qsizetype headerSize = sizeof(DataDescriptor);
         if ( readBuffer_.size() < headerSize ){
             return ;
         }
             
-        DataDescriptor header;
+        DataApiHeader header ;
         std::memcpy(
             &header,
             readBuffer_.constData(),
-            sizeof(DataDescriptor)
+            sizeof(DataApiHeader)
         );
         
         const qsizetype dataSize = header.size ;

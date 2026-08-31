@@ -1062,13 +1062,12 @@ json ControlApiHandler::getBufferData(const json& request){
     }
 
     const auto& buffer = c->getBuffer(channel);
-    DataDescriptor header {
+    DataApiHeader header {
         .componentId = static_cast<uint32_t>(id),
         .channel = static_cast<uint32_t>(channel),
-        .size = static_cast<uint64_t>(buffer.size() * sizeof(double))
     };
 
-    DataApiHandler::instance()->sendApiData(header, c->getBuffer(channel));
+    DataApiHandler::instance()->sendApiData(header, buffer.data(), buffer.size());
     return response ;
 
 }

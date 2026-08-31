@@ -62,8 +62,6 @@ void StreamingApiHandler::stop(){
     closeSocket();
 }
 
-
-
 void StreamingApiHandler::initSocket() {
     Config::load();
 #ifdef _WIN32
@@ -129,19 +127,23 @@ void StreamingApiHandler::processContexts(){
     }
 }
 
-void StreamingApiHandler::send(const std::vector<float>& output, int componentId) {
+void StreamingApiHandler::send(DataApiHeader header, const float* data, const size_t size){
+    static const size_t headerSize = sizeof(DataApiHeader);
+    static_assert(headerSize == 16, "DataApiHeader size changed -- check for padding before memcpy");
+
     if ( udpSocket_ == INVALID_SOCKET ){
         return ;
     }
 
-    // ComponentId as int32, then data as float: [float, float, float, ...]
-    size_t dataSize = sizeof(int32_t) + output.size() * sizeof(float);
-    std::vector<char> packet(dataSize);
+    header.size = static_cast<uint64_t>(size * sizeof(float));
 
-    int32_t id = static_cast<int32_t>(componentId);
-    std::memcpy(packet.data(), &id, sizeof(int32_t));
-    std::memcpy(packet.data() + sizeof(int32_t), output.data(), output.size() * sizeof(float));
+    // send header, then data as float
+    std::vector<uint8_t> packet(headerSize + header.size);
+    std::memcpy(packet.data(), &header, headerSize);
+    if ( header.size > 0 ){
+        std::memcpy(packet.data() + headerSize, data, header.size);
+    }
     
-    sendto(udpSocket_, packet.data(), static_cast<int>(dataSize), 0,
+    sendto(udpSocket_, packet.data(), packet.size(), 0,
         (struct sockaddr*)&destAddr_, sizeof(destAddr_));
 }
