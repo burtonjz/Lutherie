@@ -354,11 +354,10 @@ QMenu* Synth::buildComponentMenu(){
     quickActionSeparator->setVisible(false);
 
     // loop through each tag, create submenus and actions
-    for ( const auto& [tag, _] : tagMap){
+    for ( auto& [tag, types] : tagMap){
         QMenu* submenu = menu->addMenu(QString::fromStdString(tag));
         tagMenu_[tag] = submenu ;
 
-        std::vector<ComponentType> types = tagMap.at(tag);
         std::sort(types.begin(), types.end(), [](ComponentType a, ComponentType b){
             return ComponentRegistry::getComponentDescriptor(a).name
                 < ComponentRegistry::getComponentDescriptor(b).name ;
@@ -367,6 +366,7 @@ QMenu* Synth::buildComponentMenu(){
         for ( const auto& typ : types ){
             const auto& desc = ComponentRegistry::getComponentDescriptor(typ);
             QAction* action = submenu->addAction(QString::fromStdString(desc.name));
+            action->setData(static_cast<int>(typ));
             actionType_[action] = typ ;
             connect(action, &QAction::triggered, this, [typ](){
                 GraphPanel::instance()->onComponentSelected(typ);
@@ -417,7 +417,18 @@ QMenu* Synth::buildComponentMenu(){
 
     // enter: select component if one distinct match
     connect(
-        search, &QLineEdit::returnPressed, this, [menu, this](){
+        search, &QLineEdit::returnPressed, this, [this, menu, search](){
+            QString text = search->text();
+            // if exact match, select it
+            for ( const auto& [action, typ] : actionType_ ){
+                if ( visibleType_.count(typ) && action->text().compare(text, Qt::CaseInsensitive) == 0 ){
+                    menu->close();
+                    GraphPanel::instance()->onComponentSelected(typ);
+                    return ;
+                }
+            }
+
+            // otherwise, if only one substring match, select it
             if ( visibleType_.size() == 1 ){
                 ComponentType typ = *visibleType_.begin();
                 menu->close();
