@@ -1,0 +1,1255 @@
+{
+  "components": [
+    {
+      "id": 19,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.32283464074134827,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 18,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.4960629940032959,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 17,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 16,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 15,
+      "name": "ADSR Envelope",
+      "parameters": {
+        "attack": {
+          "currentValue": 0.10000000149011612,
+          "defaultValue": 0.10000000149011612,
+          "maximumValue": 4.0,
+          "minimumValue": 0.0010000000474974513,
+          "modulatable": true
+        },
+        "decay": {
+          "currentValue": 0.10000000149011612,
+          "defaultValue": 0.10000000149011612,
+          "maximumValue": 4.0,
+          "minimumValue": 0.0010000000474974513,
+          "modulatable": true
+        },
+        "release": {
+          "currentValue": 0.10000000149011612,
+          "defaultValue": 0.10000000149011612,
+          "maximumValue": 4.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        },
+        "retrigger": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 3,
+          "minimumValue": 0,
+          "modulatable": false
+        },
+        "sustain": {
+          "currentValue": 0.800000011920929,
+          "defaultValue": 0.800000011920929,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 14,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 3368.825906469125,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 13,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 3101.9550008653873,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 0,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.3937007784843445,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 1,
+      "name": "Spectrum Analyzer"
+    },
+    {
+      "id": 2,
+      "name": "Oscilloscope"
+    },
+    {
+      "id": 3,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.4803149700164795,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.6377952694892883,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.3937007784843445,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 6,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.23622047901153564,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 7,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": -1200.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 8,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 0.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 1200.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 10,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 1901.9550008653873,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 11,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 2400.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 12,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 15
+        },
+        "detune": {
+          "currentValue": 2786.3137138648344,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 7,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 8,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 9,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 10,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 11,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 12,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 13,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 14,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 1,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 3,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 4,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 6,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 16,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 17,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 18,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 19,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 1,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 2,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 3,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 14,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 4,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 13,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 5,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 12,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 6,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 11,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 16,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 7,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 17,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 18,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 9,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 10,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 7,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 8,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 9,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 10,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 11,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 12,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 13,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 14,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 15,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "socketType": "MIDI Outbound"
+      }
+    }
+  ],
+  "midi_controls": [
+    {
+      "action": "set_midi_control",
+      "componentId": 16,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 41
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 17,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 42
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 18,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 43
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 19,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 44
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 6,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 45
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 5,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 46
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 4,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 47
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 3,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 48
+    },
+    {
+      "action": "set_midi_control",
+      "componentId": 0,
+      "control_type": "continuous",
+      "parameter": "scalar",
+      "value": 49
+    }
+  ],
+  "nodes": [
+    {
+      "deviceId": 1,
+      "hidden_sockets": null,
+      "name": "MIDI Input Device",
+      "node_type": "PeripheralNode",
+      "xpos": -764.7208518656638,
+      "ypos": -95.68546428968796
+    },
+    {
+      "deviceId": 0,
+      "hidden_sockets": null,
+      "name": "Audio Output Device",
+      "node_type": "PeripheralNode",
+      "xpos": 652.085398134336,
+      "ypos": 181.05566071031205
+    },
+    {
+      "componentId": 0,
+      "hidden_sockets": null,
+      "name": "Master Volume",
+      "node_type": "ComponentNode",
+      "xpos": 328.73070374996087,
+      "ypos": -76.07557850921864
+    },
+    {
+      "componentId": 1,
+      "hidden_sockets": null,
+      "name": "Spectrum Analyzer",
+      "node_type": "ComponentNode",
+      "xpos": 642.3038744780856,
+      "ypos": -97.7140485396875
+    },
+    {
+      "componentId": 2,
+      "hidden_sockets": null,
+      "name": "Oscilloscope",
+      "node_type": "ComponentNode",
+      "xpos": 644.9067705874606,
+      "ypos": 28.004577475937253
+    },
+    {
+      "componentId": 3,
+      "name": "7th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 284.62212721015607,
+      "ypos": -601.1644929859372
+    },
+    {
+      "componentId": 4,
+      "name": "6th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 284.8345834669138,
+      "ypos": -721.5061360880462
+    },
+    {
+      "componentId": 5,
+      "name": "5th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 284.83458346691367,
+      "ypos": -835.2411360880461
+    },
+    {
+      "componentId": 6,
+      "name": "4th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 269.1629584669137,
+      "ypos": -946.992386088046
+    },
+    {
+      "componentId": 7,
+      "name": "Base Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 67.91999999999996,
+      "ypos": -1418.3624999999997
+    },
+    {
+      "componentId": 8,
+      "name": "1st Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 68.91999999999996,
+      "ypos": -1301.3624999999997
+    },
+    {
+      "componentId": 9,
+      "name": "2nd Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 67.91999999999996,
+      "ypos": -1182.3624999999997
+    },
+    {
+      "componentId": 10,
+      "name": "3rd Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 70.74712499999995,
+      "ypos": -1065.3114999999998
+    },
+    {
+      "componentId": 11,
+      "name": "4th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 71.96174999999994,
+      "ypos": -953.2789999999998
+    },
+    {
+      "componentId": 12,
+      "name": "5th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 71.91999999999996,
+      "ypos": -843.3624999999996
+    },
+    {
+      "componentId": 13,
+      "name": "6th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 73.88749999999993,
+      "ypos": -728.6399999999998
+    },
+    {
+      "componentId": 14,
+      "name": "7th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 78.69156899810957,
+      "ypos": -613.5682561436669
+    },
+    {
+      "componentId": 15,
+      "hidden_sockets": null,
+      "name": "ADSR Envelope",
+      "node_type": "ComponentNode",
+      "xpos": -506.6208518656639,
+      "ypos": -118.63546428968777
+    },
+    {
+      "componentId": 16,
+      "name": "Base Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 287.2821470906248,
+      "ypos": -1415.1305764093745
+    },
+    {
+      "componentId": 17,
+      "name": "1st Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 289.98797713124986,
+      "ypos": -1298.9623557734367
+    },
+    {
+      "componentId": 18,
+      "name": "2nd Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 278.22208346691366,
+      "ypos": -1188.3486360880459
+    },
+    {
+      "componentId": 19,
+      "name": "3rd Oscillator Gain",
+      "node_type": "ComponentNode",
+      "xpos": 283.5120834669137,
+      "ypos": -1074.613636088046
+    },
+    {
+      "componentIds": [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        16,
+        17,
+        18,
+        19,
+        6,
+        5,
+        4,
+        3
+      ],
+      "groupId": 0,
+      "hidden_sockets": [
+        {
+          "componentId": 7,
+          "index": 0,
+          "name": "Base Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 8,
+          "index": 0,
+          "name": "1st Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 9,
+          "index": 0,
+          "name": "2nd Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 10,
+          "index": 0,
+          "name": "3rd Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 11,
+          "index": 0,
+          "name": "4th Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 12,
+          "index": 0,
+          "name": "5th Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 13,
+          "index": 0,
+          "name": "6th Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 14,
+          "index": 0,
+          "name": "7th Harmonic Oscillator Audio Output 1",
+          "type": 3
+        },
+        {
+          "componentId": 16,
+          "name": "Base Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 16,
+          "index": 0,
+          "name": "Base Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 17,
+          "name": "1st Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 17,
+          "index": 0,
+          "name": "1st Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 18,
+          "name": "2nd Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 18,
+          "index": 0,
+          "name": "2nd Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 19,
+          "name": "3rd Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 19,
+          "index": 0,
+          "name": "3rd Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 6,
+          "name": "4th Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 6,
+          "index": 0,
+          "name": "4th Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 5,
+          "name": "5th Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 5,
+          "index": 0,
+          "name": "5th Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 4,
+          "name": "6th Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 4,
+          "index": 0,
+          "name": "6th Oscillator Gain Audio Input 1",
+          "type": 2
+        },
+        {
+          "componentId": 3,
+          "name": "7th Oscillator Gain Inbound Modulation",
+          "type": 0
+        },
+        {
+          "componentId": 3,
+          "index": 0,
+          "name": "7th Oscillator Gain Audio Input 1",
+          "type": 2
+        }
+      ],
+      "name": "Additive Synth",
+      "node_type": "GroupNode",
+      "xpos": -95.0035078496378,
+      "ypos": -135.57873526764308
+    }
+  ],
+  "version": 1
+}
