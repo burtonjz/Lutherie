@@ -30,7 +30,10 @@
 #include "graphics/GroupNode.hpp"
 #include "graphics/PeripheralNode.hpp"
 
-class ComponentNode ; // forward declaration
+// forward declaration
+class ComponentNode ; 
+class PostNote ;
+
 class GraphPanel : public QGraphicsView, public ISocketLookup {
     Q_OBJECT
 
@@ -39,6 +42,10 @@ private:
     ConnectionRenderer* connectionRenderer_ ;
     
     std::vector<GraphNode*> nodes_ ;
+    std::vector<PostNote*> posts_ ;
+
+    QWidget* postToolbar_ ;
+    PostNote* activePost_ ;
     
     // logic for managing socket hovers
     bool isDraggingConnection_ = false ;
@@ -61,8 +68,8 @@ public:
     GraphPanel& operator=(GraphPanel&&) = delete ;
 
     // APIs
-    json serializeNodes() const ;
-    void deserializeNodes(const json& nodes);
+    void serialize(json& msg) const ;
+    void deserialize(const json& msg);
 
     void addAudioOutput();
     void addMidiInput();
@@ -73,6 +80,7 @@ public:
     GraphNode* getVisibleNode(int componentId) const ;
     GraphNode* findNodeAt(const QPointF& scenePos) const ;
 
+    std::vector<PostNote*> getSelectedPosts() const ;
     std::vector<ComponentNode*> getSelectedComponents() const ;
     std::vector<GroupNode*> getSelectedGroups() const ;
 
@@ -81,6 +89,8 @@ public:
     SocketWidget* findSocketAt(const QPointF& scenePos) const override ;
 
     void updatePeripheralAudioChannels(size_t numChannels);
+
+    void createPost();
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;
@@ -104,6 +114,11 @@ private:
 
     void onDeletePressed();
 
+    void buildPostToolbar();
+    void showPostToolbar(PostNote* post);
+    void hidePostToolbar();
+    void repositionToolbar();
+
     // context menu functions
     void onNodeRightClicked(GraphNode* node);
     void onSocketRightClicked(SocketWidget* socket);
@@ -119,7 +134,6 @@ private slots:
     void onControlMessageReceived(const json& json);
     
 public slots:
-    // from parent
     void onComponentSelected(ComponentType type);
     
     // from component manager

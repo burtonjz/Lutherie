@@ -155,6 +155,15 @@ const QColor Theme::DOCKING_SEGMENT_HOVERED_COLOR = QColor(219, 173, 125, 150);
 const QColor Theme::RECORD_ICON_RECORDING_COLOR = QColor(255, 0, 0);
 const QColor Theme::RECORD_ICON_STOP_COLOR      = QColor(200, 200, 200);
 
+const std::array<QColor,6> Theme::POST_NOTE_COLORS = {
+    QColor(48, 55, 60),
+    QColor(52, 62, 55),
+    QColor(46, 58, 66),
+    QColor(56, 50, 62),
+    QColor(62, 48, 52),
+    QColor(64, 56, 44)
+};
+
 // THEME FUNCTIONS
 
 void Theme::applyDarkTheme() {
@@ -285,8 +294,9 @@ void Theme::applyDarkTheme() {
             background-color: %1;
             color: %2;
         }
-        QToolButton#unitToggle,
-        QToolButton#unitToggle:checked {
+        QToolButton[checkableBtn="true"],
+        QToolButton[textToggleBtn="true"],
+        QToolButton[textToggleBtn="true"]:checked {
             color: %1;
             border: 1px solid %5;
             border-radius: 3px;
@@ -294,8 +304,9 @@ void Theme::applyDarkTheme() {
             font-size: 9pt;
             background-color: transparent;
         }
-        QToolButton#unitToggle:hover,
-        QToolButton#unitToggle:checked:hover {
+        QToolButton[checkableBtn="true"]:checked,
+        QToolButton[textToggleBtn="true"]:hover,
+        QToolButton[textToggleBtn="true"]:checked:hover {
             color: %4;
             border: 1px solid %5;
             border-radius: 3px;

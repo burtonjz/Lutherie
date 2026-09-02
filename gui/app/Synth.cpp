@@ -613,7 +613,7 @@ void Synth::onActionSaveAs(){
 }
 
 void Synth::performSave(){
-    saveData_["nodes"] = GraphPanel::instance()->serializeNodes();
+    GraphPanel::instance()->serialize(saveData_);
 
     QFile file(saveFilePath_);
     if (!file.open(QIODevice::WriteOnly)){

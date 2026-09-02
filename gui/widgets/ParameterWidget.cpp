@@ -318,7 +318,7 @@ void DelayWidget::setupUI(){
     unitToggle_->setChecked(false);
     unitToggle_->setAutoRaise(true);
     unitToggle_->setToolTip("Toggle between samples and milliseconds");
-    unitToggle_->setObjectName("unitToggle");
+    unitToggle_->setProperty("textToggleBtn", true);
 
     QHBoxLayout* valueRow = new QHBoxLayout();
     valueRow->setContentsMargins(0,0,0,0);

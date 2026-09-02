@@ -116,29 +116,18 @@ public:
 
     static const QColor RECORD_ICON_RECORDING_COLOR ;
     static const QColor RECORD_ICON_STOP_COLOR ;
+
+    static const std::array<QColor,6> POST_NOTE_COLORS ;
     
     // Apply theme to application
     static void applyDarkTheme();
-    
-    // Get stylesheet snippets
-    static QString getComponentStyle(bool selected = false, bool hovered = false);
 
     /*
     =======================================================
     =============== THEME SPACING / CONTROLS ==============
     =======================================================
     */
-
-    static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
-
-    static constexpr int COMPONENT_MENU_NUM_QUICK_RESULTS = 3 ;
-
-    // peripheral config
-    static constexpr const char* SETUP_WINDOW_LABEL    = "Peripheral Device Configuration" ;
-    static constexpr const char* SETUP_AUDIO_LABEL     = "Select Audio Device" ;
-    static constexpr const char* SETUP_MIDI_LABEL      = "Select MIDI Device" ;
-    static constexpr const char* SETUP_PREFERRED_LABEL = "Preferred" ;
-    static constexpr const char* SETUP_CONFIRM_TEXT    = "Confirm" ;
+    static constexpr int COMPONENT_MENU_NUM_QUICK_RESULTS = 3 ; 
 
     static constexpr int API_NUM_RECONNECT_ATTEMPTS = 5 ;
     static constexpr int API_RECONNECT_DELAY_MS     = 500 ;
@@ -280,7 +269,28 @@ public:
     static constexpr int RANGE_SLIDER_HEIGHT        = 60 ;
     static constexpr int RANGE_SLIDER_HANDLE_RADIUS = 5 ;
 
+    static constexpr double POST_NOTE_MIN_WIDTH = 260.0 ;
+
+
+    /*
+    =======================================================
+    ============ TEXT LABELS / DESCRIPTIONS ===============
+    =======================================================
+    */
+
+    static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
+
     static const QString& getMidiLearnInstructions();
+
+    static constexpr const char* SETUP_WINDOW_LABEL    = "Peripheral Device Configuration" ;
+    static constexpr const char* SETUP_AUDIO_LABEL     = "Select Audio Device" ;
+    static constexpr const char* SETUP_MIDI_LABEL      = "Select MIDI Device" ;
+    static constexpr const char* SETUP_PREFERRED_LABEL = "Preferred" ;
+    static constexpr const char* SETUP_CONFIRM_TEXT    = "Confirm" ;
+
+    static constexpr const char* POST_NOTE_BOLD_BTN_TEXT      = "B" ;
+    static constexpr const char* POST_NOTE_ITALIC_BTN_TEXT    = "I" ;
+    static constexpr const char* POST_NOTE_UNDERLINE_BTN_TEXT = "U" ;
 
     /*
     =======================================================
@@ -290,6 +300,7 @@ public:
     static const QString& getLabelTitleStyle();
     static const QString& getLabelHeaderStyle();
     static const QString& getLabelCommentStyle();
+    static const QString& getPostNoteToolbarStyle();
 
 };
 

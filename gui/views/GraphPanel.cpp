@@ -17,16 +17,15 @@
 
 #include "views/GraphPanel.hpp"
 #include "api/ControlApiClient.hpp"
-#include "app/Theme.hpp"
-#include "graphics/GroupNode.hpp"
 #include "managers/ConnectionManager.hpp"
-#include "managers/StateManager.hpp"
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
-#include "graphics/GraphNode.hpp"
+#include "managers/StateManager.hpp"
 #include "graphics/SocketWidget.hpp"
+#include "graphics/GraphNode.hpp"
+#include "graphics/GroupNode.hpp"
 #include "graphics/ComponentNode.hpp"
-#include "types/ComponentType.hpp"
+#include "graphics/PostNote.hpp"
 #include "graphics/ToastNotification.hpp"
 
 #include <QWheelEvent>
@@ -63,6 +62,8 @@ GraphPanel::GraphPanel(QWidget* parent):
     setFocusPolicy(Qt::StrongFocus);
     setEnabled(true);
     setMouseTracking(true);
+
+    buildPostToolbar();
 
     // connections
 
@@ -242,89 +243,111 @@ GroupNode* GraphPanel::getGroupNode(int groupId) const {
     return nullptr ;
 }
 
-json GraphPanel::serializeNodes() const {
+void GraphPanel::serialize(json& msg) const {
     json nodes ;
-    for ( auto n : nodes_ ){
+    for ( auto* n : nodes_ ){
         nodes.push_back(n->serialize());
     }
-    return nodes ;
+    msg["nodes"] = nodes ;
+
+    json posts ;
+    for ( auto* p : posts_ ){
+        posts.push_back(p->serialize());
+    }
+    msg["posts"] = posts ;
 }
 
-void GraphPanel::deserializeNodes(const json& nodes){
-    if ( ! nodes.is_array() ){
-        SPDLOG_WARN("nodes are not in expected json format.");
-        return ;
-    }
-
-    for ( const auto& n : nodes ) {        
-        if ( ! n.contains("node_type") || ! n.at("node_type").is_string() ){
-            SPDLOG_WARN("serialized node does not have a type identifier. Ignoring object.");
-            continue ;
-        }
-
-        const std::string nodeType = n.at("node_type");
-
-        if ( nodeType == "ComponentNode" ){
-            if ( ! n.contains("componentId") || ! n.at("componentId").is_number() ){
-                SPDLOG_WARN("component node does not have id specified");
-                continue ;
-            }
-            auto c = getComponentNode(n.at("componentId"));
-            if ( ! c){
-                SPDLOG_WARN("component node not found for id {}");
-                continue ;
-            }
-            c->deserialize(n);
-        } else if ( nodeType == "PeripheralNode" ){
-            if ( !n.contains("deviceId") || ! n.at("deviceId").is_number() ){
-                SPDLOG_WARN("peripheral node does not have a defined deviceId");
+void GraphPanel::deserialize(const json& msg){
+    if ( msg.contains("nodes") && msg.at("nodes").is_array() ){
+        for ( const auto& n : msg.at("nodes") ){        
+            if ( ! n.contains("node_type") || ! n.at("node_type").is_string() ){
+                SPDLOG_WARN("serialized node does not have a type identifier. Ignoring object.");
                 continue ;
             }
 
-            PeripheralNode* p = nullptr ;
-            if ( n.at("deviceId") == MIDI_IN_DEVICE_ID ){
-                p = midiIn_ ;
-            } else if ( n.at("deviceId") == AUDIO_OUT_DEVICE_ID ){
-                p = audioOut_ ;
-            }
-            if ( p ){
-                p->deserialize(n);
-            } else {
-                SPDLOG_WARN("Invalid deviceId specified: {}", n.at("deviceId").dump());
-            }
-        } else if ( nodeType == "GroupNode" ){
-            if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
-                continue ;
-            }
+            const std::string nodeType = n.at("node_type");
 
-            std::vector<int> ids ;
-            for ( const auto& id : n.at("componentIds") ){
-                if ( ! id.is_number() ){
-                    SPDLOG_WARN("componentId in array is malformed. Expected number format, but got {}",
-                        id.dump());
+            if ( nodeType == "ComponentNode" ){
+                if ( ! n.contains("componentId") || ! n.at("componentId").is_number() ){
+                    SPDLOG_WARN("component node does not have id specified");
                     continue ;
                 }
-                ids.push_back(id);
-            }
+                auto c = getComponentNode(n.at("componentId"));
+                if ( ! c){
+                    SPDLOG_WARN("component node not found for id {}");
+                    continue ;
+                }
+                c->deserialize(n);
+            } else if ( nodeType == "PeripheralNode" ){
+                if ( !n.contains("deviceId") || ! n.at("deviceId").is_number() ){
+                    SPDLOG_WARN("peripheral node does not have a defined deviceId");
+                    continue ;
+                }
 
-            if ( ids.size() > 1 ){
-                emit requestGroupCreate(ids, n);
-            } else {
-                SPDLOG_WARN("Group node does not contain at least 2 valid component ids.");
+                PeripheralNode* p = nullptr ;
+                if ( n.at("deviceId") == MIDI_IN_DEVICE_ID ){
+                    p = midiIn_ ;
+                } else if ( n.at("deviceId") == AUDIO_OUT_DEVICE_ID ){
+                    p = audioOut_ ;
+                }
+                if ( p ){
+                    p->deserialize(n);
+                } else {
+                    SPDLOG_WARN("Invalid deviceId specified: {}", n.at("deviceId").dump());
+                }
+            } else if ( nodeType == "GroupNode" ){
+                if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
+                    continue ;
+                }
+
+                std::vector<int> ids ;
+                for ( const auto& id : n.at("componentIds") ){
+                    if ( ! id.is_number() ){
+                        SPDLOG_WARN("componentId in array is malformed. Expected number format, but got {}",
+                            id.dump());
+                        continue ;
+                    }
+                    ids.push_back(id);
+                }
+
+                if ( ids.size() > 1 ){
+                    emit requestGroupCreate(ids, n);
+                } else {
+                    SPDLOG_WARN("Group node does not contain at least 2 valid component ids.");
+                }
             }
         }
     }
+
+    if ( msg.contains("posts") && msg.at("posts").is_array() ){
+        for ( const auto& p : msg.at("posts") ){     
+            PostNote* note = new PostNote();
+            scene_->addItem(note);
+            note->deserialize(p);
+            posts_.push_back(note);
+        }
+    }
+
+}
+
+std::vector<PostNote*> GraphPanel::getSelectedPosts() const {
+    auto selectedItems = scene_->selectedItems();
+    std::vector<PostNote*> posts ;
+
+    for ( QGraphicsItem* item : selectedItems ){
+        PostNote* post = dynamic_cast<PostNote*>(item);
+        if ( post ) posts.push_back(post);
+    }
+    return posts ;
 }
 
 std::vector<ComponentNode*> GraphPanel::getSelectedComponents() const {
-    auto selectedItems = scene_->selectedItems() ;
+    auto selectedItems = scene_->selectedItems();
     std::vector<ComponentNode*> nodes ;
 
     for ( QGraphicsItem* item: selectedItems ){
         ComponentNode* node = dynamic_cast<ComponentNode*>(item);
-        if ( node ){
-            nodes.push_back(node);
-        }
+        if ( node ) nodes.push_back(node);
     }
     return nodes ;
 }
@@ -383,10 +406,25 @@ SocketWidget* GraphPanel::findSocketAt(const QPointF& scenePos) const {
 }
 
 void GraphPanel::keyPressEvent(QKeyEvent* event){
-    // scene/proxy gets priority first if focused
+    // escape before sending key presses on
+    if ( event->key() == Qt::Key_Escape ){
+        if ( connectionRenderer_->isDragging() ){
+            connectionRenderer_->cancelDrag();
+            event->accept();
+            return ;
+        }
+        if ( activePost_ ){
+            activePost_->stopEditing();
+            hidePostToolbar();
+            event->accept();
+            return ;
+        }
+    }
+
+    // otherwise, give focus item first priority
     if ( scene_->focusItem() ){
         QGraphicsView::keyPressEvent(event);
-        return ;
+        if ( event->isAccepted() ) return ;
     }
 
     switch (event->key()){
@@ -394,13 +432,13 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
         case Qt::Key_Backspace:
             onDeletePressed();
             break ;
-        case Qt::Key_Escape:
-            connectionRenderer_->cancelDrag();
-            break ;
         case Qt::Key_G:
             if ( event->modifiers() & Qt::ControlModifier ){
                 handleGroupEvent();
             }
+            break ;
+        case Qt::Key_N:
+            createPost();
             break ;
         case Qt::Key_U:
             if ( event->modifiers() & Qt::ControlModifier ){
@@ -409,6 +447,7 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
             break ;
         default:
             QGraphicsView::keyPressEvent(event);
+            break ;
     }
 }
 
@@ -450,6 +489,17 @@ void GraphPanel::mouseMoveEvent(QMouseEvent* event){
 void GraphPanel::mousePressEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
 
+    // handle post note click away
+    if ( activePost_ ){
+        bool onNote = activePost_->sceneBoundingRect().contains(scenePos);
+        bool onToolbar = postToolbar_->geometry().contains(event->pos());
+        if ( !onNote && !onToolbar ){
+            activePost_->stopEditing();
+            hidePostToolbar();
+        }
+    }
+
+    // handle connection drag
     if ( event->button() == Qt::LeftButton ){
         if ( SocketWidget* w = findSocketAt(scenePos) ){
             isDraggingConnection_ = true ;
@@ -468,13 +518,25 @@ void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
    
     QGraphicsItem* item = scene()->itemAt(scenePos, transform());
     while (item){
-        // launch the component editor ; 
+        // handle graph nodes
         if ( GraphNode* w = dynamic_cast<GraphNode*>(item)){ 
             graphNodeDoubleClicked(w);
             return ;
         } 
+
+        // handle PostNotes
+        PostNote* post = dynamic_cast<PostNote*>(item);
+        if ( post && post != activePost_ ){
+            post->startEditing();
+            showPostToolbar(post);
+            return ;
+        }
+
+        // continue walk
         item = item->parentItem();
     }
+
+    QGraphicsView::mouseDoubleClickEvent(event);
 }
 
 void GraphPanel::mouseReleaseEvent(QMouseEvent* event){
@@ -505,6 +567,7 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
         return ;
     }
 
+    QGraphicsView::contextMenuEvent(event);
 }
 
 void GraphPanel::onNodeRightClicked(GraphNode* node){
@@ -715,6 +778,9 @@ void GraphPanel::wheelEvent(QWheelEvent* event){
     } else {
         scale( 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR, 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR );
     }
+
+    repositionToolbar();
+    event->accept();
 }
 
 bool GraphPanel::isNodeNameAvailable(const QString& name, GraphNode* target) const {
@@ -805,10 +871,8 @@ void GraphPanel::onControlMessageReceived(const json& msg){
     QString action = QString::fromStdString(msg["action"]) ;
 
     if ( action == "load_patch" ){
-        if ( msg.at("status") == "success"){
-            if ( msg.contains("nodes") ){
-                deserializeNodes(msg.at("nodes"));
-            }
+        if ( msg.at("status") == "success" ){
+            deserialize(msg);
         }
         return ;
     }
@@ -935,11 +999,123 @@ void GraphPanel::onDeletePressed(){
         ToastNotification::show(scene_, this, "Cannot delete components while the engine is running.");
         return ;
     }
-    // delete all selected components
+    
     for ( const auto c : getSelectedComponents() ){
         ComponentManager::instance()->requestRemoveComponent(c->getModel()->getId());
     }
+
+    auto posts = getSelectedPosts();
+    for ( PostNote* post : posts ){
+        posts_.erase(std::remove(posts_.begin(), posts_.end(), post), posts_.end());
+        scene_->removeItem(post);
+        post->deleteLater();
+    }
 }
+
+void GraphPanel::buildPostToolbar(){
+    postToolbar_ = new QWidget(viewport());
+    postToolbar_->setAttribute(Qt::WA_TranslucentBackground);
+    // postToolbar_->setStyleSheet(Theme::getPostNoteToolbarStyle());
+    
+    QToolButton* boldBtn = new QToolButton(viewport());
+    boldBtn->setCheckable(true);
+    boldBtn->setProperty("checkableBtn", true);
+    boldBtn->setText(Theme::POST_NOTE_BOLD_BTN_TEXT);
+    boldBtn->setFont(QFont(boldBtn->font().family(), -1, QFont::Bold));
+    connect(
+        boldBtn, &QToolButton::clicked, this, [this]{
+            if ( activePost_ ) activePost_->toggleBold();
+        }
+    );
+
+    QToolButton* italicBtn = new QToolButton(viewport());
+    italicBtn->setCheckable(true);
+    italicBtn->setProperty("checkableBtn", true);
+    italicBtn->setText(Theme::POST_NOTE_ITALIC_BTN_TEXT);
+    QFont italic = italicBtn->font();
+    italic.setItalic(true);
+    italicBtn->setFont(italic);
+    connect(
+        italicBtn, &QToolButton::clicked, this, [this]{
+            if ( activePost_ ) activePost_->toggleItalic();
+        }
+    );
+    
+    QToolButton* underlineBtn = new QToolButton(viewport());
+    underlineBtn->setCheckable(true);
+    underlineBtn->setProperty("checkableBtn", true);
+    underlineBtn->setText(Theme::POST_NOTE_UNDERLINE_BTN_TEXT);
+    connect(
+        underlineBtn, &QToolButton::clicked, this, [this]{
+            if ( activePost_ ) activePost_->toggleUnderline();
+        }
+    );
+
+    QComboBox* styleCombo = new QComboBox();
+    styleCombo->addItem("Title");
+    styleCombo->addItem("Header");
+    styleCombo->addItem("Body");
+    connect(
+        styleCombo, &QComboBox::currentIndexChanged, 
+        this, [this](int index){
+            if ( activePost_ ){
+                activePost_->applyTextStyle(static_cast<PostNote::TextStyle>(index));
+                setFocus(); // back to viewport
+                activePost_->setFocus(); // and back to post
+            } 
+        }
+    );
+
+    QFontComboBox* fontCombo = new QFontComboBox(viewport());
+    connect(
+        fontCombo, &QFontComboBox::currentFontChanged, 
+        this, [this](const QFont &font){
+            if ( activePost_ ){
+                activePost_->onFontChanged(font);
+                setFocus();
+                activePost_->setFocus();
+            }
+        }
+    );
+
+    auto* layout = new QGridLayout(postToolbar_);
+    layout->setContentsMargins(4,2,4,2);
+    layout->setSpacing(2);
+
+    layout->addWidget(boldBtn, 0, 0);
+    layout->addWidget(italicBtn, 0, 1);
+    layout->addWidget(underlineBtn, 0, 2);
+    layout->addWidget(styleCombo, 0, 3);
+    layout->addWidget(fontCombo, 1, 0, 1, 4);
+
+    postToolbar_->setLayout(layout);
+    postToolbar_->adjustSize();
+
+    postToolbar_->hide();
+}
+
+void GraphPanel::showPostToolbar(PostNote* post){
+    if ( !post ) return ;
+
+    activePost_ = post ;
+    repositionToolbar();
+    postToolbar_->show();
+    postToolbar_->raise();
+}
+
+void GraphPanel::hidePostToolbar(){
+    postToolbar_->hide();
+    activePost_ = nullptr ;
+}
+
+void GraphPanel::repositionToolbar(){
+    if ( !activePost_ ) return ;
+    QRectF sceneRect = activePost_->sceneBoundingRect();
+    QPoint topLeft = mapFromScene(sceneRect.topLeft());
+    postToolbar_->move(topLeft.x(), topLeft.y() - postToolbar_->height() - 4);
+    postToolbar_->adjustSize();
+}
+
 
 void GraphPanel::handleGroupEvent(){
     std::vector<int> groupIds ;
@@ -1112,4 +1288,11 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     
     audioOut_->insertSockets(specs);
     audioOut_->addToScene(scene_);
+}
+
+void GraphPanel::createPost(){
+    PostNote* note = new PostNote();
+    posts_.push_back(note);
+    scene_->addItem(note);
+    note->setPos(getNewNodeSpawnPosition(note->boundingRect()));
 }
