@@ -27,6 +27,7 @@
 #include "graphics/ComponentNode.hpp"
 #include "graphics/PostNote.hpp"
 #include "graphics/ToastNotification.hpp"
+#include "widgets/HyperlinkDialog.hpp"
 
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -1051,6 +1052,27 @@ void GraphPanel::buildPostToolbar(){
         }
     );
 
+    QToolButton* linkBtn = new QToolButton(viewport());
+    linkBtn->setText("🔗");
+    linkBtn->setToolTip("Insert Hyperlink");
+    
+    connect(
+        linkBtn, &QToolButton::clicked, this, [this]{
+            if ( !activePost_ ) return ;
+
+            QTextCursor cursor = activePost_->textCursor();
+            QString selectedText = cursor.hasSelection() ? cursor.selectedText() : QString();
+
+            HyperlinkDialog dialog(selectedText, this);
+            if ( dialog.exec() == QDialog::Accepted && !dialog.url().isEmpty() ){
+                activePost_->insertHyperlink(dialog.url(), dialog.display());
+            }
+
+            setFocus(); // back to viewport
+            activePost_->setFocus(); // back to post
+        }
+    );
+
     QComboBox* styleCombo = new QComboBox();
     styleCombo->addItem("Title");
     styleCombo->addItem("Header");
@@ -1060,8 +1082,8 @@ void GraphPanel::buildPostToolbar(){
         this, [this](int index){
             if ( activePost_ ){
                 activePost_->applyTextStyle(static_cast<PostNote::TextStyle>(index));
-                setFocus(); // back to viewport
-                activePost_->setFocus(); // and back to post
+                setFocus(); 
+                activePost_->setFocus(); 
             } 
         }
     );
@@ -1077,7 +1099,7 @@ void GraphPanel::buildPostToolbar(){
             }
         }
     );
-
+    
     auto* layout = new QGridLayout(postToolbar_);
     layout->setContentsMargins(4,2,4,2);
     layout->setSpacing(2);
@@ -1085,8 +1107,10 @@ void GraphPanel::buildPostToolbar(){
     layout->addWidget(boldBtn, 0, 0);
     layout->addWidget(italicBtn, 0, 1);
     layout->addWidget(underlineBtn, 0, 2);
-    layout->addWidget(styleCombo, 0, 3);
-    layout->addWidget(fontCombo, 1, 0, 1, 4);
+    layout->addWidget(linkBtn, 0, 3);
+    layout->addWidget(styleCombo, 0, 4);
+
+    layout->addWidget(fontCombo, 1, 0, 1, 5);
 
     postToolbar_->setLayout(layout);
     postToolbar_->adjustSize();

@@ -25,6 +25,8 @@
 #include <QGridLayout>
 #include <QGraphicsScene>
 #include <QTimer>
+#include <QDesktopServices>
+#include <QAbstractTextDocumentLayout>
 
 #include <spdlog/spdlog.h>
 
@@ -35,6 +37,7 @@ PostNote::PostNote(QGraphicsItem* parent):
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemIsFocusable);
+    setAcceptHoverEvents(true);
     setTextInteractionFlags(Qt::NoTextInteraction);
     setDefaultTextColor(Theme::TEXT_PRIMARY);
     document()->setDocumentMargin(8.0);
@@ -70,6 +73,27 @@ bool PostNote::isEditing() const {
     return editing_ ;
 }
 
+void PostNote::insertHyperlink(const QString& url, const QString& display){
+    QTextCursor cursor = textCursor();
+
+    QTextCharFormat originalFormat = cursor.charFormat();
+
+    QTextCharFormat linkFormat ;
+    linkFormat.setAnchor(true);
+    linkFormat.setAnchorHref(url);
+    linkFormat.setForeground(Theme::ACCENT_COLOR);
+    linkFormat.setFontUnderline(true);
+
+    if ( cursor.hasSelection() ){
+        cursor.mergeCharFormat(linkFormat);
+    } else {
+        cursor.insertText(display.isEmpty() ? url : display, linkFormat);
+    }
+
+    cursor.setCharFormat(originalFormat);
+    setTextCursor(cursor);
+}
+
 void PostNote::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
     // draw bg, then let base class handle rest.
     painter->setRenderHint(QPainter::Antialiasing);
@@ -96,7 +120,7 @@ void PostNote::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
     QStyleOptionGraphicsItem opt(*option);
     opt.state &= ~QStyle::State_Selected ;
     opt.state &= ~QStyle::State_HasFocus ;
-    
+
     QGraphicsTextItem::paint(painter, &opt, widget);
 }
 
@@ -122,6 +146,24 @@ void PostNote::deserialize(const json& msg){
     if ( msg.contains("text") ){
         document()->setHtml(QString::fromStdString(msg.at("text")));
     }
+}
+
+void PostNote::mousePressEvent(QGraphicsSceneMouseEvent* event){
+    if ( textInteractionFlags() & Qt::TextEditable ){
+        QString anchor = document()->documentLayout()->anchorAt(event->pos());
+        if ( !anchor.isEmpty() ){
+            QDesktopServices::openUrl(QUrl(anchor));
+            event->accept();
+            return ;
+        }
+    }
+    QGraphicsTextItem::mousePressEvent(event);
+}
+
+void PostNote::hoverMoveEvent(QGraphicsSceneHoverEvent* event){
+    QString anchor = document()->documentLayout()->anchorAt(event->pos());
+    setCursor(anchor.isEmpty() ? Qt::IBeamCursor : Qt::PointingHandCursor);
+    QGraphicsTextItem::hoverMoveEvent(event);
 }
 
 void PostNote::contextMenuEvent(QGraphicsSceneContextMenuEvent* event){

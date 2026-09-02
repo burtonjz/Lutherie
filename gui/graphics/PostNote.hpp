@@ -53,6 +53,8 @@ public:
     void stopEditing();
     bool isEditing() const ;
 
+    void insertHyperlink(const QString& url, const QString& display);
+
     void paint(
         QPainter* painter, 
         const QStyleOptionGraphicsItem* option, 
@@ -63,6 +65,8 @@ public:
     void deserialize(const json& msg);
 
 protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent* event) override ;
+    void hoverMoveEvent(QGraphicsSceneHoverEvent* event) override ;
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override ;
 
 public slots:
