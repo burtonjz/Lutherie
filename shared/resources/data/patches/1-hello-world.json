@@ -1,0 +1,142 @@
+{
+  "components": [
+    {
+      "id": 1,
+      "name": "Oscilloscope"
+    },
+    {
+      "id": 0,
+      "name": "Oscillator",
+      "parameters": {
+        "amplitude": {
+          "currentValue": 0.035,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        },
+        "frequency": {
+          "currentValue": 440.0,
+          "defaultValue": 440.0,
+          "maximumValue": 1600.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        },
+        "gain": {
+          "currentValue": 1.0,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 1,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 1,
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    }
+  ],
+  "midi_controls": null,
+  "nodes": [
+    {
+      "deviceId": 1,
+      "hidden_sockets": null,
+      "name": "MIDI Input Device",
+      "node_type": "PeripheralNode",
+      "xpos": -1937.1966927722258,
+      "ypos": 1447.6583557858587
+    },
+    {
+      "deviceId": 0,
+      "hidden_sockets": null,
+      "name": "Audio Output Device",
+      "node_type": "PeripheralNode",
+      "xpos": 147.29999999999998,
+      "ypos": -313.79999999999995
+    },
+    {
+      "componentId": 0,
+      "hidden_sockets": null,
+      "name": "Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": -288.3,
+      "ypos": -283.69999999999993
+    },
+    {
+      "componentId": 1,
+      "hidden_sockets": null,
+      "name": "Oscilloscope",
+      "node_type": "ComponentNode",
+      "xpos": 150.75000000000003,
+      "ypos": 108.67500000000004
+    }
+  ],
+  "posts": [
+    {
+      "background_color": "#30373c",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:20pt; font-weight:700;\">1. Hello World</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:20pt; font-weight:700;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">Welcome to your first patch! Lutherie comes with a series of patches designed to teach you about audio synthesis, and how to use this software.</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt; font-weight:600;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">Other provided instructional patches can be loaded from the File menu. You'll also be able to build, save, and share your own patches!</span></p></body></html>",
+      "xpos": -916.0,
+      "ypos": -442.5,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">Oscillator</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt; font-weight:600;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">An oscillator is the central building block of digital audio, and is our main generator of audio information. Double click the oscillator (or press Ctrl+P) to open your parameters panel.</p></body></html>",
+      "xpos": -570.0999999999999,
+      "ypos": -311.4,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">Parameters</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt; font-weight:600;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Parameters allow us to adjust the functionality of a component. The Oscillator has 3 Parameters:</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:700;\">1. Waveform: </span>defines the &quot;shape&quot; of our signal. Musically, this affects the <a href=\"https://en.wikipedia.org/wiki/Timbre\"><span style=\" text-decoration: underline; color:#d58936;\">timbre</span></a> of your output. The basic shapes available here provide common building blocks for making all sorts of different sounding instruments.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:700;\">2. Frequency: </span>defines how many times per second the waveform repeats. This translates to <a href=\"https://en.wikipedia.org/wiki/Pitch_(music)\"><span style=\" text-decoration: underline; color:#d58936;\">pitch</span></a>.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:700;\">3. Amplitude: </span>defines volume, where 0 is silent and 1 is max volume. Your system volume still affects the final output. <span style=\" font-weight:700; text-decoration: underline;\">Keep this low when you first turn on the synth!</span> I set a very conservative default for you, and your speakers should be safe regardless, but a single high volume wave might be a little unpleasant.</p></body></html>",
+      "xpos": -303.00000000000006,
+      "ypos": -175.55,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">Audio Output</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt; font-weight:600; text-decoration: underline;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Sound generated within this application needs to be sent to your speakers. To select a particular sound device, select &quot;Setup&quot; in the toolbar. </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">You won't hear anything until you hit the &quot;Play&quot; icon in the toolbar! Then, feel free to mess with the parameters to see how they affect the sound.</p></body></html>",
+      "xpos": 128.75000000000006,
+      "ypos": -215.6249999999999,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">Oscilloscope</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt; font-weight:600;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">We'll use this more in the future, but an oscilloscope allows you to see the waveform of your output signal. Double click this component and you will be able to see a real time graph that responds as you change the parameters. </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The graph is dockable so feel free to place it wherever you'd like by dragging the window and following the indicators.</p></body></html>",
+      "xpos": 109.70000000000002,
+      "ypos": 210.3250000000001,
+      "hidden": false
+    }
+  ],
+  "version": 1
+}

@@ -1,0 +1,188 @@
+{
+  "components": [
+    {
+      "id": 2,
+      "name": "Linear Fader",
+      "parameters": {
+        "attack": {
+          "currentValue": 0.05000000074505806,
+          "defaultValue": 0.05000000074505806,
+          "maximumValue": 4.0,
+          "minimumValue": 0.0010000000474974513,
+          "modulatable": true
+        },
+        "release": {
+          "currentValue": 0.5,
+          "defaultValue": 0.5,
+          "maximumValue": 4.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 0,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 2
+        },
+        "detune": {
+          "currentValue": 0.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 0,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "parameter": "amplitude",
+        "socketType": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 2,
+        "socketType": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 0,
+        "socketType": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "index": 0,
+        "socketType": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 2,
+        "socketType": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 2,
+        "socketType": "MIDI Inbound"
+      },
+      "outbound": {
+        "socketType": "MIDI Outbound"
+      }
+    }
+  ],
+  "midi_controls": null,
+  "nodes": [
+    {
+      "deviceId": 1,
+      "hidden_sockets": null,
+      "name": "MIDI Input Device",
+      "node_type": "PeripheralNode",
+      "xpos": -1038.7732499999997,
+      "ypos": -245.9664999999999
+    },
+    {
+      "deviceId": 0,
+      "hidden_sockets": null,
+      "name": "Audio Output Device",
+      "node_type": "PeripheralNode",
+      "xpos": 620.0999999999999,
+      "ypos": -10.650000000000006
+    },
+    {
+      "componentId": 0,
+      "hidden_sockets": null,
+      "name": "Polyphonic Oscillator",
+      "node_type": "ComponentNode",
+      "xpos": 33.737500000000026,
+      "ypos": -265.57
+    },
+    {
+      "componentId": 2,
+      "hidden_sockets": null,
+      "name": "Linear Fader",
+      "node_type": "ComponentNode",
+      "xpos": -652.2499999999999,
+      "ypos": 84.25000000000006
+    }
+  ],
+  "posts": [
+    {
+      "background_color": "#30373c",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:20pt; font-weight:700;\">2. Basic Polyphony</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt; font-weight:600;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt; font-weight:600;\">This example patch demonstrates the most basic recommended setup for playing multiple voices (i.e., notes) at a time, which we call polyphony</span></p></body></html>",
+      "xpos": -1133.7975,
+      "ypos": -669.5524999999998,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt;\">MIDI Input</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To select a <a href=\"https://en.wikipedia.org/wiki/MIDI\"><span style=\" text-decoration: underline; color:#d58936;\">MIDI</span></a> input device, click &quot;Setup&quot; on the toolbar. Any <a href=\"https://en.wikipedia.org/wiki/MIDI_controller\"><span style=\" text-decoration: underline; color:#d58936;\">MIDI Controller</span></a> (hardware or virtual) connected to your computer should be available in the dropdown. </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">When you press a note on a MIDI controller, you get a <span style=\" font-weight:700;\">NOTE ON</span> event, which includes </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">1. What note was pressed</p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">2. How hard it was pressed (velocity)</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">When you release the note, you get a <span style=\" font-weight:700;\">NOTE OFF</span> event.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">There are more message types that will be demonstrated in later patches.</p></body></html>",
+      "xpos": -1101.8947500000002,
+      "ypos": -114.83137500000011,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt;\">Linear Fader</span> </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Physical instruments, at minimum, have two phases of volume variation.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">1. A  <span style=\" font-style:italic;\">ramp up phase</span>, which we will call <span style=\" font-weight:700;\">attack</span></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">2. A <span style=\" font-style:italic;\">ramp down phase</span>, which we will call <span style=\" font-weight:700;\">release</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">These two phases are critical for making our oscillator sound more natural, <span style=\" font-weight:700;\">and are the most minimual version of an </span><a href=\"https://en.wikipedia.org/wiki/Envelope_(music)\"><span style=\" font-weight:700; text-decoration: underline; color:#d58936;\">envelope</span></a><span style=\" font-weight:700;\">.</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">If you skip this component, the oscillator will go from 0 volume immediately to a full waveform, <span style=\" font-weight:700; text-decoration: underline;\">which could cause your speakers to play an unpleasant click.</span></p></body></html>",
+      "xpos": -697.1875,
+      "ypos": -392.44499999999994,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt;\">MIDI Connections</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The <span style=\" font-weight:700;\">Blue</span> wire passes the MIDI information along from the fader, with <span style=\" font-weight:700;\">one notable distinction</span> -- we don't know a note is released until we hit a <span style=\" font-weight:700;\">NOTE OFF</span> event.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">However, as mentioned, we don't want to turn the note off immediately. So we define an additional stage: <span style=\" font-weight:700;\">NOTE RELEASED</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-weight:700;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">This allows the Linear Fader to extend the life of the note press so it survives through the release stage.</p></body></html>",
+      "xpos": -354.77500000000003,
+      "ypos": -606.0749999999999,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt;\">Modulation Connections</span> </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The <span style=\" font-weight:700;\">Red</span> wire is a modulation connection. This connection type allows us to influence a parameter of another component.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The linear fader responds to the MIDI note press, and outputs a value based on the attack or release value.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">This gets connected to the <span style=\" font-weight:700;\">amplitude</span> of our oscillator, which is just &quot;how loud&quot; the audio signal sounds. </p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">During attack, we ramp from 0 (silent) to 1 (full volume).</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Because the Oscillator is polyphonic, the fader knows how to do this for each voice individually.</p></body></html>",
+      "xpos": -236.32500000000005,
+      "ypos": -54.07500000000004,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt;\">Polyphonic Oscillator</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">This component plays a waveform at a frequency<span style=\" font-weight:700;\"> </span>corresponding to a particular MIDI note, or multiple notes at the same time. The controls are similar to the basic oscillator.</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The <a href=\"https://en.wikipedia.org/wiki/Harmonic\"><span style=\" text-decoration: underline; color:#d58936;\">Harmonic</span></a> parameter is available for convenience, and refers to multiplying the frequency of a base signal. </p></body></html>",
+      "xpos": 4.373750000000001,
+      "ypos": -588.9187499999998,
+      "hidden": false
+    },
+    {
+      "background_color": "#38323e",
+      "text": "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\np, li { white-space: pre-wrap; }\nhr { height: 1px; border-width: 0; }\nli.unchecked::marker { content: \"\\2610\"; }\nli.checked::marker { content: \"\\2612\"; }\n</style></head><body style=\" font-family:'Adwaita Sans'; font-size:11pt; font-weight:400; font-style:normal;\">\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:15pt;\">Signal Connections</span></p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:15pt;\"><br /></p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">The <span style=\" font-weight:700;\">Green</span> wire is an audio signal connection. This allows real time audio to be sent to another object, and ultimately our <span style=\" font-weight:700;\">Audio Output Device.</span></p></body></html>",
+      "xpos": 212.00625000000002,
+      "ypos": -38.75875000000009,
+      "hidden": false
+    }
+  ],
+  "version": 1
+}
