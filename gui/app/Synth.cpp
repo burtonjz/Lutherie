@@ -322,6 +322,10 @@ void Synth::makeExternalConnections(){
         GraphPanel::instance(), &GraphPanel::requestShowGroupModulation,
         this, &Synth::onShowGroupModulation
     );
+    connect(
+        GraphPanel::instance(), &GraphPanel::requestShowAnalyzer,
+        this, &Synth::onActionToggleAnalyzer
+    );
 }
 
 QMenu* Synth::buildComponentMenu(){

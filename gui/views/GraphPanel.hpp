@@ -159,6 +159,7 @@ signals:
     void requestShowModulation(int componentId);
     void requestShowGroupParameters(int groupId);
     void requestShowGroupModulation(int groupId);
+    void requestShowAnalyzer(ComponentType typ);
 };
 
 #endif // GRAPH_PANEL_HPP_

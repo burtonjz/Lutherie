@@ -17,6 +17,7 @@
 
 #include "views/GraphPanel.hpp"
 #include "api/ControlApiClient.hpp"
+#include "api/StreamApiClient.hpp"
 #include "managers/ConnectionManager.hpp"
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
@@ -982,6 +983,13 @@ void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> component
 
 void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     if ( auto c = dynamic_cast<ComponentNode*>(widget) ){
+        const auto& types = StreamApiClient::instance()->getAnalyzerTypes();
+        auto it = std::find(types.begin(), types.end(), c->getModel()->getType() );
+        if ( it != types.end() ){
+            emit requestShowAnalyzer(*it);
+            return ;
+        }
+
         emit requestShowParameters(c->getModel()->getId());
         return ;
     }
