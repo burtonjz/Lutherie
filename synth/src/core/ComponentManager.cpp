@@ -98,13 +98,23 @@ const std::unordered_set<ComponentId>& ComponentManager::getFileComponentIds() c
 }
 
 void ComponentManager::remove(ComponentId id){
+    auto* component = getRaw(id);
+    if ( !component ) return ;
+
+    // unregister from other objects if necessary
+    if ( MidiEventHandler* h = getMidiHandler(id) ){
+        MidiController::instance()->removeHandler(h);
+    }
+
+    // clear views
     allIds_.erase(id);
     midiHandlers_.erase(id);
     midiListeners_.erase(id);
     modulators_.erase(id);
     audioSignals_.erase(id);
     audioProbes_.erase(id);
-    components_.erase(id);
+
+    components_.erase(id); // deletes unique ptr & frees memory
 }
 
 void ComponentManager::reset(){
@@ -115,6 +125,8 @@ void ComponentManager::reset(){
     modulators_.clear();
     audioSignals_.clear();
     audioProbes_.clear();
+
+    components_.clear();
 }
 
 void ComponentManager::runParameterModulation(){

@@ -46,11 +46,13 @@ void MidiController::initialize(){
 }
 
 void MidiController::addHandler(MidiEventHandler* handler){ 
+    SPDLOG_DEBUG("added handler with address {}", fmt::ptr(handler));
     if (std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end()) return ;
     handlers_.insert(handler) ; 
 }
  
 void MidiController::removeHandler(MidiEventHandler* handler){ 
+    SPDLOG_DEBUG("removed handler with address {}", fmt::ptr(handler));
     handlers_.erase(handler) ;  
 }
 

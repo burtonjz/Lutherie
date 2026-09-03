@@ -262,7 +262,6 @@ json ControlApiHandler::getAudioDevices(const json& request){
         };
         response["data"].push_back(j);
     }
-    SPDLOG_DEBUG(response.dump());
     return response ;
 }
 
