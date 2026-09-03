@@ -438,9 +438,6 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
                 handleGroupEvent();
             }
             break ;
-        case Qt::Key_N:
-            createPost();
-            break ;
         case Qt::Key_U:
             if ( event->modifiers() & Qt::ControlModifier ){
                 handleUngroupEvent();
@@ -1319,4 +1316,16 @@ void GraphPanel::createPost(){
     posts_.push_back(note);
     scene_->addItem(note);
     note->setPos(getNewNodeSpawnPosition(note->boundingRect()));
+}
+
+void GraphPanel::hideAllPosts(){
+    for ( PostNote* p : posts_ ){
+        if ( p != activePost_ ) p->hide();
+    }
+}
+
+void GraphPanel::showAllPosts(){
+    for ( PostNote* p : posts_ ){
+        p->show();
+    }
 }

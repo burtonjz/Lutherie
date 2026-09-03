@@ -192,6 +192,20 @@ void Synth::configureToolBar(){
     addComponent->setMenu(componentMenu_);
     toolBar_->addWidget(addComponent);
 
+    // post menu
+    postMenu_ = buildPostMenu();
+    QAction* postMenuAction = new QAction("Posts", this);
+    postMenuAction->setShortcut(QKeySequence("Ctrl+N"));
+    connect(postMenuAction, &QAction::triggered, this, [this](){
+        postMenu_->popup(QCursor::pos());
+    });
+
+    QToolButton* postBtn = new QToolButton(this);
+    postBtn->setDefaultAction(postMenuAction);
+    postBtn->setPopupMode(QToolButton::InstantPopup);
+    postBtn->setMenu(postMenu_);
+    toolBar_->addWidget(postBtn);
+
     addToolBar(Qt::TopToolBarArea, toolBar_);
 
     // connections
@@ -442,6 +456,31 @@ QMenu* Synth::buildComponentMenu(){
         search, [search](){ 
             search->clear(); search->setFocus(); 
     });
+    return menu ;
+}
+
+QMenu* Synth::buildPostMenu(){
+    QMenu* menu = new QMenu(this);
+
+    QAction* newPostAction = new QAction("Create New Post", menu);
+    menu->addAction(newPostAction);
+    connect(newPostAction, &QAction::triggered, this, [](){
+        GraphPanel::instance()->createPost();
+    });
+
+    QAction* hidePostsAction = new QAction("Hide all Posts", menu);
+    menu->addAction(hidePostsAction);
+    connect(hidePostsAction, &QAction::triggered, this, [](){
+        GraphPanel::instance()->hideAllPosts();
+    });
+
+    QAction* showPostsAction = new QAction("Show all Posts", menu);
+    menu->addAction(showPostsAction);
+    connect(showPostsAction, &QAction::triggered, this, [](){
+        GraphPanel::instance()->showAllPosts();
+    });
+    
+
     return menu ;
 }
 

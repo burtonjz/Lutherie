@@ -91,6 +91,8 @@ public:
     void updatePeripheralAudioChannels(size_t numChannels);
 
     void createPost();
+    void hideAllPosts();
+    void showAllPosts();
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;

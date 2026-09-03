@@ -77,8 +77,10 @@ private:
     QMenuBar* menuBar_ ;
     QToolBar* toolBar_ ;
 
-    // for component filtering
     QMenu* componentMenu_ ;
+    QMenu* postMenu_ ;
+
+    // for component filtering
     std::map<std::string, QMenu*> tagMenu_ ;
     std::map<QAction*, ComponentType> actionType_ ;
     std::set<ComponentType> visibleType_ ;
@@ -95,6 +97,7 @@ private:
     void makeExternalConnections();
 
     QMenu* buildComponentMenu();
+    QMenu* buildPostMenu();
 
     void createComponentDetailDock(int componentId, ComponentParameters* params);
     void performSave();

@@ -130,6 +130,7 @@ json PostNote::serialize() const {
     msg["xpos"] = pos().x();
     msg["ypos"] = pos().y();
     msg["text"] = document()->toHtml().toStdString();
+    msg["hidden"] = !isVisible();
 
     return msg ;
 }
@@ -145,6 +146,10 @@ void PostNote::deserialize(const json& msg){
 
     if ( msg.contains("text") ){
         document()->setHtml(QString::fromStdString(msg.at("text")));
+    }
+
+    if ( msg.contains("hidden") && msg.at("hidden").is_boolean() ){
+        setVisible(!msg.at("hidden"));
     }
 }
 
