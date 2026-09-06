@@ -18,6 +18,8 @@
 #ifndef POST_NOTE_HPP_
 #define POST_NOTE_HPP_
 
+#include "interfaces/IToolbarTarget.hpp"
+
 #include <QGraphicsTextItem>
 #include <QColor>
 #include <QGraphicsProxyWidget>
@@ -28,32 +30,22 @@
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
-
-class PostNote : public QGraphicsTextItem {
+class PostNote : public QGraphicsTextItem, public IToolbarTarget {
     Q_OBJECT
 
 private:
     bool editing_ = false ;
     double width_ ;
     QColor bgColor_ ;
-    QToolButton* boldBtn_ ;
-    QToolButton* italicBtn_ ;
-    QToolButton* underlineBtn_ ;
-    QFontComboBox* fontCombo_ ;
-    QComboBox* styleCombo_ ;
+    TextFormat currentFormat_ ;
 
 public:
     explicit PostNote(QGraphicsItem* parent = nullptr);
 
-    enum class TextStyle {Title, Header, Body};
-
     void setBackgroundColor(const QColor& color);
-
+    
     void startEditing();
     void stopEditing();
-    bool isEditing() const ;
-
-    void insertHyperlink(const QString& url, const QString& display);
 
     void paint(
         QPainter* painter, 
@@ -64,17 +56,30 @@ public:
     json serialize() const ;
     void deserialize(const json& msg);
 
+    // IToolbarInterface
+    bool editing() const override ;
+    virtual QString selectedText() const override ;
+    const TextFormat& textFormat() override ;
+    void createHyperlink(const QString &url, const QString &display) override ;
+    void applyTextFormat(const TextFormat &format) override ;
+
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override ;
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event) override ;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override ;
+    void keyPressEvent(QKeyEvent* event) override ;
     void hoverMoveEvent(QGraphicsSceneHoverEvent* event) override ;
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override ;
     void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override ;
 
-public slots:
-    void toggleBold();
-    void toggleItalic();
-    void toggleUnderline();
-    void onFontChanged(const QFont& font);
-    void applyTextStyle(TextStyle style);
+private:
+    void syncFormatFromCursor();
+
+signals:
+    void requestStartEditing();
+    void editingStarted(TextFormat format);
+    void editingFinished();
+    void formatUpdated(TextFormat format);
 
 };
 

@@ -33,34 +33,38 @@
 // forward declaration
 class ComponentNode ; 
 class PostNote ;
+class TextToolbar ;
 
 class GraphPanel : public QGraphicsView, public ISocketLookup {
     Q_OBJECT
 
 private:
-    QGraphicsScene* scene_ ;
-    ConnectionRenderer* connectionRenderer_ ;
+    QGraphicsScene* scene_ = nullptr ;
+    ConnectionRenderer* connectionRenderer_ = nullptr ;
     
     std::vector<GraphNode*> nodes_ ;
-    std::vector<PostNote*> posts_ ;
-
-    QWidget* postToolbar_ ;
-    PostNote* activePost_ ;
     
     // logic for managing socket hovers
     bool isDraggingConnection_ = false ;
     QPointer<SocketWidget> lastHovered_ = nullptr ;
 
+    // posts
+    std::vector<PostNote*> posts_ ;
+    PostNote* activePost_ = nullptr ;
+    TextToolbar* postToolbar_ = nullptr ;
+
     // peripheral nodes
-    PeripheralNode* audioOut_ ;
-    PeripheralNode* midiIn_ ;
+    PeripheralNode* audioOut_ = nullptr ;
+    PeripheralNode* midiIn_ = nullptr ;
     static constexpr int AUDIO_OUT_DEVICE_ID = 0 ;
     static constexpr int MIDI_IN_DEVICE_ID   = 1 ;
 
     explicit GraphPanel(QWidget* parent = nullptr);
+    static inline GraphPanel* instance_ = nullptr ;
 
 public:
     static GraphPanel* instance();
+    static void destroy();
 
     GraphPanel(const GraphPanel&) = delete ;
     GraphPanel& operator=(const GraphPanel&) = delete ;
@@ -90,9 +94,11 @@ public:
 
     void updatePeripheralAudioChannels(size_t numChannels);
 
+    // Post Notes
     void createPost();
     void hideAllPosts();
     void showAllPosts();
+    void setActivePost(PostNote* post);
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;
@@ -115,11 +121,6 @@ private:
     void handleUngroupEvent();
 
     void onDeletePressed();
-
-    void buildPostToolbar();
-    void showPostToolbar(PostNote* post);
-    void hidePostToolbar();
-    void repositionToolbar();
 
     // context menu functions
     void onNodeRightClicked(GraphNode* node);

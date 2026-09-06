@@ -28,7 +28,7 @@
 #include "graphics/ComponentNode.hpp"
 #include "graphics/PostNote.hpp"
 #include "graphics/ToastNotification.hpp"
-#include "widgets/HyperlinkDialog.hpp"
+#include "widgets/TextToolbar.hpp"
 
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -46,17 +46,44 @@
 #include <QLineEdit>
 
 GraphPanel* GraphPanel::instance(){
-    static GraphPanel panel ;
-    return &panel ;
+    if ( !instance_ ){
+        instance_ = new GraphPanel();
+    }
+    return instance_ ;
+}
+
+void GraphPanel::destroy(){
+    // delete children
+    instance_->postToolbar_->deleteLater();
+    instance_->connectionRenderer_->deleteLater();
+    instance_->audioOut_->deleteLater();
+    instance_->midiIn_->deleteLater();
+
+    for ( PostNote* post : instance_->posts_ ){
+        post->deleteLater();
+    }
+
+    for ( GraphNode* node : instance_->nodes_ ){
+        node->deleteLater();
+    }
+
+    instance_->scene_->deleteLater();
+    
+    delete instance_ ;
+    instance_ = nullptr ;
 }
 
 GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
-    isDraggingConnection_(false)
+    scene_(new QGraphicsScene(this)),
+    connectionRenderer_(new ConnectionRenderer(
+        scene_, ConnectionManager::instance(), 
+        this, this)
+    ),
+    isDraggingConnection_(false),
+    postToolbar_(new TextToolbar(this))
 {
     setupScene();
-
-    connectionRenderer_ = new ConnectionRenderer(scene_, ConnectionManager::instance(), this, this);
 
     addMidiInput();
     addAudioOutput();
@@ -64,8 +91,6 @@ GraphPanel::GraphPanel(QWidget* parent):
     setFocusPolicy(Qt::StrongFocus);
     setEnabled(true);
     setMouseTracking(true);
-
-    buildPostToolbar();
 
     // connections
 
@@ -122,7 +147,6 @@ GraphPanel::GraphPanel(QWidget* parent):
 }
 
 void GraphPanel::setupScene(){
-    scene_ = new QGraphicsScene(this);
     scene_->setSceneRect(-2000,-2000, 4000, 4000);
     setScene(scene_);
 
@@ -253,7 +277,7 @@ void GraphPanel::serialize(json& msg) const {
     msg["nodes"] = nodes ;
 
     json posts ;
-    for ( auto* p : posts_ ){
+    for ( auto& p : posts_ ){
         posts.push_back(p->serialize());
     }
     msg["posts"] = posts ;
@@ -415,12 +439,6 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
             event->accept();
             return ;
         }
-        if ( activePost_ ){
-            activePost_->stopEditing();
-            hidePostToolbar();
-            event->accept();
-            return ;
-        }
     }
 
     // otherwise, give focus item first priority
@@ -488,14 +506,13 @@ void GraphPanel::mouseMoveEvent(QMouseEvent* event){
 void GraphPanel::mousePressEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
 
-    // handle post note click away
-    if ( activePost_ ){
-        bool onNote = activePost_->sceneBoundingRect().contains(scenePos);
+    // handle post note edit click away
+    for ( PostNote* post : posts_ ){
+        if ( !post->editing() ) continue ;
+
+        bool onNote = post->sceneBoundingRect().contains(scenePos);
         bool onToolbar = postToolbar_->geometry().contains(event->pos());
-        if ( !onNote && !onToolbar ){
-            activePost_->stopEditing();
-            hidePostToolbar();
-        }
+        if ( !onNote && !onToolbar ) post->stopEditing();
     }
 
     // handle connection drag
@@ -522,14 +539,6 @@ void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
             graphNodeDoubleClicked(w);
             return ;
         } 
-
-        // handle PostNotes
-        PostNote* post = dynamic_cast<PostNote*>(item);
-        if ( post && post != activePost_ ){
-            post->startEditing();
-            showPostToolbar(post);
-            return ;
-        }
 
         // continue walk
         item = item->parentItem();
@@ -778,7 +787,7 @@ void GraphPanel::wheelEvent(QWheelEvent* event){
         scale( 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR, 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR );
     }
 
-    repositionToolbar();
+    postToolbar_->reposition();
     event->accept();
 }
 
@@ -1018,134 +1027,6 @@ void GraphPanel::onDeletePressed(){
     }
 }
 
-void GraphPanel::buildPostToolbar(){
-    postToolbar_ = new QWidget(viewport());
-    postToolbar_->setAttribute(Qt::WA_TranslucentBackground);
-    // postToolbar_->setStyleSheet(Theme::getPostNoteToolbarStyle());
-    
-    QToolButton* boldBtn = new QToolButton(viewport());
-    boldBtn->setCheckable(true);
-    boldBtn->setProperty("checkableBtn", true);
-    boldBtn->setText(Theme::POST_NOTE_BOLD_BTN_TEXT);
-    boldBtn->setFont(QFont(boldBtn->font().family(), -1, QFont::Bold));
-    connect(
-        boldBtn, &QToolButton::clicked, this, [this]{
-            if ( activePost_ ) activePost_->toggleBold();
-        }
-    );
-
-    QToolButton* italicBtn = new QToolButton(viewport());
-    italicBtn->setCheckable(true);
-    italicBtn->setProperty("checkableBtn", true);
-    italicBtn->setText(Theme::POST_NOTE_ITALIC_BTN_TEXT);
-    QFont italic = italicBtn->font();
-    italic.setItalic(true);
-    italicBtn->setFont(italic);
-    connect(
-        italicBtn, &QToolButton::clicked, this, [this]{
-            if ( activePost_ ) activePost_->toggleItalic();
-        }
-    );
-    
-    QToolButton* underlineBtn = new QToolButton(viewport());
-    underlineBtn->setCheckable(true);
-    underlineBtn->setProperty("checkableBtn", true);
-    underlineBtn->setText(Theme::POST_NOTE_UNDERLINE_BTN_TEXT);
-    connect(
-        underlineBtn, &QToolButton::clicked, this, [this]{
-            if ( activePost_ ) activePost_->toggleUnderline();
-        }
-    );
-
-    QToolButton* linkBtn = new QToolButton(viewport());
-    linkBtn->setText("🔗");
-    linkBtn->setToolTip("Insert Hyperlink");
-    
-    connect(
-        linkBtn, &QToolButton::clicked, this, [this]{
-            if ( !activePost_ ) return ;
-
-            QTextCursor cursor = activePost_->textCursor();
-            QString selectedText = cursor.hasSelection() ? cursor.selectedText() : QString();
-
-            HyperlinkDialog dialog(selectedText, this);
-            if ( dialog.exec() == QDialog::Accepted && !dialog.url().isEmpty() ){
-                activePost_->insertHyperlink(dialog.url(), dialog.display());
-            }
-
-            setFocus(); // back to viewport
-            activePost_->setFocus(); // back to post
-        }
-    );
-
-    QComboBox* styleCombo = new QComboBox();
-    styleCombo->addItem("Title");
-    styleCombo->addItem("Header");
-    styleCombo->addItem("Body");
-    connect(
-        styleCombo, &QComboBox::currentIndexChanged, 
-        this, [this](int index){
-            if ( activePost_ ){
-                activePost_->applyTextStyle(static_cast<PostNote::TextStyle>(index));
-                setFocus(); 
-                activePost_->setFocus(); 
-            } 
-        }
-    );
-
-    QFontComboBox* fontCombo = new QFontComboBox(viewport());
-    connect(
-        fontCombo, &QFontComboBox::currentFontChanged, 
-        this, [this](const QFont &font){
-            if ( activePost_ ){
-                activePost_->onFontChanged(font);
-                setFocus();
-                activePost_->setFocus();
-            }
-        }
-    );
-    
-    auto* layout = new QGridLayout(postToolbar_);
-    layout->setContentsMargins(4,2,4,2);
-    layout->setSpacing(2);
-
-    layout->addWidget(boldBtn, 0, 0);
-    layout->addWidget(italicBtn, 0, 1);
-    layout->addWidget(underlineBtn, 0, 2);
-    layout->addWidget(linkBtn, 0, 3);
-    layout->addWidget(styleCombo, 0, 4);
-
-    layout->addWidget(fontCombo, 1, 0, 1, 5);
-
-    postToolbar_->setLayout(layout);
-    postToolbar_->adjustSize();
-
-    postToolbar_->hide();
-}
-
-void GraphPanel::showPostToolbar(PostNote* post){
-    if ( !post ) return ;
-
-    activePost_ = post ;
-    repositionToolbar();
-    postToolbar_->show();
-    postToolbar_->raise();
-}
-
-void GraphPanel::hidePostToolbar(){
-    postToolbar_->hide();
-    activePost_ = nullptr ;
-}
-
-void GraphPanel::repositionToolbar(){
-    if ( !activePost_ ) return ;
-    QRectF sceneRect = activePost_->sceneBoundingRect();
-    QPoint topLeft = mapFromScene(sceneRect.topLeft());
-    postToolbar_->move(topLeft.x(), topLeft.y() - postToolbar_->height() - 4);
-    postToolbar_->adjustSize();
-}
-
-
 void GraphPanel::handleGroupEvent(){
     std::vector<int> groupIds ;
     std::vector<int> componentIds ;
@@ -1320,15 +1201,32 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
 }
 
 void GraphPanel::createPost(){
-    PostNote* note = new PostNote();
-    posts_.push_back(note);
-    scene_->addItem(note);
-    note->setPos(getNewNodeSpawnPosition(note->boundingRect()));
+    PostNote* post = new PostNote();
+    posts_.push_back(post);
+    scene_->addItem(post);
+    post->setPos(getNewNodeSpawnPosition(post->boundingRect()));
+
+    connect(post, &PostNote::requestStartEditing, 
+        this, [this, post] {
+            setActivePost(post);
+    });
+    connect(
+        post, &PostNote::editingStarted,
+        postToolbar_, &TextToolbar::onEditingStarted
+    );
+    connect(
+        post, &PostNote::editingFinished,
+        postToolbar_, &TextToolbar::onEditingFinished
+    );
+    connect(
+        post, &PostNote::formatUpdated,
+        postToolbar_, &TextToolbar::onFormatUpdated
+    );
 }
 
 void GraphPanel::hideAllPosts(){
     for ( PostNote* p : posts_ ){
-        if ( p != activePost_ ) p->hide();
+        if ( !p->editing() ) p->hide();
     }
 }
 
@@ -1336,4 +1234,11 @@ void GraphPanel::showAllPosts(){
     for ( PostNote* p : posts_ ){
         p->show();
     }
+}
+
+void GraphPanel::setActivePost(PostNote* post){
+    if ( activePost_ ) activePost_->stopEditing();
+
+    activePost_ = post ;
+    post->startEditing();
 }

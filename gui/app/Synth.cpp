@@ -79,7 +79,8 @@ Synth::Synth(QWidget* parent):
 
 Synth::~Synth(){
     PeripheralConfig::destroy();
-    StreamApiClient::instance()->destroy();
+    StreamApiClient::destroy();
+    GraphPanel::destroy();
 }
 
 void Synth::configureMenu(){

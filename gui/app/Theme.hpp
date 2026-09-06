@@ -269,7 +269,10 @@ public:
     static constexpr int RANGE_SLIDER_HEIGHT        = 60 ;
     static constexpr int RANGE_SLIDER_HANDLE_RADIUS = 5 ;
 
-    static constexpr double POST_NOTE_MIN_WIDTH = 260.0 ;
+    static constexpr double POST_NOTE_MIN_WIDTH    = 260.0 ;
+    static constexpr double POST_TITLE_FONT_SIZE   = 20 ;
+    static constexpr double POST_HEADER_FONT_SIZE  = 15 ;
+    static constexpr double POST_BODY_FONT_SIZE    = 11 ;
 
 
     /*

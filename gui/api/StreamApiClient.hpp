@@ -40,7 +40,6 @@ private:
 
 public:
     static StreamApiClient* instance();
-
     static void destroy();
 
     StreamApiClient(const StreamApiClient&) = delete ;

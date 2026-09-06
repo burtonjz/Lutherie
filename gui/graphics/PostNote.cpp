@@ -17,6 +17,7 @@
 
 #include "graphics/PostNote.hpp"
 #include "app/Theme.hpp"
+#include "views/GraphPanel.hpp"
 
 #include <QTextCursor>
 #include <QPainter>
@@ -27,12 +28,14 @@
 #include <QTimer>
 #include <QDesktopServices>
 #include <QAbstractTextDocumentLayout>
+#include <QToolTip>
 
 #include <spdlog/spdlog.h>
 
 PostNote::PostNote(QGraphicsItem* parent):
     QGraphicsTextItem(parent),
-    width_(Theme::POST_NOTE_MIN_WIDTH)
+    width_(Theme::POST_NOTE_MIN_WIDTH),
+    currentFormat_()
 {
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
@@ -58,6 +61,8 @@ void PostNote::startEditing(){
     editing_ = true ;
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setFocus(Qt::MouseFocusReason);
+    syncFormatFromCursor();
+    emit editingStarted(currentFormat_);   
 }
 
 void PostNote::stopEditing(){
@@ -67,13 +72,25 @@ void PostNote::stopEditing(){
     cursor.clearSelection();
     setTextCursor(cursor);
     clearFocus();
+
+    emit editingFinished();
 }
 
-bool PostNote::isEditing() const {
+bool PostNote::editing() const {
     return editing_ ;
 }
 
-void PostNote::insertHyperlink(const QString& url, const QString& display){
+const TextFormat& PostNote::textFormat(){
+    return currentFormat_ ; 
+}
+
+QString PostNote::selectedText() const {
+    QTextCursor cursor = textCursor();
+    QString selectedText = cursor.hasSelection() ? cursor.selectedText() : QString();
+    return selectedText ;
+}
+
+void PostNote::createHyperlink(const QString& url, const QString& display){
     QTextCursor cursor = textCursor();
 
     QTextCharFormat originalFormat = cursor.charFormat();
@@ -154,6 +171,7 @@ void PostNote::deserialize(const json& msg){
 }
 
 void PostNote::mousePressEvent(QGraphicsSceneMouseEvent* event){
+    // hyperlink handling
     if ( textInteractionFlags() & Qt::TextEditable ){
         QString anchor = document()->documentLayout()->anchorAt(event->pos());
         if ( !anchor.isEmpty() ){
@@ -162,13 +180,94 @@ void PostNote::mousePressEvent(QGraphicsSceneMouseEvent* event){
             return ;
         }
     }
+
     QGraphicsTextItem::mousePressEvent(event);
+    if ( editing_ ) syncFormatFromCursor();
+}
+
+void PostNote::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event){
+    if ( !editing_ ){
+        emit requestStartEditing();
+        event->accept();
+        return ;
+    }
+    
+    QGraphicsTextItem::mouseDoubleClickEvent(event);
+    syncFormatFromCursor();
+}
+
+void PostNote::mouseReleaseEvent(QGraphicsSceneMouseEvent* event){
+    QGraphicsTextItem::mouseReleaseEvent(event);
+    if ( editing_ ) syncFormatFromCursor();
+}
+
+void PostNote::keyPressEvent(QKeyEvent* event){
+    if ( editing_ && event->key() == Qt::Key_Escape ){
+            stopEditing();
+            event->accept();
+            return ;
+        }
+    
+    if ( event->modifiers() & Qt::ControlModifier ){
+        TextFormat fmt = currentFormat_ ;
+        switch (event->key()){
+        case Qt::Key_B:
+            fmt.bolded = !currentFormat_.bolded ;
+            applyTextFormat(fmt);
+            emit formatUpdated(currentFormat_);
+            event->accept();
+            return ;
+        case Qt::Key_I:
+            fmt.italicized = !currentFormat_.italicized ;
+            applyTextFormat(fmt);
+            emit formatUpdated(currentFormat_);
+            event->accept();
+            return ;
+        case Qt::Key_U:
+            fmt.underlined = !currentFormat_.underlined ;
+            applyTextFormat(fmt);
+            emit formatUpdated(currentFormat_);
+            event->accept();
+            return ;
+        default:
+            break ;
+        }
+    }
+
+    QGraphicsTextItem::keyPressEvent(event);
+    
+    // handle navigation key formats (after key press so cursor resolves)
+    switch (event->key()){
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+    case Qt::Key_Home:
+    case Qt::Key_End:
+    case Qt::Key_PageUp:
+    case Qt::Key_PageDown:
+        syncFormatFromCursor();
+        break ;
+    default:
+        break ;
+    }
 }
 
 void PostNote::hoverMoveEvent(QGraphicsSceneHoverEvent* event){
     QString anchor = document()->documentLayout()->anchorAt(event->pos());
-    setCursor(anchor.isEmpty() ? Qt::IBeamCursor : Qt::PointingHandCursor);
+    if ( anchor.isEmpty() ){
+        setCursor(Qt::IBeamCursor);
+        QToolTip::hideText();
+    } else {
+        setCursor(Qt::PointingHandCursor);
+        QToolTip::showText(event->screenPos(), anchor);
+    }
     QGraphicsTextItem::hoverMoveEvent(event);
+}
+
+void PostNote::hoverLeaveEvent(QGraphicsSceneHoverEvent* event){
+    QToolTip::hideText();
+    QGraphicsTextItem::hoverLeaveEvent(event);
 }
 
 void PostNote::contextMenuEvent(QGraphicsSceneContextMenuEvent* event){
@@ -193,65 +292,84 @@ void PostNote::contextMenuEvent(QGraphicsSceneContextMenuEvent* event){
 
 }
 
-void PostNote::toggleBold(){
-    QTextCursor cursor = textCursor();
-    QTextCharFormat fmt ;
-    bool isBold = cursor.charFormat().fontWeight() == QFont::Bold ;
-    fmt.setFontWeight(isBold ? QFont::Normal : QFont::Bold);
-    cursor.mergeCharFormat(fmt);
-    setTextCursor(cursor);
-}
-
-void PostNote::toggleItalic(){
-    QTextCursor cursor = textCursor();
-    QTextCharFormat fmt ;
-    fmt.setFontItalic(!cursor.charFormat().fontItalic());
-    cursor.mergeCharFormat(fmt);
-    setTextCursor(cursor);
-}
-
-void PostNote::toggleUnderline(){
-    QTextCursor cursor = textCursor();
-    QTextCharFormat fmt ;
-    fmt.setFontUnderline(!cursor.charFormat().fontUnderline());
-    cursor.mergeCharFormat(fmt);
-    setTextCursor(cursor);
-}
-
-void PostNote::onFontChanged(const QFont& font){
-    QTextCursor cursor = textCursor();
-    QTextCharFormat fmt ;
-    fmt.setFontFamilies(font.families());
-    cursor.mergeCharFormat(fmt);
-    setTextCursor(cursor);
-}
-
-void PostNote::applyTextStyle(TextStyle style){
-    QTextCursor cursor = textCursor();
-    if (!cursor.hasSelection()){
-        cursor.select(QTextCursor::LineUnderCursor); 
+void PostNote::applyTextFormat(const TextFormat& format){
+    if ( format.bolded != currentFormat_.bolded ){
+        QTextCursor cursor = textCursor();
+        QTextCharFormat fmt ;
+        fmt.setFontWeight(format.bolded ? QFont::Bold : QFont::Normal);
+        cursor.mergeCharFormat(fmt);
+        setTextCursor(cursor);
     }
 
-    QTextCharFormat fmt;
-    switch (style){
-        case TextStyle::Title:
-            fmt.setFontPointSize(20);
-            fmt.setFontWeight(QFont::Bold);
-            break ;
-        case TextStyle::Header:
-            fmt.setFontPointSize(15);
-            fmt.setFontWeight(QFont::DemiBold);
-            break ;
-        case TextStyle::Body:
-            fmt.setFontPointSize(11);
-            fmt.setFontWeight(QFont::Normal);
-            break ;
+    if ( format.italicized != currentFormat_.italicized ){
+        QTextCursor cursor = textCursor();
+        QTextCharFormat fmt ;
+        fmt.setFontItalic(format.italicized);
+        cursor.mergeCharFormat(fmt);
+        setTextCursor(cursor);
     }
-    cursor.mergeCharFormat(fmt);
-    setTextCursor(cursor);
+
+    if ( format.underlined != currentFormat_.underlined ){
+        QTextCursor cursor = textCursor();
+        QTextCharFormat fmt ;
+        fmt.setFontUnderline(format.underlined);
+        cursor.mergeCharFormat(fmt);
+        setTextCursor(cursor);
+    }
+
+    if ( format.font != currentFormat_.font ){
+        QTextCursor cursor = textCursor();
+        QTextCharFormat fmt ;
+        fmt.setFontFamilies(format.font.families());
+        cursor.mergeCharFormat(fmt);
+        setTextCursor(cursor);
+    }
+
+    if ( format.fontSize != currentFormat_.fontSize ){
+        QTextCharFormat fmt ;
+        switch (format.fontSize){
+        case TextFormat::FontSize::Title:
+            fmt.setFontPointSize(Theme::POST_TITLE_FONT_SIZE);
+            break ;
+        case TextFormat::FontSize::Header:
+            fmt.setFontPointSize(Theme::POST_HEADER_FONT_SIZE);
+            break ;
+        case TextFormat::FontSize::Body:
+            fmt.setFontPointSize(Theme::POST_BODY_FONT_SIZE);
+            break ;
+        }
+        QTextCursor cursor = textCursor();
+        if ( !cursor.hasSelection() ){
+            cursor.select(QTextCursor::BlockUnderCursor); 
+        }
+        cursor.mergeCharFormat(fmt) ;
+        setTextCursor(cursor);
+    }
+
+    currentFormat_ = format ;
+}
+
+void PostNote::syncFormatFromCursor(){
+    QTextCursor cursor = textCursor();
+    QTextCharFormat charFmt = cursor.charFormat();
+
+    TextFormat fmt ;
+    fmt.bolded = charFmt.fontWeight() == QFont::Bold ;
+    fmt.italicized = charFmt.fontItalic();
+    fmt.underlined = charFmt.fontUnderline();
+    fmt.font = charFmt.font();
     
-    // combo boxes have quirky focus logic so deferring this resolves weird bugs
-    QTimer::singleShot(0, this, [this](){
-        setFocus(Qt::OtherFocusReason);
-    });
+    double fontSize = charFmt.fontPointSize();
+    if ( fontSize == Theme::POST_TITLE_FONT_SIZE ){
+        currentFormat_.fontSize = TextFormat::FontSize::Title ;
+    } else if ( fontSize == Theme::POST_HEADER_FONT_SIZE ){
+        currentFormat_.fontSize = TextFormat::FontSize::Header ;
+    } else {
+        currentFormat_.fontSize = TextFormat::FontSize::Body ;
+    }
+
+    if ( fmt != currentFormat_ ){
+        currentFormat_ = fmt ;
+        emit formatUpdated(currentFormat_);
+    }
 }
