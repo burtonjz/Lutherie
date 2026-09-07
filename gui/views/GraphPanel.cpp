@@ -501,7 +501,7 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
 
         bool onNote = post->sceneBoundingRect().contains(scenePos);
         bool onToolbar = postToolbar_->geometry().contains(event->pos());
-        if ( !onNote && !onToolbar ) post->stopEditing();
+        if ( !onNote && !onToolbar ) post->endEdit();
     }
 
     // handle connection drag
@@ -1196,16 +1196,16 @@ void GraphPanel::createPost(){
     scene_->addItem(post);
     post->setPos(getNewNodeSpawnPosition(post->boundingRect()));
 
-    connect(post, &PostNote::requestStartEditing, 
+    connect(post, &PostNote::requestStartEdit, 
         this, [this, post] {
             setActivePost(post);
     });
     connect(
-        post, &PostNote::editingStarted,
+        post, &PostNote::editStarted,
         postToolbar_, &TextToolbar::onEditingStarted
     );
     connect(
-        post, &PostNote::editingFinished,
+        post, &PostNote::editFinished,
         postToolbar_, &TextToolbar::onEditingFinished
     );
     connect(
@@ -1227,8 +1227,8 @@ void GraphPanel::showAllPosts(){
 }
 
 void GraphPanel::setActivePost(PostNote* post){
-    if ( activePost_ ) activePost_->stopEditing();
+    if ( activePost_ ) activePost_->endEdit();
 
     activePost_ = post ;
-    post->startEditing();
+    post->startEdit();
 }

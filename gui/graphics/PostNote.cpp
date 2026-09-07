@@ -34,12 +34,13 @@
 
 PostNote::PostNote(QGraphicsItem* parent):
     QGraphicsTextItem(parent),
-    width_(Theme::POST_NOTE_MIN_WIDTH),
+    width_(Theme::POST_NOTE_DEFAULT_WIDTH),
     currentFormat_()
 {
     setFlag(QGraphicsItem::ItemIsMovable);
     setFlag(QGraphicsItem::ItemIsSelectable);
     setFlag(QGraphicsItem::ItemIsFocusable);
+    
     setAcceptHoverEvents(true);
     setTextInteractionFlags(Qt::NoTextInteraction);
     setDefaultTextColor(Theme::TEXT_PRIMARY);
@@ -57,15 +58,15 @@ void PostNote::setBackgroundColor(const QColor& color){
     update();
 }
 
-void PostNote::startEditing(){
+void PostNote::startEdit(){
     editing_ = true ;
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setFocus(Qt::MouseFocusReason);
     syncFormatFromCursor();
-    emit editingStarted(currentFormat_);   
+    emit editStarted(currentFormat_);   
 }
 
-void PostNote::stopEditing(){
+void PostNote::endEdit(){
     editing_ = false ;
     setTextInteractionFlags(Qt::NoTextInteraction);
     auto cursor = textCursor();
@@ -73,8 +74,32 @@ void PostNote::stopEditing(){
     setTextCursor(cursor);
     clearFocus();
 
-    emit editingFinished();
+    emit editFinished();
 }
+
+void PostNote::startResize(const QPointF pos){
+    resizing_ = true ;
+
+    resizeLeft_ = std::abs(pos.x()) < std::abs(pos.x() - width_);
+}
+
+void PostNote::updateResize(const QPointF pos){
+    if ( resizeLeft_ ){
+        width_ = std::max(width_ - pos.x(), Theme::POST_NOTE_MIN_WIDTH);
+        if ( width_ != Theme::POST_NOTE_MIN_WIDTH ){
+            moveBy(pos.x(),0.0);    
+        }
+    } else {
+        width_ = std::max(pos.x(), Theme::POST_NOTE_MIN_WIDTH);
+    }
+
+    setTextWidth(width_);
+}
+
+void PostNote::endResize(){
+    resizing_ = false ;
+}
+
 
 bool PostNote::editing() const {
     return editing_ ;
@@ -148,6 +173,7 @@ json PostNote::serialize() const {
     msg["ypos"] = pos().y();
     msg["text"] = document()->toHtml().toStdString();
     msg["hidden"] = !isVisible();
+    msg["width"] = width_ ;
 
     return msg ;
 }
@@ -168,6 +194,11 @@ void PostNote::deserialize(const json& msg){
     if ( msg.contains("hidden") && msg.at("hidden").is_boolean() ){
         setVisible(!msg.at("hidden"));
     }
+
+    if ( msg.contains("width") && msg.at("width").is_number() ){
+        width_ = msg.at("width");
+        setTextWidth(width_);
+    }
 }
 
 void PostNote::mousePressEvent(QGraphicsSceneMouseEvent* event){
@@ -181,13 +212,19 @@ void PostNote::mousePressEvent(QGraphicsSceneMouseEvent* event){
         }
     }
 
+    if ( !editing_ && !resizing_ && cursor() == Qt::SizeHorCursor ){
+        startResize(event->pos());
+        event->accept();
+        return ;
+    }
+
     QGraphicsTextItem::mousePressEvent(event);
     if ( editing_ ) syncFormatFromCursor();
 }
 
 void PostNote::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event){
     if ( !editing_ ){
-        emit requestStartEditing();
+        emit requestStartEdit();
         event->accept();
         return ;
     }
@@ -196,14 +233,28 @@ void PostNote::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event){
     syncFormatFromCursor();
 }
 
+void PostNote::mouseMoveEvent(QGraphicsSceneMouseEvent* event){
+    if ( resizing_ ){
+        updateResize(event->pos());
+    }
+
+    QGraphicsTextItem::mouseMoveEvent(event);
+}
+
 void PostNote::mouseReleaseEvent(QGraphicsSceneMouseEvent* event){
+    if ( resizing_ ){
+        endResize();
+        event->accept();
+        return ;
+    }
+
     QGraphicsTextItem::mouseReleaseEvent(event);
     if ( editing_ ) syncFormatFromCursor();
 }
 
 void PostNote::keyPressEvent(QKeyEvent* event){
     if ( editing_ && event->key() == Qt::Key_Escape ){
-            stopEditing();
+            endEdit();
             event->accept();
             return ;
         }
@@ -254,6 +305,7 @@ void PostNote::keyPressEvent(QKeyEvent* event){
 }
 
 void PostNote::hoverMoveEvent(QGraphicsSceneHoverEvent* event){
+    // hyperlink hover
     QString anchor = document()->documentLayout()->anchorAt(event->pos());
     if ( anchor.isEmpty() ){
         setCursor(Qt::IBeamCursor);
@@ -262,6 +314,20 @@ void PostNote::hoverMoveEvent(QGraphicsSceneHoverEvent* event){
         setCursor(Qt::PointingHandCursor);
         QToolTip::showText(event->screenPos(), anchor);
     }
+
+    // resize
+    if ( !editing_ && !resizing_ ){
+        int dist = std::min(
+            abs(event->pos().x() - boundingRect().left()),
+            abs(event->pos().x() - boundingRect().right())
+        );
+        if ( dist < Theme::POST_NOTE_EDGE_THRESHOLD ){
+            setCursor(Qt::SizeHorCursor);
+        } else {
+            unsetCursor();
+        }
+    }
+
     QGraphicsTextItem::hoverMoveEvent(event);
 }
 

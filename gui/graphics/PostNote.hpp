@@ -34,7 +34,10 @@ class PostNote : public QGraphicsTextItem, public IToolbarTarget {
     Q_OBJECT
 
 private:
-    bool editing_ = false ;
+    bool editing_  = false ;
+    bool resizing_ = false ;
+    bool resizeLeft_ = false ;
+
     double width_ ;
     QColor bgColor_ ;
     TextFormat currentFormat_ ;
@@ -44,8 +47,12 @@ public:
 
     void setBackgroundColor(const QColor& color);
     
-    void startEditing();
-    void stopEditing();
+    void startEdit();
+    void endEdit();
+
+    void startResize(const QPointF pos);
+    void updateResize(const QPointF pos);
+    void endResize();
 
     void paint(
         QPainter* painter, 
@@ -66,6 +73,7 @@ public:
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent* event) override ;
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event) override ;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override ;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override ;
     void keyPressEvent(QKeyEvent* event) override ;
     void hoverMoveEvent(QGraphicsSceneHoverEvent* event) override ;
@@ -76,9 +84,9 @@ private:
     void syncFormatFromCursor();
 
 signals:
-    void requestStartEditing();
-    void editingStarted(TextFormat format);
-    void editingFinished();
+    void requestStartEdit();
+    void editStarted(TextFormat format);
+    void editFinished();
     void formatUpdated(TextFormat format);
 
 };
