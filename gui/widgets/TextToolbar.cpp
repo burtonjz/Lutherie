@@ -17,8 +17,10 @@
 
 #include "widgets/TextToolbar.hpp"
 #include "widgets/HyperlinkDialog.hpp"
+#include "views/DockDialog.hpp"
 #include "app/Theme.hpp"
 
+#include <kddockwidgets/core/DockRegistry.h>
 #include <QTextCursor>
 #include <QGraphicsObject>
 #include <spdlog/spdlog.h>
@@ -84,8 +86,28 @@ void TextToolbar::build(){
                 selectedText = anchor_->selectedText();
             }
 
-            HyperlinkDialog dialog(selectedText, this);
-            if ( dialog.exec() == QDialog::Accepted && !dialog.url().isEmpty() ){
+            auto* doc = KDDW::DockRegistry::self()->dockByName(Theme::DOCK_NAME_HYPERLINK_CREATOR);
+            if ( doc ){
+                SPDLOG_DEBUG("hyperlink creator dock already loaded. raising.");
+                doc->raise();
+                return ;
+            }
+            HyperlinkDialog dialog = HyperlinkDialog(selectedText);
+            DockDialog dock(
+                Theme::DOCK_NAME_HYPERLINK_CREATOR, 
+                Theme::DOCK_TITLE_HYPERLINK_CREATOR,
+                &dialog
+            );
+            connect(
+                &dialog, &HyperlinkDialog::accept,
+                &dock, &DockDialog::accept
+            );
+            connect(
+                &dialog, &HyperlinkDialog::reject,
+                &dock, &DockDialog::reject
+            );
+
+            if ( dock.exec() == DockDialog::Accepted && !dialog.url().isEmpty() ){
                 anchor_->createHyperlink(dialog.url(), dialog.display());
             }
 

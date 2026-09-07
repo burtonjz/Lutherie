@@ -45,34 +45,6 @@
 #include <QMenu>
 #include <QLineEdit>
 
-GraphPanel* GraphPanel::instance(){
-    if ( !instance_ ){
-        instance_ = new GraphPanel();
-    }
-    return instance_ ;
-}
-
-void GraphPanel::destroy(){
-    // delete children
-    instance_->postToolbar_->deleteLater();
-    instance_->connectionRenderer_->deleteLater();
-    instance_->audioOut_->deleteLater();
-    instance_->midiIn_->deleteLater();
-
-    for ( PostNote* post : instance_->posts_ ){
-        post->deleteLater();
-    }
-
-    for ( GraphNode* node : instance_->nodes_ ){
-        node->deleteLater();
-    }
-
-    instance_->scene_->deleteLater();
-    
-    delete instance_ ;
-    instance_ = nullptr ;
-}
-
 GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
     scene_(new QGraphicsScene(this)),
@@ -144,6 +116,23 @@ GraphPanel::GraphPanel(QWidget* parent):
         GroupManager::instance(), &GroupManager::groupRemoved,
         this, &GraphPanel::onComponentGroupRemoved
     );
+}
+
+GraphPanel::~GraphPanel(){
+    postToolbar_->deleteLater();
+    connectionRenderer_->deleteLater();
+    audioOut_->deleteLater();
+    midiIn_->deleteLater();
+
+    for ( PostNote* post : posts_ ){
+        post->deleteLater();
+    }
+
+    for ( GraphNode* node : nodes_ ){
+        node->deleteLater();
+    }
+
+    scene_->deleteLater();
 }
 
 void GraphPanel::setupScene(){
@@ -885,7 +874,7 @@ void GraphPanel::onControlMessageReceived(const json& msg){
         return ;
     }
 
-    if ( action == "get_audio_configuration" ){
+    if ( action == "get_audio_configuration" || "set_audio_device" ){
         if ( msg.at("status") == "success" ){
             if ( msg.contains("output_channels") ){
                 updatePeripheralAudioChannels(msg.at("output_channels"));
@@ -1168,11 +1157,12 @@ void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
 void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     auto sockets = audioOut_->getSockets();
     size_t oldSize = sockets.size();
+    if ( oldSize == numChannels ) return ;
+
     SPDLOG_INFO(
         "updating audio output from {} to {} channels", 
         oldSize, numChannels
     );
-    if ( oldSize == numChannels ) return ;
 
     // new output peripheral has less channels
     if ( oldSize > numChannels ){

@@ -23,6 +23,7 @@
 #include "views/PeripheralConfig.hpp"
 #include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
+#include "views/DockDialog.hpp"
 #include "api/ControlApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "config/Config.hpp"
@@ -31,6 +32,7 @@
 #include "widgets/ComponentParameters.hpp"
 #include "platform/AppPaths.hpp"
 
+#include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/DockWidget.h>
 #include <kddockwidgets/core/FloatingWindow.h>
 #include <QStandardItemModel>
@@ -55,17 +57,15 @@ Synth::Synth(QWidget* parent):
         {KDDockWidgets::MainWindowOption_None}, 
         parent
     ),
-    peripheralConfigDock_(new KDDWQt::DockWidget(
-        "__peripheralConfigDock", 
-        KDDockWidgets::DockWidgetOption_NotDockable
-    )),
+    graph_(new GraphPanel(this)),
     graphDock_(new KDDWQt::DockWidget("__graphDock")),
     parameterPanel_(new ControlPanel(this)),
     parameterDock_(new KDDWQt::DockWidget("__parameterDock")),
     modulationPanel_(new ControlPanel(this)),
     modulationDock_(new KDDWQt::DockWidget("__modulationDock")),
     analyzerDocks_(),
-    componentDetailDocks_()
+    componentDetailDocks_(),
+    peripheralConfig_(new PeripheralConfig(this))
 {
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
@@ -78,9 +78,7 @@ Synth::Synth(QWidget* parent):
 }
 
 Synth::~Synth(){
-    PeripheralConfig::destroy();
     StreamApiClient::destroy();
-    GraphPanel::destroy();
 }
 
 void Synth::configureMenu(){
@@ -229,17 +227,7 @@ void Synth::configureToolBar(){
 }
 
 void Synth::configureDocks(){
-    peripheralConfigDock_->setWidget(PeripheralConfig::instance());
-    peripheralConfigDock_->resize(PeripheralConfig::instance()->minimumSizeHint());
-    peripheralConfigDock_->setTitle(Theme::SETUP_WINDOW_LABEL);
-    connect(
-        PeripheralConfig::instance(), &PeripheralConfig::completed,
-        this, [this](){
-            peripheralConfigDock_->close();
-        }
-    );
-
-    graphDock_->setWidget(GraphPanel::instance());
+    graphDock_->setWidget(graph_);
     graphDock_->setTitle("Connection Graph");
     addDockWidget(graphDock_, KDDW::Location_OnLeft);
 
@@ -308,23 +296,23 @@ void Synth::makeExternalConnections(){
     
     // graph panel
     connect(
-        GraphPanel::instance(), &GraphPanel::requestShowParameters,
+        graph_, &GraphPanel::requestShowParameters,
         this, &Synth::onShowParameters
     );
     connect(
-        GraphPanel::instance(), &GraphPanel::requestShowModulation,
+        graph_, &GraphPanel::requestShowModulation,
         this, &Synth::onShowModulation
     );
     connect(
-        GraphPanel::instance(), &GraphPanel::requestShowGroupParameters,
+        graph_, &GraphPanel::requestShowGroupParameters,
         this, &Synth::onShowGroupParameters
     );
     connect(
-        GraphPanel::instance(), &GraphPanel::requestShowGroupModulation,
+        graph_, &GraphPanel::requestShowGroupModulation,
         this, &Synth::onShowGroupModulation
     );
     connect(
-        GraphPanel::instance(), &GraphPanel::requestShowAnalyzer,
+        graph_, &GraphPanel::requestShowAnalyzer,
         this, &Synth::onActionToggleAnalyzer
     );
 }
@@ -362,9 +350,9 @@ QMenu* Synth::buildComponentMenu(){
         QAction* a = menu->addAction("");
         a->setVisible(false);
         connect(
-            a, &QAction::triggered, this, [a](){
+            a, &QAction::triggered, this, [this, a](){
                 ComponentType typ = static_cast<ComponentType>(a->data().toInt());
-                GraphPanel::instance()->onComponentSelected(typ);
+                graph_->onComponentSelected(typ);
             }
         );
         componentMenuQuickAction_.push_back(a);
@@ -387,8 +375,8 @@ QMenu* Synth::buildComponentMenu(){
             QAction* action = submenu->addAction(QString::fromStdString(desc.name));
             action->setData(static_cast<int>(typ));
             actionType_[action] = typ ;
-            connect(action, &QAction::triggered, this, [typ](){
-                GraphPanel::instance()->onComponentSelected(typ);
+            connect(action, &QAction::triggered, this, [typ, this](){
+                graph_->onComponentSelected(typ);
             });
         }
     }
@@ -442,7 +430,7 @@ QMenu* Synth::buildComponentMenu(){
             for ( const auto& [action, typ] : actionType_ ){
                 if ( visibleType_.count(typ) && action->text().compare(text, Qt::CaseInsensitive) == 0 ){
                     menu->close();
-                    GraphPanel::instance()->onComponentSelected(typ);
+                    graph_->onComponentSelected(typ);
                     return ;
                 }
             }
@@ -451,7 +439,7 @@ QMenu* Synth::buildComponentMenu(){
             if ( visibleType_.size() == 1 ){
                 ComponentType typ = *visibleType_.begin();
                 menu->close();
-                GraphPanel::instance()->onComponentSelected(typ);
+                graph_->onComponentSelected(typ);
             }
         }
     );
@@ -469,20 +457,20 @@ QMenu* Synth::buildPostMenu(){
 
     QAction* newPostAction = new QAction("Create New Post", menu);
     menu->addAction(newPostAction);
-    connect(newPostAction, &QAction::triggered, this, [](){
-        GraphPanel::instance()->createPost();
+    connect(newPostAction, &QAction::triggered, this, [this](){
+        graph_->createPost();
     });
 
     QAction* hidePostsAction = new QAction("Hide all Posts", menu);
     menu->addAction(hidePostsAction);
-    connect(hidePostsAction, &QAction::triggered, this, [](){
-        GraphPanel::instance()->hideAllPosts();
+    connect(hidePostsAction, &QAction::triggered, this, [this](){
+        graph_->hideAllPosts();
     });
 
     QAction* showPostsAction = new QAction("Show all Posts", menu);
     menu->addAction(showPostsAction);
-    connect(showPostsAction, &QAction::triggered, this, [](){
-        GraphPanel::instance()->showAllPosts();
+    connect(showPostsAction, &QAction::triggered, this, [this](){
+        graph_->showAllPosts();
     });
     
 
@@ -549,10 +537,29 @@ void Synth::onControlMessageReceived(const json& j){
 }
 
 void Synth::onActionPeripheralConfig(){
-    if ( peripheralConfigDock_->isOpen() ){
-        peripheralConfigDock_->close();
-    } else {
-        peripheralConfigDock_->open();
+    auto* doc = KDDW::DockRegistry::self()->dockByName(Theme::DOCK_NAME_PERIPHERAL_CONFIG);
+    if ( doc ){
+        SPDLOG_DEBUG("peripheral config dock already loaded. Raising.");
+        doc->raise();
+        return ;
+    }
+    DockDialog dialog(
+        Theme::DOCK_NAME_PERIPHERAL_CONFIG, 
+        Theme::DOCK_TITLE_PERIPHERAL_CONFIG,
+        peripheralConfig_
+    );
+    connect(
+        peripheralConfig_, &PeripheralConfig::accept,
+        &dialog, &DockDialog::accept
+    );
+    connect(
+        peripheralConfig_, &PeripheralConfig::reject,
+        &dialog, &DockDialog::reject
+    );
+    
+    DockDialog::Result result = dialog.exec();
+    if ( result == DockDialog::Accepted ){
+        peripheralConfig_->submit();
     }
 }
 
@@ -582,7 +589,6 @@ void Synth::onEngineStatusChange(bool status){
     actionStart_->setVisible(!status);
     actionStop_->setVisible(status);
     actionPeripheralConfig_->setDisabled(status);
-    peripheralConfigDock_->close();
 }
 
 void Synth::onActionLoad(){
@@ -601,7 +607,7 @@ void Synth::onActionLoad(){
     
     QFile file(filePath);
     if ( !file.open(QIODevice::ReadOnly | QIODevice::Text) ) {
-        ToastNotification::show(GraphPanel::instance()->scene(), GraphPanel::instance(),
+        ToastNotification::show(graph_->scene(), graph_,
             "Filed to open file " + filePath + ": " + file.errorString()
         );
         return;
@@ -614,7 +620,7 @@ void Synth::onActionLoad(){
         saveData_ = json::parse(fileData.data());
         saveFilePath_ = filePath ;
     } catch (std::exception& e ){
-        ToastNotification::show(GraphPanel::instance()->scene(), GraphPanel::instance(), 
+        ToastNotification::show(graph_->scene(), graph_, 
             "Failed to load file " + filePath + ". Invalid json: " + e.what()
         );
         return ;
@@ -657,7 +663,7 @@ void Synth::onActionSaveAs(){
 }
 
 void Synth::performSave(){
-    GraphPanel::instance()->serialize(saveData_);
+    graph_->serialize(saveData_);
 
     QFile file(saveFilePath_);
     if (!file.open(QIODevice::WriteOnly)){
@@ -945,7 +951,7 @@ void Synth::onComponentRenamed(int componentId){
     } 
 
     // rename node
-    auto n = GraphPanel::instance()->getComponentNode(componentId);
+    auto n = graph_->getComponentNode(componentId);
     if ( n ){
         SPDLOG_DEBUG("renaming component node...");
         n->onRename(m->getName());
@@ -986,7 +992,7 @@ void Synth::onGroupRenamed(int groupId){
     if ( !m ) return ;
 
     // graph node renames
-    auto n = GraphPanel::instance()->getGroupNode(groupId);
+    auto n = graph_->getGroupNode(groupId);
     if ( n ){
         n->onRename(m->getName());
     }

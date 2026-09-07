@@ -13,8 +13,6 @@
 - [Quick] basic reverb
 
 ### Misc Improvements
-- [Quick] Switch GraphPanel back out from singleton. Just keep singletons to managers/api
-- [Quick] Switch PeripheralConfig back out from singleton. Remove synth dock tracking and main drop logic (not necessary, just set Option_NotDockable instead)
 - [Medium] leverage KDDockWidgets `LayoutSaverOption` to allow users to save positionings into configs
 
 ## Day 2

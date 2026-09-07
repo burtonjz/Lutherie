@@ -32,33 +32,22 @@ class PeripheralConfig : public QWidget {
     Q_OBJECT
 
 private:
-    QLabel* audioSelectLabel_ ;
-    QLabel* midiSelectLabel_ ;
     QComboBox* audioComboBox_ ;
     QComboBox* midiComboBox_ ;
     QCheckBox* audioPreferredCheck_ ;
     QCheckBox* midiPreferredCheck_ ;
-    QPushButton* confirmButton_ ;
 
     bool audioDataReceived_ = false ;
     bool midiDataReceived_ = false ;
     bool autoSetupAttempted_ = false ;
 
-    explicit PeripheralConfig(QWidget* parent = nullptr);
-    static inline PeripheralConfig* instance_ = nullptr ;
-
 public:
-    static PeripheralConfig* instance();
-
-    static void destroy();
-
-    PeripheralConfig(const PeripheralConfig&) = delete ;
-    PeripheralConfig& operator=(const PeripheralConfig&) = delete ;
-    PeripheralConfig(PeripheralConfig&&) = delete ;
-    PeripheralConfig& operator=(PeripheralConfig&&) = delete ;
+    explicit PeripheralConfig(QWidget* parent = nullptr);
 
     void setAudioDeviceId(int id, bool block = true);
     void setMidiDeviceId(int id, bool block = true);
+
+    void submit();
 
 private:
     void requestData();
@@ -67,11 +56,10 @@ private:
 
 private slots:
     void onControlMessageReceived(const json& json);
-    void onConfigSubmit();
 
 signals:
-    void completed();
-    void audioChannelsUpdated(size_t numChannels);
+    void accept();
+    void reject();
     void setupNeeded();
 
 };

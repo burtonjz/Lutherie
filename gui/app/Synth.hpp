@@ -33,16 +33,17 @@ using json = nlohmann::json ;
 namespace KDDWQt = KDDockWidgets::QtWidgets ;
 
 // forward declarations
+class GraphPanel ;
 class ComponentParameters ;
 class ControlPanel ;
+class PeripheralConfig ;
 
 class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
 
 private:
-    // docks
-    KDDWQt::DockWidget* peripheralConfigDock_ ;
-
+    // Docks
+    GraphPanel* graph_ ;
     KDDWQt::DockWidget* graphDock_ ;
 
     ControlPanel* parameterPanel_ ;
@@ -53,6 +54,9 @@ private:
 
     std::unordered_map<ComponentType, KDDWQt::DockWidget*> analyzerDocks_ ;
     std::unordered_map<int, KDDWQt::DockWidget*> componentDetailDocks_ ;
+
+    // Floating Window Content
+    PeripheralConfig* peripheralConfig_ ;
 
     // save/load 
     QString saveFilePath_ ;

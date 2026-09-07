@@ -59,17 +59,9 @@ private:
     static constexpr int AUDIO_OUT_DEVICE_ID = 0 ;
     static constexpr int MIDI_IN_DEVICE_ID   = 1 ;
 
-    explicit GraphPanel(QWidget* parent = nullptr);
-    static inline GraphPanel* instance_ = nullptr ;
-
 public:
-    static GraphPanel* instance();
-    static void destroy();
-
-    GraphPanel(const GraphPanel&) = delete ;
-    GraphPanel& operator=(const GraphPanel&) = delete ;
-    GraphPanel(GraphPanel&&) = delete ;
-    GraphPanel& operator=(GraphPanel&&) = delete ;
+    explicit GraphPanel(QWidget* parent = nullptr);
+    ~GraphPanel();
 
     // APIs
     void serialize(json& msg) const ;

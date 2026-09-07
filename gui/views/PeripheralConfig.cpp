@@ -16,76 +16,50 @@
  */
 
 #include "views/PeripheralConfig.hpp"
-#include "views/GraphPanel.hpp"
 #include "managers/StateManager.hpp"
 #include "api/ControlApiClient.hpp"
-#include "views/GraphPanel.hpp"
 #include "app/Theme.hpp"
+#include "config/Config.hpp"
 
-#include <QBoxLayout>
+#include <QFormLayout>
+#include <QDialogButtonBox>
 #include <spdlog/spdlog.h>
-
-PeripheralConfig* PeripheralConfig::instance(){
-    if ( !instance_ ){
-        instance_ = new PeripheralConfig();
-    }
-    return instance_ ;
-}
-
-void PeripheralConfig::destroy(){
-    delete instance_ ;
-    instance_ = nullptr ;
-}
 
 PeripheralConfig::PeripheralConfig(QWidget* parent): 
     QWidget(parent),
-    audioSelectLabel_(new QLabel(Theme::SETUP_AUDIO_LABEL, this)),
-    midiSelectLabel_(new QLabel(Theme::SETUP_MIDI_LABEL, this)),
     audioComboBox_(new QComboBox(this)),
     midiComboBox_(new QComboBox(this)),
-    audioPreferredCheck_(new QCheckBox(Theme::SETUP_PREFERRED_LABEL, this)),
-    midiPreferredCheck_(new QCheckBox(Theme::SETUP_PREFERRED_LABEL, this)),
-    confirmButton_(new QPushButton(Theme::SETUP_CONFIRM_TEXT, this))
+    audioPreferredCheck_(new QCheckBox(this)),
+    midiPreferredCheck_(new QCheckBox(this))
 {
     // layout
-    QGridLayout* layout = new QGridLayout(this);
+    QFormLayout* form = new QFormLayout();
 
-    layout->addWidget(audioSelectLabel_, 0, 0, Qt::AlignRight | Qt::AlignVCenter);
-    layout->addWidget(audioComboBox_, 0, 1);
-    layout->addWidget(audioPreferredCheck_, 0, 2);
+    form->addRow(Theme::SETUP_AUDIO_LABEL, audioComboBox_);
+    form->addRow(Theme::SETUP_AUDIO_PREFERRED_LABEL, audioPreferredCheck_);
+    form->addRow(Theme::SETUP_MIDI_LABEL, midiComboBox_);
+    form->addRow(Theme::SETUP_MIDI_PREFERRED_LABEL, midiPreferredCheck_);
 
-    layout->addWidget(midiSelectLabel_, 1, 0, Qt::AlignRight | Qt::AlignVCenter);
-    layout->addWidget(midiComboBox_, 1, 1);
-    layout->addWidget(midiPreferredCheck_, 1, 2);
+    QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(
+        buttons, &QDialogButtonBox::accepted, 
+        this, &PeripheralConfig::accept
+    );
+    connect(
+        buttons, &QDialogButtonBox::rejected, 
+        this, &PeripheralConfig::reject
+    );
 
-    layout->addWidget(confirmButton_, 2, 1);
-
-    layout->setColumnStretch(0, 0);
-    layout->setColumnStretch(1, 0);
-    layout->setColumnStretch(2, 0);
-    layout->setRowStretch(3, 1);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    setLayout(layout);
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addLayout(form);
+    layout->addWidget(buttons);
     
-    // connections
+    // send initial device queries
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
         this, &PeripheralConfig::onControlMessageReceived
     );
-    connect(
-        confirmButton_, &QPushButton::clicked,
-        this, &PeripheralConfig::onConfigSubmit
-    );
-    connect(
-        StateManager::instance(), &StateManager::setupCompleted, 
-        this, &PeripheralConfig::completed
-    );
-    connect(
-        this, &PeripheralConfig::audioChannelsUpdated,
-        GraphPanel::instance(), &GraphPanel::updatePeripheralAudioChannels
-    );
 
-    // send initial device queries
     if ( ControlApiClient::instance()->isConnected() ){
         requestData();
     } else {
@@ -94,8 +68,6 @@ PeripheralConfig::PeripheralConfig(QWidget* parent):
             this, &PeripheralConfig::requestData, Qt::SingleShotConnection
         );
     }
-    
-
 }
 
 void PeripheralConfig::setAudioDeviceId(int id, bool block){
@@ -198,7 +170,7 @@ void PeripheralConfig::attemptAutoSetup(){
             "valid configuration recognized: audio device id = {}, midi device id = {}",
             audioId, midiId
         );
-        onConfigSubmit();
+        submit();
     } else {
         SPDLOG_INFO(
             "user configuration is either incomplete or invalid. auto setup incomplete"
@@ -229,7 +201,6 @@ void PeripheralConfig::onControlMessageReceived(const json& json){
     if ( action == "set_audio_device" ){
         if ( json.at("status") == "success" ){
             setAudioDeviceId(json.at("device_id"));
-            GraphPanel::instance()->updatePeripheralAudioChannels(json.at("output_channels"));
             StateManager::instance()->setSetupAudioComplete(true);
         }
         return ;
@@ -244,7 +215,7 @@ void PeripheralConfig::onControlMessageReceived(const json& json){
     }
 }
 
-void PeripheralConfig::onConfigSubmit(){
+void PeripheralConfig::submit(){
     json j ;
     j["action"] = "set_audio_device" ;
     j["device_id"] = audioComboBox_->currentData().toInt();

@@ -15,27 +15,37 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef HYPERLINK_DIALOG_HPP_
-#define HYPERLINK_DIALOG_HPP_
+#ifndef DOCK_DIALOG_HPP_
+#define DOCK_DIALOG_HPP_
 
-#include <QWidget>
-#include <QLineEdit>
+#include <QObject>
+#include <kddockwidgets/DockWidget.h>
 
-class HyperlinkDialog : public QWidget {
+namespace KDDW = KDDockWidgets ;
+namespace KDDWQt = KDDW::QtWidgets ;
+
+
+class DockDialog : public QObject {
     Q_OBJECT
 
+public:
+    enum Result {
+        Accepted,
+        Rejected
+    };
+
 private:
-    QLineEdit* url_ ;
-    QLineEdit* display_ ;
+    KDDWQt::DockWidget* dock_ = nullptr ;
+    QEventLoop* loop_ = nullptr ;
+    Result result_ = Rejected ;
 
 public:
-    explicit HyperlinkDialog(const QString& initialDisplayText, QWidget* parent = nullptr);
-    QString url() const ;
-    QString display() const ;
+    explicit DockDialog(QString docName, QString docTitle, QWidget* content, QObject* parent = nullptr);
+    Result exec();
 
-signals:
+public slots:
     void accept();
     void reject();
 };
 
-#endif // HYPERLINK_DIALOG_HPP_
+#endif // DOCK_DIALOG_HPP_

@@ -285,15 +285,21 @@ public:
 
     static const QString& getMidiLearnInstructions();
 
-    static constexpr const char* SETUP_WINDOW_LABEL    = "Peripheral Device Configuration" ;
-    static constexpr const char* SETUP_AUDIO_LABEL     = "Select Audio Device" ;
-    static constexpr const char* SETUP_MIDI_LABEL      = "Select MIDI Device" ;
-    static constexpr const char* SETUP_PREFERRED_LABEL = "Preferred" ;
-    static constexpr const char* SETUP_CONFIRM_TEXT    = "Confirm" ;
+    static constexpr const char* SETUP_WINDOW_LABEL          = "Peripheral Device Configuration" ;
+    static constexpr const char* SETUP_AUDIO_LABEL           = "Select Audio Device" ;
+    static constexpr const char* SETUP_MIDI_LABEL            = "Select MIDI Device" ;
+    static constexpr const char* SETUP_AUDIO_PREFERRED_LABEL = "Set as Default Audio Device" ;
+    static constexpr const char* SETUP_MIDI_PREFERRED_LABEL  = "Set as Default Midi Device" ;
 
     static constexpr const char* POST_NOTE_BOLD_BTN_TEXT      = "B" ;
     static constexpr const char* POST_NOTE_ITALIC_BTN_TEXT    = "I" ;
     static constexpr const char* POST_NOTE_UNDERLINE_BTN_TEXT = "U" ;
+
+    static constexpr const char* DOCK_NAME_PERIPHERAL_CONFIG  = "__PeripheralConfigDialogDock" ;
+    static constexpr const char* DOCK_TITLE_PERIPHERAL_CONFIG = "Device Configuration" ;
+
+    static constexpr const char* DOCK_NAME_HYPERLINK_CREATOR   = "__HyperlinkCreatorDialogDock" ;
+    static constexpr const char* DOCK_TITLE_HYPERLINK_CREATOR = "Create Hyperlink" ;
 
     /*
     =======================================================

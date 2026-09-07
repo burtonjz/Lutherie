@@ -110,9 +110,12 @@ void GraphNode::show(){
 }
 
 void GraphNode::addToScene(QGraphicsScene* scene){
-    scene->addItem(this);
+    if ( !scene->items().contains(this) ){
+        scene->addItem(this);
+    }
+    
     for ( auto* socket : sockets_ ){
-        if ( !scene->items().contains(socket)){
+        if ( !scene->items().contains(socket) ){
             scene->addItem(socket);
         }
     }

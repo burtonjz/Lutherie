@@ -17,8 +17,8 @@
 
 #include "managers/StateManager.hpp"
 
-StateManager::StateManager()
-    : QObject{nullptr} 
+StateManager::StateManager(): 
+    QObject()
 {}
 
 StateManager* StateManager::instance(){

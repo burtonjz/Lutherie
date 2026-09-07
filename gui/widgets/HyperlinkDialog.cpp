@@ -21,12 +21,10 @@
 #include <QDialogButtonBox>
 
 HyperlinkDialog::HyperlinkDialog(const QString& initialDisplayText, QWidget* parent):
-    QDialog(parent),
+    QWidget(parent),
     url_(new QLineEdit()),
     display_(new QLineEdit())
 {
-    setWindowTitle("Insert Hyperlink");
-
     url_->setPlaceholderText("https://...");
     
     display_->setText(initialDisplayText);
@@ -39,11 +37,11 @@ HyperlinkDialog::HyperlinkDialog(const QString& initialDisplayText, QWidget* par
     QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(
         buttons, &QDialogButtonBox::accepted, 
-        this, &QDialog::accept
+        this, &HyperlinkDialog::accept
     );
     connect(
         buttons, &QDialogButtonBox::rejected, 
-        this, &QDialog::reject
+        this, &HyperlinkDialog::reject
     );
 
     auto* layout = new QVBoxLayout(this);
