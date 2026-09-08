@@ -378,7 +378,7 @@ template <> struct ParameterTraits<ParameterType::SUSTAIN>{
 template <> struct ParameterTraits<ParameterType::RELEASE>{
     using ValueType = float ;
     static constexpr std::string_view name = "release" ;
-    static constexpr float minimum = 0.0 ;
+    static constexpr float minimum = 0.001 ;
     static constexpr float maximum = 4.0 ;
     static constexpr float defaultValue = 0.01 ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{

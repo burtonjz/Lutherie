@@ -62,6 +62,12 @@ void MidiController::tick(float dt){
     }
 }
 
+void MidiController::processEvents(){
+    for ( MidiEventHandler* h : handlers_ ){
+        h->processEvents();
+    }
+}
+
 void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *message, [[maybe_unused]] void *userData){
     MidiController::instance()->processMessage(deltaTime, message);    
 }

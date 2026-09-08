@@ -58,12 +58,8 @@ public:
     void addHandler(MidiEventHandler* handler);
     void removeHandler(MidiEventHandler* handler);
 
-    /**
-     * @brief tick all midi handlers ( to resolve the event queue)
-     * 
-     * @param dt delta time
-     */
     void tick(float dt);
+    void processEvents();
 
 private:
     void processMessage(double deltaTime, std::vector<unsigned char> *message);

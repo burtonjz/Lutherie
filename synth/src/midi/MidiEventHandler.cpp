@@ -82,7 +82,9 @@ std::vector<MidiEventListener*>& MidiEventHandler::getListeners(){
 
 bool MidiEventHandler::isNoteActive(uint8_t n) const {
     for ( uint8_t i = 0 ; i < activeCount_; ++i ){
-        if (noteIndices_[i] == n ) return true ;
+        if (noteIndices_[i] == n ){
+            return !notes_.at(noteIndices_[i]).pendingOff ;
+        } 
     }
     return false ;
 }
@@ -176,14 +178,16 @@ void MidiEventHandler::processEvents(){
 }
 
 void MidiEventHandler::tick(float dt){
-    processEvents();
-
     onTick(dt); 
 
     for ( uint8_t i = 0; i < activeCount_ ; ++i ){
         ActiveNote& note = notes_[noteIndices_[i]];
+
+        if ( note.pendingOff ) continue ;
+
         if ( shouldKillNote(note) ){
             MidiEvent e = {MidiEvent::Type::NoteOff, note};
+            note.pendingOff = true ;
             queue_.push(e);
         } else {
             note.updateTime(dt);

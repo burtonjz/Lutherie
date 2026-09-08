@@ -352,11 +352,12 @@ int Engine::audioCallback(
         return 1 ; 
     }
 
-    float bufferDt = nBufferFrames / static_cast<float>(engine->getSampleRate());
-    MidiController::instance()->tick(bufferDt);
+    float sampleDt = 1 / static_cast<float>(engine->getSampleRate());
+    MidiController::instance()->processEvents();
     for (unsigned int i = 0; i < nBufferFrames; ++i){
         ComponentManager::instance()->runParameterModulation();
         auto [output, outputSize] = SignalController::instance()->processFrame();
+        MidiController::instance()->tick(sampleDt);
         for ( unsigned int j = 0 ; j < outputSize ; ++j ){
             *buffer++ = dsp::fastAtan(output[j]);
         }

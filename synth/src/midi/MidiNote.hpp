@@ -106,6 +106,7 @@ public:
 struct ActiveNote {
     MidiNote note ;
     float time = 0.0f ;
+    bool pendingOff = false ;
 
     void resetTime(){
         time = 0.0f ;
