@@ -87,7 +87,7 @@ public:
     void updatePeripheralAudioChannels(size_t numChannels);
 
     // Post Notes
-    void createPost();
+    PostNote* createPost();
     void hideAllPosts();
     void showAllPosts();
     void setActivePost(PostNote* post);

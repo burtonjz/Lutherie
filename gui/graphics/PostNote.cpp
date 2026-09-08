@@ -230,7 +230,7 @@ void PostNote::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event){
     }
     
     QGraphicsTextItem::mouseDoubleClickEvent(event);
-    syncFormatFromCursor();
+    if ( editing_ ) syncFormatFromCursor();
 }
 
 void PostNote::mouseMoveEvent(QGraphicsSceneMouseEvent* event){
@@ -324,7 +324,7 @@ void PostNote::hoverMoveEvent(QGraphicsSceneHoverEvent* event){
         if ( dist < Theme::POST_NOTE_EDGE_THRESHOLD ){
             setCursor(Qt::SizeHorCursor);
         } else {
-            unsetCursor();
+            setCursor(Qt::IBeamCursor);
         }
     }
 

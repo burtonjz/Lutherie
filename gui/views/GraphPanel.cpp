@@ -270,6 +270,15 @@ void GraphPanel::serialize(json& msg) const {
         posts.push_back(p->serialize());
     }
     msg["posts"] = posts ;
+
+    json view ;
+    const QPoint viewportCenter = viewport()->rect().center();
+    const QPointF sceneCenter = mapToScene(viewportCenter);
+    view["xpos"] = sceneCenter.x();
+    view["ypos"] = sceneCenter.y();
+    const QTransform zoom = transform();
+    view["zoom"] = zoom.m11();
+    msg["viewport"] = view ;
 }
 
 void GraphPanel::deserialize(const json& msg){
@@ -336,13 +345,22 @@ void GraphPanel::deserialize(const json& msg){
 
     if ( msg.contains("posts") && msg.at("posts").is_array() ){
         for ( const auto& p : msg.at("posts") ){     
-            PostNote* note = new PostNote();
+            PostNote* note = createPost();
             scene_->addItem(note);
             note->deserialize(p);
             posts_.push_back(note);
         }
     }
 
+    if ( msg.contains("viewport") ){
+        const json& view = msg.at("viewport");
+        if ( view.contains("xpos") && view.contains("ypos") && view.contains("zoom") ){
+            const double zoom = view.at("zoom");
+            resetTransform();
+            scale(zoom,zoom);
+            centerOn(view.at("xpos"), view.at("ypos"));
+        }
+    }
 }
 
 std::vector<PostNote*> GraphPanel::getSelectedPosts() const {
@@ -1190,7 +1208,7 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     audioOut_->addToScene(scene_);
 }
 
-void GraphPanel::createPost(){
+PostNote* GraphPanel::createPost(){
     PostNote* post = new PostNote();
     posts_.push_back(post);
     scene_->addItem(post);
@@ -1212,6 +1230,8 @@ void GraphPanel::createPost(){
         post, &PostNote::formatUpdated,
         postToolbar_, &TextToolbar::onFormatUpdated
     );
+
+    return post ;
 }
 
 void GraphPanel::hideAllPosts(){
