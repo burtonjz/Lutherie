@@ -30,7 +30,7 @@ WaveMap Wavetable::waves_ ;
 // define functions
 
 const Wave Wavetable::getWavetable(Waveform waveform) {
-    return { waves_[static_cast<int>(waveform)].data(), waves_[static_cast<int>(waveform)].size() } ;
+    return { waves_[waveform].data(), waves_[waveform].size() } ;
 }
 
 void Wavetable::generate(){
@@ -50,7 +50,7 @@ void Wavetable::generate(){
 }
 
 void Wavetable::generateSineWavetable(){\
-    std::vector<double>& w = waves_[static_cast<int>(Waveform::SINE)];
+    std::vector<double>& w = waves_[Waveform::SINE];
     double phase ;
 
     for ( size_t i = 0; i < w.size() ; ++i ){
@@ -60,7 +60,7 @@ void Wavetable::generateSineWavetable(){\
 }
 
 void Wavetable::generateSquareWavetable(){
-    std::vector<double>& w = waves_[static_cast<int>(Waveform::SQUARE)];
+    std::vector<double>& w = waves_[Waveform::SQUARE];
 
     double dt = 1.0 / w.size() ;
     double phase ;
@@ -78,8 +78,8 @@ void Wavetable::generateSquareWavetable(){
 }
 
 void Wavetable::generateTriangleWavetable(){
-    std::vector<double>& w = waves_[static_cast<int>(Waveform::TRIANGLE)];
-    std::vector<double>& square = waves_[static_cast<int>(Waveform::SQUARE)];
+    std::vector<double>& w = waves_[Waveform::TRIANGLE];
+    std::vector<double>& square = waves_[Waveform::SQUARE];
 
     // triangle is an integral of a square wave, we'll do a reimann sum
     double dt = 1.0 / w.size() ;
@@ -91,7 +91,7 @@ void Wavetable::generateTriangleWavetable(){
 }
 
 void Wavetable::generateSawWavetable(){
-    std::vector<double>& w = waves_[static_cast<int>(Waveform::SAW)];
+    std::vector<double>& w = waves_[Waveform::SAW];
     double sample ;
     double t ;
     double dt = 1.0 / w.size() ;
@@ -106,7 +106,7 @@ void Wavetable::generateSawWavetable(){
 }
 
 void Wavetable::generateNoiseWavetable(){
-    std::vector<double>& w = waves_[static_cast<int>(Waveform::NOISE)];
+    std::vector<double>& w = waves_[Waveform::NOISE];
     std::random_device rd;
     std::mt19937 rng(rd());
     std::uniform_real_distribution<double> distr(-1.0, 1.0);

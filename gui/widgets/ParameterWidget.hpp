@@ -123,13 +123,13 @@ public:
     void setValue(const ParameterValue& value, bool block = false) override ;
 };
 
-class MonophonicTriggerBehaviorWidget : public ParameterWidget {
+class MonophonicTriggerTypeWidget : public ParameterWidget {
 private:
     QLabel* label_ ;
     QComboBox* type_ ;
 
 public:
-    explicit MonophonicTriggerBehaviorWidget(QWidget* parent = nullptr);
+    explicit MonophonicTriggerTypeWidget(QWidget* parent = nullptr);
 
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;

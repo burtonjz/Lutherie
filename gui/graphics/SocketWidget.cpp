@@ -20,23 +20,20 @@
 #include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
-#include <qgraphicsitem.h>
+#include <QGraphicsItem>
+#include <spdlog/spdlog.h>
 
 SocketWidget::SocketWidget(SocketSpec spec, GraphNode* parent):
     QGraphicsObject(),
     spec_(spec),
     parent_(parent)
 {
-    if ( spec.idx.has_value() ){
-        setData(Qt::UserRole, QVariant::fromValue(spec.idx.value()));
-    }
-    
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::LeftButton);
     setZValue(-0.2); // we want the sockets just behind the GraphNode, with room to place the cable between
 
-    setToolTip(spec_.name);
+    setToolTip(spec_.name());
     show();
 }
 
@@ -69,7 +66,7 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 }
 
 QColor SocketWidget::getSocketColor(bool isHovered) const {
-    switch(spec_.type){
+    switch( spec_.type() ){
         case SocketType::ModulationInbound:
         case SocketType::ModulationOutbound:
             return isHovered ? Theme::SOCKET_MODULATION_LIGHT : Theme::SOCKET_MODULATION ;
@@ -97,37 +94,38 @@ void SocketWidget::setHovered(bool hovered){
 }
 
 bool SocketWidget::isOutbound() const {
-    return spec_.type == SocketType::ModulationOutbound || 
-           spec_.type == SocketType::SignalOutbound ||
-           spec_.type == SocketType::BufferOutbound ||
-           spec_.type == SocketType::MidiOutbound
-    ;
+    return !spec_.type().isInbound();
 }
 
 bool SocketWidget::isInbound() const {
-    return !isOutbound() ;
-}
-
-bool SocketWidget::hasConnection() const {
-    return nConnections_ > 0 ;
-}
-
-void SocketWidget::setConnnection(bool newConnection){
-    if ( newConnection ){
-        ++nConnections_ ;
-    } else {
-        --nConnections_ ;
-    }
-}
-
-void SocketWidget::syncConnection(SocketWidget* other){
-    nConnections_ = other->nConnections_ ;
+    return spec_.type().isInbound();
 }
 
 QPointF SocketWidget::getConnectionPoint() const {
     return mapToScene(0,0);
 }
 
-bool SocketWidget::matches(SocketSpec spec) const {
-    return spec == spec_ ;
+json SocketWidget::serialize() const {
+    json msg ;
+    msg["spec"] = spec_ ;
+    msg["visible"] = isVisible();
+
+    return msg ;
 }
+
+void SocketWidget::deserialize(const json& msg){
+    if ( !msg.contains("spec") ){
+        throw std::runtime_error("serialization message does not include 'spec'.");
+    }
+
+    SocketSpec spec = msg.at("spec");
+    if ( spec != spec_ ){
+        SPDLOG_ERROR("deserialization spec does not match socket spec. Exiting.");
+        return ;
+    }
+
+    if ( msg.contains("visible") && msg.at("visible").is_boolean() ){
+        setVisible(msg.at("is_visible"));
+    }
+}
+

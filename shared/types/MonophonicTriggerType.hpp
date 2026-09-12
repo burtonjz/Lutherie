@@ -15,30 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __FILTER_TYPE_HPP_
-#define __FILTER_TYPE_HPP_
+#ifndef __MONOPHONIC_TRIGGER_BEHAVIOR_HPP_
+#define __MONOPHONIC_TRIGGER_BEHAVIOR_HPP_
 
 #include <cstdint>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
 
-class FilterType {
+class MonophonicTriggerType {
 public:
     enum Value : uint8_t {
-        LowPass,
-        HighPass,
-        BandPass,
-        BandStop,
-        PeakingBell,
-        LowShelf,
-        HighShelf,
-        AllPass,
-        N_FILTER_TYPES
+        LEGATO,
+        RETRIGGER_LEGATO,
+        RETRIGGER_RESET,
+        N_MONOHPONIC_TRIGGER_TYPES
     };
 
-    FilterType() = default ;
-    constexpr FilterType(Value v) : value_(v){} 
+    MonophonicTriggerType() = default ;
+    constexpr MonophonicTriggerType(Value v) : value_(v){} 
 
     constexpr operator Value() const { return value_ ; }
 
@@ -46,8 +41,8 @@ public:
         return std::string(names_[value_]);
     }
 
-    static FilterType fromString(std::string_view str){
-        for (int i = 0; i < N_FILTER_TYPES; ++i ){
+    static MonophonicTriggerType fromString(std::string_view str){
+        for (int i = 0; i < N_MONOHPONIC_TRIGGER_TYPES; ++i ){
             if ( names_[i] == str ){
                 return static_cast<Value>(i);
             }
@@ -59,38 +54,32 @@ public:
         return value_ ;
     }
 
-    static FilterType from_uint8(uint8_t val){
-        return FilterType(static_cast<Value>(val));
+    static MonophonicTriggerType from_uint8(uint8_t val){
+        return MonophonicTriggerType(static_cast<Value>(val));
     }
 
-    static const std::array<std::string_view, N_FILTER_TYPES>& getNames(){
+    static const std::array<std::string_view, N_MONOHPONIC_TRIGGER_TYPES>& getNames(){
         return names_ ;
     }
 
-    static constexpr int count = N_FILTER_TYPES ;
+    static constexpr int count = N_MONOHPONIC_TRIGGER_TYPES ;
 
 private:
-    Value value_{LowPass} ;
+    Value value_ ;
 
-    static constexpr std::array<std::string_view, N_FILTER_TYPES> names_{
-        "Low Pass",
-        "High Pass",
-        "Band Pass",
-        "Band Stop",
-        "Peaking Bell",
-        "Low Shelf",
-        "High Shelf",
-        "All Pass",
+    static constexpr std::array<std::string_view, N_MONOHPONIC_TRIGGER_TYPES> names_{
+        "Legato",
+        "Retrigger (Legato)",
+        "Retrigger (Reset)"
     };
 };
 
-inline void from_json(const json& j, FilterType& t){
-    t = FilterType::fromString(j.get_ref<const std::string&>());
+inline void from_json(const json& j, MonophonicTriggerType& t){
+    t = MonophonicTriggerType::fromString(j.get_ref<const std::string&>());
 }
 
-inline void to_json(json& j, const FilterType& t){
+inline void to_json(json& j, const MonophonicTriggerType& t){
     j = t.toString();
 }
 
-
-#endif // __FILTER_TYPE_HPP_
+#endif // __MONOPHONIC_TRIGGER_BEHAVIOR_HPP_

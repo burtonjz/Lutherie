@@ -26,7 +26,7 @@ GroupNode::GroupNode(GroupModel* model, QGraphicsItem* parent):
 }
 
 void GroupNode::add(ComponentNode* node){
-    if ( !node || contains(node) ){
+    if ( !node || includes(node) ){
         SPDLOG_WARN("ignoring GroupNode Component add with null pointer");
         return ;
     } 
@@ -35,25 +35,24 @@ void GroupNode::add(ComponentNode* node){
     node->hide();
 }
 
-void GroupNode::remove(ComponentNode* node){
-    if ( !node || !contains(node) ) return ;
-    children_.erase(std::remove(children_.begin(), children_.end(), node), children_.end());
-    removeSockets(node);
-    node->show();
+// void GroupNode::remove(ComponentNode* node){
+//     if ( !node || !includes(node) ) return ;
+//     children_.erase(std::remove(children_.begin(), children_.end(), node), children_.end());
+//     removeSockets(node);
+//     node->show();
+// }
+
+void GroupNode::clear(){
+    children_.clear();
+    removeSockets();
 }
 
-void GroupNode::removeAll(){
-    while ( children_.size() > 0 ){
-       remove(children_[0]);
-    }
-}
-
-bool GroupNode::contains(ComponentNode* node) const {
+bool GroupNode::includes(ComponentNode* node) const {
     auto it = std::find(children_.begin(), children_.end(), node);
     return it != children_.end() ;
 }
 
-bool GroupNode::contains(int componentId) const {
+bool GroupNode::includes(int componentId) const {
     for ( const auto& c : children_ ){
         if ( c->getModel()->getId() == componentId ){
             return true ;
@@ -78,34 +77,12 @@ GroupModel* GroupNode::getModel() const {
 void GroupNode::addSockets(ComponentNode* node){
     for ( auto cSocket : node->getSockets() ){
         auto spec = cSocket->getSpec();
-        spec.name = node->getName() + " " + spec.name ;
+        spec.setName(node->getName() + " " + spec.name());
         SocketWidget* socket = new SocketWidget(spec, this);
-        socket->syncConnection(cSocket);
         sockets_.push_back(socket);  
         if ( scene() ) scene()->addItem(socket);
     }
 
-    layoutSockets();
-    reorderSockets();
-    positionSockets(scenePos());
-}
-
-void GroupNode::removeSockets(ComponentNode* node){
-    sockets_.erase(
-        std::remove_if(
-            sockets_.begin(), sockets_.end(),
-            [&](SocketWidget* s){
-                bool match = s->getSpec().componentId == node->getModel()->getId();
-                if ( match ){
-                    if ( s->scene() ) s->scene()->removeItem(s);
-                    node->getSocket(s->getSpec())->syncConnection(s);
-                    s->deleteLater();
-                }
-                return match ;
-            }
-        ), sockets_.end()
-    );
-    
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());

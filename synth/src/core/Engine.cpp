@@ -516,12 +516,12 @@ bool Engine::handleMidiConnection(ConnectionRequest request){
     BaseComponent* inbound = nullptr ;
     BaseComponent* outbound = nullptr ;
 
-    if ( request.inboundID.has_value() ){
-        inbound = ComponentManager::instance()->getRaw(request.inboundID.value());
+    if ( request.inbound().componentId().has_value() ){
+        inbound = ComponentManager::instance()->getRaw(request.inbound().componentId().value());
     }
 
-    if ( request.outboundID.has_value() ){
-        outbound = ComponentManager::instance()->getMidiHandler(request.outboundID.value());
+    if ( request.outbound().componentId().has_value() ){
+        outbound = ComponentManager::instance()->getMidiHandler(request.outbound().componentId().value());
     }
     
     // Case 1: inbound and outbound components both exist
@@ -533,7 +533,7 @@ bool Engine::handleMidiConnection(ConnectionRequest request){
             auto handler = dynamic_cast<MidiEventHandler*>(outbound);
             auto listener = dynamic_cast<MidiEventListener*>(inbound);
 
-            if ( request.remove ){
+            if ( request.remove() ){
                 handler->removeListener(listener);   
             } else {
                 handler->addListener(listener);
@@ -549,7 +549,7 @@ bool Engine::handleMidiConnection(ConnectionRequest request){
         // A: inbound is a handler, so we need to register this handler against the MidiState (receive raw midi events)
         if ( inboundDescriptor.isMidiHandler() ){
             auto handler = dynamic_cast<MidiEventHandler*>(inbound);
-            if ( request.remove ){
+            if ( request.remove() ){
                 unregisterBaseMidiHandler(handler);
                 return true ;
             }
@@ -560,7 +560,7 @@ bool Engine::handleMidiConnection(ConnectionRequest request){
         // B: inbound is only a listener (so we register to the default handler)
         if ( inboundDescriptor.isMidiListener() ){
             auto listener = dynamic_cast<MidiEventListener*>(inbound);
-            if ( request.remove ){
+            if ( request.remove() ){
                 getDefaultMidiHandler()->removeListener(listener);
                 return true ;
             }
@@ -594,81 +594,130 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
 }
 
 bool Engine::handleSignalConnection(ConnectionRequest request){
-    AudioSignalComponent* inbound = nullptr ;
     AudioSignalComponent* outbound = nullptr ;
+    AudioSignalComponent* inbound = nullptr ;
 
-    // inbound component can be a normal signal component or peripheral device
-    inbound = ComponentManager::instance()->getSignalComponent(request.inboundID.value_or(-1));
+    size_t outboundIdx = request.outbound().index().value();
+    size_t inboundIdx = request.inbound().index().value();
     
-    // outbound can be module only
-    outbound = ComponentManager::instance()->getSignalComponent(request.outboundID.value_or(-1));
-
-    // Case 1: if outbound is a peripheral
-    if ( !request.outboundID.has_value() ){
-        SPDLOG_WARN("receiving audio from an peripheral source is not yet supported.");
+    if ( !request.outbound().componentId().has_value() ){
+        SPDLOG_ERROR("receiving audio from an peripheral source is not yet supported.");
         return false ;
     }
 
-    // Case 2: if inbound is a peripheral
-    if ( !request.inboundID.has_value() ){
-        if ( request.remove ){
-            SignalController::instance()->unregisterSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
+    ComponentId outboundId = request.outbound().componentId().value();
+    outbound = ComponentManager::instance()->getSignalComponent(outboundId);
+    if ( !outbound ){
+        SPDLOG_ERROR(
+            "outbound component with ID {} was not found.",
+            outboundId
+        );
+        return false ;
+    }
+
+    if ( request.inbound().componentId().has_value() ){
+        inbound = ComponentManager::instance()->getSignalComponent(
+            request.inbound().componentId().value()
+        );
+    } else {
+        // inbound is an audio sink
+        if ( request.remove() ){
+            SignalController::instance()->unregisterSink(
+                outbound, outboundIdx, inboundIdx 
+            );
             return true ;
         }
-        SignalController::instance()->registerSink(outbound, request.outboundIdx.value(), request.inboundIdx.value());
+
+        SignalController::instance()->registerSink(
+            outbound, outboundIdx, inboundIdx
+        );
         return true ;
     }
 
-    // Case 3: inbound and outbound are components
-    if ( request.remove ){
-        SignalController::instance()->disconnect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
+    if ( !inbound ){
+        SPDLOG_ERROR(
+            "inbound component with ID {} was not found",
+            request.inbound().componentId().value()
+        );
+        return false ;
+    }
+    
+    // Inbound and Outbound are both components, make a normal connection
+    if ( request.remove() ){
+        SignalController::instance()->disconnect(
+            outbound, outboundIdx,
+            inbound, inboundIdx
+        );
         return true ;
     }
 
-    SignalController::instance()->connect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
+    SignalController::instance()->connect(
+        outbound, outboundIdx,
+        inbound, inboundIdx
+    );
     return true ;
 }
 
 bool Engine::handleBufferConnection(ConnectionRequest request){
-    AudioBufferComponent* inbound = nullptr ;
     AudioBufferComponent* outbound = nullptr ;
+    AudioBufferComponent* inbound = nullptr ;
+
+    size_t outboundIdx = request.outbound().index().value();
+    size_t inboundIdx = request.inbound().index().value();
     
-    inbound = ComponentManager::instance()->getBufferComponent(request.inboundID.value_or(-1));
-    outbound = ComponentManager::instance()->getBufferComponent(request.outboundID.value_or(-1));
-    
-    if ( !inbound ){
-        SPDLOG_WARN("Inbound component with id {} is not valid.");
+    if ( 
+        !request.outbound().componentId().has_value() ||
+        !request.inbound().componentId().has_value()
+    ){
+        SPDLOG_ERROR("all buffer components are expected to have a valid componentId.");
         return false ;
     }
 
+    ComponentId outboundId = request.outbound().componentId().value();
+    outbound = ComponentManager::instance()->getBufferComponent(outboundId);
     if ( !outbound ){
-        SPDLOG_WARN("Outbound component with id {} is not valid.");
+        SPDLOG_ERROR(
+            "outbound component with ID {} was not found.",
+            outboundId
+        );
         return false ;
     }
 
-    if ( !request.inboundIdx.has_value() ){
-        SPDLOG_WARN("inbound index not properly set, this is not a valid request");
+    ComponentId inboundId = request.inbound().componentId().value();
+    inbound = ComponentManager::instance()->getBufferComponent(inboundId);
+    if ( !inbound ){
+        SPDLOG_ERROR(
+            "inbound component with ID {} was not found.",
+            inboundId
+        );
         return false ;
     }
 
-    if ( !request.outboundIdx.has_value() ){
-        SPDLOG_WARN("outbound index not properly set, this is not a valid request");
-        return false ;
-    }
-
-    if ( request.remove ){
-        inbound->disconnectInput(outbound, request.inboundIdx.value(), request.outboundIdx.value());
+    if ( request.remove() ){
+        inbound->disconnectInput(
+            outbound, inboundIdx, 
+            outboundIdx
+        );
         return true ;
     }
 
-    if ( !ComponentRegistry::getComponentDescriptor(inbound->getType()).allowMultipleBufferConnections ){
-        if ( inbound->getInputs(request.inboundIdx.value()).size() > 0 ){
-            SPDLOG_WARN("This component does not support more than one buffer input per socket. Cancelling connection.");
-            return false ;
-        }
-    }
+    ComponentDescriptor d = ComponentRegistry::getComponentDescriptor(inbound->getType());
+    bool connectionValid = 
+        d.allowMultipleBufferConnections ||
+        inbound->getInputs(inboundIdx).size() == 0 ;
     
-    inbound->connectInput(outbound, request.inboundIdx.value(), request.outboundIdx.value());
+    if ( !connectionValid ){
+        SPDLOG_ERROR(
+            "Component of type {} does not support more than one inbound buffer per socket.",
+            d.name        
+        );
+        return false ;
+    }
+
+    inbound->connectInput(
+        outbound, inboundIdx, 
+        outboundIdx
+    );
     return true ;
 }
 
@@ -684,75 +733,80 @@ void Engine::getComponentConnections(ComponentId id, std::vector<ConnectionReque
 };
 
 void Engine::getPeripheralConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const {
-    // check if module is a sink
+    // check if component is a signal sink
     AudioSignalComponent* m = ComponentManager::instance()->getSignalComponent(id);
-
     if ( m ){
         for ( size_t i = 0; i < SignalController::instance()->getNumChannels(); ++i ){
+            ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                SocketType::SignalInbound, i
+            );
             for ( const auto& conn : SignalController::instance()->getSinks(i)){
-                if ( m == conn.component ){
-                    ConnectionRequest req ;
-                    req.outboundID = id ;
-                    req.outboundIdx = conn.index ;
-                    req.inboundSocket = SocketType::SignalInbound ;
-                    req.outboundSocket = SocketType::SignalOutbound ;
-                    req.inboundIdx = i ;
-                    requests.push_back(req);
-                }
+                if ( m != conn.component ) continue ;
+                ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                    SocketType::SignalOutbound, conn.index, id
+                );    
+                requests.push_back(ConnectionRequest(
+                    outbound, inbound
+                ));
             }
         }
     }
     
-    // midi peripherals are registered to midi state or to the default midi handler
+    // midi peripherals 
     MidiEventHandler* handler = ComponentManager::instance()->getMidiHandler(id);
     MidiEventListener* listener = ComponentManager::instance()->getMidiListener(id);
+    ConnectionEndpoint outbound = ConnectionEndpoint::create(SocketType::MidiOutbound);
+
     if ( handler ){
+        // handlers are only registered to MIDI state. 
         auto handlers = MidiState::instance()->getHandlers();
         if ( std::find(handlers.begin(), handlers.end(), handler) != handlers.end() ){
-            ConnectionRequest req ;
-            req.inboundID = id ;
-            req.inboundSocket = SocketType::MidiInbound ;
-            req.outboundSocket = SocketType::MidiOutbound ;
-            requests.push_back(req);
+            ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                SocketType::MidiInbound, std::nullopt, id
+            );
+            requests.push_back(ConnectionRequest(
+                outbound, inbound
+            ));
         }
     } else if ( listener ){
+        // listeners are registered to the default handler.
         for ( auto h : listener->getHandlers() ){
             if ( h == &midiDefaultHandler_ ){
-                ConnectionRequest req ;
-                req.inboundID = id ;
-                req.inboundSocket = SocketType::MidiInbound ;
-                req.outboundSocket = SocketType::MidiOutbound ;
-                requests.push_back(req);
+                ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                SocketType::MidiInbound, std::nullopt, id
+            );
+            requests.push_back(ConnectionRequest(
+                outbound, inbound
+            ));
             }
         }
     }
 }
 
 bool Engine::handleModulationConnection(ConnectionRequest request){
-    if ( ! request.outboundID.has_value() || ! request.inboundID.has_value() ){
-        SPDLOG_ERROR("modulation connections must have valid IDs for both inbound and outbound objects.");
-        return false ;
-    }
+    ComponentId outboundId = request.outbound().componentId().value();
+    ComponentId inboundId = request.inbound().componentId().value();
+    ParameterType param = request.inbound().modulatedParam().value();
 
-    ModulatorComponent* modulator = ComponentManager::instance()->getModulator(request.outboundID.value());
-    BaseComponent* component = ComponentManager::instance()->getRaw(request.inboundID.value());
+    ModulatorComponent* modulator = ComponentManager::instance()->getModulator(outboundId);
+    BaseComponent* component = ComponentManager::instance()->getRaw(inboundId);
 
-    if (!modulator || !component ){
+    if ( !modulator || !component ){
         SPDLOG_ERROR("valid modulator or component not found.");;
         return false ;
     }
 
-    if ( request.depthConnection ){
-        if ( request.remove ){
-            component->removeParameterDepthModulation(request.inboundParameter.value());
+    if ( request.modulatingDepth() ){
+        if ( request.remove() ){
+            component->removeParameterDepthModulation(param);
         } else {
-            component->setParameterDepthModulation(request.inboundParameter.value(), modulator);
+            component->setParameterDepthModulation(param, modulator);
         }
     } else {
-        if ( request.remove ){
-            component->removeParameterModulation(request.inboundParameter.value());
+        if ( request.remove() ){
+            component->removeParameterModulation(param);
         } else {
-            component->setParameterModulation(request.inboundParameter.value(), modulator);
+            component->setParameterModulation(param, modulator);
         }
     }
     

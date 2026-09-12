@@ -20,15 +20,17 @@
 
 #include "interfaces/ISocketLookup.hpp"
 #include "requests/ConnectionRequest.hpp"
+#include "util/SocketSpec.hpp"
 
 #include <QObject>
 #include <QGraphicsScene>
 #include <vector>
 
+using Connections = std::vector<ConnectionRequest> ; 
 class ConnectionManager: public QObject {
     Q_OBJECT
 private:
-    std::vector<ConnectionRequest> connections_ ;
+    Connections connections_ ;
     ISocketLookup* socketLookup_ ;
 
     explicit ConnectionManager(QObject* parent = nullptr);
@@ -41,16 +43,58 @@ public:
     ConnectionManager(ConnectionManager&&) = delete ;
     ConnectionManager& operator=(ConnectionManager&&) = delete ;
 
-    void loadConnection(const ConnectionRequest& req);
-    std::vector<ParameterType> getModulationConnections(int componentId) const ;
-    std::vector<ParameterType> getModulationDepthConnections(int componentId) const ;
+    // convenient connection lookups
+    bool hasExternalConnections(const SocketSpec& spec) const ;
 
-    void requestConnectionEvent(const ConnectionRequest& req); 
+    bool hasModulationConnections(const ConnectionEndpoint& endpoint) const ;
+    bool hasModulationDepthConnections(const ConnectionEndpoint& endpoint) const ;
+
+    Connections getConnectionsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
+    size_t getNumConnectionsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
+    
+    Connections getConnectionsMatchingEndpoints(
+        const ConnectionEndpoint& outbound,
+        const ConnectionEndpoint& inbound
+    ) const ;
+    size_t getNumConnectionsMatchingEndpoints(
+        const ConnectionEndpoint& outbound,
+        const ConnectionEndpoint& inbound
+    ) const ;
+
+    Connections getConnectionsMatchingSpec(const SocketSpec& spec) const ;
+    size_t getNumConnectionsMatchingSpec(const SocketSpec& spec) const ;
+
+    Connections getConnectionsMatchingSpecs(
+        const SocketSpec& outbound, 
+        const SocketSpec& inbound
+    ) const ;
+    size_t getNumConnectionsMatchingSpecs(
+        const SocketSpec& outbound, 
+        const SocketSpec& inbound
+    ) const ;
+    
+
+
+    void requestConnectionEvent(
+        const ConnectionRequest& req
+    );
+
+    void requestConnectionEvent(
+        const ConnectionEndpoint& outbound, 
+        const ConnectionEndpoint& inbound, 
+        bool remove = false, bool depth = false
+    ); 
+    void requestConnectionEvent(
+        const SocketSpec& outbound, 
+        const SocketSpec& inbound, 
+        bool remove = false, bool depth = false
+    ); 
 
 private:
-    void sendConnectionApiRequest(ConnectionRequest req);
-
-    bool connectionExists(ConnectionRequest req) const ;
+    bool connectionExists(const ConnectionRequest& req) const ;
+    
+    void addConnection(const ConnectionRequest& req);
+    void removeConnection(const ConnectionRequest& req);
 
 private slots:
     void onControlMessageReceived(const json& json);

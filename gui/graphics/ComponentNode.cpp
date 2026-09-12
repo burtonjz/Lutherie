@@ -17,95 +17,94 @@
 
 #include "graphics/ComponentNode.hpp"
 #include "graphics/SocketWidget.hpp"
+#include "types/ConnectionEndpoint.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
 ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent): 
     GraphNode(model->getName(), parent),
-    model_(model),
-    specs_()
+    model_(model)
 {
     auto d = model_->getDescriptor();
     
     // create sockets from descriptor
+    std::vector<SocketSpec> specs ;
+
     if ( d.modulatableParameters.size() > 0 ){
-        specs_.push_back({
-            .type        =SocketType::ModulationInbound, 
-            .name        = "Inbound Modulation", 
-            .componentId = model_->getId()
-        });
+        std::vector<ConnectionEndpoint> endpoints ;
+        for ( const auto& p : d.modulatableParameters ){
+            endpoints.push_back(ConnectionEndpoint::create(
+                SocketType::ModulationInbound, std::nullopt, 
+                model_->getId(), p
+            ));     
+        }
+        
+        SocketSpec spec("Modulation Inputs", endpoints);
+        specs.push_back(spec);
     }
     
     for ( size_t i = 0; i < d.numSignalInputs; ++i ){
-        specs_.push_back({
-            .type        = SocketType::SignalInbound, 
-            .name        = QString("Audio Input %1").arg(i+1), 
-            .componentId = model_->getId(),
-            .idx         = i
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::SignalInbound, i, model_->getId()
+        );     
+        SocketSpec spec(QString("Audio Input %1").arg(i+1), e);
+        specs.push_back(spec);
     }
 
     for ( size_t i = 0; i < d.numBufferInputs; ++i ){
-        specs_.push_back({
-            .type        = SocketType::BufferInbound, 
-            .name        = QString("Buffer Input %1").arg(i+1), 
-            .componentId = model_->getId(),
-            .idx         = i
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::BufferInbound, i, model_->getId()
+        );     
+        SocketSpec spec(QString("Buffer Input %1").arg(i+1), e);
+        specs.push_back(spec);
     }
 
     for ( size_t i = 0; i < d.numMidiInputs; ++i ){
-        specs_.push_back({
-            .type = SocketType::MidiInbound, 
-            .name = QString("MIDI Input %1").arg(i+1),
-            .componentId = model_->getId()
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::MidiInbound, std::nullopt, model_->getId()
+        );     
+        SocketSpec spec(QString("MIDI Input %1").arg(i+1), e);
+        specs.push_back(spec);
     }
 
     for ( size_t i = 0; i < d.numSignalOutputs; ++i ){
-        specs_.push_back({
-            .type = SocketType::SignalOutbound, 
-            .name = QString("Audio Output %1").arg(i+1), 
-            .componentId = model_->getId(),
-            .idx = i
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::SignalOutbound, i, model_->getId()
+        );     
+        SocketSpec spec(QString("Audio Output %1").arg(i+1), e);
+        specs.push_back(spec);
     }
 
     for ( size_t i = 0; i < d.numBufferOutputs; ++i ){
-        specs_.push_back({
-            .type = SocketType::BufferOutbound, 
-            .name = QString("Buffer Output %1").arg(i+1), 
-            .componentId = model_->getId(),
-            .idx = i
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::BufferOutbound, i, model_->getId()
+        );     
+        SocketSpec spec(QString("Buffer Output %1").arg(i+1), e);
+        specs.push_back(spec);
     }
 
     for ( size_t i = 0; i < d.numMidiOutputs; ++i ){
-        specs_.push_back({
-            .type = SocketType::MidiOutbound, 
-            .name = QString("MIDI Output %1").arg(i+1),
-            .componentId = model_->getId()
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::MidiOutbound, std::nullopt, model_->getId()
+        );     
+        SocketSpec spec(QString("Midi Output %1").arg(i+1), e);
+        specs.push_back(spec);
     }
 
     if ( d.isModulator() ){
-        specs_.push_back({
-            .type = SocketType::ModulationOutbound, 
-            .name = QString("Modulation Output"),
-            .componentId = model_->getId()
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::ModulationOutbound, std::nullopt, model_->getId()
+        );     
+        SocketSpec spec("Modulation Output", e);
+        specs.push_back(spec);
     }
 
-    insertSockets(specs_);
+    insertSockets(specs);
 }
 
 ComponentModel* ComponentNode::getModel() const {
     return model_ ;
-}
-
-const std::vector<SocketSpec>& ComponentNode::getSpecs() const {
-    return specs_ ;
 }
 
 json ComponentNode::serialize() const {

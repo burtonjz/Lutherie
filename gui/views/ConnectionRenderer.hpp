@@ -20,16 +20,15 @@
 
 #include <QObject>
 #include <QGraphicsScene>
-#include "managers/ConnectionManager.hpp"
 #include "interfaces/ISocketLookup.hpp"
 #include "graphics/ConnectionCable.hpp"
 #include "graphics/GraphNode.hpp"
+#include "requests/ConnectionRequest.hpp"
 
 class ConnectionRenderer : public QObject {
     Q_OBJECT
 private:
     QGraphicsScene* scene_ ;
-    ConnectionManager* manager_ ;
     ISocketLookup* socketLookup_ ;
 
     // dragging new cable
@@ -42,7 +41,6 @@ private:
 public:
     explicit ConnectionRenderer(
         QGraphicsScene* scene,
-        ConnectionManager* manager,
         ISocketLookup* socketLookup,
         QObject* parent = nullptr 
     );
@@ -53,23 +51,20 @@ public:
     void finishDrag(const QPointF& scenePos);
     void cancelDrag();
     bool isDragging() const ;
-    void setDragCableParameter(ParameterType p, bool depth = false); 
 
     // cable management
     const std::vector<ConnectionCable*> getNodeConnections(GraphNode* node) const ;
     const std::vector<ConnectionCable*> getSocketConnections(SocketWidget* socket) const ;
-    void requestRemoveConnection(ConnectionCable* cable);
-    void requestRemoveSocketConnections(SocketWidget* s);
+
+    void requestRemoveConnections(ConnectionCable* cable);
     void requestRemoveSocket(SocketWidget* s);
 
     void onComponentGroup(const std::vector<int>& componentIds);
 
 private:
-    void sendDragCableRequest();
-    bool socketIsRemovable(SocketWidget* s, bool request = false );
+    bool socketIsRemovable(SocketWidget* s, bool request = false);
 
 signals:
-    void dragCableParameterNeeded(SocketWidget* socket);
     void canRemoveSocket(SocketWidget* socket);
 
 public slots:

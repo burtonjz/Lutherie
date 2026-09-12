@@ -37,17 +37,17 @@ using ComponentId = int ;
 
 class BaseComponent : public ParameterListener {
 protected:
-    ComponentId id_ ;
+    std::optional<ComponentId> id_ ;
     ComponentType type_ ;
     ParameterMap* parameters_ ; 
     std::unordered_set<AudioSignalComponent*> modulationModules_ ; // used only for tracking, see SignalChain for context
 
 public:
-    BaseComponent(ComponentId id = -1, ComponentType type = ComponentType::Unknown);
+    BaseComponent(std::optional<ComponentId> id = std::nullopt, ComponentType type = ComponentType::Unknown);
 
     virtual ~BaseComponent();
     
-    ComponentId getId() const { return id_ ; }
+    std::optional<ComponentId> getId() const { return id_ ; }
     ComponentType getType() const { return type_ ; }
     ParameterMap* getParameters() { return parameters_ ;}
     std::unordered_set<AudioSignalComponent*>& getModulationInputs() ;

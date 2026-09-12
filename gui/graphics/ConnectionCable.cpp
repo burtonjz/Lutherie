@@ -37,10 +37,10 @@ ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocke
 }
 
 bool ConnectionCable::operator==(const ConnectionCable& other) const {
-    return toConnectionRequest() == other.toConnectionRequest();
-}
-bool ConnectionCable::operator==(const ConnectionRequest& req) const {
-    return toConnectionRequest() == req ;
+    return fromSocket_ == other.fromSocket_ 
+        && toSocket_ == other.toSocket_ 
+        && modulated_ == other.modulated_ 
+        && isDepthModulation_ == other.isDepthModulation_ ;
 }
 
 SocketWidget* ConnectionCable::getInboundSocket() const {
@@ -68,6 +68,10 @@ void ConnectionCable::setModulatedParameter(ParameterType p, bool depth){
     isDepthModulation_ = depth ;
 }
 
+bool ConnectionCable::modulatesDepth() const {
+    return isDepthModulation_ ;
+}
+
 void ConnectionCable::setFromSocket(SocketWidget* socket){
     fromSocket_ = socket ;
     updatePath();
@@ -93,8 +97,8 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     // if (fromSocket_->getParent() == socket->getParent()) return false ;
     
     // Must be compatible types
-    SocketType fromType = fromSocket_->getSpec().type;
-    SocketType toType = socket->getSpec().type;
+    SocketType fromType = fromSocket_->getSpec().type();
+    SocketType toType = socket->getSpec().type();
 
     switch ( fromType ){
     case SocketType::MidiInbound:
@@ -128,6 +132,12 @@ bool ConnectionCable::involvesSocket(SocketWidget* socket) const {
            ( toSocket_ && toSocket_ == socket ) ;
 }
 
+bool ConnectionCable::involvesEndpoint(const ConnectionEndpoint& endpoint) const {
+    if ( fromSocket_ && fromSocket_->getSpec().includes(endpoint) ) return true ;
+    if ( toSocket_ && toSocket_->getSpec().includes(endpoint) ) return true ;
+    return false ;
+}
+
 void ConnectionCable::updatePath(){
     if (!fromSocket_) return ;
     
@@ -147,48 +157,17 @@ void ConnectionCable::updatePath(){
     setPen(QPen(getCableColor(), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 }
 
-ConnectionRequest ConnectionCable::toConnectionRequest() const {
-    ConnectionRequest r ;
-    
-    auto outboundSocket = getOutboundSocket();
-    auto inboundSocket = getInboundSocket();
-    
-    if ( inboundSocket ){  
-        r.inboundID = inboundSocket->getSpec().componentId ;
-        r.inboundSocket = inboundSocket->getSpec().type ;
-        r.inboundIdx = inboundSocket->getSpec().idx ;
-        if ( 
-            inboundSocket->getSpec().type == SocketType::ModulationInbound &&
-            modulated_.has_value()
-        ){
-            r.inboundParameter = modulated_.value() ;
-        }
-    }
-        
-    if ( outboundSocket ){
-        r.outboundID = outboundSocket->getSpec().componentId ;
-        r.outboundSocket = outboundSocket->getSpec().type ;
-        r.outboundIdx = outboundSocket->getSpec().idx ;
-    }
-
-    if ( isDepthModulation_ ){
-        r.depthConnection = true ;
-    }
-    
-    return r ;
-};
-
 QString ConnectionCable::toText() const {
     QString fromText = getFromSocket()
         ? QString("%1 %2")
             .arg(getFromSocket()->getParent()->getName())
-            .arg(getFromSocket()->getSpec().name)
+            .arg(getFromSocket()->getSpec().name())
         : "null" ;
 
     QString toText = getToSocket()
         ? QString("%1 %2")
             .arg(getToSocket()->getParent()->getName())
-            .arg(getToSocket()->getSpec().name)
+            .arg(getToSocket()->getSpec().name())
         : "null" ;
     return fromText + "->" + toText ;
 }
@@ -221,7 +200,7 @@ QColor ConnectionCable::getCableColor() const
 {
     if (!fromSocket_) return Qt::gray;
     
-    switch (fromSocket_->getSpec().type) {
+    switch (fromSocket_->getSpec().type()) {
         case SocketType::ModulationInbound:
         case SocketType::ModulationOutbound:
             return Theme::CABLE_MODULATION ;
@@ -383,7 +362,7 @@ void ConnectionCable::drawCableArrow(QPainterPath& path, qreal atPercent){
 QPointF ConnectionCable::getSocketDirectionVector(SocketWidget* socket){
     if ( ! socket ) return QPointF(0.0,0.0);
     
-    switch(socket->getSpec().type){
+    switch(socket->getSpec().type()){
         case SocketType::SignalInbound: // left
         case SocketType::MidiInbound: 
         case SocketType::BufferInbound:

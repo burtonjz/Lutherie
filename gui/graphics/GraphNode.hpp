@@ -26,6 +26,8 @@
 #include <nlohmann/json.hpp>
 
 #include "graphics/SocketWidget.hpp"
+#include "types/ConnectionEndpoint.hpp"
+#include "util/SocketSpec.hpp"
 
 using json = nlohmann::json ;
 
@@ -57,11 +59,17 @@ public:
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;
 
-    SocketWidget* getSocket(SocketSpec s) const ;
-    const std::vector<SocketWidget*>& getSockets() const { return sockets_ ; }
+    const std::vector<SocketWidget*>& getSockets() const ;
+
+    SocketWidget* getSingleSocketMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
+    std::vector<SocketWidget*> getSocketsMatchingSpec(const SocketSpec& spec) const ;
+    std::vector<SocketWidget*> getSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
+    std::vector<SocketWidget*> getVisibleSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ; 
+
     const QString& getName() const { return name_ ; }
     QGraphicsTextItem* getNameItem() const { return titleText_ ; }
 
+    SocketWidget* insertSocket(SocketSpec spec);
     void insertSockets(const std::vector<SocketSpec> specs );
 
     void hide();
@@ -73,6 +81,7 @@ public:
     void unhideAllSockets();
     void hideSocket(SocketWidget* socket);
     void hideDisconnectedSockets();
+    void hideInternalConnections(GraphNode* node);
 
     virtual json serialize() const ;
     virtual void deserialize(const json& node);
@@ -87,6 +96,7 @@ protected:
 
 public slots:
     void onRename(QString name);
+    void removeSockets();
     void removeSocket(SocketWidget* socket);
 
 signals:

@@ -70,7 +70,7 @@ void SignalChain::addPseudoSink(AudioSignalComponent* component, size_t channel)
         return ;
     }
 
-    SPDLOG_DEBUG("component with id {} added as pseudo-sink.", component->getId());
+    SPDLOG_DEBUG("component with id {} added as pseudo-sink.", component->getId().value());
     pseudoSinks_.insert({component, channel});
 }
 
@@ -80,7 +80,7 @@ void SignalChain::removePseudoSink(AudioSignalComponent* component, size_t chann
         return ;
     }
 
-    SPDLOG_DEBUG("component with id {} is no longer a pseudo-sink.", component->getId());
+    SPDLOG_DEBUG("component with id {} is no longer a pseudo-sink.", component->getId().value());
     pseudoSinks_.erase({component, channel});
 }
 

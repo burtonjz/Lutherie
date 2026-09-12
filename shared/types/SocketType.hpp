@@ -19,34 +19,126 @@
 #define __SHARED_SOCKET_TYPE_HPP_
 
 #include <array>
+#include <stdexcept>
+#include <string>
 #include <string_view>
+#include <nlohmann/json.hpp>
 
-enum class SocketType {
-    ModulationInbound,
-    ModulationOutbound,
-    SignalInbound,
-    SignalOutbound,
-    MidiInbound,
-    MidiOutbound,
-    BufferInbound,
-    BufferOutbound,
-    N_SOCKET_TYPES
+using json = nlohmann::json ;
+class SocketType {
+public:
+    enum Value : uint8_t {
+        ModulationInbound,
+        ModulationOutbound,
+        SignalInbound,
+        SignalOutbound,
+        MidiInbound,
+        MidiOutbound,
+        BufferInbound,
+        BufferOutbound,
+        N_SOCKET_TYPES
+    };
+
+    SocketType() = default ;
+    constexpr SocketType(Value v) : value_(v){}
+
+    constexpr operator Value() const { return value_ ; }
+
+    std::string toString() const {
+        return std::string(names_[value_]);
+    }
+
+    static SocketType fromString(std::string_view str){
+        for (int i = 0; i < N_SOCKET_TYPES; ++i){
+            if ( names_[i] == str){
+                return static_cast<Value>(i);
+            }
+        }   
+        throw std::invalid_argument("unknown SocketType: " + std::string(str));
+    }
+
+    uint8_t to_uint8() const {
+        return value_ ;
+    }
+
+    static SocketType from_uint8(uint8_t val){
+        return SocketType(static_cast<Value>(val));
+    }
+
+    static const std::array<std::string_view, N_SOCKET_TYPES>& getNames(){
+        return names_ ;
+    }
+
+    static constexpr int count = N_SOCKET_TYPES ;
+
+    constexpr bool isInbound() const {
+        switch (value_){
+            case ModulationInbound:
+            case SignalInbound:
+            case MidiInbound:
+            case BufferInbound:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    constexpr bool isAudio() const {
+        switch (value_){
+            case SignalInbound:
+            case SignalOutbound:
+            case BufferInbound:
+            case BufferOutbound:
+                return true ;
+            default:
+                return false ;
+        }
+    }
+
+    const SocketType getMatchingType() const {
+        switch (value_){
+            case ModulationInbound:
+                return ModulationOutbound ;
+            case ModulationOutbound:
+                return ModulationInbound ;
+            case SignalInbound:
+                return SignalOutbound ;
+            case SignalOutbound:
+                return SignalInbound ;
+            case MidiInbound:
+                return MidiOutbound ;
+            case MidiOutbound:
+                return MidiInbound ;
+            case BufferInbound:
+                return BufferOutbound ;
+            case BufferOutbound:
+                return BufferInbound ;
+            default:
+                throw std::runtime_error("SocketType case not defined.");
+        }
+    }
+
+private:
+    Value value_{ModulationInbound};
+
+    static constexpr std::array<std::string_view, N_SOCKET_TYPES> names_{
+        "Modulation Inbound", 
+        "Modulation Outbound",
+        "Signal Inbound",     
+        "Signal Outbound",
+        "MIDI Inbound",       
+        "MIDI Outbound",
+        "Buffer Inbound",     
+        "Buffer Outbound"
+    };
 };
 
-constexpr int N_SOCKET_TYPES = static_cast<int>(SocketType::N_SOCKET_TYPES) ;
+inline void from_json(const json& j, SocketType& t) {
+    t = SocketType::fromString(j.get_ref<const std::string&>());
+}
 
-constexpr std::array<std::string_view, N_SOCKET_TYPES> socketStrings({
-    "Modulation Inbound",
-    "Modulation Outbound",
-    "Signal Inbound",
-    "Signal Outbound",
-    "MIDI Inbound",
-    "MIDI Outbound",
-    "Buffer Inbound",
-    "Buffer Outbound"
-});
-
-const std::string socketType2String(SocketType s);
-SocketType socketTypeFromString(std::string str);
+inline void to_json(json& j, const SocketType& t) {
+    j = t.toString();
+}
 
 #endif // __SHARED_SOCKET_TYPE_HPP_

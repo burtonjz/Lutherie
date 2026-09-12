@@ -28,7 +28,7 @@ using json = nlohmann::json ;
 
 class ScaleNote {
 public:
-    enum Note : uint8_t {
+    enum Value : uint8_t {
         C = 0, 
         CSHARP_DFLAT = 1, 
         D = 2, 
@@ -41,86 +41,103 @@ public:
         A = 9, 
         ASHARP_BFLAT = 10, 
         B = 11,
-        N
+        N_SCALE_NOTES
     };
 
     ScaleNote() = default ;
+    constexpr ScaleNote(Value v) : value_(v){} 
 
-    // construct from enum
-    constexpr ScaleNote(Note n) : note_(n){} 
+    constexpr operator Value() const { return value_ ; }
 
-    // construct from string
-    ScaleNote(std::string_view name){
-        if      ( name == "C" )  note_ = C ;
-        else if ( name == "C#" ) note_ = CSHARP_DFLAT ;
-        else if ( name == "Db" ) note_ = CSHARP_DFLAT ;
-        else if ( name == "D" )  note_ = D ;
-        else if ( name == "D#" ) note_ = DSHARP_EFLAT ;
-        else if ( name == "Eb" ) note_ = DSHARP_EFLAT ;
-        else if ( name == "E" )  note_ = E ;
-        else if ( name == "F" )  note_ = F ;
-        else if ( name == "F#" ) note_ = FSHARP_GFLAT ;
-        else if ( name == "Gb" ) note_ = FSHARP_GFLAT ;
-        else if ( name == "G" )  note_ = G ;
-        else if ( name == "G#" ) note_ = GSHARP_AFLAT ;
-        else if ( name == "Ab" ) note_ = GSHARP_AFLAT ;
-        else if ( name == "A" )  note_ = A ;
-        else if ( name == "A#" ) note_ = ASHARP_BFLAT ;
-        else if ( name == "Bb" ) note_ = ASHARP_BFLAT ;
-        else if ( name == "B" )  note_ = B ;
+    std::string toString(bool preferSharp = true) const {
+        if ( preferSharp ){
+            return std::string(sharps_[value_]);
+        } else {
+            return std::string(flats_[value_]);
+        }
     }
 
-    // allow switch / comparisons
-    constexpr operator Note() const { return note_ ; }
-
-    // prevent bool usage e.g., if(Waveform)
-    explicit operator bool() const = delete ;
-
-    static std::string toString(Note n, bool preferSharps = true){
-        static const std::string sharps[] = 
-            {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-        static const std::string flats[] = 
-            {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
-
-        return preferSharps ? sharps[n] : flats[n] ;
+    static ScaleNote fromString(std::string_view str){
+        for (int i = 0; i < N_SCALE_NOTES; ++i ){
+            if ( sharps_[i] == str ){
+                return static_cast<Value>(i);
+            } 
+            if ( flats_[i] == str ){
+                return static_cast<Value>(i);
+            }
+        }
+        throw std::invalid_argument("unknown Filter Type: " + std::string(str));
     }
 
-    std::string toString() const {
-        return ScaleNote::toString(note_);
+    static const std::pair<ScaleNote, uint8_t> fromMidiValue(uint8_t midi){
+        uint8_t octave = ( midi / 12 ) - 1 ;
+        Value Value = static_cast<enum Value>(modulo(midi, 12));
+        return {Value, octave};
     }
 
-    uint8_t getMidiValue(Note n, uint8_t octave, uint8_t interval = 0 ){
+    static const std::array<std::string_view, N_SCALE_NOTES>& getNames(bool preferSharp = true){
+        if ( preferSharp ) return sharps_ ;
+        return flats_ ;
+    }
+
+    static constexpr int count = N_SCALE_NOTES ;
+
+    static constexpr uint8_t getMidiValue(Value n, uint8_t octave, uint8_t interval = 0){
         return n + 12 * (octave + 1) + interval ;
     }
 
-    static const std::pair<Note, uint8_t> fromMidiValue(uint8_t midi ){
-        uint8_t octave = ( midi / 12 ) - 1 ;
-        Note note = static_cast<Note>(modulo(midi, 12));
-        return {note, octave};
-    }
-
-    static Note from_uint8(uint8_t val){
-        return static_cast<Note>(static_cast<std::underlying_type_t<Note>>(val));
+    static Value from_uint8(uint8_t val){
+        return static_cast<Value>(static_cast<std::underlying_type_t<Value>>(val));
     }
 
     uint8_t to_uint8(){
-        return static_cast<uint8_t>(note_) ;
+        return static_cast<uint8_t>(value_) ;
     }
 
 private:
-    Note note_ ;
+    Value value_ ;
+
+    static constexpr std::array<std::string_view, N_SCALE_NOTES> sharps_{
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#", 
+        "G",
+        "G#", 
+        "A", 
+        "A#", 
+        "B"
+    };
+
+    static constexpr std::array<std::string_view, N_SCALE_NOTES> flats_{
+        "C", 
+        "Db",
+        "D",
+        "Eb",
+        "E",
+        "F",
+        "Gb",
+        "G",
+        "Ab",
+        "A",
+        "Bb",
+        "B"
+    };
 
     static int modulo(int a, int b){
         return (a % b + b) % b ;
     }
 };
 
-inline void to_json(json& j, const ScaleNote& n){
-        j = n.toString();
-    }
+inline void from_json(const json& j, ScaleNote& t){
+    t = ScaleNote::fromString(j.get_ref<const std::string&>());
+}
 
-inline void from_json(const json& j, ScaleNote& n){
-    n = ScaleNote(j.get<std::string>());
+inline void to_json(json& j, const ScaleNote& t){
+    j = t.toString();
 }
 
 #endif // __SCALE_TYPE_HPP_

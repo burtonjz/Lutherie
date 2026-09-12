@@ -20,7 +20,7 @@
 
 #include "types/FilterType.hpp"
 #include "types/Waveform.hpp"
-#include "types/MonophonicTriggerBehavior.hpp"
+#include "types/MonophonicTriggerType.hpp"
 #include "types/ScaleType.hpp"
 #include "types/ScaleNote.hpp"
 #include "config/Config.hpp"
@@ -194,7 +194,7 @@ template <> struct ParameterTraits<ParameterType::WAVEFORM>{
     using ValueType = uint8_t ;
     static constexpr std::string_view name = "waveform" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = Waveform::N ;
+    static constexpr float maximum = Waveform::count ;
     static constexpr float defaultValue = Waveform::SINE ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
@@ -395,7 +395,7 @@ template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
     using ValueType = uint8_t ;
     static constexpr std::string_view name = "filter type" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = FilterType::N ;
+    static constexpr float maximum = FilterType::count ;
     static constexpr float defaultValue = FilterType::LowPass ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
@@ -555,7 +555,7 @@ template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
     using ValueType = uint8_t ;
     static constexpr std::string_view name = "note" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = ScaleNote::N ;
+    static constexpr float maximum = ScaleNote::count ;
     static constexpr float defaultValue = ScaleNote::C ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
@@ -571,7 +571,7 @@ template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
     using ValueType = uint8_t ;
     static constexpr std::string_view name = "scale type" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = ScaleType::N ;
+    static constexpr float maximum = ScaleType::count ;
     static constexpr float defaultValue = ScaleType::MAJOR ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
@@ -587,8 +587,8 @@ template <> struct ParameterTraits<ParameterType::TRIGGER>{
     using ValueType = uint8_t ;
     static constexpr std::string_view name = "retrigger" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = MonophonicTriggerBehavior::N ;
-    static constexpr float defaultValue = MonophonicTriggerBehavior::LEGATO ;
+    static constexpr float maximum = MonophonicTriggerType::count ;
+    static constexpr float defaultValue = MonophonicTriggerType::LEGATO ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},

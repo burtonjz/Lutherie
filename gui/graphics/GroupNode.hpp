@@ -21,6 +21,7 @@
 #include "graphics/GraphNode.hpp"
 #include "graphics/ComponentNode.hpp"
 #include "models/GroupModel.hpp"
+#include "util/SocketSpec.hpp"
 
 #include <QGraphicsItem>
 
@@ -35,11 +36,11 @@ public:
     explicit GroupNode(GroupModel* model, QGraphicsItem* parent = nullptr);
 
     void add(ComponentNode* node);
-    void remove(ComponentNode* node);
-    void removeAll();
+    // void remove(ComponentNode* node);
+    void clear();
 
-    bool contains(ComponentNode* node) const ;
-    bool contains(int componentId) const ;
+    bool includes(ComponentNode* node) const ;
+    bool includes(int componentId) const ;
     
     size_t getNumComponents() const ;
 
@@ -51,7 +52,6 @@ public:
 
 private:
     void addSockets(ComponentNode* node);
-    void removeSockets(ComponentNode* node);
 
 signals:
     // signal group events to connection renderer

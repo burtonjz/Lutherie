@@ -416,9 +416,9 @@ WaveformWidget::WaveformWidget(QWidget* parent):
 
     // waveforms
     waveforms_ = new QComboBox(this);
-    for ( auto wf : Waveform::getWaveforms()){
-        Waveform wave = Waveform(wf);
-        waveforms_->addItem(QString::fromStdString(wave.toString()),wave.to_uint8());
+    for ( auto wf : Waveform::getNames()){
+        Waveform w = Waveform::fromString(wf);
+        waveforms_->addItem(QString::fromStdString(std::string(wf)), w.to_uint8());
     }
     int idx = waveforms_->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, defaultValue));
     if ( idx != -1 ){
@@ -427,7 +427,10 @@ WaveformWidget::WaveformWidget(QWidget* parent):
     layout->addWidget(waveforms_);
 
     // connections
-    connect(waveforms_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
+    connect(
+        waveforms_, &QComboBox::currentIndexChanged, 
+        this, &ParameterWidget::valueChanged
+    );
 
 }
 
@@ -480,9 +483,9 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
 
     // populate types
     type_ = new QComboBox(this);
-    for ( auto ft : FilterType::getFilterTypes()){
-        FilterType f = FilterType(ft);
-        type_->addItem(QString::fromStdString(f.toString()),f.to_uint8());
+    for ( auto ft : FilterType::getNames()){
+        FilterType f = FilterType::fromString(ft);
+        type_->addItem(QString::fromStdString(std::string(ft)),f.to_uint8());
     }
 
     // set default type
@@ -494,7 +497,10 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
     layout->addWidget(type_);
 
     // connections
-    connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
+    connect(
+        type_, &QComboBox::currentIndexChanged, 
+        this, &ParameterWidget::valueChanged
+        );
 }
 
 ParameterType FilterTypeWidget::getType() const {
@@ -528,7 +534,7 @@ void FilterTypeWidget::setValue(const ParameterValue& value, bool block){
 ===== MONOPHONIC TRIGGER BEHAVIOR =======
 =========================================
 */
-MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent):
+MonophonicTriggerTypeWidget::MonophonicTriggerTypeWidget(QWidget* parent):
     ParameterWidget(parent),
     label_(nullptr),
     type_(nullptr)
@@ -547,9 +553,9 @@ MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent
 
     // populate types
     type_ = new QComboBox(this);
-    for ( auto b : MonophonicTriggerBehavior::getBehaviors()){
-        MonophonicTriggerBehavior behavior = MonophonicTriggerBehavior(b);
-        type_->addItem(QString::fromStdString(behavior.toString()),behavior.to_uint8());
+    for ( auto b : MonophonicTriggerType::getNames()){
+        MonophonicTriggerType typ = MonophonicTriggerType::fromString(b);
+        type_->addItem(QString::fromStdString(std::string(b)),typ.to_uint8());
     }
 
     // set default type
@@ -564,15 +570,15 @@ MonophonicTriggerBehaviorWidget::MonophonicTriggerBehaviorWidget(QWidget* parent
     connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
 }
 
-ParameterType MonophonicTriggerBehaviorWidget::getType() const {
+ParameterType MonophonicTriggerTypeWidget::getType() const {
     return ParameterType::TRIGGER ;
 }
 
-ParameterValue MonophonicTriggerBehaviorWidget::getValue() const {
+ParameterValue MonophonicTriggerTypeWidget::getValue() const {
     return type_->itemData(type_->currentIndex()).value<uint8_t>();
 }
 
-void MonophonicTriggerBehaviorWidget::setValue(const ParameterValue& value, bool block){
+void MonophonicTriggerTypeWidget::setValue(const ParameterValue& value, bool block){
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::TRIGGER);
 
     QSignalBlocker blocker(type_);

@@ -402,7 +402,7 @@ json ControlApiHandler::removeComponent(const json& request){
     bool allRemoved = true ;
     auto connections = Engine::instance()->getComponentConnections(id);
     for ( auto c : connections ){
-        c.remove = true ;
+        c.setRemove(true);
         json j = c ;
         auto cresponse = parseConnectionRequest(j);
         sendApiResponse(cresponse);
@@ -433,15 +433,19 @@ json ControlApiHandler::syncComponent(const json& request){
 
 json ControlApiHandler::parseConnectionRequest(const json& request){
     json response = request ;
-    ConnectionRequest req ;
+    
+    ConnectionRequest req = [&] {
+        try {
+            return response.get<ConnectionRequest>();
+        } catch (const std::exception& e) {
+            throw std::runtime_error(fmt::format(
+                "could not parse connection request: {}",
+                e.what()
+            ));
+        }
+    }();
 
-    try {
-        req = response.get<ConnectionRequest>() ;
-    } catch (const std::exception& e){
-        throw std::runtime_error("could not parse connection request");
-    }
-
-    if ( ! req.valid() ){
+    if ( !req.valid() ){
         throw std::runtime_error("parsed connection request is invalid");
     }
 
@@ -1155,18 +1159,24 @@ json ControlApiHandler::setMidiControl(const json& request){
 }
 
 
-bool ControlApiHandler::routeConnectionRequest(ConnectionRequest request){
-    if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )
+bool ControlApiHandler::routeConnectionRequest(const ConnectionRequest& request){
+    // only check inbound, already validated
+    switch(request.inbound().socket()){
+    case SocketType::MidiInbound:
         return Engine::instance()->handleMidiConnection(request);
-    if ( request.inboundSocket == SocketType::SignalInbound && request.outboundSocket == SocketType::SignalOutbound )
+    case SocketType::SignalInbound:
         return Engine::instance()->handleSignalConnection(request);
-    if ( request.inboundSocket == SocketType::BufferInbound && request.outboundSocket == SocketType::BufferOutbound )
+    case SocketType::BufferInbound:
         return Engine::instance()->handleBufferConnection(request);
-    if ( request.inboundSocket == SocketType::ModulationInbound && request.outboundSocket == SocketType::ModulationOutbound )
+    case SocketType::ModulationInbound:
         return Engine::instance()->handleModulationConnection(request);
-
-    SPDLOG_WARN("WARN: socket params are incompatible. No connection will be made");
-    return false ;
+    default:
+        SPDLOG_WARN(
+            "socket type {} is not properly routed. No connection will be made",
+            request.inbound().socket().toString()
+        );
+        return false ;
+    }
 }
 
 bool ControlApiHandler::loadCreateComponent(const json& components, IdMap& idMap){
@@ -1273,25 +1283,14 @@ bool ControlApiHandler::loadConnectComponent(const json& connections){
     if ( !connections.is_array() ) return false ;
 
     bool success = true ;
-    for ( auto c : connections ){
-        ConnectionRequest request ;
-        try {
-            request = c ;
-        } catch (std::exception& e){
-            SPDLOG_ERROR("Could not parse {} to ConnectionRequest.", c.dump());
-            success = false ;
-        }
-
-        auto connectionResponse = parseConnectionRequest(request);
-        sendApiResponse(connectionResponse);
+    for ( auto c : connections ){         
+        json connectionResponse = parseConnectionRequest(c);
         if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
             SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
             success = false ;
         }
     }
-
     return success ;
-
 }
 
 bool ControlApiHandler::loadMidiControls(const json& controls){

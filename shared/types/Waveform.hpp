@@ -30,72 +30,66 @@ using json = nlohmann::json ;
 
 class Waveform {
 public:
-    enum Wave : uint8_t {
+    enum Value : uint8_t {
         SINE = 0, 
         SQUARE,
         TRIANGLE,
         SAW,
         NOISE,
-        N
+        N_WAVEFORMS
     };
 
     Waveform() = default ;
-    // construct from enum
-    constexpr Waveform(Wave wf) : waveform_(wf){} 
+    constexpr Waveform(Value v) : value_(v){} 
 
-    // construct from string
-    Waveform(std::string_view name){
-        if      (name == "SINE")     waveform_ = SINE ;
-        else if (name == "SQUARE")   waveform_ = SQUARE ;
-        else if (name == "TRIANGLE") waveform_ = TRIANGLE ;
-        else if (name == "SAW")      waveform_ = SAW ;
-        else if (name == "NOISE")    waveform_ = NOISE ;
-        else throw std::invalid_argument("Unknown waveform: " + std::string(name));
-    }
-
-    // allow switch / comparisons
-    constexpr operator Wave() const { return waveform_ ; }
-
-    // prevent bool usage e.g., if(Waveform)
-    explicit operator bool() const = delete ;
-
-    static std::string toString(Waveform w){
-        switch(w){
-        case SINE:     return "SINE" ;
-        case SQUARE:   return "SQUARE" ;
-        case TRIANGLE: return "TRIANGLE" ;
-        case SAW:      return "SAW" ;
-        case NOISE:    return "NOISE" ;
-        default:       return "" ;
-        };
-    }
+    constexpr operator Value() const { return value_ ; }
 
     std::string toString() const {
-        return Waveform::toString(waveform_);
+        return std::string(names_[value_]);
     }
 
-    static std::array<std::string_view, N> getWaveforms(){
-        return { "SINE", "SQUARE", "TRIANGLE", "SAW", "NOISE"} ;
+    static Waveform fromString(std::string_view str){
+        for (int i = 0; i < N_WAVEFORMS; ++i){
+            if ( names_[i] == str){
+                return static_cast<Value>(i);
+            }
+        }
+        throw std::invalid_argument("unknown Waveform: " + std::string(str));
     }
 
-    static Wave from_uint8(uint8_t val){
-        return static_cast<Wave>(static_cast<std::underlying_type_t<Wave>>(val));
+    uint8_t to_uint8() const {
+        return value_ ;
     }
 
-    uint8_t to_uint8(){
-        return static_cast<uint8_t>(waveform_) ;
+    static Waveform from_uint8(uint8_t val){
+        return Waveform(static_cast<Value>(val));
     }
+
+    static const std::array<std::string_view, N_WAVEFORMS>& getNames(){
+        return names_ ;
+    }
+
+    static constexpr int count = N_WAVEFORMS ;
 
 private:
-    Wave waveform_ ;
+    Value value_{SINE} ;
+
+    static constexpr std::array<std::string_view, N_WAVEFORMS> names_{
+        "SINE",
+        "SQUARE",
+        "TRIANGLE",
+        "SAW",
+        "NOISE"
+    };
 };
 
-inline void to_json(json& j, const Waveform& w){
-        j = w.toString();
-    }
-
-inline void from_json(const json& j, Waveform& w){
-    w = Waveform(j.get<std::string>());
+inline void from_json(const json& j, Waveform& t){
+    t = Waveform::fromString(j.get_ref<const std::string&>());
 }
+
+inline void to_json(json& j, const Waveform& t){
+    j = t.toString();
+}
+
 
 #endif // __WAVEFORM_HPP_

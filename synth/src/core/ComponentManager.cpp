@@ -159,7 +159,7 @@ json ComponentManager::serializeComponent(BaseComponent* c) const {
     if ( cd.hasCollection() ){
         CollectionRequest req = {
             .action = CollectionAction::GET_ALL,
-            .componentId = c->getId(),
+            .componentId = c->getId().value(),
             .value = std::nullopt,
             .index = std::nullopt
         };
@@ -206,31 +206,29 @@ void ComponentManager::getComponentSignalConnections(ComponentId id, std::vector
 
     // signal inputs
     for ( size_t i = 0; i < component->getNumInputs(); ++i ){
+        ConnectionEndpoint inbound = ConnectionEndpoint::create(
+            SocketType::SignalInbound, i, id
+        );
         for ( const auto& conn : component->getInputs(i) ){
             if ( !conn.component ) continue ;
-            ConnectionRequest req ;
-            req.inboundID = id ;
-            req.inboundIdx = i ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundID = conn.component->getId() ;
-            req.outboundIdx = conn.index ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            requests.push_back(req);
+            ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                SocketType::SignalOutbound, conn.index, conn.component->getId()
+            );
+            requests.push_back(ConnectionRequest(outbound, inbound));
         }    
     }
     
     // signal outputs
     for ( size_t i = 0; i < component->getNumOutputs(); ++i ){
+        ConnectionEndpoint outbound = ConnectionEndpoint::create(
+            SocketType::SignalOutbound, i, id
+        );
         for ( const auto& conn : component->getOutputs(i) ){
             if ( !conn.component ) continue ;
-            ConnectionRequest req ;
-            req.inboundID = conn.component->getId() ;
-            req.inboundIdx = conn.index ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundID = id ;
-            req.outboundIdx = i ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            requests.push_back(req);
+            ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                SocketType::SignalInbound, conn.index, conn.component->getId()
+            );
+            requests.push_back(ConnectionRequest(outbound, inbound));
         }
     }
     
@@ -250,13 +248,31 @@ void ComponentManager::getComponentModulationConnections(ComponentId id, std::ve
         for ( auto p : d.modulatableParameters ){
             ModulatorComponent* paramModulator = module->getParameterModulator(p);
             if ( paramModulator ){
-                ConnectionRequest req ;
-                req.inboundID = id ;
-                req.inboundSocket = SocketType::ModulationInbound ;
-                req.inboundParameter = p ;
-                req.outboundID = paramModulator->getId() ;
-                req.outboundSocket = SocketType::ModulationOutbound ;
-                requests.push_back(req);
+                ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                    SocketType::ModulationOutbound, std::nullopt,
+                    paramModulator->getId()
+                );
+                ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                    SocketType::ModulationInbound, std::nullopt, 
+                    id, p
+                );
+                requests.push_back(ConnectionRequest(outbound, inbound));
+            }
+
+            ModulatorComponent* depthModulator = module->getParameterDepthModulator(p);
+            if ( depthModulator ){
+                ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                    SocketType::ModulationOutbound, std::nullopt,
+                    depthModulator->getId()
+                );
+                ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                    SocketType::ModulationInbound, std::nullopt, 
+                    id, p
+                );
+                requests.push_back(ConnectionRequest(
+                    outbound, inbound, 
+                    false, true
+                ));
             }
         }
     }
@@ -265,14 +281,18 @@ void ComponentManager::getComponentModulationConnections(ComponentId id, std::ve
     if ( modulator ){
         for ( auto t : modulator->getModulationTargets() ){
             if ( t.component ){
-                ConnectionRequest req ;
-                req.inboundID = t.component->getId() ;
-                req.inboundSocket = SocketType::ModulationInbound ;
-                req.inboundParameter = t.param ;
-                req.outboundID = id ;
-                req.outboundSocket = SocketType::ModulationOutbound ;
-                req.depthConnection = t.depth ;
-                requests.push_back(req);
+                ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                    SocketType::ModulationOutbound, std::nullopt,
+                    id
+                );
+                ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                    SocketType::ModulationInbound, std::nullopt, 
+                    t.component->getId(), t.param
+                );
+                requests.push_back(ConnectionRequest(
+                    outbound, inbound, 
+                    false, t.depth
+                ));
             }
         }
     }
@@ -289,15 +309,19 @@ void ComponentManager::getComponentMidiConnections(ComponentId id, std::vector<C
 
     MidiEventHandler* h = getMidiHandler(id);
     if ( h ){
-        // also create a connection request for all listeners
+        ConnectionEndpoint outbound = ConnectionEndpoint::create(
+            SocketType::MidiOutbound, 
+            std::nullopt, id
+        );
         for ( auto listener : h->getListeners() ){
             if ( listener ){
-                ConnectionRequest req ;
-                req.inboundID = listener->getId();
-                req.inboundSocket = SocketType::MidiInbound ;
-                req.outboundID = id ;
-                req.outboundSocket = SocketType::MidiOutbound ;
-                requests.push_back(req);
+                ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                    SocketType::MidiInbound, 
+                    std::nullopt, listener->getId()
+                );
+                requests.push_back(ConnectionRequest(
+                    outbound, inbound
+                ));
             }
         }
     }
@@ -305,17 +329,19 @@ void ComponentManager::getComponentMidiConnections(ComponentId id, std::vector<C
     // if it's a listener, create a connection request for all handlers
     MidiEventListener* listener = getMidiListener(id);
     if ( listener ){
+        ConnectionEndpoint inbound = ConnectionEndpoint::create(
+            SocketType::MidiInbound, 
+            std::nullopt, id
+        );
         for ( auto handler : listener->getHandlers() ){
             if ( handler ){
-                ConnectionRequest req ;
-                req.inboundID = id ;
-                req.inboundSocket = SocketType::MidiInbound ;
-                ComponentId handlerId = handler->getId();
-                if ( handlerId != -1 ){
-                    req.outboundID =  handlerId ;
-                }
-                req.outboundSocket = SocketType::MidiOutbound ;
-                requests.push_back(req);
+                ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                    SocketType::MidiOutbound, 
+                    std::nullopt, handler->getId()
+                );
+                requests.push_back(ConnectionRequest(
+                    outbound, inbound
+                ));
             }
         }
     }
@@ -326,30 +352,36 @@ void ComponentManager::getComponentBufferConnections(ComponentId id, std::vector
     if ( !component ) return ;
 
     for ( size_t i = 0; i < component->getNumInputs(); ++i ){
+        ConnectionEndpoint inbound = ConnectionEndpoint::create(
+            SocketType::BufferInbound, i,
+            component->getId()
+        );
         for ( const auto& conn : component->getInputs(i) ){
             if ( !conn.component ) continue ;
-            ConnectionRequest req ;
-            req.inboundID = component->getId();
-            req.inboundIdx = i ;
-            req.inboundSocket = SocketType::BufferInbound ;
-            req.outboundID = conn.component->getId();
-            req.outboundIdx = conn.index ; 
-            req.outboundSocket = SocketType::BufferOutbound ;
-            requests.push_back(req);
+            ConnectionEndpoint outbound = ConnectionEndpoint::create(
+                SocketType::BufferOutbound, conn.index,
+                conn.component->getId()
+            );
+            requests.push_back(ConnectionRequest(
+                outbound, inbound
+            ));
         }
     }
 
     for ( size_t i = 0; i < component->getNumOutputs(); ++i ){
+        ConnectionEndpoint outbound = ConnectionEndpoint::create(
+            SocketType::BufferOutbound, i,
+            component->getId()
+        );
         for ( const auto& conn : component->getOutputs(i) ){
             if ( !conn.component ) continue ;
-            ConnectionRequest req ;
-            req.inboundID = conn.component->getId();
-            req.inboundIdx = conn.index ; 
-            req.inboundSocket = SocketType::BufferInbound ;
-            req.outboundID = component->getId();
-            req.outboundIdx = i ;
-            req.outboundSocket = SocketType::BufferOutbound ;
-            requests.push_back(req);
+            ConnectionEndpoint inbound = ConnectionEndpoint::create(
+                SocketType::BufferInbound, conn.index,
+                conn.component->getId()
+            );
+            requests.push_back(ConnectionRequest(
+                outbound, inbound
+            ));
         }
     }
 }

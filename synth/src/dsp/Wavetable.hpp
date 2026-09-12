@@ -25,7 +25,7 @@
 #include <vector>
 #include <utility>
 
-using WaveMap = std::array<std::vector<double>, static_cast<int>(Waveform::N)> ;
+using WaveMap = std::array<std::vector<double>, Waveform::count> ;
 using Wave = std::pair<double*, std::size_t> ;
 
 /**

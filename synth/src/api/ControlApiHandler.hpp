@@ -72,7 +72,7 @@ public:
     json addComponent(const json& request);
     json removeComponent(const json& request);
     json parseConnectionRequest(const json& request);
-    bool routeConnectionRequest(ConnectionRequest request);
+    bool routeConnectionRequest(const ConnectionRequest& request);
     json syncComponent(const json& request);
     
     // parameter management

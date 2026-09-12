@@ -36,8 +36,8 @@ public:
     virtual bool shouldKillNote(const ActiveNote& note) const override ;
 
 private:
-    uint8_t resolveMonophonicNote(uint8_t currentNote, ModulationData* mData, MonophonicTriggerBehavior behavior) const ;
-    void updateMonophonicState(uint8_t midiNote, bool isPressed, ModulationData* mData, MonophonicTriggerBehavior behavior) const ;
+    uint8_t resolveMonophonicNote(uint8_t currentNote, ModulationData* mData, MonophonicTriggerType behavior) const ;
+    void updateMonophonicState(uint8_t midiNote, bool isPressed, ModulationData* mData, MonophonicTriggerType behavior) const ;
 
 
 };

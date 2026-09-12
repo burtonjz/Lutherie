@@ -21,13 +21,17 @@
 #include "graphics/SocketWidget.hpp"
 #include <QPointF>
 
+struct ModulationParameter {
+    std::optional<ConnectionEndpoint> endpoint = std::nullopt ;
+    bool depth = false ;
+};
+
 class ISocketLookup {
 public:
     virtual ~ISocketLookup() = default ;
 
-    virtual SocketWidget* findSocket(
-        SocketSpec spec
-    ) const = 0 ;
+    virtual SocketWidget* findVisibleSocket(const SocketSpec& spec) const = 0 ;
+    virtual SocketWidget* findVisibleSocket(const ConnectionEndpoint& endpoint) const = 0 ;
 
     /**
      * @brief find a socket widget at the specified location
@@ -36,6 +40,8 @@ public:
      * @return SocketWidget* 
      */
     virtual SocketWidget* findSocketAt(const QPointF& scenePos) const = 0 ;
+
+    virtual ModulationParameter requestModulationParameter(SocketWidget* socket) = 0 ;
 
 };
 

@@ -2,10 +2,6 @@
 #include "configs/ComponentConfig.hpp"
 #include "components/Components.hpp"
 
-#define HANDLE_CREATE_COMPONENT(Type) \
-    case ComponentType::Type: \
-        return store_->create<ComponentType::Type>(name,  j.get<Type##Config>());
-
 ComponentId ComponentFactory::createFromJson(ComponentType type, const std::string& name, const json& j ){
     switch(type){
         #define X(NAME) \

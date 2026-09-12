@@ -29,6 +29,7 @@
 #include "graphics/PostNote.hpp"
 #include "graphics/ToastNotification.hpp"
 #include "widgets/TextToolbar.hpp"
+#include "util/SocketSpec.hpp"
 
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -49,8 +50,7 @@ GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
     scene_(new QGraphicsScene(this)),
     connectionRenderer_(new ConnectionRenderer(
-        scene_, ConnectionManager::instance(), 
-        this, this)
+        scene_, this, this)
     ),
     isDraggingConnection_(false),
     postToolbar_(new TextToolbar(this))
@@ -70,12 +70,6 @@ GraphPanel::GraphPanel(QWidget* parent):
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
         this, &GraphPanel::onControlMessageReceived
-    );
-
-    // ConnectionRenderer
-    connect(
-        connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
-        this, &GraphPanel::onDragCableParameterNeeded
     );
 
     // ComponentManager
@@ -175,14 +169,13 @@ void GraphPanel::setNodeConnections(GraphNode* node){
 
 void GraphPanel::addAudioOutput(){
     audioOut_ = new PeripheralNode(AUDIO_OUT_DEVICE_ID, "Audio Output Device");
-    audioOut_->insertSockets({{
-        .type = SocketType::SignalInbound, 
-        .name = "Audio In",
-        .idx  = 0
-    }});
-    
+    ConnectionEndpoint endpoint = ConnectionEndpoint::create(
+        SocketType::SignalInbound, 0
+    );    
+    audioOut_->insertSocket(SocketSpec("Audio In", endpoint));
     audioOut_->addToScene(scene_);
     audioOut_->moveBy(200, 0);
+
     nodes_.push_back(audioOut_);
     
     setNodeConnections(audioOut_);
@@ -193,11 +186,11 @@ void GraphPanel::addAudioOutput(){
 
 void GraphPanel::addMidiInput(){
     midiIn_ = new PeripheralNode(MIDI_IN_DEVICE_ID, "MIDI Input Device");
-    midiIn_->insertSockets({{
-        .type = SocketType::MidiOutbound, 
-        .name = "MIDI Out"
-    }});
-
+    ConnectionEndpoint endpoint = ConnectionEndpoint::create(
+        SocketType::MidiOutbound
+    );    
+    midiIn_->insertSocket(SocketSpec("MIDI Out", endpoint));  
+    
     midiIn_->addToScene(scene_);
     midiIn_->moveBy(-200,0);
     nodes_.push_back(midiIn_);
@@ -206,22 +199,6 @@ void GraphPanel::addMidiInput(){
 
     SPDLOG_INFO("Created midi input node named {} at position {},{}",
         midiIn_->getName().toStdString(), midiIn_->pos().x(), midiIn_->pos().y());
-}
-
-GraphNode* GraphPanel::getVisibleNode(int componentId) const {
-    for ( auto n : nodes_ ){
-        auto cNode = dynamic_cast<ComponentNode*>(n);
-        if ( cNode && cNode->isVisible() ){
-            if ( cNode->getModel()->getId() == componentId ){
-                return cNode ;
-            }
-        }
-        auto gNode = dynamic_cast<GroupNode*>(n);
-        if ( gNode && gNode->contains(componentId) ){
-            return gNode ;
-        }
-    }
-    return nullptr ;
 }
 
 GraphNode* GraphPanel::findNodeAt(const QPointF& scenePos) const {
@@ -398,33 +375,23 @@ std::vector<GroupNode*> GraphPanel::getSelectedGroups() const {
     return nodes ;
 }
 
-SocketWidget* GraphPanel::findSocket(SocketSpec spec) const {
-    GraphNode* w = nullptr ;
-
-    // first, find the corresponding GraphNode
-    if ( !spec.componentId.has_value() ){ 
-        if ( spec.type == SocketType::SignalInbound ){
-            w = audioOut_ ;
-        } else if ( spec.type == SocketType::MidiOutbound ){
-            w = midiIn_ ;
-        } 
-    } else {
-        w = getVisibleNode(spec.componentId.value());
-    }
-
-    if ( !w ){ 
-        SPDLOG_WARN("Could not find node matching search criteria.");
-        return nullptr ;
-    }
-
-    // search its sockets
-    for ( auto s : w->getSockets() ){
-        if ( s->matches(spec) ){
-            return s ;
+SocketWidget* GraphPanel::findVisibleSocket(const SocketSpec& spec) const {
+    for ( auto* n : nodes_ ){
+        for ( auto* s : n->getSocketsMatchingSpec(spec) ){
+            if ( isVisible() ) return s ;
         }
     }
+    SPDLOG_WARN("Could not find visible socket with spec {}", static_cast<json>(spec).dump());
+    return nullptr ;
+}
 
-    SPDLOG_WARN("Could not find socket matching search criteria.");
+SocketWidget* GraphPanel::findVisibleSocket(const ConnectionEndpoint& endpoint) const {
+    for ( auto* n : nodes_ ){
+        for ( auto* s : n->getSocketsMatchingEndpoint(endpoint) ){
+            if ( isVisible() ) return s ;
+        }
+    }
+    SPDLOG_WARN("Could not find visible socket with endpoint {}", static_cast<json>(endpoint).dump());
     return nullptr ;
 }
 
@@ -637,29 +604,19 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     socketMenu->addAction(hideDisconnected);
 
     QAction* hideInternal = new QAction("Hide Internal Connections", socketMenu);
-    connect(hideInternal, &QAction::triggered, [this, node](){
-        for ( auto s : node->getSockets() ){
-            if ( !s->isVisible() || !s->hasConnection() ) continue ;
-            bool internalOnly = true ;
-            for ( auto connection : connectionRenderer_->getSocketConnections(s) ){
-                if ( 
-                    connection->getInboundSocket()->getParent() != node ||
-                    connection->getOutboundSocket()->getParent() != node
-                ){
-                    internalOnly = false ;
-                    break ;
-                }
+    connect(hideInternal, &QAction::triggered, [node](){
+        for ( auto* socket : node->getSockets() ){
+            if ( !ConnectionManager::instance()->hasExternalConnections(socket->getSpec()) ){
+                node->hideSocket(socket);
             }
-            if ( internalOnly ){
-                node->hideSocket(s);
-            }   
         }
     });
     socketMenu->addAction(hideInternal);
 
     socketMenu->addSeparator();
+
     for ( auto s : node->getHiddenSockets() ){
-        QAction* showSocket = new QAction("Unhide " + s->getSpec().name, socketMenu);
+        QAction* showSocket = new QAction("Unhide " + s->getSpec().name(), socketMenu);
         connect ( showSocket, &QAction::triggered, [node, s]{
             node->unhideSocket(s);
         });
@@ -694,35 +651,53 @@ void GraphPanel::onSocketRightClicked(SocketWidget* socket){
     QMenu menu ;
 
     QAction* disconnectAll = new QAction("Disconnect All",&menu);
-    connect(disconnectAll, &QAction::triggered, [this, socket]() 
-        { connectionRenderer_->requestRemoveSocketConnections(socket);}
-    );
+    connect(disconnectAll, &QAction::triggered, [socket](){
+        auto connections = ConnectionManager::instance()
+        ->getConnectionsMatchingSpec(socket->getSpec());
+        for ( auto& c : connections ){
+            c.setRemove(true);
+            ConnectionManager::instance()->requestConnectionEvent(c);
+        }
+    });
 
     QMenu* disconnectMenu = new QMenu("Disconnect",&menu);
-    GraphNode* node = socket->getParent();
     bool isInbound = socket->isInbound();
 
-    for ( const auto c : connectionRenderer_->getNodeConnections(node)){
-        if ( ! c->involvesSocket(socket) ) continue ;
-        GraphNode* other ;
-        QString s ;
+    auto connections = ConnectionManager::instance()
+        ->getConnectionsMatchingSpec(socket->getSpec());
+    for ( const auto& c : connections ){
+        SocketWidget* w = nullptr ;
         if ( isInbound ){
-            other = c->getOutboundSocket()->getParent();
-            s = other->getName() + ": " + c->getOutboundSocket()->getSpec().name ;
+             w = findVisibleSocket(c.outbound());
         } else {
-            other = c->getInboundSocket()->getParent();
-            s = other->getName() + ": " + c->getInboundSocket()->getSpec().name ;
+            w = findVisibleSocket(c.inbound());
         }
-        QAction* disconnectOne = new QAction(s,disconnectMenu);
-        connect( disconnectOne, &QAction::triggered, [this, c](){
-            connectionRenderer_->requestRemoveConnection(c);
+        if ( !w ) continue ;
+        GraphNode* n = w->getParent();
+        if ( !n ) continue ;
+
+        QString label = n->getName() + ": " + w->getSpec().name();
+        if ( w->getSpec().type() == SocketType::ModulationInbound ){
+            label = label + " - " + QString::fromStdString(std::string(
+                GET_PARAMETER_TRAIT_MEMBER(c.inbound().modulatedParam().value(), name)
+            ));
+        }
+        if ( c.modulatingDepth() ){
+            label = label + " depth" ;
+        }
+
+        QAction* disconnectOne = new QAction(label,disconnectMenu);
+        connect( disconnectOne, &QAction::triggered, [c](){
+            ConnectionRequest r = c ;
+            r.setRemove(true);
+            ConnectionManager::instance()->requestConnectionEvent(r);
         });
         disconnectMenu->addAction(disconnectOne);
     }
 
     QAction* socketHide = new QAction("Hide Socket", &menu);
-    connect(socketHide, &QAction::triggered, [node, socket](){
-        node->hideSocket(socket);
+    connect(socketHide, &QAction::triggered, [socket](){
+        socket->getParent()->hideSocket(socket);
     });
 
     menu.addAction(socketHide);
@@ -972,7 +947,6 @@ void GraphPanel::onComponentGroupRemoved(int groupId, std::vector<int> component
         return ;
     }
 
-    gNode->removeAll();
     nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), gNode), nodes_.end());
     scene_->removeItem(gNode);
     gNode->deleteLater();
@@ -988,7 +962,7 @@ void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> component
         return ;
     }
 
-    gNode->removeAll();
+    gNode->removeSockets();
     for ( const auto id : componentIds ){
         gNode->add(getComponentNode(id));
     }
@@ -1096,80 +1070,82 @@ void GraphPanel::onNodeZUpdate(){
     }
 }
 
-void GraphPanel::onDragCableParameterNeeded(SocketWidget* socket){
-    if ( ! socket ){
-        SPDLOG_WARN("drag cable parameter requested for an invalid socket. Cancelling drag.");
-        connectionRenderer_->cancelDrag();
-        return ;
-    }
+ModulationParameter GraphPanel::requestModulationParameter(SocketWidget* socket){
+    ModulationParameter output ; 
 
-    if ( ! socket->getSpec().componentId.has_value() ){
-        SPDLOG_WARN("drag cable inbound socket does not have a defined componentId. Cancelling drag.");
-        connectionRenderer_->cancelDrag();
-        return ;
-    }
+    if ( !socket ) return output ;
+    
+    const SocketSpec& spec = socket->getSpec();
 
+    // create user menu
     QMenu menu ;
-
     QAction* header = menu.addAction("Select Parameter");
     header->setEnabled(false);
     menu.addSeparator();
 
-    int id = socket->getSpec().componentId.value() ;
-
-    auto params = ComponentManager::instance()
-        ->getModel(id)
-        ->getDescriptor().modulatableParameters ;
-
-    auto existing = ConnectionManager::instance()
-        ->getModulationConnections(id);
-
-    auto depthExisting = ConnectionManager::instance()
-        ->getModulationDepthConnections(id);
-
+    bool multipleIds = spec.componentIds().size() > 1 ;
+    auto createActionName = [&](int id, ParameterType p, bool depth = false){
+        QString name = "";
+        if ( multipleIds ){
+            name = ComponentManager::instance()
+                ->getModel(id)->getName()
+                + ": ";
+        }
+        name = name + QString::fromStdString(
+            std::string(GET_PARAMETER_TRAIT_MEMBER(p, name))
+        );
+        if ( depth ){
+            name = name + " depth" ;
+        }
+        return name ;
+    };
+    
     bool hasActions = false ;
-    for ( const auto& p : params ){
-        bool modExists = std::find(existing.begin(), existing.end(), p) != existing.end();
-        bool depthExists = std::find(depthExisting.begin(), depthExisting.end(), p) != depthExisting.end();
-        if ( ! modExists ){
-            QAction* param = new QAction(
-                QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(p, name))),
-                &menu
+    for ( const auto& endpoint : spec.endpoints() ){
+        bool exists = ConnectionManager::instance()
+            ->hasModulationConnections(endpoint);
+        if ( !exists ){
+            int id = endpoint.componentId().value();
+            ParameterType p = endpoint.modulatedParam().value();
+            QAction* param = menu.addAction(createActionName(id, p));
+            connect(
+                param, &QAction::triggered,
+                [&output, endpoint](){
+                    output = {
+                        .endpoint = endpoint
+                    };
+                }
             );
-            menu.addAction(param);
             hasActions = true ;
-        }   
-        if ( modExists && ! depthExists ){
-            QAction* param = new QAction(
-                QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(p, name)) + " depth"),
-                &menu
+            continue ;
+        }
+
+        bool depthExists = ConnectionManager::instance()
+            ->hasModulationDepthConnections(endpoint);
+        if ( !depthExists ){
+            int id = endpoint.componentId().value();
+            ParameterType p = endpoint.modulatedParam().value();
+            QAction* param = menu.addAction(createActionName(id, p, true));
+            connect(
+                param, &QAction::triggered,
+                [&output, endpoint](){
+                    output = {
+                        .endpoint = endpoint,
+                        .depth = true 
+                    };
+                }
             );
-            menu.addAction(param);
             hasActions = true ;
-        }    
+        }
     }
 
     if ( ! hasActions ){ 
-        connectionRenderer_->cancelDrag();
         ToastNotification::show(scene_, this, "All modulation slots are full.");
-        return ;
+        return output ;
     }
 
-    QAction* selected = menu.exec(QCursor::pos());
-    if ( selected ){
-        auto str = selected->text().toStdString();
-        ParameterType p ;
-        if ( str.find("depth") != std::string::npos ){
-            str.erase(str.find(" depth"), 6);
-            p = stringToParameter(str);
-            connectionRenderer_->setDragCableParameter(p, true);
-        } else {
-            p = stringToParameter(str);
-            connectionRenderer_->setDragCableParameter(p);
-        }
-    } else {
-        connectionRenderer_->cancelDrag();
-    }
+    menu.exec(QCursor::pos());
+    return output ;
 }
 
 void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
@@ -1186,8 +1162,8 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     if ( oldSize > numChannels ){
         for ( auto s : sockets ){
             if ( !s ) continue ;
-            auto spec = s->getSpec();
-            if ( spec.idx.has_value() && spec.idx.value() >= numChannels ){
+            const auto& spec = s->getSpec();
+            if ( spec.endpoints()[0].index().value() >= numChannels ){
                 connectionRenderer_->requestRemoveSocket(s);
             }
         }
@@ -1197,11 +1173,13 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     // otherwise, there are more channels
     std::vector<SocketSpec> specs ;
     for ( size_t i = oldSize ; i < numChannels ; ++i ){
-        specs.push_back({
-            .type = SocketType::SignalInbound, 
-            .name = "Audio In " + QString::number(i),
-            .idx  = i    
-        });
+        ConnectionEndpoint e = ConnectionEndpoint::create(
+            SocketType::SignalInbound, i
+        );
+        specs.push_back(SocketSpec(
+            "Audio In " + QString::number(i),
+            e
+        ));
     }
     
     audioOut_->insertSockets(specs);

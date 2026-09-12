@@ -33,14 +33,12 @@ class ComponentNode :  public GraphNode {
 
 private:
     ComponentModel* model_ ;
-    std::vector<SocketSpec> specs_ ;
 
 public:
     explicit ComponentNode(ComponentModel* model, QGraphicsItem* parent = nullptr);
     ~ComponentNode() = default ;
 
     ComponentModel* getModel() const ;
-    const std::vector<SocketSpec>& getSpecs() const ;
 
     json serialize() const override ;
     virtual void deserialize(const json& node) override ;

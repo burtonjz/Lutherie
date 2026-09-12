@@ -50,7 +50,7 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
     
     // get the midi note
     bool monophonicMode = !mData->has(ModulationParameter::MIDI_NOTE);
-    auto behavior = MonophonicTriggerBehavior::from_uint8(
+    auto behavior = MonophonicTriggerType::from_uint8(
         parameters_->getParameter<ParameterType::TRIGGER>()->getValue()
     );
     uint8_t midiNote ;
@@ -105,9 +105,9 @@ bool ADSREnvelope::shouldKillNote(const ActiveNote& note) const {
 
 uint8_t ADSREnvelope::resolveMonophonicNote(
     uint8_t currentNote, ModulationData* mData, 
-    MonophonicTriggerBehavior behavior) const 
+    MonophonicTriggerType behavior) const 
 {
-    if ( behavior == MonophonicTriggerBehavior::LEGATO ){
+    if ( behavior == MonophonicTriggerType::LEGATO ){
         if ( mData->has(ModulationParameter::LAST_MIDI_NOTE) ){
             uint8_t latchedNote = static_cast<uint8_t>(mData->get(ModulationParameter::LAST_MIDI_NOTE));
             if ( isNoteActive(latchedNote) ){
@@ -120,24 +120,24 @@ uint8_t ADSREnvelope::resolveMonophonicNote(
 
 void ADSREnvelope::updateMonophonicState(
     uint8_t midiNote, bool isPressed, 
-    ModulationData* mData, MonophonicTriggerBehavior behavior) const 
+    ModulationData* mData, MonophonicTriggerType behavior) const 
 {
     bool wasPressed = mData->has(ModulationParameter::LAST_STATE) &&
         mData->get(ModulationParameter::LAST_STATE) > 0.0f ;
     bool noteChanged = mData->has(ModulationParameter::LAST_MIDI_NOTE) &&
         mData->get(ModulationParameter::LAST_MIDI_NOTE) != midiNote ;
     switch ( behavior ){
-    case MonophonicTriggerBehavior::LEGATO:
+    case MonophonicTriggerType::LEGATO:
         if ( isPressed != wasPressed ){
             mData->set(ModulationParameter::INITIAL_VALUE, mData->get(ModulationParameter::LAST_OUTPUT));
         }
         break ;
-    case MonophonicTriggerBehavior::RETRIGGER_LEGATO:
+    case MonophonicTriggerType::RETRIGGER_LEGATO:
         if (( isPressed != wasPressed ) || noteChanged ){
             mData->set(ModulationParameter::INITIAL_VALUE, mData->get(ModulationParameter::LAST_OUTPUT));
         }
         break ;
-    case MonophonicTriggerBehavior::RETRIGGER_RESET:
+    case MonophonicTriggerType::RETRIGGER_RESET:
         if (( isPressed && !wasPressed ) || noteChanged ){
             mData->set(ModulationParameter::INITIAL_VALUE, 0.0f);
         } else if ( !isPressed && wasPressed ){

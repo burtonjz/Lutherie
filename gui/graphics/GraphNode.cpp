@@ -17,6 +17,7 @@
 
 #include "graphics/GraphNode.hpp"
 #include "graphics/SocketWidget.hpp"
+#include "managers/ConnectionManager.hpp"
 #include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
@@ -45,9 +46,7 @@ GraphNode::GraphNode(QString name, QGraphicsItem* parent):
 }
 
 GraphNode::~GraphNode(){
-    for ( auto socket : sockets_ ){
-        socket->deleteLater();
-    }
+    removeSockets();
 }
 
 QRectF GraphNode::boundingRect() const {
@@ -77,11 +76,65 @@ void GraphNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
     }
 }
 
-SocketWidget* GraphNode::getSocket(SocketSpec s) const {
-    for ( auto socket : sockets_ ){
-        if ( socket->matches(s) ) return socket ;
+const std::vector<SocketWidget*>& GraphNode::getSockets() const {
+    return sockets_ ;
+}
+
+SocketWidget* GraphNode::getSingleSocketMatchingEndpoint(const ConnectionEndpoint& endpoint) const {
+    for ( auto* socket : sockets_ ){
+        const SocketSpec& spec = socket->getSpec();
+        if ( spec.isGroup() ) continue ;
+        if ( spec.endpoints()[0] == endpoint ) return socket ;
     }
     return nullptr ;
+}
+
+std::vector<SocketWidget*> GraphNode::getSocketsMatchingSpec(const SocketSpec& spec) const {
+    std::vector<SocketWidget*> v ;
+    for ( auto* socket : sockets_ ){
+        if ( spec == socket->getSpec() ) v.push_back(socket);
+    }
+    return v ;
+}
+
+std::vector<SocketWidget*> GraphNode::getSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const {
+    std::vector<SocketWidget*> v ;
+    for ( auto* socket : sockets_ ){
+        const SocketSpec& spec = socket->getSpec();
+        for ( const auto& e : spec.endpoints() ){
+            if ( e == endpoint ){
+                v.push_back(socket);
+                continue ;
+            }
+        }
+    }
+    return v ;
+}
+
+std::vector<SocketWidget*> GraphNode::getVisibleSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const {
+    std::vector<SocketWidget*> v ;
+    for ( auto socket : sockets_ ){
+        if ( !socket->isVisible() ) continue ;
+        const SocketSpec& spec = socket->getSpec();
+        for ( const auto& e : spec.endpoints() ){
+            if ( e == endpoint ){
+                v.push_back(socket);
+                continue ;
+            }
+        }
+    }
+    return v ;
+}
+
+SocketWidget* GraphNode::insertSocket(SocketSpec spec){
+    SocketWidget* socket = new SocketWidget(spec, this);
+    sockets_.push_back(socket);
+
+    layoutSockets();
+    reorderSockets();
+    positionSockets(scenePos());
+
+    return socket ;
 }
 
 void GraphNode::insertSockets(std::vector<SocketSpec> specs){
@@ -123,8 +176,27 @@ void GraphNode::addToScene(QGraphicsScene* scene){
 
 std::vector<SocketWidget*> GraphNode::getHiddenSockets() const {
     std::vector<SocketWidget*> output ;
+
     for ( const auto& s : sockets_ ){
-        if ( ! s->isVisible() ) output.push_back(s);
+        if ( !s->isVisible() ){
+            const SocketSpec& spec = s->getSpec();
+            if ( spec.isGroup() ){
+                output.push_back(s);
+                continue ;
+            } 
+
+            // only include if it isn't otherwise a member of a group
+            bool isGrouped = false ;
+            for ( auto* search : sockets_ ){
+                const SocketSpec& searchSpec = search->getSpec();
+                if ( !searchSpec.isGroup() ) continue ;
+                if ( searchSpec.includes(spec.endpoints()[0]) ){
+                    isGrouped = true ;
+                    break ;
+                }
+            }
+            if ( !isGrouped ) output.push_back(s);
+        } 
     }
     return output ;
 }
@@ -161,7 +233,10 @@ void GraphNode::hideSocket(SocketWidget* socket){
 
 void GraphNode::hideDisconnectedSockets(){
     for ( auto s : sockets_ ){
-        if ( ! s->hasConnection() && s->isVisible() ){
+        bool noConnection = ConnectionManager::instance()
+            ->getNumConnectionsMatchingSpec(s->getSpec()) == 0 ;
+        
+        if ( noConnection && s->isVisible() ){
             hideSocket(s);
         }
     }
@@ -174,7 +249,7 @@ void GraphNode::layoutSockets(){
     bottomSockets_.clear();
 
     for (SocketWidget* socket : sockets_){
-        switch(socket->getSpec().type){
+        switch( socket->getSpec().type() ){
         case SocketType::MidiInbound:
         case SocketType::SignalInbound:
         case SocketType::BufferInbound:
@@ -275,6 +350,20 @@ void GraphNode::positionSockets(QPointF newPos){
     emit positionChanged();
 }
 
+void GraphNode::removeSockets(){
+    for ( auto* socket : sockets_ ){
+        scene()->removeItem(socket);
+        socket->deleteLater();
+    }
+    sockets_.clear();
+    leftSockets_.clear();
+    rightSockets_.clear();
+    topSockets_.clear();
+    bottomSockets_.clear();
+    
+    update();
+}
+
 QVariant GraphNode::itemChange(GraphicsItemChange change, const QVariant& value ){
     if ( change == ItemPositionChange ){
         positionSockets(value.toPointF());
@@ -296,8 +385,10 @@ void GraphNode::reorderSockets(){
     2. Hidden Socket
     */
     auto socketSortLR = [](const SocketWidget* a, const SocketWidget* b){
-        bool aConnect = a->hasConnection();
-        bool bConnect = b->hasConnection();
+        bool aConnect = ConnectionManager::instance()
+            ->getNumConnectionsMatchingSpec(a->getSpec()) > 0 ;
+        bool bConnect = ConnectionManager::instance()
+            ->getNumConnectionsMatchingSpec(b->getSpec()) > 0 ;
 
         if ( aConnect != bConnect ){
             return aConnect ;
@@ -313,11 +404,11 @@ void GraphNode::reorderSockets(){
         const auto& aSpec = a->getSpec();
         const auto& bSpec = b->getSpec();
 
-        if ( aSpec.type != bSpec.type ){
-            return aSpec.type < bSpec.type ;
+        if ( aSpec.type() != bSpec.type() ){
+            return aSpec.type() < bSpec.type() ;
         }
 
-        return aSpec.name < bSpec.name ;
+        return aSpec.name() < bSpec.name() ;
     };
 
     // top/bottom are reversed due to draw order
@@ -337,17 +428,13 @@ json GraphNode::serialize() const {
     msg["name"] = name_.toStdString() ;
     msg["xpos"] = pos().x() ;
     msg["ypos"] = pos().y() ;
+    msg["visible"] = isVisible();
     
-    // don't include hidden sockets if the whole node is invisible (as it is when it is grouped)
-    if ( ! isVisible() ) return msg ;
-
-    auto& hidden = msg["hidden_sockets"] ;
-    for ( const auto& s : sockets_ ){
-        if ( ! s->isVisible() ){
-            hidden.push_back(s->getSpec());
-        }
+    json sockets ;
+    for ( const auto& socket : sockets_ ){
+        sockets.push_back(socket->serialize());
     }
-
+       
     return msg ;
 }
 
@@ -355,20 +442,45 @@ void GraphNode::deserialize(const json& node){
     if ( node.contains("name") && node.at("name").is_string() ){
         onRename(QString::fromStdString(node.at("name")));
     } 
+
     if ( 
         node.contains("xpos") && node.at("xpos").is_number() &&
         node.contains("ypos") && node.at("ypos").is_number()
     ){
         setPos(node.at("xpos"), node.at("ypos"));
     }
-    if ( node.contains("hidden_sockets") && node.at("hidden_sockets").is_array() ){
-        for ( const auto& s : node.at("hidden_sockets") ){
+    if ( node.contains("visible") && node.at("visible").is_boolean() ){
+        setVisible(node.at("visible"));
+    }
+
+    if ( node.contains("sockets") && node.at("sockets").is_array() ){
+        for ( const auto& s : node.at("sockets") ){
+            std::optional<SocketSpec> spec = std::nullopt ;
             try {
-                SocketSpec spec = s ;
-                SocketWidget* s = getSocket(spec);
-                hideSocket(s);
+                spec = s.at("spec") ;
             } catch ( const std::exception& e){
-                SPDLOG_WARN("hidden sockets did not contain a valid socket spec.");
+                SPDLOG_WARN("sockets did not contain a valid socket spec.");
+                continue ;
+            }
+
+            const auto& sockets = getSocketsMatchingSpec(*spec);
+            if ( sockets.size() == 0 ){
+                if ( spec->isGroup() ){
+                    SPDLOG_DEBUG("Creating new grouped socket.");
+                    SocketWidget* sock = insertSocket(spec.value());
+                    sock->deserialize(s);
+                    continue ;
+                }
+
+                SPDLOG_WARN(
+                    "A single SocketSpec is not already present in the component. This shouldn't happen."
+                );
+                continue ;
+            } else {
+                SPDLOG_DEBUG("deserializing {} sockets.", sockets.size());
+                for ( auto* socket : sockets ){
+                    socket->deserialize(s);
+                }
             }
         }
     }

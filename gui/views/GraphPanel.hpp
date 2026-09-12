@@ -73,7 +73,6 @@ public:
     ComponentNode* getComponentNode(int componentId) const ;
     GroupNode* getGroupNode(int groupId) const ;
 
-    GraphNode* getVisibleNode(int componentId) const ;
     GraphNode* findNodeAt(const QPointF& scenePos) const ;
 
     std::vector<PostNote*> getSelectedPosts() const ;
@@ -81,8 +80,10 @@ public:
     std::vector<GroupNode*> getSelectedGroups() const ;
 
     // ISocketLookup
-    SocketWidget* findSocket(SocketSpec spec) const override ;
+    SocketWidget* findVisibleSocket(const SocketSpec& spec) const override ;
+    SocketWidget* findVisibleSocket(const ConnectionEndpoint& endpoint) const override ;
     SocketWidget* findSocketAt(const QPointF& scenePos) const override ;
+    ModulationParameter requestModulationParameter(SocketWidget* socket) override ;
 
     void updatePeripheralAudioChannels(size_t numChannels);
 
@@ -140,8 +141,6 @@ public slots:
     void onComponentGroupUpdated(int groupId, std::vector<int> componentIds);
 
     void onNodeZUpdate();
-
-    void onDragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
 
 signals:
     void requestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialized = std::nullopt );

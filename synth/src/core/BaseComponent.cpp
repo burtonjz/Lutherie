@@ -23,7 +23,7 @@
 #include <unordered_set>
 
 
-BaseComponent::BaseComponent(ComponentId id, ComponentType type):
+BaseComponent::BaseComponent(std::optional<ComponentId> id, ComponentType type):
     id_(id),
     type_(type),
     parameters_(new ParameterMap)

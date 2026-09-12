@@ -19,7 +19,7 @@
 #define CONNECTION_CABLE_HPP_
 
 #include "graphics/SocketWidget.hpp"
-#include "requests/ConnectionRequest.hpp"
+#include "types/ParameterType.hpp"
 
 #include <QGraphicsPathItem>
 #include <optional>
@@ -36,7 +36,6 @@ public:
     ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket = nullptr);
 
     bool operator==(const ConnectionCable& other) const ;
-    bool operator==(const ConnectionRequest& req) const ;
 
     SocketWidget* getFromSocket() const { return fromSocket_ ; }
     SocketWidget* getToSocket() const { return toSocket_ ; }
@@ -46,6 +45,8 @@ public:
 
     std::optional<ParameterType> getModulatedParameter(bool depth = false) const ;
     void setModulatedParameter(ParameterType p, bool depth = false);
+
+    bool modulatesDepth() const ;
 
     void setFromSocket(SocketWidget* socket);
     void setToSocket(SocketWidget* socket);
@@ -57,10 +58,10 @@ public:
 
     bool involvesWidget(GraphNode* widget) const ;
     bool involvesSocket(SocketWidget* socket) const ;
+    bool involvesEndpoint(const ConnectionEndpoint& endpoint) const ;
 
     void updatePath();
 
-    ConnectionRequest toConnectionRequest() const ;
     QString toText() const ;
 
 protected:

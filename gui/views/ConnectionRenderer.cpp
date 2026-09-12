@@ -17,31 +17,30 @@
 
 #include "views/ConnectionRenderer.hpp"
 #include "graphics/GraphNode.hpp"
+#include "managers/ConnectionManager.hpp"
 
 #include <spdlog/spdlog.h>
 
 ConnectionRenderer::ConnectionRenderer(
     QGraphicsScene* scene,
-    ConnectionManager* manager,
     ISocketLookup* socketLookup,
     QObject* parent
 ):
     QObject(parent),
     scene_(scene),
-    manager_(manager),
     socketLookup_(socketLookup),
     dragCable_(nullptr),
     dragFromSocket_(nullptr)
 {
     connect(
-        manager_, 
+        ConnectionManager::instance(), 
         &ConnectionManager::connectionAdded, 
         this, 
         &ConnectionRenderer::onConnectionAdded
     );
 
     connect(
-        manager_, 
+        ConnectionManager::instance(), 
         &ConnectionManager::connectionRemoved, 
         this, 
         &ConnectionRenderer::onConnectionRemoved
@@ -64,8 +63,6 @@ void ConnectionRenderer::updateDrag(const QPointF& scenePos){
 }
 
 void ConnectionRenderer::finishDrag(const QPointF& scenePos){
-    ConnectionRequest request ;
-    
     if ( !dragCable_ || !dragFromSocket_ ){
         SPDLOG_DEBUG("drag connection not available. Unable to finish drag.");
         return ;
@@ -79,23 +76,40 @@ void ConnectionRenderer::finishDrag(const QPointF& scenePos){
         cancelDrag();
         return ;
     }
-    dragCable_->setToSocket(toSocket);
 
-    if ( !dragCable_->isCompatible(toSocket)){
+    if ( dragCable_->isCompatible(toSocket) ){
+        dragCable_->setToSocket(toSocket);
+    } else {
         cancelDrag();
         return ;
     }
 
-    if ( toSocket->getSpec().type == SocketType::ModulationInbound ){
-        emit dragCableParameterNeeded(toSocket);
-        return ;
-    } else if ( dragFromSocket_->getSpec().type == SocketType::ModulationInbound ){
-        emit dragCableParameterNeeded(dragFromSocket_);
-        return ;
-    } else {
-        sendDragCableRequest();
+    const SocketSpec& outbound = dragCable_->getOutboundSocket()->getSpec();
+    const SocketSpec& inbound = dragCable_->getInboundSocket()->getSpec();
+
+    if ( inbound.type() == SocketType::ModulationInbound ){
+        auto v = socketLookup_
+            ->requestModulationParameter(dragCable_->getInboundSocket());
+
+        if ( !v.endpoint.has_value() ){
+            cancelDrag();
+            return ;
+        } 
+
+        for ( const auto& endpoint : outbound.endpoints() ){
+            ConnectionManager::instance()->requestConnectionEvent(
+                endpoint, v.endpoint.value(),
+                false, v.depth
+            );
+        }
+        cancelDrag();
         return ;
     }
+     
+    ConnectionManager::instance()->requestConnectionEvent(
+        outbound, inbound
+    );
+    cancelDrag();
 }
 
 void ConnectionRenderer::cancelDrag(){
@@ -111,24 +125,18 @@ bool ConnectionRenderer::isDragging() const {
     return dragCable_ != nullptr ;
 }
 
-void ConnectionRenderer::setDragCableParameter(ParameterType p, bool depth){
-    dragCable_->setModulatedParameter(p, depth);
-    sendDragCableRequest();
-}
-
-void ConnectionRenderer::requestRemoveConnection(ConnectionCable* cable){
+void ConnectionRenderer::requestRemoveConnections(ConnectionCable* cable){
     if ( !cable ) return ;
-    auto req = cable->toConnectionRequest();
-    req.remove = true ;
-    manager_->requestConnectionEvent(req);
-}
 
-void ConnectionRenderer::requestRemoveSocketConnections(SocketWidget* s){
-    for ( auto c : cables_ ){
-        if ( c->getFromSocket() == s || c->getToSocket() == s ){
-            requestRemoveConnection(c);
-        }
-    }
+    SocketWidget* fromSock = cable->getFromSocket();
+    SocketWidget* toSock = cable->getToSocket();
+
+    if ( !fromSock || !toSock ) return ;
+
+    ConnectionManager::instance()->requestConnectionEvent(
+        fromSock->getSpec(), toSock->getSpec(), 
+        true, cable->modulatesDepth()
+    );
 }
 
 void ConnectionRenderer::requestRemoveSocket(SocketWidget* s){
@@ -155,19 +163,13 @@ const std::vector<ConnectionCable*> ConnectionRenderer::getSocketConnections(Soc
     return c ;
 }
 
-void ConnectionRenderer::sendDragCableRequest(){
-    ConnectionRequest request = dragCable_->toConnectionRequest();
-    manager_->requestConnectionEvent(request);
-    cancelDrag(); // destroy temporary cable
-}
-
 bool ConnectionRenderer::socketIsRemovable(SocketWidget* s, bool request){
     bool hasConnection = false ;
     for ( auto c: cables_ ){
         if ( c->getFromSocket() == s || c->getToSocket() == s ){
             hasConnection = true ;
             if ( request ){
-                requestRemoveConnection(c);
+                requestRemoveConnections(c);
             }
         }
     }
@@ -177,19 +179,24 @@ bool ConnectionRenderer::socketIsRemovable(SocketWidget* s, bool request){
 
 void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
     for ( auto cable : cables_ ){
-        SocketSpec fromSpec = cable->getFromSocket()->getSpec();
-        SocketSpec toSpec = cable->getToSocket()->getSpec();
-        bool hasFromId = fromSpec.componentId.has_value();
-        bool hasToId = toSpec.componentId.has_value();
-        if ( !hasFromId && !hasToId ) continue ;
+        const SocketSpec& fromSpec = cable->getFromSocket()->getSpec();
+        const SocketSpec& toSpec = cable->getToSocket()->getSpec();
+
+        auto fromIds = fromSpec.componentIds();
+        auto toIds = toSpec.componentIds();
+        if ( 
+            fromIds.size() == 0 && 
+            toIds.size() == 0 
+        ) continue ;
+
         for ( const auto& id : componentIds ){
-            if ( hasFromId && fromSpec.componentId.value() == id ){
+            if ( fromIds.contains(id) ){
                 cable->setVisible(true);
-                cable->setFromSocket(socketLookup_->findSocket(fromSpec));
+                cable->setFromSocket(socketLookup_->findVisibleSocket(fromSpec));
             }
-            if ( hasToId && toSpec.componentId.value() == id ){
+            if ( toIds.contains(id) ){
                 cable->setVisible(true);
-                cable->setToSocket(socketLookup_->findSocket(toSpec));
+                cable->setToSocket(socketLookup_->findVisibleSocket(toSpec));
             }
         }
     }
@@ -231,17 +238,8 @@ void ConnectionRenderer::onSocketUnhidden(SocketWidget* socket){
 }
 
 void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
-    SocketWidget* outbound = socketLookup_->findSocket({
-        .type = req.outboundSocket, 
-        .componentId = req.outboundID,
-        .idx = req.outboundIdx
-    });
-
-    SocketWidget*  inbound = socketLookup_->findSocket({
-        .type = req.inboundSocket, 
-        .componentId = req.inboundID, 
-        .idx = req.inboundIdx, 
-    });
+    SocketWidget* outbound = socketLookup_->findVisibleSocket(req.inbound());
+    SocketWidget*  inbound = socketLookup_->findVisibleSocket(req.outbound());
 
     if ( !outbound || !inbound ){
         SPDLOG_DEBUG("did not find sockets to draw connection cable. Please investigate");
@@ -250,29 +248,45 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
 
     ConnectionCable* c = new ConnectionCable(outbound, inbound);
     
-    if ( inbound->getSpec().type == SocketType::ModulationInbound ){
-        c->setModulatedParameter(req.inboundParameter.value(), req.depthConnection);
+    if ( inbound->getSpec().type() == SocketType::ModulationInbound ){
+        c->setModulatedParameter(req.inbound().modulatedParam().value(), req.modulatingDepth());
     }
 
     cables_.push_back(c);
     scene_->addItem(c);
     c->setZValue(std::max(inbound->zValue(), outbound->zValue()));
-
-    inbound->setConnnection(true);
-    outbound->setConnnection(true);
 }
 
 void ConnectionRenderer::onConnectionRemoved(const ConnectionRequest& req){
-    for ( auto c : cables_ ){
-        if ( c->toConnectionRequest() == req ){
-            c->getInboundSocket()->setConnnection(false);
-            c->getOutboundSocket()->setConnnection(false);
+    const auto& outbound = req.outbound();
+    const auto& inbound = req.inbound();
 
-            scene_->removeItem(c);
-            delete c ;
-            cables_.erase(std::remove(cables_.begin(), cables_.end(), c), cables_.end());
+    // find cable with these endpoints
+    ConnectionCable* match = nullptr ;
+    for ( auto c : cables_ ){
+        if ( 
+            c->involvesEndpoint(outbound) &&
+            c->involvesEndpoint(inbound)
+        ){
+            match = c ;
+            break ;
         }
     }
+    
+    if ( !match ) return ;
+
+    size_t nConnections = ConnectionManager::instance()
+        ->getNumConnectionsMatchingEndpoints(outbound, inbound);
+
+    if ( nConnections > 0 ) return ;
+
+    
+    cables_.erase(std::remove(
+        cables_.begin(), cables_.end(), match), 
+        cables_.end()
+    );
+    scene_->removeItem(match);
+    delete match ;
 
     for ( auto s : socketsQueuedForRemoval_ ){
         if ( socketIsRemovable(s, false) ){

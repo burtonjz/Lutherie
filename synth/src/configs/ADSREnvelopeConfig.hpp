@@ -19,7 +19,7 @@
 #define __HPP_CONFIGS_ADSRENVELOPE_
 
 #include "types/ComponentType.hpp"
-#include "types/MonophonicTriggerBehavior.hpp"
+#include "types/MonophonicTriggerType.hpp"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
@@ -33,7 +33,7 @@ struct ADSREnvelopeConfig {
     double decay = 0.1 ;
     double sustain = 0.8 ;
     double release = 0.1 ; 
-    MonophonicTriggerBehavior trigger = MonophonicTriggerBehavior::LEGATO ;
+    MonophonicTriggerType trigger = MonophonicTriggerType::LEGATO ;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ADSREnvelopeConfig, attack, decay, sustain, release, trigger) // macro to serialize/deserialize json <-> structs

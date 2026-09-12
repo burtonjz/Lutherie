@@ -39,10 +39,6 @@
     X(BufferReverser) \
     X(StreamRecorder)
 
-/**
- * @brief enumeration of modulation source classes
- * 
-*/
 enum class ComponentType {
     #define X(name) \
         name,

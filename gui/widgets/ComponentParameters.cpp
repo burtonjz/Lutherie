@@ -103,7 +103,7 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
         w = new FilterTypeWidget(this);
         break ;
     case ParameterType::TRIGGER:
-        w = new MonophonicTriggerBehaviorWidget(this);
+        w = new MonophonicTriggerTypeWidget(this);
         break ;
     case ParameterType::DELAY:
         w = new DelayWidget(this);

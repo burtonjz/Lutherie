@@ -30,7 +30,7 @@ using json = nlohmann::json ;
 
 class ScaleType {
 public:
-    enum Scale : uint8_t {
+    enum Value : uint8_t {
         MAJOR,
         NATURAL_MINOR,
         HARMONIC_MINOR,
@@ -47,115 +47,114 @@ public:
         CHROMATIC,
         DIMINISHED,
         AUGMENTED,
-        N
+        N_SCALE_TYPES
     };
 
     ScaleType() = default ;
+    constexpr ScaleType(Value v) : value_(v){} 
 
-    // construct from enum
-    constexpr ScaleType(Scale s) : scale_(s){} 
-
-    // construct from string
-    ScaleType(std::string_view name){
-        if      ( name == "MAJOR" )            scale_ = MAJOR ;
-        else if ( name == "NATURAL_MINOR" )    scale_ = NATURAL_MINOR ;
-        else if ( name == "HARMONIC_MINOR" )   scale_ = HARMONIC_MINOR ;
-        else if ( name == "MELODIC_MINOR" )    scale_ = MELODIC_MINOR ;
-        else if ( name == "PENTATONIC" )       scale_ = PENTATONIC ;
-        else if ( name == "PENTATONIC_MINOR" ) scale_ = PENTATONIC_MINOR ;
-        else if ( name == "BLUES" )            scale_ = BLUES ;
-        else if ( name == "DORIAN" )           scale_ = DORIAN ;
-        else if ( name == "PHRYGIAN" )         scale_ = PHRYGIAN ;
-        else if ( name == "LYDIAN" )           scale_= LYDIAN ;
-        else if ( name == "MIXOLYDIAN" )       scale_ = MIXOLYDIAN ;
-        else if ( name == "LOCRIAN" )          scale_ = LOCRIAN ;
-        else if ( name == "WHOLE_TONE" )       scale_ = WHOLE_TONE ;
-        else if ( name == "CHROMATIC" )        scale_ = CHROMATIC ;
-        else if ( name == "DIMINISHED" )       scale_ = DIMINISHED ;
-        else if ( name == "AUGMENTED" )        scale_ = AUGMENTED ;
-        else throw std::invalid_argument("Unknown scale: " + std::string(name));
-    }
-
-    // allow switch / comparisons
-    constexpr operator Scale() const { return scale_ ; }
-
-    // prevent bool usage e.g., if(Waveform)
-    explicit operator bool() const = delete ;
-
-    static std::string toString(Scale s){
-        switch(s){
-        case MAJOR:            return "MAJOR" ;
-        case NATURAL_MINOR:    return "NATURAL_MINOR" ;
-        case HARMONIC_MINOR:   return "HARMONIC_MINOR" ;
-        case MELODIC_MINOR:    return "MELODIC_MINOR" ;
-        case PENTATONIC:       return "PENTATONIC" ;
-        case PENTATONIC_MINOR: return "PENTATONIC_MINOR" ;
-        case BLUES:            return "BLUES" ;
-        case DORIAN:           return "DORIAN" ;
-        case PHRYGIAN:         return "PHRYGIAN" ;
-        case LYDIAN:           return "LYDIAN" ;
-        case MIXOLYDIAN:       return "MIXOLYDIAN" ;
-        case LOCRIAN:          return "LOCRIAN" ;
-        case WHOLE_TONE:       return "WHOLE_TONE";
-        case CHROMATIC:        return "CHROMATIC";
-        case DIMINISHED:       return "DIMINISHED";
-        case AUGMENTED:        return "AUGMENTED";
-        default:               return "" ;
-        };
-    }
+    constexpr operator Value() const { return value_ ; }
 
     std::string toString() const {
-        return ScaleType::toString(scale_);
+        return std::string(names_[value_]);
     }
 
-    static std::array<std::string_view, N> getScaleTypes(){
-        return { "MAJOR","NATURAL_MINOR","HARMONIC_MINOR","MELODIC_MINOR","PENTATONIC",
-            "PENTATONIC_MINOR","BLUES", "DORIAN", "PHRYGIAN", "LYDIAN", "MIXOLYDIAN", "LOCRIAN",
-            "WHOLE_TONE","CHROMATIC","DIMINISHED","AUGMENTED" };
+    static ScaleType fromString(std::string_view str) {
+        for (int i = 0; i < N_SCALE_TYPES; ++i){
+            if ( names_[i] == str){
+                return static_cast<Value>(i);
+            }
+        }
+        throw std::invalid_argument("unknown Scale Type: " + std::string(str));
     }
 
-    const std::vector<uint8_t>& getIntervals() const {
-        static const std::unordered_map<Scale, std::vector<uint8_t>> m = {
-            {MAJOR, {0,2,4,5,7,9,11}},
-            {NATURAL_MINOR, {0,2,3,5,7,8,10}},
-            {HARMONIC_MINOR, {0,2,3,5,7,8,11}},
-            {MELODIC_MINOR, {0,2,3,5,7,8,9,10,11}},
-            {PENTATONIC, {0,2,4,7,9}},
-            {PENTATONIC_MINOR, {0,3,5,7,10}},
-            {BLUES, {0,3,5,6,7,10}},
-            {DORIAN, {0,2,3,5,7,9,10}},
-            {PHRYGIAN, {0,1,3,5,7,8,10}},
-            {LYDIAN, {{0,2,4,6,7,9,11}}},
-            {MIXOLYDIAN, {0,2,4,5,7,9,10}},
-            {LOCRIAN, {0,2,4,5,6,8,10}},
-            {WHOLE_TONE, {0,2,4,6,8,10}},
-            {CHROMATIC, {0,1,2,3,4,5,6,7,8,9,10,11}},
-            {DIMINISHED, {0,2,3,5,6,8,9,11}},
-            {AUGMENTED, {0,3,4,7,8,11}}
-        };
-
-        return m.at(scale_);
+    uint8_t to_uint8() const {
+        return value_ ;
     }
 
-    static Scale from_uint8(uint8_t val){
-        return static_cast<Scale>(static_cast<std::underlying_type_t<Scale>>(val));
+    static ScaleType from_uint8(uint8_t val){
+        return ScaleType(static_cast<Value>(val));
     }
 
-    uint8_t to_uint8(){
-        return static_cast<uint8_t>(scale_) ;
+    static const std::array<std::string_view, N_SCALE_TYPES>& getNames(){
+        return names_ ;
+    }
+
+    static constexpr int count = N_SCALE_TYPES ;
+    static constexpr size_t MAX_INTERVALS = 12 ; 
+
+    std::span<const uint8_t> intervals() const {
+        return std::span<const uint8_t>(intervals_[value_].data(), counts_[value_]);
     }
 
 private:
-    Scale scale_ ;
+    Value value_ ;
+
+    static constexpr std::array<std::string_view, N_SCALE_TYPES> names_{
+        "Major",
+        "Natural Minor",
+        "Harmonic Minor",
+        "Melodic Minor",
+        "Pentatonic",
+        "Pentatonic Minor",
+        "Blues",
+        "Dorian",
+        "Phrygian",
+        "Lydian",
+        "Mixolydian",
+        "Locrian",
+        "Whole Tone",
+        "Chromatic",
+        "Diminished",
+        "Augmented"
+    };
+
+    static constexpr std::array<std::array<uint8_t, MAX_INTERVALS>, N_SCALE_TYPES> intervals_{{
+        {0,2,4,5,7,9,11}, // MAJOR
+        {0,2,3,5,7,8,10}, // NATURAL_MINOR
+        {0,2,3,5,7,8,11}, // HARMONIC_MINOR
+        {0,2,3,5,7,8,9,10,11}, // MELODIC_MINOR
+        {0,2,4,7,9}, // PENTATONIC
+        {0,3,5,7,10}, // PENTATONIC_MINOR
+        {0,3,5,6,7,10}, // BLUES
+        {0,2,3,5,7,9,10}, // DORIAN
+        {0,1,3,5,7,8,10}, // PHRYGIAN
+        {0,2,4,6,7,9,11}, // LYDIAN
+        {0,2,4,5,7,9,10}, // MIXOLYDIAN
+        {0,2,4,5,6,8,10}, // LOCRIAN
+        {0,2,4,6,8,10}, // WHOLE_TONE
+        {0,1,2,3,4,5,6,7,8,9,10,11}, // CHROMATIC
+        {0,2,3,5,6,8,9,11}, // DIMINISHED
+        {0,3,4,7,8,11}, // AUGMENTED
+    }};
+
+    static constexpr std::array<size_t, N_SCALE_TYPES> counts_{
+        7, // MAJOR
+        7, // NATURAL_MINOR
+        7, // HARMONIC_MINOR
+        9, // MELODIC_MINOR
+        5, // PENTATONIC
+        5, // PENTATONIC_MINOR
+        6, // BLUES
+        7, // DORIAN
+        7, // PHRYGIAN
+        7, // LYDIAN
+        7, // MIXOLYDIAN
+        7, // LOCRIAN
+        6, // WHOLE_TONE
+        12, // CHROMATIC
+        8, // DIMINISHED
+        6 // AUGMENTED
+    };
 
 };
 
-inline void to_json(json& j, const ScaleType& s){
-        j = s.toString();
-    }
+inline void from_json(const json& j, ScaleType& t){
+    t = ScaleType::fromString(j.get_ref<const std::string&>());
+}
 
-inline void from_json(const json& j, ScaleType& s){
-    s = ScaleType(j.get<std::string>());
+inline void to_json(json& j, const ScaleType& t){
+    j = t.toString();
 }
 
 #endif // __SCALE_TYPE_HPP_

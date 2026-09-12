@@ -219,7 +219,8 @@ void PolyOscillator::onRemoveParameterDepthModulation(ParameterType p){
 }
 
 void PolyOscillator::updateGain(){
-    auto s = std::string(Waveform::getWaveforms()[parameters_->getParameter<ParameterType::WAVEFORM>()->getValue()]) ;
+    Waveform wf = Waveform::from_uint8(parameters_->getParameter<ParameterType::WAVEFORM>()->getValue());
+    auto s = std::string(Waveform::getNames()[wf]) ;
     float gain = Config::get<float>("oscillator." + s + ".auto_gain").value() / 
         std::sqrt(Config::get<int>("oscillator.expected_voices").value()) ;
     SPDLOG_DEBUG("setting gain to {}", gain);

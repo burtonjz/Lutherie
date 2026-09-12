@@ -22,50 +22,13 @@
 #include <QWidget>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
-#include <optional>
 #include <nlohmann/json.hpp>
 
-#include "types/SocketType.hpp"
+#include "util/SocketSpec.hpp"
 
 using json = nlohmann::json ;
 
 class GraphNode ; // forward declaration
-
-struct SocketSpec {
-    SocketType type ;
-    QString name = "" ;
-    std::optional<int> componentId = std::nullopt ;
-    std::optional<size_t> idx = std::nullopt ;
-
-    bool operator==(const SocketSpec& other){
-        return other.type == type &&
-               other.componentId == componentId &&
-               other.idx == idx
-            ;
-    }
-};
-
-inline void to_json(json& j, const SocketSpec& spec){
-    j["type"] = spec.type ;
-    j["name"] = spec.name.toStdString();
-    if ( spec.componentId.has_value() ){
-        j["componentId"] = spec.componentId.value();
-    }
-    if ( spec.idx.has_value() ){
-        j["index"] = spec.idx.value();
-    }
-}
-
-inline void from_json(const json& j, SocketSpec& spec){
-    spec.type = static_cast<SocketType>(j.at("type"));
-    spec.name = QString::fromStdString(j.at("name")) ;
-    if ( j.contains("componentId") ){
-        spec.componentId = j.at("componentId") ;
-    }
-    if ( j.contains("index") ){
-        spec.idx = j.at("index");
-    }
-}
 
 class SocketWidget : public QGraphicsObject {
     Q_OBJECT
@@ -95,15 +58,12 @@ public:
 
     bool isInbound() const ;
     bool isOutbound() const ;
-
-    bool hasConnection() const ;
-    void setConnnection(bool newConnection);
-    void syncConnection(SocketWidget* other);
     
     QPointF getConnectionPoint() const ;
 
-    bool matches(SocketSpec spec) const ;
-
+    json serialize() const ;
+    void deserialize(const json& msg);
 };
+
 
 #endif // __GUI_SOCKET_WIDGET_HPP_

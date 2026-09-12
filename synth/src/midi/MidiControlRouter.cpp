@@ -65,7 +65,7 @@ bool MidiControlRouter::registerRoute(uint8_t ctrl, BaseComponent* component, Pa
     if ( existing != INVALID_ROUTE ){
         SPDLOG_ERROR(
             "Component with id {} already is routed to ctrl {}",
-            component->getId(), existing
+            component->getId().value(), existing
         );
         return false ;
     }
@@ -204,7 +204,7 @@ void MidiControlRouter::handleContinuousUpdate(uint8_t ctrl, uint8_t value){
             continue ;
         }
         d.component->getParameters()->setValuePercentDispatch(d.param, percent);
-        notifyClients(d.component->getId(), d.param);
+        notifyClients(d.component->getId().value(), d.param);
     }
 }
 
@@ -218,7 +218,7 @@ void MidiControlRouter::handleDiscreteUpdate(uint8_t ctrl, uint8_t value){
             continue ;
         }
         d.component->getParameters()->setValueTickWrapDispatch(d.param);
-        notifyClients(d.component->getId(), d.param);
+        notifyClients(d.component->getId().value(), d.param);
     }
 }
 

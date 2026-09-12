@@ -133,7 +133,7 @@ void AudioBufferComponent::notifyDownstream(size_t channel){
         }
     }
     DataApiHeader header = {
-        .componentId = static_cast<uint32_t>(getId()),
+        .componentId = static_cast<uint32_t>(getId().value()),
         .channel = static_cast<uint32_t>(channel)
     };
     const auto& buf = getBuffer(channel);

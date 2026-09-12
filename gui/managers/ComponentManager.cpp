@@ -547,30 +547,23 @@ void ComponentManager::onRequestBufferData(int componentId, size_t channel){
 
 void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
     // handle modulation connection tracking
-    if ( 
-        req.inboundSocket == SocketType::ModulationInbound && 
-        req.inboundID.has_value() &&
-        req.inboundParameter.has_value()
-    ){
-        auto modParams = getModulationParameters(req.inboundID.value());
+    if ( req.inbound().socket() == SocketType::ModulationInbound ){
+        auto modParams = getModulationParameters(
+            req.inbound().componentId().value());
         if ( !modParams ) return ;
-        modParams->setConnectionStatus(req.inboundParameter.value(), true);
+        modParams->setConnectionStatus(req.inbound().modulatedParam().value(), true);
     }
 
     // handle upstream buffer tracking
-    if (
-        req.inboundSocket == SocketType::BufferInbound &&
-        req.inboundID.has_value() &&
-        req.inboundIdx.has_value()
-    ){
-        ComponentModel* inbound = getModel(req.inboundID.value());
-        ComponentModel* outbound = getModel(req.outboundID.value());
+    if ( req.inbound().socket() == SocketType::BufferInbound ){
+        ComponentModel* inbound = getModel(req.inbound().componentId().value());
+        ComponentModel* outbound = getModel(req.outbound().componentId().value());
 
         if ( !outbound ){
             SPDLOG_WARN(
                 "buffer connection created, but the outbound component (ID={})"
                 " does not exist.",
-                req.outboundID.value()
+                req.outbound().componentId().value()
             );
             return ;
         }
@@ -578,13 +571,13 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
             SPDLOG_WARN(
                 "buffer connection created, but the inbound component (ID={})"
                 " does not exist.",
-                req.inboundID.value()
+                req.inbound().componentId().value()
             );
             return ;
         }
         inbound->setUpstreamModel(
-            req.inboundIdx.value(),
-            req.outboundIdx.value(),
+            req.inbound().index().value(),
+            req.outbound().index().value(),
             outbound
         );
     }
@@ -592,26 +585,19 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
 
 void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
     // handle modulation connection tracking
-    if ( 
-        req.inboundSocket == SocketType::ModulationInbound && 
-        req.inboundID.has_value() &&
-        req.inboundParameter.has_value()
-    ){
-        auto modParams = getModulationParameters(req.inboundID.value());
+    if ( req.inbound().socket() == SocketType::ModulationInbound ){
+        auto modParams = getModulationParameters(
+            req.inbound().componentId().value());
         if ( !modParams ) return ;
-        modParams->setConnectionStatus(req.inboundParameter.value(), false);
+        modParams->setConnectionStatus(req.inbound().modulatedParam().value(), false);
     }
 
-    // handle buffer tracking
-    if (
-        req.inboundSocket == SocketType::BufferInbound &&
-        req.inboundID.has_value() &&
-        req.inboundIdx.has_value()
-    ){
-        ComponentModel* inbound = getModel(req.inboundID.value());
+    // handle upstream buffer tracking
+    if ( req.inbound().socket() == SocketType::BufferInbound ){
+        ComponentModel* inbound = getModel(req.inbound().componentId().value());
 
         if ( !inbound ) return ;
-
-        inbound->clearUpstreamModel(req.inboundIdx.value());
+        
+        inbound->clearUpstreamModel(req.inbound().index().value());
     }
 }
