@@ -100,7 +100,7 @@ void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::opti
     } 
 
     groups_[groupId] = model ;
-    emit groupCreated(groupId, model->getComponents(), deserialize);
+    emit groupCreated(model, deserialize);
 }
 
 void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentIds){
@@ -114,9 +114,6 @@ void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentI
             model->addComponent(id);
         }
     }
-
-    emit groupUpdated(groupId, model->getComponents());
-
 }
 
 void GroupManager::onRequestGroupRemove(int groupId){
@@ -124,7 +121,7 @@ void GroupManager::onRequestGroupRemove(int groupId){
         SPDLOG_WARN("group removal requested for invalid group id: {}", groupId);
         return ;
     }
-    emit groupRemoved(groupId, groups_.at(groupId)->getComponents());
+    emit groupRemoved(groups_.at(groupId));
 
     groups_.at(groupId)->deleteLater();
     groups_.erase(groupId);

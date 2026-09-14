@@ -276,14 +276,10 @@ void Synth::makeExternalConnections(){
         this, &Synth::onComponentRenamed
     );
     
-    // group manager
+    // group management
     connect(
         GroupManager::instance(), &GroupManager::groupCreated,
         this, &Synth::onComponentGroupCreated
-    );
-    connect(
-        GroupManager::instance(), &GroupManager::groupUpdated,
-        this, &Synth::onComponentGroupUpdated
     );
     connect(
         GroupManager::instance(), &GroupManager::groupRemoved,
@@ -807,11 +803,20 @@ void Synth::onShowGroupModulation(int groupId){
     modulationPanel_->maximizeSection(modParams);
 }
 
-void Synth::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
-    auto m = GroupManager::instance()->getModel(groupId);
-    if ( !m ) return ;
+void Synth::onComponentGroupCreated(GroupModel* model){
+    if ( !model ) return ;
 
-    QString name = m->getName();
+    // subscribe to updates
+    connect( 
+        model, &GroupModel::componentAdded,
+        this, &Synth::onComponentGroupComponentAdded
+    );
+    connect( 
+        model, &GroupModel::componentRemoved,
+        this, &Synth::onComponentGroupComponentRemoved
+    );
+    
+    QString name = model->getName();
 
     // create group container widgets
     QWidget* paramContent = new QWidget();
@@ -826,11 +831,11 @@ void Synth::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
 
     // loop through parameters and move content to group container
     bool paramAdded = false, modAdded = false ;
-    for ( auto componentId : componentIds ){
+    for ( auto componentId : model->getComponents() ){
         auto params = ComponentManager::instance()->getParameters(componentId);
         if ( params && !params->hasDetailedEditor() ){
             if ( !paramAdded ){
-                GroupManager::instance()->setParameters(groupId, paramContent);
+                GroupManager::instance()->setParameters(model->getId(), paramContent);
                 parameterPanel_->addContent(name, paramContent);
                 connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
                     parameterPanel_->removeContent(paramContent);
@@ -843,7 +848,7 @@ void Synth::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
         auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
         if ( modParams ){
             if ( !modAdded ){
-                GroupManager::instance()->setModulationParameters(groupId, modContent);
+                GroupManager::instance()->setModulationParameters(model->getId(), modContent);
                 modulationPanel_->addContent(name, modContent);
                 connect(modContent, &QObject::destroyed, this, [this, modContent](){
                     modulationPanel_->removeContent(modContent);
@@ -863,83 +868,86 @@ void Synth::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
     }
 }
 
-void Synth::onComponentGroupRemoved(int groupId, std::vector<int> componentIds){
-    auto m = GroupManager::instance()->getModel(groupId);
-    if ( !m ) return ;
+void Synth::onComponentGroupRemoved(GroupModel* model){
+    if ( !model ) return ;
 
     // loop through parameters and promote all content to top-level
-    for ( auto componentId : componentIds ){
+    for ( auto componentId : model->getComponents() ){
         auto params = ComponentManager::instance()->getParameters(componentId);
         auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
         parameterPanel_->promoteContent(params);
         modulationPanel_->promoteContent(modParams);
     }
 
-    GroupManager::instance()->removeContent(groupId);
+    GroupManager::instance()->removeContent(model->getId());
 }
 
-void Synth::onComponentGroupUpdated(int groupId, std::vector<int> componentIds){
-    auto m = GroupManager::instance()->getModel(groupId);
-    if ( !m ) return ;
+void Synth::onComponentGroupComponentAdded(GroupModel* model, int newId){
+    if ( !model ) return ;
 
-    // content widgets might not exist if no group elements had parameters
-    QWidget* paramContent = GroupManager::instance()->getParameters(groupId);
-    bool newParamContent = false ;
-    if ( !paramContent ){
-        newParamContent = true ;
-        paramContent = new QWidget();
-        QVBoxLayout* paramLayout = new QVBoxLayout(paramContent);
-        paramLayout->setContentsMargins(0,0,0,0);
-        paramLayout->setSpacing(1);
-    }
-
-    auto modContent = GroupManager::instance()->getModulationParameters(groupId);
-    bool newModContent = false ;
-    if ( !modContent ){
-        newModContent = true ;
-        modContent = new QWidget();
-        QVBoxLayout* modLayout = new QVBoxLayout(modContent);
-        modLayout->setContentsMargins(0,0,0,0);
-        modLayout->setSpacing(1);
-    }
-
-    // loop through parameters and move content to group container
-    bool paramAdded = false, modAdded = false ;
-    for ( auto componentId : componentIds ){
-        auto params = ComponentManager::instance()->getParameters(componentId);
-        if ( params && ! params->hasDetailedEditor() ){
-            if ( newParamContent && !paramAdded ){
-                GroupManager::instance()->setParameters(groupId, paramContent);
-                parameterPanel_->addContent(m->getName(), paramContent);
-                connect(paramContent, &QObject::destroyed, this, [this, paramContent](){
-                    parameterPanel_->removeContent(paramContent);
-                });
-                paramAdded = true ;
-            }
-            parameterPanel_->moveContent(params, paramContent);
+    // Parameter Panel, move parameter content to the group container
+    auto params = ComponentManager::instance()
+        ->getParameters(newId);
+    if ( params && !params->hasDetailedEditor() ){
+        // get existing parameter content. It might not exist if previous group def didn't have one
+        QWidget* container = GroupManager::instance()->getParameters(model->getId());
+        if ( !container ){
+            container = new QWidget();
+            QVBoxLayout* paramLayout = new QVBoxLayout(container);
+            paramLayout->setContentsMargins(0,0,0,0);
+            paramLayout->setSpacing(1);
+            GroupManager::instance()->setParameters(model->getId(), params);
+            parameterPanel_->addContent(model->getName(), container);
+            connect(
+                container, &QObject::destroyed, this, 
+                    [this, container](){
+                    parameterPanel_->removeContent(container);
+                }
+            );
         }
+        parameterPanel_->moveContent(params, container);
+    }
 
-        auto modParams = ComponentManager::instance()->getModulationParameters(componentId);
-        if ( modParams ){
-            if ( newModContent && !modAdded ){
-                GroupManager::instance()->setModulationParameters(groupId, modContent);
-                modulationPanel_->addContent(m->getName(), modContent);
-                connect(modContent, &QObject::destroyed, this, [this, modContent](){
-                    modulationPanel_->removeContent(modContent);
-                });
-                modAdded = true ;
-            }
-            modulationPanel_->moveContent(modParams, modContent);
+    // Modulation Panel, move modulation content to the group container
+    auto modParams = ComponentManager::instance()
+        ->getModulationParameters(newId);
+    if ( modParams ){
+        // get existing modulator content. It might not exist if previous group had nothing modulatable
+        QWidget* container = GroupManager::instance()->getModulationParameters(model->getId());
+        if ( !container ){
+            container = new QWidget();
+            QVBoxLayout* paramLayout = new QVBoxLayout(container);
+            paramLayout->setContentsMargins(0,0,0,0);
+            paramLayout->setSpacing(1);
+            GroupManager::instance()->setModulationParameters(model->getId(), modParams);
+            modulationPanel_->addContent(model->getName(), container);
+            connect(
+                container, &QObject::destroyed, this, 
+                    [this, container](){
+                    modulationPanel_->removeContent(container);
+                }
+            );
         }
+        modulationPanel_->moveContent(modParams, container);
+    }
+}
+
+void Synth::onComponentGroupComponentRemoved(GroupModel* model, int removedId){
+    if ( !model ) return ;
+
+    // Parameter Panel, move parameter content out from the group container
+    auto params = ComponentManager::instance()
+        ->getParameters(removedId);   
+    if ( parameterPanel_->hasContent(params) ){
+        parameterPanel_->promoteContent(params);
     }
 
-    if ( newParamContent && !paramAdded ){
-        paramContent->deleteLater();
+    // Modulation Panel, move modulation content to the group container
+    auto modParams = ComponentManager::instance()
+        ->getModulationParameters(removedId);
+    if ( modulationPanel_->hasContent(modParams) ){
+        modulationPanel_->promoteContent(modParams);
     }
-
-    if ( newModContent && !modAdded ){
-        modContent->deleteLater();
-    } 
 }
 
 void Synth::onComponentRenamed(int componentId){
@@ -987,26 +995,25 @@ void Synth::onComponentRenamed(int componentId){
     }
 }
 
-void Synth::onGroupRenamed(int groupId){
-    auto m = GroupManager::instance()->getModel(groupId);
-    if ( !m ) return ;
+void Synth::onGroupRenamed(GroupModel* model){
+    if ( !model ) return ;
 
     // graph node renames
-    auto n = graph_->getGroupNode(groupId);
+    auto n = graph_->getGroupNode(model->getId());
     if ( n ){
-        n->onRename(m->getName());
+        n->onRename(model->getName());
     }
 
     // tell panels to update headers
-    auto paramContent = GroupManager::instance()->getParameters(groupId);
+    auto paramContent = GroupManager::instance()->getParameters(model->getId());
     if ( paramContent ){
         auto paramSection = parameterPanel_->getSection(paramContent);
-        paramSection->setTitle(m->getName());
+        paramSection->setTitle(model->getName());
     }
     
-    auto modContent = GroupManager::instance()->getModulationParameters(groupId);
+    auto modContent = GroupManager::instance()->getModulationParameters(model->getId());
     if ( modContent ){
         auto modSection = modulationPanel_->getSection(modContent);
-        modSection->setTitle(m->getName());
+        modSection->setTitle(model->getName());
     }
 }

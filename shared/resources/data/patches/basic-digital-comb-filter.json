@@ -127,24 +127,24 @@
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -152,12 +152,12 @@
       "inbound": {
         "componentId": 1,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -165,12 +165,12 @@
       "inbound": {
         "componentId": 2,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -178,12 +178,12 @@
       "inbound": {
         "componentId": 3,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 2,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -191,12 +191,12 @@
       "inbound": {
         "componentId": 4,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 1,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -204,12 +204,12 @@
       "inbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -217,12 +217,12 @@
       "inbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 3,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -230,12 +230,12 @@
       "inbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 4,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -243,12 +243,12 @@
       "inbound": {
         "componentId": 6,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -256,12 +256,12 @@
       "inbound": {
         "componentId": 7,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     }
   ],

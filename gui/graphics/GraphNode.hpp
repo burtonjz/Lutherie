@@ -70,11 +70,13 @@ public:
     QGraphicsTextItem* getNameItem() const { return titleText_ ; }
 
     SocketWidget* insertSocket(SocketSpec spec);
-    void insertSockets(const std::vector<SocketSpec> specs );
+    void insertSockets(const std::vector<SocketSpec>& specs );
+
+    void removeSocket(SocketSpec spec);
+    void removeSockets(const std::vector<SocketSpec>& specs);
 
     void hide();
     void show();
-    void addToScene(QGraphicsScene* scene);
 
     std::vector<SocketWidget*> getHiddenSockets() const ;
     void unhideSocket(SocketWidget* socket);
@@ -102,6 +104,9 @@ public slots:
 signals:
     void positionChanged();
     void needsZUpdate();
+
+    void socketAdded(SocketWidget* socket);
+    void removingSocket(SocketWidget* socket);
     void socketHidden(SocketWidget* socket);
     void socketUnhidden(SocketWidget* socket);
     

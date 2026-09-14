@@ -35,28 +35,21 @@ private:
 public:
     explicit GroupNode(GroupModel* model, QGraphicsItem* parent = nullptr);
 
-    void add(ComponentNode* node);
-    // void remove(ComponentNode* node);
+    void addComponent(ComponentNode* node);
+    void removeComponent(ComponentNode* node);
     void clear();
 
     bool includes(ComponentNode* node) const ;
     bool includes(int componentId) const ;
     
-    size_t getNumComponents() const ;
-
-    int getId() const ; 
     GroupModel* getModel() const ;
 
     json serialize() const override ;
     virtual void deserialize(const json& node) override ;
 
 private:
-    void addSockets(ComponentNode* node);
-
-signals:
-    // signal group events to connection renderer
-    void SocketGrouped(SocketSpec spec);
-    void SocketUngrouped(SocketSpec spec);
+    void addComponentSockets(ComponentNode* node);
+    void removeComponentSockets(ComponentNode* node);
 
 };
 

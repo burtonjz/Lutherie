@@ -97,10 +97,6 @@ GraphPanel::GraphPanel(QWidget* parent):
         this, &GraphPanel::requestGroupUpdate,
         GroupManager::instance(), &GroupManager::onRequestGroupUpdate
     );
-    connect(
-        GroupManager::instance(), &GroupManager::groupUpdated,
-        this, &GraphPanel::onComponentGroupUpdated
-    );
 
     connect(
         this, &GraphPanel::requestGroupRemove,
@@ -154,16 +150,20 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
     );
     connect(
+        node, &GraphNode::socketAdded,
+        connectionRenderer_, &ConnectionRenderer::onSocketAdded
+    );
+    connect(
+        node, &GraphNode::removingSocket,
+        connectionRenderer_, &ConnectionRenderer::onSocketRemoval
+    );
+    connect(
         node, &GraphNode::socketHidden,
         connectionRenderer_, &ConnectionRenderer::onSocketHidden
     );
     connect(
         node, &GraphNode::socketUnhidden,
         connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
-    );
-    connect(
-        connectionRenderer_, &ConnectionRenderer::canRemoveSocket,
-        node, &GraphNode::removeSocket
     );
 }
 
@@ -172,8 +172,9 @@ void GraphPanel::addAudioOutput(){
     ConnectionEndpoint endpoint = ConnectionEndpoint::create(
         SocketType::SignalInbound, 0
     );    
+    scene_->addItem(audioOut_);
     audioOut_->insertSocket(SocketSpec("Audio In", endpoint));
-    audioOut_->addToScene(scene_);
+    
     audioOut_->moveBy(200, 0);
 
     nodes_.push_back(audioOut_);
@@ -189,10 +190,11 @@ void GraphPanel::addMidiInput(){
     ConnectionEndpoint endpoint = ConnectionEndpoint::create(
         SocketType::MidiOutbound
     );    
+    scene_->addItem(midiIn_);
+
     midiIn_->insertSocket(SocketSpec("MIDI Out", endpoint));  
-    
-    midiIn_->addToScene(scene_);
     midiIn_->moveBy(-200,0);
+
     nodes_.push_back(midiIn_);
     
     setNodeConnections(midiIn_);
@@ -227,7 +229,7 @@ GroupNode* GraphPanel::getGroupNode(int groupId) const {
     for ( auto n : nodes_ ){
         auto gNode = dynamic_cast<GroupNode*>(n);
         if ( gNode ){
-            if ( gNode->getId() == groupId ){
+            if ( gNode->getModel()->getId() == groupId ){
                 return gNode ;
             }
         }
@@ -378,7 +380,7 @@ std::vector<GroupNode*> GraphPanel::getSelectedGroups() const {
 SocketWidget* GraphPanel::findVisibleSocket(const SocketSpec& spec) const {
     for ( auto* n : nodes_ ){
         for ( auto* s : n->getSocketsMatchingSpec(spec) ){
-            if ( isVisible() ) return s ;
+            if ( s->isVisible() ) return s ;
         }
     }
     SPDLOG_WARN("Could not find visible socket with spec {}", static_cast<json>(spec).dump());
@@ -388,7 +390,7 @@ SocketWidget* GraphPanel::findVisibleSocket(const SocketSpec& spec) const {
 SocketWidget* GraphPanel::findVisibleSocket(const ConnectionEndpoint& endpoint) const {
     for ( auto* n : nodes_ ){
         for ( auto* s : n->getSocketsMatchingEndpoint(endpoint) ){
-            if ( isVisible() ) return s ;
+            if ( s->isVisible() ) return s ;
         }
     }
     SPDLOG_WARN("Could not find visible socket with endpoint {}", static_cast<json>(endpoint).dump());
@@ -568,7 +570,7 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
         QAction* openParams = showMenu->addAction("Parameter Controls");
         connect ( openParams, &QAction::triggered, [this,g](){
-            emit requestShowGroupParameters(g->getId());
+            emit requestShowGroupParameters(g->getModel()->getId());
         });
     }
     
@@ -582,7 +584,7 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
         QAction* openMod = showMenu->addAction("Modulation Controls");
         connect ( openMod, &QAction::triggered, [this,g](){
-            emit requestShowGroupModulation(g->getId());
+            emit requestShowGroupModulation(g->getModel()->getId());
         });
     }
 
@@ -897,11 +899,10 @@ void GraphPanel::onComponentAdded(int componentId, [[maybe_unused]] ComponentTyp
     }
     if ( count > 1 ) m->setName(name);
     
-    auto n = new ComponentNode(m);
+    auto n = new ComponentNode(m, scene_);
     nodes_.push_back(n);
 
     setNodeConnections(n);
-    n->addToScene(scene_);
     n->setPos(getNewNodeSpawnPosition(n->boundingRect()));
 }
 
@@ -917,59 +918,75 @@ void GraphPanel::onComponentRemoved(int componentId){
     n->deleteLater();
 }
 
-void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> componentIds, std::optional<json> deserialized){
-    auto* model = GroupManager::instance()->getModel(groupId);
-    model->setName(QString("Group %1").arg(groupId));
+void GraphPanel::onComponentGroupCreated(GroupModel* model, std::optional<json> deserialized){
+    if ( !model ) return ;
 
+    model->setName(QString("Group %1").arg(model->getId()));
+    
+    // subscribe to model updates
+    connect(
+        model, &GroupModel::componentAdded,
+        this, &GraphPanel::onComponentGroupComponentAdded
+    );
+    connect(
+        model, &GroupModel::componentRemoved,
+        this, &GraphPanel::onComponentGroupComponentRemoved
+    );
+
+    // create node
     auto gNode =  new GroupNode(model);
+    scene_->addItem(gNode);
     nodes_.push_back(gNode);
-    gNode->addToScene(scene_);
 
-    // connections 
     setNodeConnections(gNode);
 
-    for ( const auto id : componentIds ){
-        gNode->add(getComponentNode(id));
+    for ( const auto id : model->getComponents() ){
+        gNode->addComponent(getComponentNode(id));
     }
-
-    connectionRenderer_->onComponentGroup(componentIds);
 
     if ( deserialized.has_value() ){
         gNode->deserialize(deserialized.value());
     }
 }
 
-void GraphPanel::onComponentGroupRemoved(int groupId, std::vector<int> componentIds){
-    auto gNode = getGroupNode(groupId);
+void GraphPanel::onComponentGroupRemoved(GroupModel* model){
+    if ( !model ) return ;
+    auto gNode = getGroupNode(model->getId());
 
     if ( !gNode ){
-        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", groupId);
+        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", model->getId());
         return ;
     }
 
     nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), gNode), nodes_.end());
+    gNode->clear();
     scene_->removeItem(gNode);
     gNode->deleteLater();
-
-    connectionRenderer_->onComponentGroup(componentIds);
 }
 
-void GraphPanel::onComponentGroupUpdated(int groupId, std::vector<int> componentIds){
-    auto gNode = getGroupNode(groupId);
+void GraphPanel::onComponentGroupComponentAdded(GroupModel* model, int newId){
+    if ( !model ) return ;
 
+    auto gNode = getGroupNode(model->getId());
     if ( !gNode ){
-        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", groupId);
+        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", model->getId());
         return ;
     }
 
-    gNode->removeSockets();
-    for ( const auto id : componentIds ){
-        gNode->add(getComponentNode(id));
-    }
-
-    connectionRenderer_->onComponentGroup(componentIds);
+    gNode->addComponent(getComponentNode(newId));
 }
 
+void GraphPanel::onComponentGroupComponentRemoved(GroupModel* model, int removedId){
+    if ( !model ) return ;
+
+    auto gNode = getGroupNode(model->getId());
+    if ( !gNode ){
+        SPDLOG_WARN("Node with groupId {} not found. Cannot delete.", model->getId());
+        return ;
+    }
+
+    gNode->removeComponent(getComponentNode(removedId));
+}
 
 void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     if ( auto c = dynamic_cast<ComponentNode*>(widget) ){
@@ -985,7 +1002,7 @@ void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     }
 
     if ( auto g = dynamic_cast<GroupNode*>(widget) ){
-        emit requestShowGroupParameters(g->getId());
+        emit requestShowGroupParameters(g->getModel()->getId());
         return ;
     }
 }
@@ -1013,7 +1030,7 @@ void GraphPanel::handleGroupEvent(){
     std::vector<int> componentIds ;
 
     for ( const auto& g : getSelectedGroups() ){
-        groupIds.push_back(g->getId());
+        groupIds.push_back(g->getModel()->getId());
     }
 
     // sort components by name for initial group
@@ -1041,7 +1058,7 @@ void GraphPanel::handleGroupEvent(){
 
 void GraphPanel::handleUngroupEvent(){
     for ( const auto& g : getSelectedGroups() ){
-        emit requestGroupRemove(g->getId());
+        emit requestGroupRemove(g->getModel()->getId());
     }
 }
 
@@ -1164,7 +1181,12 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
             if ( !s ) continue ;
             const auto& spec = s->getSpec();
             if ( spec.endpoints()[0].index().value() >= numChannels ){
-                connectionRenderer_->requestRemoveSocket(s);
+                auto connections = ConnectionManager::instance()->getConnectionsMatchingSpec(spec);
+                for ( auto& c : connections ){
+                    c.setRemove(true);
+                    ConnectionManager::instance()->requestConnectionEvent(c);
+                }
+                s->getParent()->removeSocket(s);
             }
         }
         return ;
@@ -1183,7 +1205,6 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
     }
     
     audioOut_->insertSockets(specs);
-    audioOut_->addToScene(scene_);
 }
 
 PostNote* GraphPanel::createPost(){

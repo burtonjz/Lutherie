@@ -33,8 +33,9 @@ using EndpointGroup = std::vector<ConnectionEndpoint>;
 
 class SocketSpec {
 private:
+    using DataVariant = std::variant<ConnectionEndpoint,EndpointGroup>;
     QString name_ = "" ;
-    std::variant<ConnectionEndpoint,EndpointGroup> data_ ;
+    DataVariant data_ ;
 
 public:
     enum RemoveResult { Removed, RequiresDispersal, NotFound };
@@ -60,6 +61,10 @@ public:
 
     void add(const ConnectionEndpoint& endpoint);
     RemoveResult remove(const ConnectionEndpoint& endpoint);
+
+private:
+    DataVariant initializeData(EndpointGroup points) const ;
+
 };
 
 // JSON (de)serialization

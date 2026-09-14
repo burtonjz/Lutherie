@@ -128,24 +128,45 @@ std::vector<SocketWidget*> GraphNode::getVisibleSocketsMatchingEndpoint(const Co
 
 SocketWidget* GraphNode::insertSocket(SocketSpec spec){
     SocketWidget* socket = new SocketWidget(spec, this);
+    if ( scene() ) scene()->addItem(socket);
     sockets_.push_back(socket);
 
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());
 
+    emit socketAdded(socket);
     return socket ;
 }
 
-void GraphNode::insertSockets(std::vector<SocketSpec> specs){
+void GraphNode::insertSockets(const std::vector<SocketSpec>& specs){
+    std::vector<SocketWidget*> newSockets ;
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);
+        if ( scene() ) scene()->addItem(socket);
+        newSockets.push_back(socket);
         sockets_.push_back(socket);
     }
 
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());
+
+    for ( auto* s : newSockets ) emit socketAdded(s);
+}
+
+void GraphNode::removeSocket(SocketSpec spec){
+    auto it = std::find_if(sockets_.begin(), sockets_.end(), 
+    [spec](SocketWidget* sock){
+        return sock->getSpec() == spec ;
+    });
+    removeSocket(*it);
+}
+
+void GraphNode::removeSockets(const std::vector<SocketSpec>& specs){
+    for ( const auto& spec : specs ){
+        removeSocket(spec);
+    }
 }
 
 void GraphNode::hide(){
@@ -159,18 +180,6 @@ void GraphNode::show(){
     QGraphicsItem::show();
     for ( auto& s : getSockets() ){
         s->show();
-    }
-}
-
-void GraphNode::addToScene(QGraphicsScene* scene){
-    if ( !scene->items().contains(this) ){
-        scene->addItem(this);
-    }
-    
-    for ( auto* socket : sockets_ ){
-        if ( !scene->items().contains(socket) ){
-            scene->addItem(socket);
-        }
     }
 }
 
@@ -340,19 +349,19 @@ void GraphNode::positionSockets(QPointF newPos){
         }
     }
 
+    emit positionChanged();
+
     if ( height_ == height ) return ;
 
-    if ( height_ > height ){
-        prepareGeometryChange();    
-    }
-
+    prepareGeometryChange();  
     height_ = height ;
-    emit positionChanged();
 }
 
 void GraphNode::removeSockets(){
     for ( auto* socket : sockets_ ){
-        scene()->removeItem(socket);
+        if ( scene() ) scene()->removeItem(socket);
+        socket->setVisible(false);
+        emit removingSocket(socket);
         socket->deleteLater();
     }
     sockets_.clear();
@@ -430,11 +439,12 @@ json GraphNode::serialize() const {
     msg["ypos"] = pos().y() ;
     msg["visible"] = isVisible();
     
-    json sockets ;
+    json sockets = json::array() ;
     for ( const auto& socket : sockets_ ){
         sockets.push_back(socket->serialize());
     }
-       
+    if ( !sockets.empty() ) msg["sockets"] = sockets ;
+    
     return msg ;
 }
 
@@ -465,22 +475,14 @@ void GraphNode::deserialize(const json& node){
 
             const auto& sockets = getSocketsMatchingSpec(*spec);
             if ( sockets.size() == 0 ){
-                if ( spec->isGroup() ){
-                    SPDLOG_DEBUG("Creating new grouped socket.");
-                    SocketWidget* sock = insertSocket(spec.value());
-                    sock->deserialize(s);
-                    continue ;
-                }
-
-                SPDLOG_WARN(
-                    "A single SocketSpec is not already present in the component. This shouldn't happen."
-                );
+                SocketWidget* sock = insertSocket(spec.value());
+                sock->deserialize(s);
                 continue ;
-            } else {
-                SPDLOG_DEBUG("deserializing {} sockets.", sockets.size());
-                for ( auto* socket : sockets ){
-                    socket->deserialize(s);
-                }
+            }
+            
+            SPDLOG_DEBUG("deserializing {} sockets.", sockets.size());
+            for ( auto* socket : sockets ){
+                socket->deserialize(s);
             }
         }
     }
@@ -501,6 +503,8 @@ void GraphNode::removeSocket(SocketWidget* socket){
     );
 
     scene()->removeItem(socket);
+    socket->setVisible(false);
+    emit removingSocket(socket);
     delete socket ;
 
     layoutSockets();

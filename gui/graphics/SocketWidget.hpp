@@ -37,7 +37,6 @@ private:
     SocketSpec spec_ ;
     GraphNode* parent_ ;
     bool isHovered_ = false ;
-    int nConnections_ = false ;
     QColor getSocketColor(bool isHovered) const ;
 
 public:

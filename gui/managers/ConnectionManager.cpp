@@ -42,7 +42,9 @@ bool ConnectionManager::hasExternalConnections(const SocketSpec& spec) const {
     auto ids = spec.componentIds();
 
     auto isExternal = [&](const ConnectionEndpoint& endpoint){
-        if ( !endpoint.componentId().has_value() ) return true ;
+        // peripheral always external
+        if ( !endpoint.componentId().has_value() ) return true ; 
+        // otherwise only if spec doesn't include id
         return !ids.contains(endpoint.componentId().value());
     };
 

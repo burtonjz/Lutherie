@@ -35,7 +35,7 @@ private:
     ComponentModel* model_ ;
 
 public:
-    explicit ComponentNode(ComponentModel* model, QGraphicsItem* parent = nullptr);
+    explicit ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGraphicsItem* parent = nullptr);
     ~ComponentNode() = default ;
 
     ComponentModel* getModel() const ;

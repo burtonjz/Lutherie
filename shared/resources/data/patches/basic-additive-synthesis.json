@@ -413,11 +413,11 @@
       "inbound": {
         "componentId": 7,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -425,11 +425,11 @@
       "inbound": {
         "componentId": 8,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -437,11 +437,11 @@
       "inbound": {
         "componentId": 9,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -449,11 +449,11 @@
       "inbound": {
         "componentId": 10,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -461,11 +461,11 @@
       "inbound": {
         "componentId": 11,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -473,11 +473,11 @@
       "inbound": {
         "componentId": 12,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -485,11 +485,11 @@
       "inbound": {
         "componentId": 13,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -497,35 +497,35 @@
       "inbound": {
         "componentId": 14,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "Modulation Outbound"
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -533,12 +533,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 3,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -546,12 +546,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 4,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -559,12 +559,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -572,12 +572,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 6,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -585,12 +585,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 16,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -598,12 +598,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 17,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -611,12 +611,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 18,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -624,12 +624,12 @@
       "inbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 19,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -637,12 +637,12 @@
       "inbound": {
         "componentId": 1,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -650,12 +650,12 @@
       "inbound": {
         "componentId": 2,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 0,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -663,12 +663,12 @@
       "inbound": {
         "componentId": 3,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 14,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -676,12 +676,12 @@
       "inbound": {
         "componentId": 4,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 13,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -689,12 +689,12 @@
       "inbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 12,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -702,12 +702,12 @@
       "inbound": {
         "componentId": 6,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 11,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -715,12 +715,12 @@
       "inbound": {
         "componentId": 16,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 7,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -728,12 +728,12 @@
       "inbound": {
         "componentId": 17,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 8,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -741,12 +741,12 @@
       "inbound": {
         "componentId": 18,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 9,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
@@ -754,110 +754,110 @@
       "inbound": {
         "componentId": 19,
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 10,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 7,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 8,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 9,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 10,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 11,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 12,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 13,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 14,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
         "componentId": 15,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 15,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     }
   ],

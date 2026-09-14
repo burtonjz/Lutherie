@@ -22,29 +22,31 @@
 GroupNode::GroupNode(GroupModel* model, QGraphicsItem* parent):
     GraphNode(model->getName(), parent),
     model_(model)
-{
+{}
+
+void GroupNode::clear(){
+    for ( auto* node : children_ ){
+        if ( !node ) continue ;
+        node->show();
+    }
+    removeSockets();
 }
 
-void GroupNode::add(ComponentNode* node){
-    if ( !node || includes(node) ){
-        SPDLOG_WARN("ignoring GroupNode Component add with null pointer");
-        return ;
-    } 
+void GroupNode::addComponent(ComponentNode* node){
+    if ( !node || includes(node) ) return ;
     children_.push_back(node);
-    addSockets(node);
+    addComponentSockets(node);
     node->hide();
 }
 
-// void GroupNode::remove(ComponentNode* node){
-//     if ( !node || !includes(node) ) return ;
-//     children_.erase(std::remove(children_.begin(), children_.end(), node), children_.end());
-//     removeSockets(node);
-//     node->show();
-// }
-
-void GroupNode::clear(){
-    children_.clear();
-    removeSockets();
+void GroupNode::removeComponent(ComponentNode* node){
+    if ( !node || includes(node) ) return ;
+    node->show();
+    children_.erase(std::remove(
+        children_.begin(), children_.end(), node
+        ), children_.end() 
+    );
+    removeComponentSockets(node);
 }
 
 bool GroupNode::includes(ComponentNode* node) const {
@@ -61,31 +63,33 @@ bool GroupNode::includes(int componentId) const {
     return false ;
 }
 
-size_t GroupNode::getNumComponents() const {
-    return children_.size();
-}
-
-int GroupNode::getId() const {
-    return model_->getId() ;
-}
-
 GroupModel* GroupNode::getModel() const {
     return model_ ;
 }
 
 
-void GroupNode::addSockets(ComponentNode* node){
-    for ( auto cSocket : node->getSockets() ){
-        auto spec = cSocket->getSpec();
-        spec.setName(node->getName() + " " + spec.name());
-        SocketWidget* socket = new SocketWidget(spec, this);
-        sockets_.push_back(socket);  
-        if ( scene() ) scene()->addItem(socket);
+void GroupNode::addComponentSockets(ComponentNode* node){
+    if ( !node ) return ;
+
+    std::vector<SocketSpec> specs ;
+    for ( auto s : node->getSockets() ){
+        auto spec = s->getSpec();
+        spec.setName(spec.name() + " (" + node->getName() + ")");
+        specs.push_back(spec);
     }
 
-    layoutSockets();
-    reorderSockets();
-    positionSockets(scenePos());
+    insertSockets(specs);
+}
+
+void GroupNode::removeComponentSockets(ComponentNode* node){
+    if ( !node ) return ;
+
+    std::vector<SocketSpec> specs ;
+    for ( auto s : node->getSockets() ){
+        specs.push_back(s->getSpec());
+    }
+
+    removeSockets(specs);
 }
 
 json GroupNode::serialize() const {

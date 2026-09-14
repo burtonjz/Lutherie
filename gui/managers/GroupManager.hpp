@@ -63,10 +63,9 @@ public slots:
     void onRequestGroupRemove(int groupId);
 
 signals:
-    void groupCreated(int groupId, const std::vector<int>& componentIds, std::optional<json> deserialize = std::nullopt);
-    void groupUpdated(int groupId, const std::vector<int>& componentIds);
-    void groupRemoved(int groupId, const std::vector<int>& componentIds);
-    void groupRenamed(int groupId);
+    void groupCreated(GroupModel* model, std::optional<json> deserialize = std::nullopt);
+    void groupRemoved(GroupModel* model);
+    void groupRenamed(GroupModel* model);
 
 };
 

@@ -24,6 +24,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 #include <cmath>
+#include <spdlog/spdlog.h>
 
 ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket): 
     QGraphicsPathItem(nullptr), 
@@ -43,16 +44,85 @@ bool ConnectionCable::operator==(const ConnectionCable& other) const {
         && isDepthModulation_ == other.isDepthModulation_ ;
 }
 
+SocketWidget* ConnectionCable::getFromSocket() const { 
+    return fromSocket_ ; 
+}
+
+void ConnectionCable::setFromSocket(SocketWidget* socket){
+    fromSocket_ = socket ;
+    updatePath();
+}
+
+SocketWidget* ConnectionCable::getToSocket() const {
+     return toSocket_ ; 
+}
+
+void ConnectionCable::setToSocket(SocketWidget* socket){
+    toSocket_ = socket ;
+    updatePath();
+}
+
 SocketWidget* ConnectionCable::getInboundSocket() const {
     if ( fromSocket_ && fromSocket_->isInbound() ) return fromSocket_ ;
     if ( toSocket_ && toSocket_->isInbound() ) return toSocket_ ;
     return nullptr ;
 }
 
+void ConnectionCable::setInboundSocket(SocketWidget* socket){
+    if ( !socket ){
+        SPDLOG_ERROR("cannot set inbound socket to nullptr");
+        return ;
+    }
+    if ( !socket->isInbound() ){
+        SPDLOG_ERROR(
+            "cannot set inbound socket to socket of type {}",
+            socket->getSpec().type().toString()
+        );
+        return ;
+    }
+
+    if ( fromSocket_ && fromSocket_->isInbound() ){
+        fromSocket_ = socket ;
+        return ;
+    }
+    if ( toSocket_ && toSocket_->isInbound() ){
+        toSocket_ = socket ;
+        return ;
+    } 
+
+    SPDLOG_ERROR("existing inbound sacket is not defined, which means this wasn't a valid cable.");
+}
+
+
 SocketWidget* ConnectionCable::getOutboundSocket() const {
     if ( fromSocket_ && fromSocket_->isOutbound() ) return fromSocket_ ;
     if ( toSocket_ && toSocket_->isOutbound() ) return toSocket_ ;
     return nullptr ;
+}
+
+void ConnectionCable::setOutboundSocket(SocketWidget* socket){
+    if ( !socket ){
+        SPDLOG_ERROR("cannot set inbound socket to nullptr");
+        return ;
+    }
+    if ( socket->isInbound() ){
+        SPDLOG_ERROR(
+            "cannot set outbound socket to socket of type {}",
+            socket->getSpec().type().toString()
+        );
+        return ;
+    }
+
+    if ( fromSocket_ && !fromSocket_->isInbound() ){
+        fromSocket_ = socket ;
+        return ;
+    }
+    if ( toSocket_ && !toSocket_->isInbound() ){
+        toSocket_ = socket ;
+        return ;
+    } 
+
+    SPDLOG_ERROR("existing outbound sacket is not defined, which means this wasn't a valid cable.");
 }
 
 std::optional<ParameterType> ConnectionCable::getModulatedParameter(bool depth) const {
@@ -70,16 +140,6 @@ void ConnectionCable::setModulatedParameter(ParameterType p, bool depth){
 
 bool ConnectionCable::modulatesDepth() const {
     return isDepthModulation_ ;
-}
-
-void ConnectionCable::setFromSocket(SocketWidget* socket){
-    fromSocket_ = socket ;
-    updatePath();
-}
-
-void ConnectionCable::setToSocket(SocketWidget* socket){
-    toSocket_ = socket ;
-    updatePath();
 }
 
 void ConnectionCable::setEndpoint(const QPointF& point){
@@ -139,7 +199,7 @@ bool ConnectionCable::involvesEndpoint(const ConnectionEndpoint& endpoint) const
 }
 
 void ConnectionCable::updatePath(){
-    if (!fromSocket_) return ;
+    if ( !fromSocket_ ) return ;
     
     QPointF startPoint = fromSocket_->getConnectionPoint();
     QPointF endPoint ;

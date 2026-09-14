@@ -19,13 +19,16 @@
 #include "graphics/SocketWidget.hpp"
 #include "types/ConnectionEndpoint.hpp"
 
+#include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
-ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent): 
+ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGraphicsItem* parent): 
     GraphNode(model->getName(), parent),
     model_(model)
 {
+    scene->addItem(this);
+    
     auto d = model_->getDescriptor();
     
     // create sockets from descriptor

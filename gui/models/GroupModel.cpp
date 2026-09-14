@@ -35,7 +35,7 @@ const QString& GroupModel::getName() const {
 
 void GroupModel::setName(QString name){
     name_ = name ;
-    emit groupRenamed(id_);
+    emit groupRenamed(this);
 }
 
 void GroupModel::addComponent(int componentId){
@@ -46,13 +46,16 @@ void GroupModel::addComponent(int componentId){
         return ;
     }
     componentIds_.push_back(componentId);
+    emit componentAdded(this, componentId);
 } 
 
 void GroupModel::removeComponent(int componentId){
-    componentIds_.erase(std::remove(
+    auto it = componentIds_.erase(std::remove(
         componentIds_.begin(), componentIds_.end(), componentId), 
         componentIds_.end()
     );
+    if ( it == componentIds_.end() ) return ;
+    emit componentRemoved(this, componentId);
 } 
 
 bool GroupModel::hasComponent(int componentId){

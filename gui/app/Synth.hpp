@@ -19,6 +19,7 @@
 #define __UI_SYNTH_HPP_
 
 #include "types/ComponentType.hpp"
+#include "models/GroupModel.hpp"
 
 #include <kddockwidgets/MainWindow.h>
 #include <QUiLoader>
@@ -37,7 +38,6 @@ class GraphPanel ;
 class ComponentParameters ;
 class ControlPanel ;
 class PeripheralConfig ;
-
 class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
 
@@ -141,12 +141,13 @@ public slots:
     void onShowGroupModulation(int groupId);
 
     // for framing groups in panels
-    void onComponentGroupCreated(int groupId, std::vector<int> componentIds);
-    void onComponentGroupRemoved(int groupId, std::vector<int> componentIds);
-    void onComponentGroupUpdated(int groupId, std::vector<int> componentIds);
+    void onComponentGroupCreated(GroupModel* model);
+    void onComponentGroupRemoved(GroupModel* model);
+    void onComponentGroupComponentAdded(GroupModel* model, int newId);
+    void onComponentGroupComponentRemoved(GroupModel* model, int removedId);
 
     void onComponentRenamed(int componentId);
-    void onGroupRenamed(int groupId);
+    void onGroupRenamed(GroupModel* model);
 
 };
 

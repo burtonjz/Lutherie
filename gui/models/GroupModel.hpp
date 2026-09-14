@@ -42,7 +42,9 @@ public:
     const std::vector<int>& getComponents() const ;
 
 signals:
-    void groupRenamed(int groupId);
+    void componentAdded(GroupModel* group, int componentId);
+    void componentRemoved(GroupModel* group, int componentId);
+    void groupRenamed(GroupModel* model);
 
 };
 

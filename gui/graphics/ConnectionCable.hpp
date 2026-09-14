@@ -37,19 +37,22 @@ public:
 
     bool operator==(const ConnectionCable& other) const ;
 
-    SocketWidget* getFromSocket() const { return fromSocket_ ; }
-    SocketWidget* getToSocket() const { return toSocket_ ; }
-    
+    SocketWidget* getFromSocket() const ;
+    void setFromSocket(SocketWidget* socket);
+
+    SocketWidget* getToSocket() const ;
+    void setToSocket(SocketWidget* socket);
+
     SocketWidget* getOutboundSocket() const ;
+    void setOutboundSocket(SocketWidget* socket);
+
     SocketWidget* getInboundSocket() const ;
+    void setInboundSocket(SocketWidget* socket);
 
     std::optional<ParameterType> getModulatedParameter(bool depth = false) const ;
     void setModulatedParameter(ParameterType p, bool depth = false);
 
     bool modulatesDepth() const ;
-
-    void setFromSocket(SocketWidget* socket);
-    void setToSocket(SocketWidget* socket);
 
     void setEndpoint(const QPointF& end);
 

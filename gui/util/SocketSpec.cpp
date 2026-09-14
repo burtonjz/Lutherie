@@ -24,17 +24,25 @@ SocketSpec::SocketSpec(const QString& name, ConnectionEndpoint endpoint):
     data_(std::move(endpoint))
 {}
 
-SocketSpec::SocketSpec(const QString& name, std::vector<ConnectionEndpoint> points):
+SocketSpec::SocketSpec(const QString& name, EndpointGroup points):
     name_(name),
-    data_(std::move(points))
+    data_(initializeData(points))
 {
-    if ( endpoints().size() < 2 ){
-        throw std::runtime_error("Cannot create a Group SocketSpec with less than 2 members.");
-    }
-
     if ( !valid() ){
         throw std::runtime_error("Cannot create an invalid Group SocketSpec.");
     }
+}
+
+SocketSpec::DataVariant SocketSpec::initializeData(EndpointGroup points) const {
+    if ( points.size() == 0 ){
+        throw std::runtime_error("Cannot create a SocketSpec with 0 endpoints.");
+    }
+
+    if ( points.size() == 1 ){
+        return DataVariant(std::in_place_type<ConnectionEndpoint>, std::move(points[0]));
+    }
+
+    return DataVariant(std::in_place_type<EndpointGroup>, std::move(points));
 }
 
 SocketType SocketSpec::type() const {

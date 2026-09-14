@@ -1285,6 +1285,7 @@ bool ControlApiHandler::loadConnectComponent(const json& connections){
     bool success = true ;
     for ( auto c : connections ){         
         json connectionResponse = parseConnectionRequest(c);
+        sendApiResponse(connectionResponse);
         if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
             SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
             success = false ;

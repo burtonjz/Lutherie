@@ -136,9 +136,10 @@ public slots:
     void onComponentAdded(int componentId, ComponentType type);
     void onComponentRemoved(int componentId);
 
-    void onComponentGroupCreated(int groupId, std::vector<int> componentIds, std::optional<json> deserialized = std::nullopt);
-    void onComponentGroupRemoved(int groupId, std::vector<int> componentIds);
-    void onComponentGroupUpdated(int groupId, std::vector<int> componentIds);
+    void onComponentGroupCreated(GroupModel* model, std::optional<json> deserialized = std::nullopt);
+    void onComponentGroupRemoved(GroupModel* model);
+    void onComponentGroupComponentAdded(GroupModel* model, int newId);
+    void onComponentGroupComponentRemoved(GroupModel* model, int removedId);
 
     void onNodeZUpdate();
 
