@@ -15,28 +15,33 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "graphics/ToastNotification.hpp"
+#include "widgets/ToastNotification.hpp"
 #include "app/Theme.hpp"
+#include "app/Synth.hpp"
 
-void ToastNotification::show(QGraphicsScene* scene, QGraphicsView* view, const QString& message){
-    auto toast = new ToastNotification(message);
-    scene->addItem(toast);
-    toast->reposition(view);
+void ToastNotification::show(const QString& message, QWidget* parent){
+    if ( !parent ) parent = QApplication::activeWindow();
+    if ( !parent ) parent = Synth::current();
+    auto toast = new ToastNotification(parent, message);
+    toast->reposition(parent);
     toast->popup();
 }
 
-ToastNotification::ToastNotification(const QString& message):
-        QGraphicsItem(nullptr),
-        opacity_(1.0f),
-        message_(message)
+ToastNotification::ToastNotification(QWidget* parent, const QString& message):
+    QWidget(parent, Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint),
+    opacity_(1.0f),
+    message_(message)
 {
-    setZValue(9999);
-    
+    setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_ShowWithoutActivating);
+    setAttribute(Qt::WA_DeleteOnClose);
+
     font_.setPointSize(Theme::TOAST_NOTIFICATION_FONT_SIZE);
     QFontMetrics fm(font_);
+
     width_ = fm.horizontalAdvance(message) + Theme::TOAST_NOTIFICATION_PADDING_H * 2 ;
     height_ = fm.height() + Theme::TOAST_NOTIFICATION_PADDING_V * 2 ;
-    setFlag(QGraphicsItem::ItemIgnoresTransformations);
+    resize(width_, height_);
 }
 
 float ToastNotification::toastOpacity() const {
@@ -48,62 +53,57 @@ void ToastNotification::setToastOpacity(float o){
     update();
 }
 
-QRectF ToastNotification::boundingRect() const {
-    return QRectF(0, 0, width_, height_);
-}
-
-void ToastNotification::reposition(QGraphicsView* view){
-    QPointF topCenter = view->mapToScene(
-        view->viewport()->width() / 2 - width_ / 2,
-        Theme::TOAST_NOTIFICATION_MARGIN
-    );
-    setPos(topCenter);
+void ToastNotification::reposition(QWidget* parent){
+    QPoint topCenter = parent->mapToGlobal(
+    QPoint(parent->width() / 2 - width_ / 2, Theme::TOAST_NOTIFICATION_MARGIN)
+        );
+    move(topCenter);
 }
 
 void ToastNotification::popup(){
-    QGraphicsItem::show();
+    QWidget::show();
 
     // linger then fade
     QTimer::singleShot(
-        Theme::TOAST_NOTIFICATION_DURATION, this, [this]() 
-    {
-        auto* anim = new QPropertyAnimation(
-            this, 
-            "toastOpacity", 
-            this
-        );
-        anim->setDuration(Theme::TOAST_NOTIFICATION_FADE_DURATION);
-        anim->setStartValue(1.0);
-        anim->setEndValue(0.0);
-        anim->setEasingCurve(QEasingCurve::InQuad);
-        connect(
-            anim, &QPropertyAnimation::finished, 
-            this, [this]()
+    Theme::TOAST_NOTIFICATION_DURATION, this, [this]() 
         {
-            scene()->removeItem(this);
-            delete this ;
+    auto* anim = new QPropertyAnimation(
+    this, 
+    "toastOpacity", 
+    this
+            );
+    anim->setDuration(Theme::TOAST_NOTIFICATION_FADE_DURATION);
+    anim->setStartValue(1.0);
+    anim->setEndValue(0.0);
+    anim->setEasingCurve(QEasingCurve::InQuad);
+    connect(
+    anim, &QPropertyAnimation::finished, 
+    this, [this]()
+            {
+    close();
+            });
+    anim->start();
         });
-        anim->start();
-    });
 }
 
 
-void ToastNotification::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*){
-    painter->setRenderHint(QPainter::Antialiasing);
+void ToastNotification::paintEvent(QPaintEvent*){
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
 
     QColor bg = Theme::TOAST_NOTIFICATION_BG ;
     bg.setAlpha(static_cast<int>(opacity_ * Theme::TOAST_NOTIFICATION_BG_MAX_ALPHA));
-    painter->setBrush(bg);
-    painter->setPen(Qt::NoPen);
-    painter->drawRoundedRect(
-        boundingRect(),
-        Theme::TOAST_NOTIFICATION_CORNER_RADIUS,
-        Theme::TOAST_NOTIFICATION_CORNER_RADIUS
-    );
+    painter.setBrush(bg);
+    painter.setPen(Qt::NoPen);
+    painter.drawRoundedRect(
+    rect(),
+    Theme::TOAST_NOTIFICATION_CORNER_RADIUS,
+    Theme::TOAST_NOTIFICATION_CORNER_RADIUS
+        );
 
     QColor txt = Theme::TOAST_NOTIFICATION_TEXT ;
     txt.setAlpha(static_cast<int>(opacity_ * 255));
-    painter->setPen(txt);
-    painter->setFont(font_);
-    painter->drawText(boundingRect(), Qt::AlignCenter, message_);
+    painter.setPen(txt);
+    painter.setFont(font_);
+    painter.drawText(rect(), Qt::AlignCenter, message_);
 }

@@ -55,6 +55,11 @@ public:
     // if the endpoint matches either inbound or outbound
     bool partialMatch(const ConnectionEndpoint& other) const ;
     
+    std::string toString() const ;
+};
+
+struct ConnectionRequestHash {
+    std::size_t operator()(const ConnectionRequest& req) const ;
 };
 
 // JSON (de)serialization

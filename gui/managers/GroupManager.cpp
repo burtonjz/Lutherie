@@ -80,7 +80,7 @@ void GroupManager::removeContent(int groupId){
     }
 }
 
-void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialize){
+GroupModel* GroupManager::createGroup(std::vector<int> componentIds){
     int groupId = currentGroupId_++ ;
     auto model = new GroupModel(groupId, QString("Group %1").arg(groupId));
     connect(
@@ -96,15 +96,17 @@ void GroupManager::onRequestGroupCreate(std::vector<int> componentIds, std::opti
     if ( model->getComponents().size() == 0 ){
         model->deleteLater();
         SPDLOG_WARN("group creation does not have any valid component ids");
-        return ;
+        return nullptr ;
     } 
 
     groups_[groupId] = model ;
-    emit groupCreated(model, deserialize);
+
+    emit groupCreated(model);
+    return model ;
 }
 
-void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentIds){
-    if ( ! groups_.contains(groupId) ){
+void GroupManager::updateGroup(int groupId, std::vector<int> componentIds){
+    if ( !groups_.contains(groupId) ){
         SPDLOG_WARN("group update requested for invalid group id: {}", groupId);
         return ;
     }
@@ -116,7 +118,7 @@ void GroupManager::onRequestGroupUpdate(int groupId, std::vector<int> componentI
     }
 }
 
-void GroupManager::onRequestGroupRemove(int groupId){
+void GroupManager::removeGroup(int groupId){
     if ( ! groups_.contains(groupId) ){
         SPDLOG_WARN("group removal requested for invalid group id: {}", groupId);
         return ;

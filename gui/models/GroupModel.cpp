@@ -45,16 +45,13 @@ void GroupModel::addComponent(int componentId){
         );
         return ;
     }
-    componentIds_.push_back(componentId);
+    componentIds_.insert(componentId);
     emit componentAdded(this, componentId);
 } 
 
 void GroupModel::removeComponent(int componentId){
-    auto it = componentIds_.erase(std::remove(
-        componentIds_.begin(), componentIds_.end(), componentId), 
-        componentIds_.end()
-    );
-    if ( it == componentIds_.end() ) return ;
+    size_t removed = componentIds_.erase(componentId);
+    if ( removed == 0 ) return ;
     emit componentRemoved(this, componentId);
 } 
 
@@ -63,6 +60,6 @@ bool GroupModel::hasComponent(int componentId){
         != componentIds_.end() ;
 }
 
-const std::vector<int>& GroupModel::getComponents() const {
+const std::set<int>& GroupModel::getComponents() const {
     return componentIds_ ;
 } 

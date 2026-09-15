@@ -158,7 +158,7 @@ void MidiFilterWidget::updateCollection(const CollectionRequest& req){
     default:
         SPDLOG_WARN(
             "received collection request with unexpected action: {}", 
-            static_cast<json>(req).dump()
+            req.toString()
         );
         break ;
     }

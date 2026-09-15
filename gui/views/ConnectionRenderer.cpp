@@ -18,17 +18,20 @@
 #include "views/ConnectionRenderer.hpp"
 #include "graphics/GraphNode.hpp"
 #include "managers/ConnectionManager.hpp"
+#include "managers/ComponentManager.hpp"
+#include "managers/SocketRegistry.hpp"
+#include "widgets/ToastNotification.hpp"
+
+#include <QMenu>
 
 #include <spdlog/spdlog.h>
 
 ConnectionRenderer::ConnectionRenderer(
     QGraphicsScene* scene,
-    ISocketLookup* socketLookup,
     QObject* parent
 ):
     QObject(parent),
     scene_(scene),
-    socketLookup_(socketLookup),
     dragCable_(nullptr),
     dragFromSocket_(nullptr)
 {
@@ -44,6 +47,11 @@ ConnectionRenderer::ConnectionRenderer(
         &ConnectionManager::connectionRemoved, 
         this, 
         &ConnectionRenderer::onConnectionRemoved
+    );
+
+    connect(
+        SocketRegistry::instance(), &SocketRegistry::socketMappingChanged,
+        this, &ConnectionRenderer::onSocketMappingChanged
     );
 }
 
@@ -69,7 +77,7 @@ void ConnectionRenderer::finishDrag(const QPointF& scenePos){
 
     dragFromSocket_->ungrabMouse();
 
-    SocketWidget* toSocket = socketLookup_->findSocketAt(scenePos);
+    SocketWidget* toSocket = SocketRegistry::instance()->findSocketAt(scenePos);
     if ( !toSocket ){
         SPDLOG_DEBUG("No socket endpoint specified for drag cable. Cancelling connection.");
         cancelDrag();
@@ -87,8 +95,7 @@ void ConnectionRenderer::finishDrag(const QPointF& scenePos){
     const SocketSpec& inbound = dragCable_->getInboundSocket()->getSpec();
 
     if ( inbound.type() == SocketType::ModulationInbound ){
-        auto v = socketLookup_
-            ->requestModulationParameter(dragCable_->getInboundSocket());
+        auto v = requestModulationParameter(dragCable_->getInboundSocket());
 
         if ( !v.endpoint.has_value() ){
             cancelDrag();
@@ -126,55 +133,25 @@ bool ConnectionRenderer::isDragging() const {
 
 const std::vector<ConnectionCable*> ConnectionRenderer::getNodeConnections(GraphNode* node) const {
     std::vector<ConnectionCable*> c ;
-    for ( auto cable : cables_ ) {
-        if (cable->involvesWidget(node)) c.push_back(cable);
+    for ( auto* cable : cables_ ) {
+        if ( cable->involvesWidget(node) ) c.push_back(cable);
     }
     return c ;
 }
 
 const std::vector<ConnectionCable*> ConnectionRenderer::getSocketConnections(SocketWidget* socket) const {
     std::vector<ConnectionCable*> c ;
-    for ( auto cable : cables_ ){
+    for ( auto* cable : cables_ ){
         if ( cable->involvesSocket(socket)) c.push_back(cable);
     }
     return c ;
 }
 
-ConnectionCable* ConnectionRenderer::createCable(
-    SocketWidget* outbound, SocketWidget* inbound,
-    std::optional<ParameterType> modParam, bool modDepth
-){
-    ConnectionCable* c = new ConnectionCable(outbound, inbound);
-    if ( inbound->getSpec().type() == SocketType::ModulationInbound ){
-        c->setModulatedParameter(modParam.value(), modDepth);
-    }
-
-    auto it = std::find(cables_.begin(), cables_.end(), c);
-
-    if ( it != cables_.end() ){
-        SPDLOG_WARN("will not create cable that is already rendered.");
-        delete c ;
-        return nullptr ;
-    }
-
-    cables_.push_back(c);
-    scene_->addItem(c);
-    c->setZValue(std::max(inbound->zValue(), outbound->zValue()));
-
-    SPDLOG_DEBUG(
-        "created new ConnectionCable ({}): (SocketWidget*={}, name={}) -> (SocketWidget*={}, name={})", 
-        fmt::ptr(c),
-        fmt::ptr(outbound), outbound->getSpec().name().toStdString(),
-        fmt::ptr(inbound), inbound->getSpec().name().toStdString()
-    );
-
-    return c ;
-}
 
 void ConnectionRenderer::deleteCable(ConnectionCable* cable){
     if ( !cable ) return ;
 
-    SPDLOG_DEBUG(
+    SPDLOG_TRACE(
         "deleting ConnectionCable ({}): SocketWidget*={} -> SocketWidget*={}", 
         fmt::ptr(cable),
         fmt::ptr(cable->getFromSocket()),
@@ -189,189 +166,220 @@ void ConnectionRenderer::deleteCable(ConnectionCable* cable){
     delete cable ;
 }
 
-void ConnectionRenderer::onNodePositionChanged(){
-    GraphNode* widget = dynamic_cast<GraphNode*>(sender());
-    if (!widget) return ;
-    
+void ConnectionRenderer::onSocketPositionChanged(SocketWidget* socket){
     for ( const auto& cable : cables_ ) {
-        if (cable->involvesWidget(widget)){
-            cable->updatePath();
-        }
+        if ( !cable->involvesSocket(socket) ) continue ;
+        cable->updatePath();
     }
 }
 
-void ConnectionRenderer::onSocketAdded(SocketWidget* socket){
-    if ( !socket || !socket->isVisible() ){
-        SPDLOG_WARN("socket add for null or not visible socket is not expected ({})", fmt::ptr(socket));
+void ConnectionRenderer::onSocketVisibilityChanged(SocketWidget* socket){
+    if ( !socket->hasClaims() ) return ;
+
+    for ( const auto& cable : cables_ ){
+        if ( !cable->involvesSocket(socket) ) continue ;
+        setCableVisibility(cable);
+    }
+}
+
+void ConnectionRenderer::onSocketMappingChanged(){
+    SocketRegistry* registry = SocketRegistry::instance();
+    for ( auto& [req, cableRef] : req2Cable_ ){
+        if ( !cableRef ){
+            SPDLOG_WARN("found null cable during mapping for request: {}", req.toString());
+            findOrCreateCable(req);
+            continue ;
+        } 
+
+        ConnectionCable* cable = cableRef ; // copy out from map
+
+        SocketWidget* outbound = registry->findSocket(req.outbound());
+        SocketWidget* inbound = registry->findSocket(req.inbound());        
+        
+        bool outboundMatch = cable->getOutboundSocket() == outbound ;
+        bool inboundMatch = cable->getInboundSocket() == inbound ;
+        if ( inboundMatch && outboundMatch ) continue ;
+
+        // cable doesn't match
+        req2Cable_.at(req) = nullptr ;
+        if ( !cableHasConnections(cable) ) deleteCable(cable);
+        findOrCreateCable(req);
+    }
+}
+
+ConnectionCable* ConnectionRenderer::registerCable(ConnectionCable* candidate){
+    // if candidate matches existing, delete and replace with existing
+    ConnectionCable* cable = candidate ;
+    for ( auto* c : cables_ ){
+        if ( candidate == c ){
+            delete candidate ;
+            return c ;
+        }
+    }
+
+    scene_->addItem(cable);
+    cable->setZValue(std::max(
+        cable->getInboundSocket()->zValue(), 
+        cable->getOutboundSocket()->zValue())
+    );
+    
+    SPDLOG_TRACE(
+        "registered new ConnectionCable ({}): (SocketWidget*={}, name={}) -> (SocketWidget*={}, name={})", 
+        fmt::ptr(cable),
+        fmt::ptr(cable->getOutboundSocket()), 
+        cable->getOutboundSocket()->getSpec().name().toStdString(),
+        fmt::ptr(cable->getInboundSocket()), 
+        cable->getInboundSocket()->getSpec().name().toStdString()
+    );
+
+    setCableVisibility(cable);
+    cables_.push_back(cable);
+    return cable ;
+}
+
+void ConnectionRenderer::findOrCreateCable(const ConnectionRequest& req){
+    SocketWidget* outbound = SocketRegistry::instance()->findSocket(req.outbound());
+    SocketWidget*  inbound = SocketRegistry::instance()->findSocket(req.inbound());
+
+    if ( !outbound || !inbound ){
+        SPDLOG_WARN("did not find sockets to draw connection cable. Please investigate");
+        req2Cable_[req] = nullptr ;
         return ;
     }
-    const SocketSpec& spec = socket->getSpec();
-    bool inbound = spec.type().isInbound();
-
-    std::set<SocketWidget*> others ;
-    std::set<ConnectionCable*> toDelete ;
-    for ( auto* cable : cables_ ){
-        for ( const auto& endpoint : spec.endpoints() ){
-            if ( !cable->involvesEndpoint(endpoint) ) continue ;
-
-            SocketWidget* other = nullptr ;
-            if ( inbound ) other = cable->getOutboundSocket();
-            else other = cable->getInboundSocket();
-            
-            if ( !other ){
-                SPDLOG_WARN("a null socket was found on an active cable.");
-                continue ;
-            }
-
-            // consolidate cables if already present
-            if ( others.contains(other) ){
-                toDelete.insert(cable);
-                break ;
-            }
-
-            // otherwise edit this cable
-            if ( inbound ) cable->setInboundSocket(socket);
-            else           cable->setOutboundSocket(socket);
-
-            SPDLOG_TRACE(
-                "updated ConnectionCable*={} to use the following sockets: "
-                "(SocketWidget*={}, name={}) -> (SocketWidget*={}, name={})", 
-                fmt::ptr(cable),
-                fmt::ptr(cable->getOutboundSocket()), 
-                cable->getOutboundSocket()->getSpec().name().toStdString(),
-                fmt::ptr(cable->getInboundSocket()),
-                cable->getInboundSocket()->getSpec().name().toStdString()
-            );
-
-            cable->updatePath();
-            others.insert(other);
-            break ;
-        }
-    }
-
-    while ( toDelete.size() > 0 ){
-        auto it = toDelete.begin();
-        SPDLOG_TRACE(
-            "ConnectionCable* {} is now a duplicate., deleting...",
-            fmt::ptr(*it)
+    
+    ConnectionCable* candidate = new ConnectionCable(outbound, inbound);
+    if ( inbound->getSpec().type() == SocketType::ModulationInbound ){
+        candidate->setModulatedParameter(
+            req.inbound().modulatedParam().value(), 
+            req.modulatingDepth()
         );
-        deleteCable(*it);
-        toDelete.erase(it);
     }
+
+    ConnectionCable* cable = registerCable(candidate);
+    req2Cable_[req] = cable ;
 }
 
-void ConnectionRenderer::onSocketRemoval(SocketWidget* socket){
-    if ( !socket ){
-        SPDLOG_WARN("socket removal passed a nullptr");
-        return ;
-    } 
-
-    std::vector<ConnectionCable*> cables = cables_ ;
-    for ( auto* cable : cables ){        
-        SocketWidget* other ;
-        if ( socket == cable->getInboundSocket() ){
-            other = cable->getOutboundSocket();
-        } else if ( socket == cable->getOutboundSocket() ){
-            other = cable->getInboundSocket();
-        } else {
-            continue ;
-        }
-
-        if ( !other ){
-            SPDLOG_WARN("a null socket was found on an active cable.");
-            continue ;
-        }
-
-        // find the current socket(s)
-        const SocketSpec& spec = socket->getSpec();
-        std::set<SocketWidget*> resolvedSockets ;
-        for ( const auto& endpoint : spec.endpoints() ){
-            SocketWidget* resolved = socketLookup_->findVisibleSocket(endpoint);
-            if ( !resolved ) continue ;
-            resolvedSockets.insert(resolved);
-        }
-
-        SPDLOG_TRACE(
-            "ConnectionCable*={} uses removed SocketWidget*={}. "
-            "Socket Lookup found {} socket(s) for replacement.",
-            fmt::ptr(cable), fmt::ptr(socket), resolvedSockets.size()
-        );
-
-        std::optional<ParameterType> p = cable->getModulatedParameter();
-        bool depth = cable->modulatesDepth();
-        deleteCable(cable);
-
-        if ( resolvedSockets.size() == 0 ){
-            SPDLOG_WARN(
-                "no new visible Socket is available for the given connection: {}. "
-                "The cable gets silently dropped as invalid in this condition.",
-                cable->toText().toStdString()
-            );
-        }
-
-        for ( auto* s : resolvedSockets ){
-            createCable(other, s, p, depth);
+bool ConnectionRenderer::cableHasConnections(ConnectionCable* cable) const {
+    for ( const auto& [req, c] : req2Cable_ ){
+        if ( cable == c ){
+            return true ;
         }
     }
+    return false ;
 }
 
-void ConnectionRenderer::onSocketHidden(SocketWidget* socket){
-    for ( auto c : cables_ ){
-        if ( c->involvesSocket(socket) ){
-            c->hide();
-        }
-    }
-}
-
-void ConnectionRenderer::onSocketUnhidden(SocketWidget* socket){
-    for ( auto c : cables_ ){
-        if ( c->involvesSocket(socket) ){
-            SocketWidget* other ;
-            if ( socket->isInbound() ){
-                other = c->getOutboundSocket();
-            } else {
-                other = c->getInboundSocket();
-            }
-            if ( other->isVisible() ){
-                c->show();
-            }
-        }
-    }
+void ConnectionRenderer::setCableVisibility(ConnectionCable* cable){
+    cable->setVisible(
+        cable->getOutboundSocket()->isVisible() &&
+        cable->getInboundSocket()->isVisible() 
+    );
 }
 
 void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
-    SocketWidget* outbound = socketLookup_->findVisibleSocket(req.outbound());
-    SocketWidget*  inbound = socketLookup_->findVisibleSocket(req.inbound());
-
-    if ( !outbound || !inbound ){
-        SPDLOG_DEBUG("did not find sockets to draw connection cable. Please investigate");
+    if ( req2Cable_.contains(req) ){
+        SPDLOG_WARN(
+            "Received connection add request already present in renderer",
+            "this suggests a desync has occurred. Please investigate. ConnectionRequest={}",
+            req.toString()
+        );
         return ;
     }
 
-    createCable(outbound, inbound, req.inbound().modulatedParam(), req.modulatingDepth());
+    findOrCreateCable(req);
 }
 
 void ConnectionRenderer::onConnectionRemoved(const ConnectionRequest& req){
-    const auto& outbound = req.outbound();
-    const auto& inbound = req.inbound();
+    if ( !req2Cable_.contains(req) ){
+        SPDLOG_WARN(
+            "The removed connection is not present in request map."
+            "This suggests this client is out of sync. ConnectionRequest={}",
+            req.toString()
+        );
+        return ;
+    }
 
-    // find cable with these endpoints
-    ConnectionCable* match = nullptr ;
-    for ( auto c : cables_ ){
-        if ( 
-            c->involvesEndpoint(outbound) &&
-            c->involvesEndpoint(inbound)
-        ){
-            match = c ;
-            break ;
+    ConnectionCable* cable = req2Cable_.at(req);
+    req2Cable_.erase(req);
+
+    if ( !cableHasConnections(cable) ){
+        deleteCable(cable);
+    }
+}
+
+ConnectionRenderer::ModulationParameter ConnectionRenderer::requestModulationParameter(SocketWidget* socket){
+    ModulationParameter output ; 
+
+    if ( !socket ) return output ;
+    
+    const SocketSpec& spec = socket->getSpec();
+
+    // create user menu
+    QMenu menu ;
+    QAction* header = menu.addAction("Select Parameter");
+    header->setEnabled(false);
+    menu.addSeparator();
+
+    bool multipleIds = spec.componentIds().size() > 1 ;
+    auto createActionName = [&](int id, ParameterType p, bool depth = false){
+        QString name = "";
+        if ( multipleIds ){
+            name = ComponentManager::instance()
+                ->getModel(id)->getName()
+                + ": ";
+        }
+        name = name + QString::fromStdString(
+            std::string(GET_PARAMETER_TRAIT_MEMBER(p, name))
+        );
+        if ( depth ){
+            name = name + " depth" ;
+        }
+        return name ;
+    };
+    
+    bool hasActions = false ;
+    for ( const auto& endpoint : spec.endpoints() ){
+        bool exists = ConnectionManager::instance()
+            ->hasModulationConnections(endpoint);
+        if ( !exists ){
+            int id = endpoint.componentId().value();
+            ParameterType p = endpoint.modulatedParam().value();
+            QAction* param = menu.addAction(createActionName(id, p));
+            connect(
+                param, &QAction::triggered,
+                [&output, endpoint](){
+                    output = {
+                        .endpoint = endpoint
+                    };
+                }
+            );
+            hasActions = true ;
+            continue ;
+        }
+
+        bool depthExists = ConnectionManager::instance()
+            ->hasModulationDepthConnections(endpoint);
+        if ( !depthExists ){
+            int id = endpoint.componentId().value();
+            ParameterType p = endpoint.modulatedParam().value();
+            QAction* param = menu.addAction(createActionName(id, p, true));
+            connect(
+                param, &QAction::triggered,
+                [&output, endpoint](){
+                    output = {
+                        .endpoint = endpoint,
+                        .depth = true 
+                    };
+                }
+            );
+            hasActions = true ;
         }
     }
-    
-    if ( !match ) return ;
 
-    size_t nConnections = ConnectionManager::instance()
-        ->getNumConnectionsMatchingEndpoints(outbound, inbound);
+    if ( ! hasActions ){ 
+        ToastNotification::show("All modulation slots are full.");
+        return output ;
+    }
 
-    if ( nConnections > 0 ) return ;
-    deleteCable(match);
+    menu.exec(QCursor::pos());
+    return output ;
 }

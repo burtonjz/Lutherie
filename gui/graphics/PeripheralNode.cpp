@@ -18,7 +18,7 @@
 #include "graphics/PeripheralNode.hpp"
 
 PeripheralNode::PeripheralNode(int deviceId, const QString& name, QGraphicsItem* parent):
-    GraphNode(name,parent),
+    GraphNode(name, SocketClaimBehavior::Reactive, parent),
     deviceId_(deviceId)
 {}
 

@@ -18,7 +18,6 @@
 #ifndef __GUI_CONNECTION_MANAGER_HPP_
 #define __GUI_CONNECTION_MANAGER_HPP_
 
-#include "interfaces/ISocketLookup.hpp"
 #include "requests/ConnectionRequest.hpp"
 #include "util/SocketSpec.hpp"
 
@@ -31,7 +30,6 @@ class ConnectionManager: public QObject {
     Q_OBJECT
 private:
     Connections connections_ ;
-    ISocketLookup* socketLookup_ ;
 
     explicit ConnectionManager(QObject* parent = nullptr);
 
@@ -44,7 +42,7 @@ public:
     ConnectionManager& operator=(ConnectionManager&&) = delete ;
 
     // convenient connection lookups
-    bool hasExternalConnections(const SocketSpec& spec) const ;
+    bool hasExternalConnections(const SocketSpec& spec, const std::set<int>& ids) const ;
 
     bool hasModulationConnections(const ConnectionEndpoint& endpoint) const ;
     bool hasModulationDepthConnections(const ConnectionEndpoint& endpoint) const ;

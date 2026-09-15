@@ -81,10 +81,9 @@
             "isGroup": false,
             "name": "MIDI Out"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": -1937.1966927722258,
       "ypos": 1447.6583557858587
     },
@@ -102,10 +101,9 @@
             "isGroup": false,
             "name": "Audio In"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": -359.21749999999986,
       "ypos": -248.9975
     },
@@ -131,7 +129,7 @@
             "isGroup": true,
             "name": "Modulation Inputs"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -143,7 +141,7 @@
             "isGroup": false,
             "name": "Audio Output 1"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -154,10 +152,9 @@
             "isGroup": false,
             "name": "Modulation Output"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": -1007.7399999999998,
       "ypos": -39.037499999999994
     },
@@ -176,10 +173,9 @@
             "isGroup": false,
             "name": "Audio Input 1"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": -383.5399999999998,
       "ypos": 26.680000000000035
     }

@@ -18,23 +18,51 @@
 #include "graphics/SocketWidget.hpp"
 #include "graphics/GraphNode.hpp"
 #include "app/Theme.hpp"
+#include "managers/SocketRegistry.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsItem>
 #include <spdlog/spdlog.h>
 
-SocketWidget::SocketWidget(SocketSpec spec, GraphNode* parent):
+SocketWidget::SocketWidget(SocketSpec spec, SocketClaimBehavior claimBehavior, GraphNode* parent):
     QGraphicsObject(),
     spec_(spec),
     parent_(parent)
 {
     setFlag(QGraphicsItem::ItemIsSelectable, false);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::LeftButton);
     setZValue(-0.2); // we want the sockets just behind the GraphNode, with room to place the cable between
-
     setToolTip(spec_.name());
-    show();
+
+    connect(
+        this, &SocketWidget::positionChanged,
+        parent, &GraphNode::socketPositionChanged
+    );
+
+    // socket registration
+    SocketRegistry::instance()->registerSocket(this);
+
+    switch(claimBehavior){
+    case SocketClaimBehavior::Override:
+        SocketRegistry::instance()->claim(this);
+        break ;
+    case SocketClaimBehavior::Reactive:
+        connect(
+            SocketRegistry::instance(), &SocketRegistry::socketMappingChanged,
+            this, &SocketWidget::onMappingChanged
+        );
+        onMappingChanged();
+        break ;
+    default:
+        SPDLOG_WARN("invalid socket claim behavior specified");
+        break ;
+    }
+}
+
+SocketWidget::~SocketWidget(){
+    SocketRegistry::instance()->unregisterSocket(this);
 }
 
 QRectF SocketWidget::boundingRect() const {
@@ -65,6 +93,14 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 
 }
 
+QVariant SocketWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
+    if ( change == ItemPositionHasChanged && hasClaims() ){
+        emit positionChanged(this);
+    }
+
+    return QGraphicsObject::itemChange(change, value);
+}
+
 QColor SocketWidget::getSocketColor(bool isHovered) const {
     switch( spec_.type() ){
         case SocketType::ModulationInbound:
@@ -93,6 +129,43 @@ void SocketWidget::setHovered(bool hovered){
     update();
 }
 
+bool SocketWidget::hasClaims() const {
+    return hasClaims_ ;
+}
+
+void SocketWidget::setHasClaims(bool b){
+    if ( hasClaims() == b ){
+        return ;
+    }
+    hasClaims_ = b ;
+
+    if ( !hasClaims() ){
+        setVisible(false);
+        emit visibilityChanged(this);
+    } else if ( userHidden() == isVisible() ){
+        setVisible(!userHidden());
+        emit visibilityChanged(this);
+    }
+    emit claimStatusChanged();
+}
+
+bool SocketWidget::userHidden() const {
+    return userHidden_ ;
+}
+
+void SocketWidget::setUserHidden(bool hidden){
+    if ( userHidden() == hidden ) return ;
+    userHidden_ = hidden ;
+
+    if ( !hasClaims() ) return ;
+    
+    if ( userHidden() == isVisible() ){
+        setVisible(!userHidden());
+        emit visibilityChanged(this);
+    }
+}
+
+
 bool SocketWidget::isOutbound() const {
     return !spec_.type().isInbound();
 }
@@ -108,7 +181,7 @@ QPointF SocketWidget::getConnectionPoint() const {
 json SocketWidget::serialize() const {
     json msg ;
     msg["spec"] = spec_ ;
-    msg["visible"] = isVisible();
+    msg["hidden"] = userHidden_ ;
 
     return msg ;
 }
@@ -124,8 +197,18 @@ void SocketWidget::deserialize(const json& msg){
         return ;
     }
 
-    if ( msg.contains("visible") && msg.at("visible").is_boolean() ){
-        setVisible(msg.at("is_visible"));
+    if ( msg.contains("hidden") && msg.at("hidden").is_boolean() ){
+        setUserHidden(msg.at("hidden").get<bool>());
     }
 }
 
+void SocketWidget::onMappingChanged(){
+    auto* registry = SocketRegistry::instance();
+
+    // if any of my endpoints are available, claim my endpoints
+    for ( const auto& endpoint : spec_.endpoints() ){
+        if ( registry->isClaimed(endpoint) ) continue ;
+        registry->claim(this);
+        return ;
+    }
+}

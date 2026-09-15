@@ -18,6 +18,7 @@
 #include "graphics/GraphNode.hpp"
 #include "graphics/SocketWidget.hpp"
 #include "managers/ConnectionManager.hpp"
+#include "managers/SocketRegistry.hpp"
 #include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
@@ -25,8 +26,9 @@
 #include <QPoint>
 #include <spdlog/spdlog.h>
 
-GraphNode::GraphNode(QString name, QGraphicsItem* parent): 
+GraphNode::GraphNode(QString name, SocketClaimBehavior behavior, QGraphicsItem* parent): 
     QGraphicsObject(parent),
+    claimBehavior_(behavior),
     name_(name)
 {
     // configure widget
@@ -127,32 +129,24 @@ std::vector<SocketWidget*> GraphNode::getVisibleSocketsMatchingEndpoint(const Co
 }
 
 SocketWidget* GraphNode::insertSocket(SocketSpec spec){
-    SocketWidget* socket = new SocketWidget(spec, this);
-    if ( scene() ) scene()->addItem(socket);
-    sockets_.push_back(socket);
+    SocketWidget* s = createSocket(spec);
 
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());
 
-    emit socketAdded(socket);
-    return socket ;
+    return s ;
 }
 
 void GraphNode::insertSockets(const std::vector<SocketSpec>& specs){
     std::vector<SocketWidget*> newSockets ;
     for ( const auto& s : specs ){
-        SocketWidget* socket = new SocketWidget(s, this);
-        if ( scene() ) scene()->addItem(socket);
-        newSockets.push_back(socket);
-        sockets_.push_back(socket);
+        createSocket(s);
     }
 
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());
-
-    for ( auto* s : newSockets ) emit socketAdded(s);
 }
 
 void GraphNode::removeSocket(SocketSpec spec){
@@ -164,91 +158,56 @@ void GraphNode::removeSocket(SocketSpec spec){
 }
 
 void GraphNode::removeSockets(const std::vector<SocketSpec>& specs){
+    SocketRegistry::instance()->startBatch();
     for ( const auto& spec : specs ){
         removeSocket(spec);
     }
+    SocketRegistry::instance()->endBatch();
 }
 
 void GraphNode::hide(){
     QGraphicsItem::hide();
+    // hide only should occur on graph node if all sockets lack claims.
+#ifdef DEBUG_BUILD
     for ( auto& s : getSockets() ){
-        s->hide();
+        if ( s->hasClaims() ){
+            SPDLOG_WARN("GraphNode::hide called, but at least one socket has a claim.");       
+            return ;
+        }
     }
+#endif // DEBUG_BUILD
 }
 
 void GraphNode::show(){
     QGraphicsItem::show();
+    // show only should occur on graph node if all sockets
+#ifdef DEBUG_BUILD
     for ( auto& s : getSockets() ){
-        s->show();
+        if ( s->hasClaims() ) return ;
     }
+    SPDLOG_WARN("GraphNode::show called, but no sockets have claims.");
+#endif 
 }
 
-std::vector<SocketWidget*> GraphNode::getHiddenSockets() const {
-    std::vector<SocketWidget*> output ;
+SocketWidget* GraphNode::createSocket(const SocketSpec& spec){
+    SocketWidget* socket = new SocketWidget(spec, claimBehavior_, this);
+    if ( scene() ) scene()->addItem(socket);
+    sockets_.push_back(socket);
 
-    for ( const auto& s : sockets_ ){
-        if ( !s->isVisible() ){
-            const SocketSpec& spec = s->getSpec();
-            if ( spec.isGroup() ){
-                output.push_back(s);
-                continue ;
-            } 
-
-            // only include if it isn't otherwise a member of a group
-            bool isGrouped = false ;
-            for ( auto* search : sockets_ ){
-                const SocketSpec& searchSpec = search->getSpec();
-                if ( !searchSpec.isGroup() ) continue ;
-                if ( searchSpec.includes(spec.endpoints()[0]) ){
-                    isGrouped = true ;
-                    break ;
-                }
-            }
-            if ( !isGrouped ) output.push_back(s);
-        } 
-    }
-    return output ;
-}
-
-void GraphNode::unhideSocket(SocketWidget* socket){
-    if ( !socket ) return ;
-    auto it = std::find(sockets_.begin(), sockets_.end(), socket);
-    if ( it == sockets_.end() ) return ;
-    socket->show();
-    reorderSockets();
-    positionSockets(scenePos());
-    emit socketUnhidden(socket);
-    emit positionChanged();
-}
-
-void GraphNode::unhideAllSockets(){
-    for ( auto s : sockets_ ){
-        if ( !s->isVisible() ) unhideSocket(s);
-    }
-}
-
-void GraphNode::hideSocket(SocketWidget* socket){
-    if ( !socket ) return ;
-    auto it = std::find(sockets_.begin(), sockets_.end(), socket);
-    if ( it == sockets_.end() ) return ;
-    if ( ! socket->isVisible() ) return ;
-
-    socket->hide();
-    reorderSockets();
-    positionSockets(scenePos());
-    emit socketHidden(socket);
-    emit positionChanged();
-}
-
-void GraphNode::hideDisconnectedSockets(){
-    for ( auto s : sockets_ ){
-        bool noConnection = ConnectionManager::instance()
-            ->getNumConnectionsMatchingSpec(s->getSpec()) == 0 ;
-        
-        if ( noConnection && s->isVisible() ){
-            hideSocket(s);
+    connect(
+        socket, &SocketWidget::claimStatusChanged,
+        this, &GraphNode::socketClaimStatusChanged
+    );
+    connect(
+        socket, &SocketWidget::visibilityChanged,
+        this, [this](SocketWidget* s){
+            reorderSockets();
+            positionSockets(scenePos());
+            emit socketVisibilityChanged(s);
         }
-    }
+    );
+
+    return socket ;
 }
 
 void GraphNode::layoutSockets(){
@@ -349,8 +308,6 @@ void GraphNode::positionSockets(QPointF newPos){
         }
     }
 
-    emit positionChanged();
-
     if ( height_ == height ) return ;
 
     prepareGeometryChange();  
@@ -358,12 +315,13 @@ void GraphNode::positionSockets(QPointF newPos){
 }
 
 void GraphNode::removeSockets(){
+    SocketRegistry::instance()->startBatch();
     for ( auto* socket : sockets_ ){
         if ( scene() ) scene()->removeItem(socket);
-        socket->setVisible(false);
-        emit removingSocket(socket);
         socket->deleteLater();
     }
+    SocketRegistry::instance()->startBatch();
+
     sockets_.clear();
     leftSockets_.clear();
     rightSockets_.clear();
@@ -376,7 +334,6 @@ void GraphNode::removeSockets(){
 QVariant GraphNode::itemChange(GraphicsItemChange change, const QVariant& value ){
     if ( change == ItemPositionChange ){
         positionSockets(value.toPointF());
-        emit positionChanged() ;
     }
 
     // if the item is selected, we need to inform graph panel to move it to the top
@@ -437,7 +394,6 @@ json GraphNode::serialize() const {
     msg["name"] = name_.toStdString() ;
     msg["xpos"] = pos().x() ;
     msg["ypos"] = pos().y() ;
-    msg["visible"] = isVisible();
     
     json sockets = json::array() ;
     for ( const auto& socket : sockets_ ){
@@ -459,9 +415,6 @@ void GraphNode::deserialize(const json& node){
     ){
         setPos(node.at("xpos"), node.at("ypos"));
     }
-    if ( node.contains("visible") && node.at("visible").is_boolean() ){
-        setVisible(node.at("visible"));
-    }
 
     if ( node.contains("sockets") && node.at("sockets").is_array() ){
         for ( const auto& s : node.at("sockets") ){
@@ -474,13 +427,6 @@ void GraphNode::deserialize(const json& node){
             }
 
             const auto& sockets = getSocketsMatchingSpec(*spec);
-            if ( sockets.size() == 0 ){
-                SocketWidget* sock = insertSocket(spec.value());
-                sock->deserialize(s);
-                continue ;
-            }
-            
-            SPDLOG_DEBUG("deserializing {} sockets.", sockets.size());
             for ( auto* socket : sockets ){
                 socket->deserialize(s);
             }
@@ -503,11 +449,21 @@ void GraphNode::removeSocket(SocketWidget* socket){
     );
 
     scene()->removeItem(socket);
-    socket->setVisible(false);
-    emit removingSocket(socket);
     delete socket ;
 
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());
+}
+
+void GraphNode::socketClaimStatusChanged(){
+    for ( auto* socket : sockets_ ){
+        if ( socket->hasClaims() ){
+            if ( !isVisible() ){
+                setVisible(true);
+            }
+            return ;
+        }
+    }
+    setVisible(false);
 }

@@ -48,6 +48,8 @@ public:
     const std::optional<size_t>& index() const ;
     const std::optional<int>& componentId() const ;
     const std::optional<ParameterType>& modulatedParam() const ;
+    
+    std::string toString() const ;
 
 private:
     ConnectionEndpoint(
@@ -61,6 +63,10 @@ private:
     static ConnectionEndpoint audio(SocketType socket, size_t index, std::optional<int> componentId);
     static ConnectionEndpoint modulationIn(SocketType socket, int componentId, ParameterType param);
     
+};
+
+struct EndpointHash {
+    std::size_t operator()(const ConnectionEndpoint& endpoint) const ;
 };
 
 // JSON (de)serialization

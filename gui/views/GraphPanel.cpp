@@ -22,12 +22,13 @@
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
 #include "managers/StateManager.hpp"
+#include "managers/SocketRegistry.hpp"
 #include "graphics/SocketWidget.hpp"
 #include "graphics/GraphNode.hpp"
 #include "graphics/GroupNode.hpp"
 #include "graphics/ComponentNode.hpp"
 #include "graphics/PostNote.hpp"
-#include "graphics/ToastNotification.hpp"
+#include "widgets/ToastNotification.hpp"
 #include "widgets/TextToolbar.hpp"
 #include "util/SocketSpec.hpp"
 
@@ -50,7 +51,7 @@ GraphPanel::GraphPanel(QWidget* parent):
     QGraphicsView(parent),
     scene_(new QGraphicsScene(this)),
     connectionRenderer_(new ConnectionRenderer(
-        scene_, this, this)
+        scene_, this)
     ),
     isDraggingConnection_(false),
     postToolbar_(new TextToolbar(this))
@@ -85,22 +86,8 @@ GraphPanel::GraphPanel(QWidget* parent):
 
     // GroupManager
     connect(
-        this, &GraphPanel::requestGroupCreate,
-        GroupManager::instance(), &GroupManager::onRequestGroupCreate
-    );
-    connect(
         GroupManager::instance(), &GroupManager::groupCreated,
         this, &GraphPanel::onComponentGroupCreated
-    );
-
-    connect(
-        this, &GraphPanel::requestGroupUpdate,
-        GroupManager::instance(), &GroupManager::onRequestGroupUpdate
-    );
-
-    connect(
-        this, &GraphPanel::requestGroupRemove,
-        GroupManager::instance(), &GroupManager::onRequestGroupRemove
     );
     connect(
         GroupManager::instance(), &GroupManager::groupRemoved,
@@ -146,24 +133,12 @@ void GraphPanel::setNodeConnections(GraphNode* node){
         this, &GraphPanel::onNodeZUpdate
     );
     connect(
-        node, &GraphNode::positionChanged, 
-        connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
+        node, &GraphNode::socketPositionChanged,
+        connectionRenderer_, &ConnectionRenderer::onSocketPositionChanged
     );
     connect(
-        node, &GraphNode::socketAdded,
-        connectionRenderer_, &ConnectionRenderer::onSocketAdded
-    );
-    connect(
-        node, &GraphNode::removingSocket,
-        connectionRenderer_, &ConnectionRenderer::onSocketRemoval
-    );
-    connect(
-        node, &GraphNode::socketHidden,
-        connectionRenderer_, &ConnectionRenderer::onSocketHidden
-    );
-    connect(
-        node, &GraphNode::socketUnhidden,
-        connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
+        node, &GraphNode::socketVisibilityChanged,
+        connectionRenderer_, &ConnectionRenderer::onSocketVisibilityChanged
     );
 }
 
@@ -269,19 +244,21 @@ void GraphPanel::deserialize(const json& msg){
             }
 
             const std::string nodeType = n.at("node_type");
-
             if ( nodeType == "ComponentNode" ){
                 if ( ! n.contains("componentId") || ! n.at("componentId").is_number() ){
                     SPDLOG_WARN("component node does not have id specified");
                     continue ;
                 }
                 auto c = getComponentNode(n.at("componentId"));
-                if ( ! c){
+                if ( !c ){
                     SPDLOG_WARN("component node not found for id {}");
                     continue ;
                 }
                 c->deserialize(n);
-            } else if ( nodeType == "PeripheralNode" ){
+                continue ;
+            }
+            
+            if ( nodeType == "PeripheralNode" ){
                 if ( !n.contains("deviceId") || ! n.at("deviceId").is_number() ){
                     SPDLOG_WARN("peripheral node does not have a defined deviceId");
                     continue ;
@@ -293,12 +270,16 @@ void GraphPanel::deserialize(const json& msg){
                 } else if ( n.at("deviceId") == AUDIO_OUT_DEVICE_ID ){
                     p = audioOut_ ;
                 }
+
                 if ( p ){
                     p->deserialize(n);
                 } else {
                     SPDLOG_WARN("Invalid deviceId specified: {}", n.at("deviceId").dump());
                 }
-            } else if ( nodeType == "GroupNode" ){
+                continue ;
+            } 
+            
+            if ( nodeType == "GroupNode" ){
                 if ( ! n.contains("componentIds") || ! n.at("componentIds").is_array() ){
                     continue ;
                 }
@@ -313,11 +294,30 @@ void GraphPanel::deserialize(const json& msg){
                     ids.push_back(id);
                 }
 
-                if ( ids.size() > 1 ){
-                    emit requestGroupCreate(ids, n);
-                } else {
+                if ( ids.size() < 2 ){
                     SPDLOG_WARN("Group node does not contain at least 2 valid component ids.");
+                    continue ;
                 }
+
+                // deserializing a GroupNode requires creating it, but we don't want to 
+                // lose the node in the signal
+                disconnect(
+                    GroupManager::instance(), &GroupManager::groupCreated,
+                    this, &GraphPanel::onComponentGroupCreated
+                );
+                GroupModel* m = GroupManager::instance()->createGroup(ids);
+                connect(
+                    GroupManager::instance(), &GroupManager::groupCreated,
+                    this, &GraphPanel::onComponentGroupCreated
+                );
+                GroupNode* gNode = onComponentGroupCreated(m);
+                if ( !gNode ){
+                    SPDLOG_ERROR("Failed to create group node during deserialization");
+                    continue ;
+                }
+
+                gNode->deserialize(n);
+                continue ;
             }
         }
     }
@@ -377,36 +377,6 @@ std::vector<GroupNode*> GraphPanel::getSelectedGroups() const {
     return nodes ;
 }
 
-SocketWidget* GraphPanel::findVisibleSocket(const SocketSpec& spec) const {
-    for ( auto* n : nodes_ ){
-        for ( auto* s : n->getSocketsMatchingSpec(spec) ){
-            if ( s->isVisible() ) return s ;
-        }
-    }
-    SPDLOG_WARN("Could not find visible socket with spec {}", static_cast<json>(spec).dump());
-    return nullptr ;
-}
-
-SocketWidget* GraphPanel::findVisibleSocket(const ConnectionEndpoint& endpoint) const {
-    for ( auto* n : nodes_ ){
-        for ( auto* s : n->getSocketsMatchingEndpoint(endpoint) ){
-            if ( s->isVisible() ) return s ;
-        }
-    }
-    SPDLOG_WARN("Could not find visible socket with endpoint {}", static_cast<json>(endpoint).dump());
-    return nullptr ;
-}
-
-SocketWidget* GraphPanel::findSocketAt(const QPointF& scenePos) const {
-    auto items = scene_->items(scenePos);
-    for ( auto item : items ){
-        if ( SocketWidget* socket = dynamic_cast<SocketWidget*>(item) ){
-            return socket ;
-        }
-    }
-    return nullptr ;
-}
-
 void GraphPanel::keyPressEvent(QKeyEvent* event){
     // escape before sending key presses on
     if ( event->key() == Qt::Key_Escape ){
@@ -446,7 +416,7 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
 
 void GraphPanel::mouseMoveEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
-    SocketWidget* w = findSocketAt(scenePos);
+    SocketWidget* w = SocketRegistry::instance()->findSocketAt(scenePos);
 
     // resolve hover events for socket widgets
     if ( lastHovered_ ){
@@ -493,7 +463,7 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
 
     // handle connection drag
     if ( event->button() == Qt::LeftButton ){
-        if ( SocketWidget* w = findSocketAt(scenePos) ){
+        if ( SocketWidget* w = SocketRegistry::instance()->findSocketAt(scenePos) ){
             isDraggingConnection_ = true ;
             connectionRenderer_->startDrag(w);
             event->accept();
@@ -540,7 +510,7 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
     QPointF scenePos = mapToScene(event->pos());
 
     // right clicking on a socket
-    if ( SocketWidget* w = findSocketAt(scenePos) ){
+    if ( SocketWidget* w = SocketRegistry::instance()->findSocketAt(scenePos) ){
         onSocketRightClicked(w);
         return ;
     }
@@ -595,21 +565,37 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     // socket menu
     QAction* unhideAll = new QAction("Unhide All", socketMenu);
     connect(unhideAll, &QAction::triggered, [node]{
-        node->unhideAllSockets();
+        for ( SocketWidget* s : node->getSockets() ){
+            s->setUserHidden(false);
+        }
     });
     socketMenu->addAction(unhideAll);
 
     QAction* hideDisconnected = new QAction("Hide Disconnected", socketMenu);
     connect(hideDisconnected, &QAction::triggered, [node](){
-        node->hideDisconnectedSockets();
+        for ( auto s : node->getSockets() ){
+        bool noConnection = ConnectionManager::instance()
+            ->getNumConnectionsMatchingSpec(s->getSpec()) == 0 ;
+        
+        if ( noConnection ){
+            s->setUserHidden(true);
+        }
+    }
     });
     socketMenu->addAction(hideDisconnected);
 
     QAction* hideInternal = new QAction("Hide Internal Connections", socketMenu);
     connect(hideInternal, &QAction::triggered, [node](){
         for ( auto* socket : node->getSockets() ){
-            if ( !ConnectionManager::instance()->hasExternalConnections(socket->getSpec()) ){
-                node->hideSocket(socket);
+            std::set<int> ids ;
+            if ( auto* cNode = dynamic_cast<ComponentNode*>(node) ){
+                ids.insert(cNode->getModel()->getId());
+            } else if ( auto* gNode = dynamic_cast<GroupNode*>(node) ){
+                ids = gNode->getModel()->getComponents();
+            } else continue ;
+
+            if ( !ConnectionManager::instance()->hasExternalConnections(socket->getSpec(), ids) ){
+                socket->setUserHidden(true);
             }
         }
     });
@@ -617,12 +603,14 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
 
     socketMenu->addSeparator();
 
-    for ( auto s : node->getHiddenSockets() ){
-        QAction* showSocket = new QAction("Unhide " + s->getSpec().name(), socketMenu);
-        connect ( showSocket, &QAction::triggered, [node, s]{
-            node->unhideSocket(s);
+    for ( auto s : node->getSockets() ){
+        if ( !s->hasClaims() || !s->userHidden() ) continue ;
+
+        QAction* unhideAction = new QAction("Unhide " + s->getSpec().name(), socketMenu);
+        connect ( unhideAction, &QAction::triggered, [s]{
+            s->setUserHidden(false);
         });
-        socketMenu->addAction(showSocket);
+        socketMenu->addAction(unhideAction);
     }
 
     // MISC ACTIONS
@@ -670,9 +658,9 @@ void GraphPanel::onSocketRightClicked(SocketWidget* socket){
     for ( const auto& c : connections ){
         SocketWidget* w = nullptr ;
         if ( isInbound ){
-             w = findVisibleSocket(c.outbound());
+             w = SocketRegistry::instance()->findSocket(c.outbound());
         } else {
-            w = findVisibleSocket(c.inbound());
+            w = SocketRegistry::instance()->findSocket(c.inbound());
         }
         if ( !w ) continue ;
         GraphNode* n = w->getParent();
@@ -699,7 +687,7 @@ void GraphPanel::onSocketRightClicked(SocketWidget* socket){
 
     QAction* socketHide = new QAction("Hide Socket", &menu);
     connect(socketHide, &QAction::triggered, [socket](){
-        socket->getParent()->hideSocket(socket);
+        socket->setUserHidden(true);
     });
 
     menu.addAction(socketHide);
@@ -741,8 +729,10 @@ void GraphPanel::startRename(GraphNode* node ){
             if ( isNodeNameAvailable(newName, node) ){
                 updateModelName(node, newName);
             } else {
-                ToastNotification::show(scene_, this, 
-                    "Cannot name widget '" + newName + "'. Name is unavailable.");
+                ToastNotification::show(
+                    "Cannot name widget '" + newName + "'. Name is unavailable.", 
+                    viewport()
+                );
             }
         } 
         text->show();
@@ -918,8 +908,8 @@ void GraphPanel::onComponentRemoved(int componentId){
     n->deleteLater();
 }
 
-void GraphPanel::onComponentGroupCreated(GroupModel* model, std::optional<json> deserialized){
-    if ( !model ) return ;
+GroupNode* GraphPanel::onComponentGroupCreated(GroupModel* model){
+    if ( !model ) return nullptr ;
 
     model->setName(QString("Group %1").arg(model->getId()));
     
@@ -934,6 +924,7 @@ void GraphPanel::onComponentGroupCreated(GroupModel* model, std::optional<json> 
     );
 
     // create node
+    SocketRegistry::instance()->startBatch();
     auto gNode =  new GroupNode(model);
     scene_->addItem(gNode);
     nodes_.push_back(gNode);
@@ -943,10 +934,9 @@ void GraphPanel::onComponentGroupCreated(GroupModel* model, std::optional<json> 
     for ( const auto id : model->getComponents() ){
         gNode->addComponent(getComponentNode(id));
     }
+    SocketRegistry::instance()->endBatch();
 
-    if ( deserialized.has_value() ){
-        gNode->deserialize(deserialized.value());
-    }
+    return gNode ;
 }
 
 void GraphPanel::onComponentGroupRemoved(GroupModel* model){
@@ -959,7 +949,6 @@ void GraphPanel::onComponentGroupRemoved(GroupModel* model){
     }
 
     nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), gNode), nodes_.end());
-    gNode->clear();
     scene_->removeItem(gNode);
     gNode->deleteLater();
 }
@@ -1009,7 +998,10 @@ void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
 
 void GraphPanel::onDeletePressed(){
     if ( StateManager::instance()->isRunning() ){
-        ToastNotification::show(scene_, this, "Cannot delete components while the engine is running.");
+        ToastNotification::show(
+            "Cannot delete components while the engine is running.",
+            viewport()
+        );
         return ;
     }
     
@@ -1047,18 +1039,18 @@ void GraphPanel::handleGroupEvent(){
     
     // case 1: no groups selected, create new group
     if ( groupIds.size() == 0 ){
-       emit requestGroupCreate(componentIds);
+       GroupManager::instance()->createGroup(componentIds);
     }
 
     // case 2: one group selected, add into group
     if ( groupIds.size() == 1 ){
-        emit requestGroupUpdate(groupIds[0], componentIds);
+        GroupManager::instance()->updateGroup(groupIds[0], componentIds);
     }
 }
 
 void GraphPanel::handleUngroupEvent(){
     for ( const auto& g : getSelectedGroups() ){
-        emit requestGroupRemove(g->getModel()->getId());
+        GroupManager::instance()->removeGroup(g->getModel()->getId());
     }
 }
 
@@ -1085,84 +1077,6 @@ void GraphPanel::onNodeZUpdate(){
     for ( auto* socket: sockets){
         socket->setZValue(maxZ + 0.8);
     }
-}
-
-ModulationParameter GraphPanel::requestModulationParameter(SocketWidget* socket){
-    ModulationParameter output ; 
-
-    if ( !socket ) return output ;
-    
-    const SocketSpec& spec = socket->getSpec();
-
-    // create user menu
-    QMenu menu ;
-    QAction* header = menu.addAction("Select Parameter");
-    header->setEnabled(false);
-    menu.addSeparator();
-
-    bool multipleIds = spec.componentIds().size() > 1 ;
-    auto createActionName = [&](int id, ParameterType p, bool depth = false){
-        QString name = "";
-        if ( multipleIds ){
-            name = ComponentManager::instance()
-                ->getModel(id)->getName()
-                + ": ";
-        }
-        name = name + QString::fromStdString(
-            std::string(GET_PARAMETER_TRAIT_MEMBER(p, name))
-        );
-        if ( depth ){
-            name = name + " depth" ;
-        }
-        return name ;
-    };
-    
-    bool hasActions = false ;
-    for ( const auto& endpoint : spec.endpoints() ){
-        bool exists = ConnectionManager::instance()
-            ->hasModulationConnections(endpoint);
-        if ( !exists ){
-            int id = endpoint.componentId().value();
-            ParameterType p = endpoint.modulatedParam().value();
-            QAction* param = menu.addAction(createActionName(id, p));
-            connect(
-                param, &QAction::triggered,
-                [&output, endpoint](){
-                    output = {
-                        .endpoint = endpoint
-                    };
-                }
-            );
-            hasActions = true ;
-            continue ;
-        }
-
-        bool depthExists = ConnectionManager::instance()
-            ->hasModulationDepthConnections(endpoint);
-        if ( !depthExists ){
-            int id = endpoint.componentId().value();
-            ParameterType p = endpoint.modulatedParam().value();
-            QAction* param = menu.addAction(createActionName(id, p, true));
-            connect(
-                param, &QAction::triggered,
-                [&output, endpoint](){
-                    output = {
-                        .endpoint = endpoint,
-                        .depth = true 
-                    };
-                }
-            );
-            hasActions = true ;
-        }
-    }
-
-    if ( ! hasActions ){ 
-        ToastNotification::show(scene_, this, "All modulation slots are full.");
-        return output ;
-    }
-
-    menu.exec(QCursor::pos());
-    return output ;
 }
 
 void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){

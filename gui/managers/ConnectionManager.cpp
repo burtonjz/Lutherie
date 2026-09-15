@@ -38,9 +38,7 @@ ConnectionManager::ConnectionManager(QObject* parent):
     );
 }
 
-bool ConnectionManager::hasExternalConnections(const SocketSpec& spec) const {
-    auto ids = spec.componentIds();
-
+bool ConnectionManager::hasExternalConnections(const SocketSpec& spec, const std::set<int>& ids) const {
     auto isExternal = [&](const ConnectionEndpoint& endpoint){
         // peripheral always external
         if ( !endpoint.componentId().has_value() ) return true ; 
@@ -237,7 +235,7 @@ size_t ConnectionManager::getNumConnectionsMatchingSpecs(
 
 void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){
     if ( !req.valid() ){
-        SPDLOG_WARN("Invalid connection request created. Cancelling connection. {}", json(req).dump());
+        SPDLOG_WARN("Invalid connection request created. Cancelling connection. {}", req.toString());
         return ;
     }
 

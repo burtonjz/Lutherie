@@ -113,6 +113,20 @@ bool ConnectionRequest::partialMatch(const ConnectionEndpoint& other) const {
     }
 }
 
+std::string ConnectionRequest::toString() const {
+    json j = *this ;
+    return j.dump();
+}
+
+std::size_t ConnectionRequestHash::operator()(const ConnectionRequest& req) const {
+    EndpointHash endpointHash ;
+
+    std::size_t h = endpointHash(req.outbound());
+    h ^= endpointHash(req.inbound()) << 1 ;
+    h ^= std::hash<bool>()(req.modulatingDepth()) << 1 ;
+    return h ;
+}
+
 ConnectionRequest nlohmann::adl_serializer<ConnectionRequest>::from_json(const json& j){
     if ( !j.contains("inbound") || !j.contains("outbound") ){
         throw std::runtime_error("'inbound' and 'outbound' json objects must be defined.");

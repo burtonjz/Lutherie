@@ -24,7 +24,7 @@
 #include <vector>
 
 ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGraphicsItem* parent): 
-    GraphNode(model->getName(), parent),
+    GraphNode(model->getName(), SocketClaimBehavior::Reactive, parent),
     model_(model)
 {
     scene->addItem(this);

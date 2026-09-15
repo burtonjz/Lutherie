@@ -113,10 +113,9 @@
             "isGroup": false,
             "name": "MIDI Out"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": -924.7076249999991,
       "ypos": -169.92275000000004
     },
@@ -134,10 +133,9 @@
             "isGroup": false,
             "name": "Audio In"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": 620.0999999999999,
       "ypos": -10.650000000000006
     },
@@ -168,7 +166,7 @@
             "isGroup": true,
             "name": "Modulation Inputs"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -179,7 +177,7 @@
             "isGroup": false,
             "name": "MIDI Input 1"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -191,10 +189,9 @@
             "isGroup": false,
             "name": "Audio Output 1"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": 296.8488749999999,
       "ypos": -256.44475
     },
@@ -220,7 +217,7 @@
             "isGroup": true,
             "name": "Modulation Inputs"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -231,7 +228,7 @@
             "isGroup": false,
             "name": "MIDI Input 1"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -242,7 +239,7 @@
             "isGroup": false,
             "name": "Midi Output 1"
           },
-          "visible": true
+          "hidden": false
         },
         {
           "spec": {
@@ -253,10 +250,9 @@
             "isGroup": false,
             "name": "Modulation Output"
           },
-          "visible": true
+          "hidden": false
         }
       ],
-      "visible": true,
       "xpos": -609.6654999999998,
       "ypos": -101.29674999999985
     }

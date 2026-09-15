@@ -27,7 +27,7 @@
 #include "api/ControlApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "config/Config.hpp"
-#include "graphics/ToastNotification.hpp"
+#include "widgets/ToastNotification.hpp"
 #include "app/Theme.hpp"
 #include "widgets/ComponentParameters.hpp"
 #include "platform/AppPaths.hpp"
@@ -50,6 +50,8 @@
 #include <QShortcut>
 
 namespace KDDW   = KDDockWidgets ;
+
+Synth* Synth::current_ = nullptr ;
 
 Synth::Synth(QWidget* parent):
     KDDockWidgets::QtWidgets::MainWindow(
@@ -75,10 +77,13 @@ Synth::Synth(QWidget* parent):
     configureToolBar();
 
     makeExternalConnections();
+
+    current_ = this ;
 }
 
 Synth::~Synth(){
     StreamApiClient::destroy();
+    if ( current_ == this ) current_ = nullptr ;
 }
 
 void Synth::configureMenu(){
@@ -603,7 +608,7 @@ void Synth::onActionLoad(){
     
     QFile file(filePath);
     if ( !file.open(QIODevice::ReadOnly | QIODevice::Text) ) {
-        ToastNotification::show(graph_->scene(), graph_,
+        ToastNotification::show(
             "Filed to open file " + filePath + ": " + file.errorString()
         );
         return;
@@ -616,7 +621,7 @@ void Synth::onActionLoad(){
         saveData_ = json::parse(fileData.data());
         saveFilePath_ = filePath ;
     } catch (std::exception& e ){
-        ToastNotification::show(graph_->scene(), graph_, 
+        ToastNotification::show(
             "Failed to load file " + filePath + ". Invalid json: " + e.what()
         );
         return ;

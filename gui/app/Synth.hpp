@@ -90,9 +90,13 @@ private:
     std::set<ComponentType> visibleType_ ;
     std::vector<QAction*> componentMenuQuickAction_ ;
 
+    static Synth* current_ ;
+
 public:
     Synth(QWidget* parent = nullptr);
     ~Synth();
+
+    static Synth* current() { return current_ ; }
 
 private:
     void configureMenu();

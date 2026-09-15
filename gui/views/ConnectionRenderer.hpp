@@ -20,7 +20,6 @@
 
 #include <QObject>
 #include <QGraphicsScene>
-#include "interfaces/ISocketLookup.hpp"
 #include "graphics/ConnectionCable.hpp"
 #include "graphics/GraphNode.hpp"
 #include "requests/ConnectionRequest.hpp"
@@ -29,18 +28,17 @@ class ConnectionRenderer : public QObject {
     Q_OBJECT
 private:
     QGraphicsScene* scene_ ;
-    ISocketLookup* socketLookup_ ;
 
     // dragging new cable
     ConnectionCable* dragCable_ ;
     SocketWidget* dragFromSocket_ ;
 
     std::vector<ConnectionCable*> cables_ ;
+    std::unordered_map<ConnectionRequest, ConnectionCable*, ConnectionRequestHash> req2Cable_ ;
 
 public:
     explicit ConnectionRenderer(
         QGraphicsScene* scene,
-        ISocketLookup* socketLookup,
         QObject* parent = nullptr 
     );
 
@@ -56,20 +54,23 @@ public:
     const std::vector<ConnectionCable*> getSocketConnections(SocketWidget* socket) const ;
 
 private:
-    ConnectionCable* createCable(
-        SocketWidget* outbound, SocketWidget* inbound, 
-        std::optional<ParameterType> modParam = std::nullopt,
-        bool modDepth = false
-    );
+    struct ModulationParameter {
+        std::optional<ConnectionEndpoint> endpoint = std::nullopt ;
+        bool depth = false ;
+    };
+
+    bool cableHasConnections(ConnectionCable* cable) const ;
+    void setCableVisibility(ConnectionCable* cable);
+
+    ConnectionCable* registerCable(ConnectionCable* candidate);
+    void findOrCreateCable(const ConnectionRequest& req);
     void deleteCable(ConnectionCable* cable);
+    ModulationParameter requestModulationParameter(SocketWidget* socket);
 
 public slots:
-    void onNodePositionChanged(); 
-
-    void onSocketAdded(SocketWidget* socket);
-    void onSocketRemoval(SocketWidget* socket);
-    void onSocketHidden(SocketWidget* socket);
-    void onSocketUnhidden(SocketWidget* socket);
+    void onSocketPositionChanged(SocketWidget* socket); 
+    void onSocketVisibilityChanged(SocketWidget* socket);  
+    void onSocketMappingChanged();
 
     void onConnectionAdded(const ConnectionRequest& req);
     void onConnectionRemoved(const ConnectionRequest& req);

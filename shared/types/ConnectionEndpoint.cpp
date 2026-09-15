@@ -94,6 +94,28 @@ const std::optional<ParameterType>& ConnectionEndpoint::modulatedParam() const {
     return param_ ;
 }
 
+std::string ConnectionEndpoint::toString() const {
+    json j = *this ;
+    return j.dump();
+}
+
+std::size_t EndpointHash::operator()(const ConnectionEndpoint& endpoint) const {
+    std::size_t h = std::hash<SocketType::Value>()(endpoint.socket());
+    
+    const auto& index = endpoint.index();
+    h ^= std::hash<bool>()(index.has_value()) << 1 ;
+    if ( index ) h ^= std::hash<size_t>()(*index) << 1 ;
+
+    const auto& componentId = endpoint.componentId();
+    h ^= std::hash<bool>()(componentId.has_value()) << 1 ;
+    if ( componentId ) h ^= std::hash<int>()(*componentId) << 1 ;
+
+    const auto& param = endpoint.modulatedParam();
+    h ^= std::hash<bool>()(param.has_value()) << 1 ;
+    if ( param ) h ^= std::hash<ParameterType>()(*param) << 1 ;
+    return h ;
+}
+
 ConnectionEndpoint nlohmann::adl_serializer<ConnectionEndpoint>::from_json(const json& j){
     if ( !j.contains("socket") ){
         throw std::runtime_error("socket not present in json");

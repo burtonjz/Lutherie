@@ -18,24 +18,26 @@
 #ifndef GRAPH_PANEL_HPP_
 #define GRAPH_PANEL_HPP_
 
+#include "views/ConnectionRenderer.hpp"
+#include "graphics/GraphNode.hpp"
+#include "graphics/GroupNode.hpp"
+#include "graphics/PeripheralNode.hpp"
+
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QPointer>
 #include <QJsonObject>
 #include <vector>
+#include <nlohmann/json.hpp>
 
-#include "interfaces/ISocketLookup.hpp"
-#include "views/ConnectionRenderer.hpp"
-#include "graphics/GraphNode.hpp"
-#include "graphics/GroupNode.hpp"
-#include "graphics/PeripheralNode.hpp"
+using json = nlohmann::json ;
 
 // forward declaration
 class ComponentNode ; 
 class PostNote ;
 class TextToolbar ;
 
-class GraphPanel : public QGraphicsView, public ISocketLookup {
+class GraphPanel : public QGraphicsView {
     Q_OBJECT
 
 private:
@@ -79,11 +81,11 @@ public:
     std::vector<ComponentNode*> getSelectedComponents() const ;
     std::vector<GroupNode*> getSelectedGroups() const ;
 
-    // ISocketLookup
-    SocketWidget* findVisibleSocket(const SocketSpec& spec) const override ;
-    SocketWidget* findVisibleSocket(const ConnectionEndpoint& endpoint) const override ;
-    SocketWidget* findSocketAt(const QPointF& scenePos) const override ;
-    ModulationParameter requestModulationParameter(SocketWidget* socket) override ;
+    // // ISocketLookup
+    // SocketWidget* findVisibleSocket(const SocketSpec& spec) const override ;
+    // SocketWidget* findVisibleSocket(const ConnectionEndpoint& endpoint) const override ;
+    // SocketWidget* findSocketAt(const QPointF& scenePos) const override ;
+    // ModulationParameter requestModulationParameter(SocketWidget* socket) override ;
 
     void updatePeripheralAudioChannels(size_t numChannels);
 
@@ -136,7 +138,7 @@ public slots:
     void onComponentAdded(int componentId, ComponentType type);
     void onComponentRemoved(int componentId);
 
-    void onComponentGroupCreated(GroupModel* model, std::optional<json> deserialized = std::nullopt);
+    GroupNode* onComponentGroupCreated(GroupModel* model);
     void onComponentGroupRemoved(GroupModel* model);
     void onComponentGroupComponentAdded(GroupModel* model, int newId);
     void onComponentGroupComponentRemoved(GroupModel* model, int removedId);
@@ -144,10 +146,6 @@ public slots:
     void onNodeZUpdate();
 
 signals:
-    void requestGroupCreate(std::vector<int> componentIds, std::optional<json> deserialized = std::nullopt );
-    void requestGroupUpdate(int groupId, std::vector<int> componentIds);
-    void requestGroupRemove(int groupId);
-
     void requestShowParameters(int componentId);
     void requestShowModulation(int componentId);
     void requestShowGroupParameters(int groupId);

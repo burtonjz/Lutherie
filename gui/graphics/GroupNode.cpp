@@ -20,15 +20,11 @@
 #include <spdlog/spdlog.h>
 
 GroupNode::GroupNode(GroupModel* model, QGraphicsItem* parent):
-    GraphNode(model->getName(), parent),
+    GraphNode(model->getName(), SocketClaimBehavior::Override, parent),
     model_(model)
 {}
 
 void GroupNode::clear(){
-    for ( auto* node : children_ ){
-        if ( !node ) continue ;
-        node->show();
-    }
     removeSockets();
 }
 
@@ -36,12 +32,10 @@ void GroupNode::addComponent(ComponentNode* node){
     if ( !node || includes(node) ) return ;
     children_.push_back(node);
     addComponentSockets(node);
-    node->hide();
 }
 
 void GroupNode::removeComponent(ComponentNode* node){
-    if ( !node || includes(node) ) return ;
-    node->show();
+    if ( !node || !includes(node) ) return ;
     children_.erase(std::remove(
         children_.begin(), children_.end(), node
         ), children_.end() 

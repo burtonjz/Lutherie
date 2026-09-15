@@ -18,14 +18,13 @@
 #ifndef TOAST_NOTIFICATION_HPP_
 #define TOAST_NOTIFICATION_HPP_
 
-#include <QObject>
-#include <QGraphicsItem>
+#include <QWidget>
 #include <QTimer>
 #include <QLabel>
 #include <QPropertyAnimation>
 #include <QGraphicsView>
 
-class ToastNotification : public QObject, public QGraphicsItem {
+class ToastNotification : public QWidget {
     Q_OBJECT
     Q_PROPERTY(float toastOpacity READ toastOpacity WRITE setToastOpacity)
 
@@ -37,18 +36,18 @@ private:
     int height_ ;
 
 public:
-    static void show(QGraphicsScene* scene, QGraphicsView* view, const QString& message);
+    static void show(const QString& message, QWidget* parent = nullptr);
 
     float toastOpacity() const ;
     void setToastOpacity(float o);
 
-    QRectF boundingRect() const override ;
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) override ;
-    
-private:
-    ToastNotification(const QString& message);
+protected:
+    void paintEvent(QPaintEvent*) override ;
 
-    void reposition(QGraphicsView* view);
+private:
+    ToastNotification(QWidget* parent, const QString& message);
+
+    void reposition(QWidget* parent);
     void popup();
 
 };

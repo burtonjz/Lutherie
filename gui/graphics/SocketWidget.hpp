@@ -30,6 +30,11 @@ using json = nlohmann::json ;
 
 class GraphNode ; // forward declaration
 
+enum class SocketClaimBehavior {
+    Override, // claim when registered, doesn't track mapping changes
+    Reactive  // watch for mapping events, only claim if at least one matching endpoint is available to claiming
+};
+
 class SocketWidget : public QGraphicsObject {
     Q_OBJECT
 
@@ -37,10 +42,12 @@ private:
     SocketSpec spec_ ;
     GraphNode* parent_ ;
     bool isHovered_ = false ;
-    QColor getSocketColor(bool isHovered) const ;
-
+    bool hasClaims_ = false ; // hide based on not being an "active" socket (see SocketRegistry)
+    bool userHidden_ = false ; // hide based on user action
+    
 public:
-    SocketWidget(SocketSpec spec, GraphNode* parent = nullptr);
+    SocketWidget(SocketSpec spec, SocketClaimBehavior claimBehavior, GraphNode* parent = nullptr);
+    ~SocketWidget();
 
     enum { Type = UserType + 2 };
     int type() const override { return Type; }
@@ -48,12 +55,20 @@ public:
     // QGraphicsItem interface
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override ;
-
+    QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ;
+    
     // Getters/Setters
     const SocketSpec& getSpec() const { return spec_ ; }
     GraphNode* getParent() const { return parent_ ; }
+
     bool isHovered() const ;
     void setHovered(bool hovered);
+
+    bool hasClaims() const ;
+    void setHasClaims(bool b);
+
+    bool userHidden() const ;
+    void setUserHidden(bool hidden);
 
     bool isInbound() const ;
     bool isOutbound() const ;
@@ -62,6 +77,20 @@ public:
 
     json serialize() const ;
     void deserialize(const json& msg);
+
+private:
+    using QGraphicsObject::setVisible ; // remove public access
+
+    QColor getSocketColor(bool isHovered) const ;
+
+public slots:
+    void onMappingChanged();
+
+signals:
+    void claimStatusChanged();
+    void positionChanged(SocketWidget* socket);
+    void visibilityChanged(SocketWidget* socket);
+
 };
 
 

@@ -35,6 +35,7 @@ class GraphNode :  public QGraphicsObject {
     Q_OBJECT
 
 private:
+    SocketClaimBehavior claimBehavior_ ;
     bool isDragging_ = false ;
     QPointF dragStartPos_ ;
     QString name_ ;
@@ -50,7 +51,11 @@ protected:
     QGraphicsTextItem* titleText_ ;
 
 public:
-    explicit GraphNode(QString name, QGraphicsItem* parent = nullptr);
+    explicit GraphNode(
+        QString name, 
+        SocketClaimBehavior claimBehavior, // = SocketClaimBehavior::Reactive,
+        QGraphicsItem* parent = nullptr
+    );
     virtual ~GraphNode();
 
     enum { Type = UserType + 1 };
@@ -77,14 +82,7 @@ public:
 
     void hide();
     void show();
-
-    std::vector<SocketWidget*> getHiddenSockets() const ;
-    void unhideSocket(SocketWidget* socket);
-    void unhideAllSockets();
-    void hideSocket(SocketWidget* socket);
-    void hideDisconnectedSockets();
-    void hideInternalConnections(GraphNode* node);
-
+    
     virtual json serialize() const ;
     virtual void deserialize(const json& node);
 
@@ -92,6 +90,7 @@ protected:
     // Graphics overrides
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
+    SocketWidget* createSocket(const SocketSpec& spec);
     void layoutSockets();
     void reorderSockets();
     void positionSockets(QPointF newPos); 
@@ -100,17 +99,13 @@ public slots:
     void onRename(QString name);
     void removeSockets();
     void removeSocket(SocketWidget* socket);
+    void socketClaimStatusChanged();
 
 signals:
-    void positionChanged();
     void needsZUpdate();
-
-    void socketAdded(SocketWidget* socket);
-    void removingSocket(SocketWidget* socket);
-    void socketHidden(SocketWidget* socket);
-    void socketUnhidden(SocketWidget* socket);
+    void socketPositionChanged(SocketWidget* socket);
+    void socketVisibilityChanged(SocketWidget* socket);
     
-
 };
 
 #endif // GRAPH_NODE_HPP_
