@@ -47,18 +47,6 @@ public:
     bool hasModulationConnections(const ConnectionEndpoint& endpoint) const ;
     bool hasModulationDepthConnections(const ConnectionEndpoint& endpoint) const ;
 
-    Connections getConnectionsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
-    size_t getNumConnectionsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
-    
-    Connections getConnectionsMatchingEndpoints(
-        const ConnectionEndpoint& outbound,
-        const ConnectionEndpoint& inbound
-    ) const ;
-    size_t getNumConnectionsMatchingEndpoints(
-        const ConnectionEndpoint& outbound,
-        const ConnectionEndpoint& inbound
-    ) const ;
-
     Connections getConnectionsMatchingSpec(const SocketSpec& spec) const ;
     size_t getNumConnectionsMatchingSpec(const SocketSpec& spec) const ;
 
@@ -70,9 +58,12 @@ public:
         const SocketSpec& outbound, 
         const SocketSpec& inbound
     ) const ;
+    bool specsHaveEquivalentConnections(
+        const SocketSpec& first, 
+        const SocketSpec& second
+    ) const ;
     
-
-
+    // lookups
     void requestConnectionEvent(
         const ConnectionRequest& req
     );

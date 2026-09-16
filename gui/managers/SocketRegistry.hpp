@@ -28,18 +28,20 @@
 // forward declarations
 class SocketWidget ;
 class GraphNode ;
-
+using SocketPriority = size_t ;
 class SocketRegistry : public QObject {
     Q_OBJECT
 
 private:
-    std::unordered_set<SocketWidget*> registeredSockets_ ;
+
+    std::unordered_set<SocketWidget*> registered_ ;
+    std::map<size_t, std::unordered_set<SocketWidget*>, std::greater<>> registeredByPriority_ ;
 
     std::unordered_map<ConnectionEndpoint, SocketWidget*, EndpointHash> endpoint2Socket_ ;
     std::unordered_map<SocketWidget*, std::unordered_set<ConnectionEndpoint, EndpointHash>> socket2Endpoints_ ;
 
     size_t batchDepth_ = 0 ;
-    bool batchDirty_ = false ;
+    bool dirty_ = false ;
 
     explicit SocketRegistry(QObject* parent = nullptr);
 
@@ -59,23 +61,11 @@ public:
     // get sockets claiming the specified endpoint
     SocketWidget* findSocket(const ConnectionEndpoint& endpoint) const ;
 
-    // get socket at a particular location on the scene
+    // get visible socket at a particular location on the scene
     SocketWidget* findSocketAt(const QPointF& scenePos) const ;
 
-    // Registration
-    void registerSocket(SocketWidget* socket);
+    void registerSocket(SocketWidget* socket, SocketPriority priority);
     void unregisterSocket(SocketWidget* socket);
-
-    void registerNodeSockets(GraphNode* node);
-    void unregisterNodeSockets(GraphNode* node);
-
-    /**
-     * @brief request for the socket to be representative of all its endpoints
-     * returns false if claim fails 
-     */
-    bool claim(SocketWidget* socket);
-    void release(std::span<const ConnectionEndpoint> endpoints);
-    bool isClaimed(const ConnectionEndpoint& endpoint) const ;
 
     // batching -- hold signals until sets of events (e.g., grouping, deserialization, etc)
     // are fully complete
@@ -83,13 +73,21 @@ public:
     void endBatch();
     bool isBatching() const ;
 
-    /**
-     * @brief after a batch, check for a bad state 
-     * 
-     * @return endpoints associated with bad state
-     */
-    std::set<ConnectionEndpoint> validateInvariants() const ;
+private:
+    bool isClaimed(const ConnectionEndpoint& endpoint) const ;
+    bool evaluateSocketClaims(SocketWidget* socket) const ;
+    
+    bool claim(SocketWidget* socket);
+    void release(SocketWidget* socket);
 
+    void runClaimLoop();
+
+    static constexpr size_t maxIterations = 100 ;
+
+#ifdef DEBUG_BUILD
+    void validate() const ;
+#endif
+    
 signals:
     void socketMappingChanged();
 

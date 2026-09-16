@@ -18,7 +18,6 @@
 #ifndef SOCKET_SPEC_HPP_
 #define SOCKET_SPEC_HPP_
 
-#include <variant>
 #include <vector>
 #include <set>
 #include <nlohmann/json.hpp>
@@ -29,28 +28,21 @@
 #include "types/SocketType.hpp"
 
 using json = nlohmann::json ;
-using EndpointGroup = std::vector<ConnectionEndpoint>;
 
 class SocketSpec {
 private:
-    using DataVariant = std::variant<ConnectionEndpoint,EndpointGroup>;
-    QString name_ = "" ;
-    DataVariant data_ ;
+    std::vector<ConnectionEndpoint> data_ ;
+    QString name_ ;
 
 public:
-    enum RemoveResult { Removed, RequiresDispersal, NotFound };
-
-    SocketSpec(const QString& name, ConnectionEndpoint endpoint);
-    SocketSpec(const QString& name, std::vector<ConnectionEndpoint> points);
+    SocketSpec(ConnectionEndpoint endpoint);
+    SocketSpec(std::vector<ConnectionEndpoint> points);
 
     bool operator<=>(const SocketSpec& other) const = default ;
 
     SocketType type() const ;
-
-    const QString& name() const ;
-    void setName(const QString& name);
-
-    bool isGroup() const ;
+    
+    size_t numEndpoints() const ;
     std::span<const ConnectionEndpoint> endpoints() const ;
 
     std::set<int> componentIds() const ;
@@ -60,10 +52,14 @@ public:
     bool includes(const ConnectionEndpoint& endpoint) const ;
 
     void add(const ConnectionEndpoint& endpoint);
-    RemoveResult remove(const ConnectionEndpoint& endpoint);
+    bool remove(const ConnectionEndpoint& endpoint);
 
-private:
-    DataVariant initializeData(EndpointGroup points) const ;
+    bool mergeWith(const SocketSpec& other);
+
+    QString name() const ;
+    void updateName();
+
+    std::string toString() const ;
 
 };
 

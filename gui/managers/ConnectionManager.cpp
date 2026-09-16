@@ -83,70 +83,6 @@ bool ConnectionManager::hasModulationDepthConnections(
     return false ;
 }
 
-Connections ConnectionManager::getConnectionsMatchingEndpoint(
-    const ConnectionEndpoint& endpoint
-) const {
-    Connections requests ;
-    for ( const auto& c : connections_ ){
-        if ( c.partialMatch(endpoint) ) requests.push_back(c);
-    }
-    return requests ;
-}
-
-size_t ConnectionManager::getNumConnectionsMatchingEndpoint(
-    const ConnectionEndpoint& endpoint
-) const {
-    size_t count = 0 ;
-    for ( const auto& c : connections_ ){
-        if ( c.partialMatch(endpoint) ) ++count ;
-    }
-    return count ;
-}   
-
-Connections ConnectionManager::getConnectionsMatchingEndpoints(
-    const ConnectionEndpoint& outbound, 
-    const ConnectionEndpoint& inbound
-) const {
-    Connections requests ;
-
-    if ( outbound.socket().isInbound() ){
-        SPDLOG_WARN("match function recieved inbound endpoint as outbound argument.");
-        return requests ;
-    }
-
-    if ( !inbound.socket().isInbound() ){
-        SPDLOG_WARN("match function recieved outbound endpoint as inbound argument.");
-        return requests ;
-    }
-
-    for ( const auto& c : connections_ ){
-        if ( c.inbound() == inbound && c.outbound() == outbound ) requests.push_back(c);
-    }
-    return requests ;
-}
-
-size_t ConnectionManager::getNumConnectionsMatchingEndpoints(
-    const ConnectionEndpoint& outbound,
-    const ConnectionEndpoint& inbound
-) const {
-    size_t count = 0 ;
-
-    if ( outbound.socket().isInbound() ){
-        SPDLOG_WARN("match function recieved inbound endpoint as outbound argument.");
-        return 0 ;
-    }
-
-    if ( !inbound.socket().isInbound() ){
-        SPDLOG_WARN("match function recieved outbound endpoint as inbound argument.");
-        return 0 ;
-    }
-
-    for ( const auto& c : connections_ ){
-        if ( c.inbound() == inbound && c.outbound() == outbound ) ++count ;
-    }
-    return count ;
-}   
-
 Connections ConnectionManager::getConnectionsMatchingSpec(
     const SocketSpec& spec
 ) const {
@@ -231,6 +167,36 @@ size_t ConnectionManager::getNumConnectionsMatchingSpecs(
         if ( matches() ) ++count ;
     }
     return count ;
+}
+
+bool ConnectionManager::specsHaveEquivalentConnections(
+    const SocketSpec& first, 
+    const SocketSpec& second
+) const {
+    if ( first.type() != second.type() ){
+        SPDLOG_WARN("two specs of differing types cannot have matching specs.");
+        return false ;
+    }
+
+    bool inbound = first.type().isInbound();
+
+    auto connections1 = getConnectionsMatchingSpec(first);
+    auto connections2 = getConnectionsMatchingSpec(second);
+
+    if ( connections1.size() != connections2.size() ) return false ;
+
+    for ( const auto& c1 : connections1 ){
+        const ConnectionEndpoint& other = inbound ? c1.outbound() : c1.inbound() ;
+        bool found = false ;
+        for ( const auto& c2 : connections2 ){
+            if ( c2.partialMatch(other) ){
+                found = true ;
+                break ;
+            }
+        }
+        if ( !found ) return false ;
+    }
+    return true ;
 }
 
 void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){

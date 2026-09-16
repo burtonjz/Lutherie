@@ -2,10 +2,83 @@
   "components": [
     {
       "id": 19,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.3937007784843445,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 18,
+      "name": "Spectrum Analyzer"
+    },
+    {
+      "id": 17,
+      "name": "Oscilloscope"
+    },
+    {
+      "id": 16,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.4803149700164795,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 15,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.6377952694892883,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 14,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.3937007784843445,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 13,
+      "name": "Multiply",
+      "parameters": {
+        "scalar": {
+          "currentValue": 0.23622047901153564,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": true
+        }
+      }
+    },
+    {
+      "id": 0,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": -1200.0,
@@ -31,11 +104,11 @@
       }
     },
     {
-      "id": 18,
+      "id": 1,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 0.0,
@@ -61,11 +134,11 @@
       }
     },
     {
-      "id": 17,
+      "id": 2,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 1200.0,
@@ -91,11 +164,11 @@
       }
     },
     {
-      "id": 16,
+      "id": 3,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 1901.9550008653873,
@@ -121,11 +194,11 @@
       }
     },
     {
-      "id": 15,
+      "id": 4,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 2400.0,
@@ -151,11 +224,11 @@
       }
     },
     {
-      "id": 14,
+      "id": 5,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 2786.3137138648344,
@@ -181,11 +254,11 @@
       }
     },
     {
-      "id": 13,
+      "id": 6,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 3101.9550008653873,
@@ -211,11 +284,11 @@
       }
     },
     {
-      "id": 0,
+      "id": 7,
       "name": "Polyphonic Oscillator",
       "parameters": {
         "amplitude": {
-          "modulatorId": 1
+          "modulatorId": 8
         },
         "detune": {
           "currentValue": 3368.825906469125,
@@ -241,7 +314,7 @@
       }
     },
     {
-      "id": 1,
+      "id": 8,
       "name": "ADSR Envelope",
       "parameters": {
         "attack": {
@@ -282,7 +355,7 @@
       }
     },
     {
-      "id": 2,
+      "id": 9,
       "name": "Multiply",
       "parameters": {
         "scalar": {
@@ -295,7 +368,7 @@
       }
     },
     {
-      "id": 3,
+      "id": 10,
       "name": "Multiply",
       "parameters": {
         "scalar": {
@@ -308,7 +381,7 @@
       }
     },
     {
-      "id": 4,
+      "id": 11,
       "name": "Multiply",
       "parameters": {
         "scalar": {
@@ -321,84 +394,11 @@
       }
     },
     {
-      "id": 5,
-      "name": "Multiply",
-      "parameters": {
-        "scalar": {
-          "currentValue": 0.32283464074134827,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": true
-        }
-      }
-    },
-    {
-      "id": 6,
-      "name": "Multiply",
-      "parameters": {
-        "scalar": {
-          "currentValue": 0.23622047901153564,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": true
-        }
-      }
-    },
-    {
-      "id": 7,
-      "name": "Multiply",
-      "parameters": {
-        "scalar": {
-          "currentValue": 0.3937007784843445,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": true
-        }
-      }
-    },
-    {
-      "id": 8,
-      "name": "Multiply",
-      "parameters": {
-        "scalar": {
-          "currentValue": 0.6377952694892883,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": true
-        }
-      }
-    },
-    {
-      "id": 9,
-      "name": "Multiply",
-      "parameters": {
-        "scalar": {
-          "currentValue": 0.4803149700164795,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": true
-        }
-      }
-    },
-    {
-      "id": 10,
-      "name": "Oscilloscope"
-    },
-    {
-      "id": 11,
-      "name": "Spectrum Analyzer"
-    },
-    {
       "id": 12,
       "name": "Multiply",
       "parameters": {
         "scalar": {
-          "currentValue": 0.3937007784843445,
+          "currentValue": 0.32283464074134827,
           "defaultValue": 1.0,
           "maximumValue": 1.0,
           "minimumValue": 0.0,
@@ -416,193 +416,102 @@
         "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 1,
+        "componentId": 8,
         "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 13,
+        "componentId": 1,
         "parameter": "amplitude",
         "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 1,
+        "componentId": 8,
         "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 14,
-        "parameter": "amplitude",
-        "socket": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 15,
-        "parameter": "amplitude",
-        "socket": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 16,
-        "parameter": "amplitude",
-        "socket": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 17,
-        "parameter": "amplitude",
-        "socket": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 18,
-        "parameter": "amplitude",
-        "socket": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 19,
-        "parameter": "amplitude",
-        "socket": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 0,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 12,
-        "index": 0,
-        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 2,
-        "index": 0,
-        "socket": "Signal Inbound"
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 19,
-        "index": 0,
-        "socket": "Signal Outbound"
+        "componentId": 8,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 3,
-        "index": 0,
-        "socket": "Signal Inbound"
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 18,
-        "index": 0,
-        "socket": "Signal Outbound"
+        "componentId": 8,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 4,
-        "index": 0,
-        "socket": "Signal Inbound"
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 17,
-        "index": 0,
-        "socket": "Signal Outbound"
+        "componentId": 8,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 5,
-        "index": 0,
-        "socket": "Signal Inbound"
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 16,
-        "index": 0,
-        "socket": "Signal Outbound"
+        "componentId": 8,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 6,
-        "index": 0,
-        "socket": "Signal Inbound"
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 15,
-        "index": 0,
-        "socket": "Signal Outbound"
+        "componentId": 8,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 7,
-        "index": 0,
-        "socket": "Signal Inbound"
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 14,
-        "index": 0,
-        "socket": "Signal Outbound"
+        "componentId": 8,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 8,
         "index": 0,
         "socket": "Signal Inbound"
       },
       "outbound": {
-        "componentId": 13,
+        "componentId": 19,
         "index": 0,
         "socket": "Signal Outbound"
       }
@@ -628,7 +537,7 @@
         "socket": "Signal Inbound"
       },
       "outbound": {
-        "componentId": 12,
+        "componentId": 1,
         "index": 0,
         "socket": "Signal Outbound"
       }
@@ -637,19 +546,6 @@
       "action": "create_connection",
       "inbound": {
         "componentId": 11,
-        "index": 0,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 12,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 12,
         "index": 0,
         "socket": "Signal Inbound"
       },
@@ -675,7 +571,7 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 12,
+        "componentId": 13,
         "index": 0,
         "socket": "Signal Inbound"
       },
@@ -688,7 +584,7 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 12,
+        "componentId": 14,
         "index": 0,
         "socket": "Signal Inbound"
       },
@@ -701,7 +597,7 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 12,
+        "componentId": 15,
         "index": 0,
         "socket": "Signal Inbound"
       },
@@ -714,7 +610,7 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 12,
+        "componentId": 16,
         "index": 0,
         "socket": "Signal Inbound"
       },
@@ -727,12 +623,12 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 12,
+        "componentId": 17,
         "index": 0,
         "socket": "Signal Inbound"
       },
       "outbound": {
-        "componentId": 8,
+        "componentId": 19,
         "index": 0,
         "socket": "Signal Outbound"
       }
@@ -740,7 +636,20 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 12,
+        "componentId": 18,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
         "index": 0,
         "socket": "Signal Inbound"
       },
@@ -753,98 +662,189 @@
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 0,
-        "socket": "MIDI Inbound"
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
       },
       "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 1,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 13,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 14,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 15,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 16,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 17,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "componentId": 18,
-        "socket": "MIDI Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "socket": "MIDI Outbound"
+        "componentId": 10,
+        "index": 0,
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 11,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 12,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 13,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 14,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 15,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 19,
+        "index": 0,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 16,
+        "index": 0,
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 0,
         "socket": "MIDI Inbound"
       },
       "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
         "componentId": 1,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 2,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 3,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 4,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 5,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 6,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 7,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
+        "componentId": 8,
+        "socket": "MIDI Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 8,
+        "socket": "MIDI Inbound"
+      },
+      "outbound": {
         "socket": "MIDI Outbound"
       }
     }
@@ -852,63 +852,63 @@
   "midi_controls": [
     {
       "action": "set_midi_control",
-      "componentId": 2,
+      "componentId": 9,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 41
     },
     {
       "action": "set_midi_control",
-      "componentId": 3,
+      "componentId": 10,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 42
     },
     {
       "action": "set_midi_control",
-      "componentId": 4,
+      "componentId": 11,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 43
     },
     {
       "action": "set_midi_control",
-      "componentId": 5,
+      "componentId": 12,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 44
     },
     {
       "action": "set_midi_control",
-      "componentId": 6,
+      "componentId": 13,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 45
     },
     {
       "action": "set_midi_control",
-      "componentId": 7,
+      "componentId": 14,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 46
     },
     {
       "action": "set_midi_control",
-      "componentId": 8,
+      "componentId": 15,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 47
     },
     {
       "action": "set_midi_control",
-      "componentId": 9,
+      "componentId": 16,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 48
     },
     {
       "action": "set_midi_control",
-      "componentId": 12,
+      "componentId": 19,
       "control_type": "continuous",
       "parameter": "scalar",
       "value": 49
@@ -923,11 +923,11 @@
         {
           "hidden": false,
           "spec": {
-            "endpoint": {
-              "socket": "MIDI Outbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Out"
+            "endpoints": [
+              {
+                "socket": "MIDI Outbound"
+              }
+            ]
           }
         }
       ],
@@ -942,12 +942,23 @@
         {
           "hidden": false,
           "spec": {
-            "endpoint": {
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio In"
+            "endpoints": [
+              {
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "index": 1,
+                "socket": "Signal Inbound"
+              }
+            ]
           }
         }
       ],
@@ -956,916 +967,6 @@
     },
     {
       "componentId": 0,
-      "name": "7th Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 0,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 0,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 0,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 0,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 0,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 78.69156899810957,
-      "ypos": -613.5682561436669
-    },
-    {
-      "componentId": 1,
-      "name": "ADSR Envelope",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 1,
-                "parameter": "attack",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 1,
-                "parameter": "decay",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 1,
-                "parameter": "sustain",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 1,
-                "parameter": "release",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 1,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 1,
-              "socket": "MIDI Outbound"
-            },
-            "isGroup": false,
-            "name": "Midi Output 1"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 1,
-              "socket": "Modulation Outbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Output"
-          }
-        }
-      ],
-      "xpos": -514.6208518656639,
-      "ypos": 28.364535710312225
-    },
-    {
-      "componentId": 2,
-      "name": "Base Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 2,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 2,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 2,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 287.2821470906248,
-      "ypos": -1415.1305764093745
-    },
-    {
-      "componentId": 3,
-      "name": "1st Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 3,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 3,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 3,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 289.98797713124986,
-      "ypos": -1298.9623557734367
-    },
-    {
-      "componentId": 4,
-      "name": "2nd Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 4,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 4,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 4,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 278.22208346691366,
-      "ypos": -1188.3486360880459
-    },
-    {
-      "componentId": 5,
-      "name": "3rd Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 5,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 5,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 5,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 283.5120834669137,
-      "ypos": -1074.613636088046
-    },
-    {
-      "componentId": 6,
-      "name": "4th Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 6,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 6,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 6,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 269.1629584669137,
-      "ypos": -946.992386088046
-    },
-    {
-      "componentId": 7,
-      "name": "5th Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 7,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 7,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 7,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 284.83458346691367,
-      "ypos": -835.2411360880461
-    },
-    {
-      "componentId": 8,
-      "name": "6th Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 8,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 8,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 8,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 284.8345834669138,
-      "ypos": -721.5061360880462
-    },
-    {
-      "componentId": 9,
-      "name": "7th Oscillator Gain",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 9,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 9,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 9,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 284.62212721015607,
-      "ypos": -601.1644929859372
-    },
-    {
-      "componentId": 10,
-      "name": "Oscilloscope",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 10,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        }
-      ],
-      "xpos": 644.9067705874606,
-      "ypos": 28.004577475937253
-    },
-    {
-      "componentId": 11,
-      "name": "Spectrum Analyzer",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 11,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        }
-      ],
-      "xpos": 642.3038744780856,
-      "ypos": -97.7140485396875
-    },
-    {
-      "componentId": 12,
-      "name": "Master Volume",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 12,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 12,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 12,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 328.73070374996087,
-      "ypos": -76.07557850921864
-    },
-    {
-      "componentId": 13,
-      "name": "6th Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 13,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 13,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 13,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 13,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 13,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 73.88749999999993,
-      "ypos": -728.6399999999998
-    },
-    {
-      "componentId": 14,
-      "name": "5th Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 14,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 14,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 14,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 14,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 14,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 71.91999999999996,
-      "ypos": -843.3624999999996
-    },
-    {
-      "componentId": 15,
-      "name": "4th Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 15,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 15,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 15,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 15,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 15,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 71.96174999999994,
-      "ypos": -953.2789999999998
-    },
-    {
-      "componentId": 16,
-      "name": "3rd Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 16,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 16,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 16,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 16,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 16,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 70.74712499999995,
-      "ypos": -1065.3114999999998
-    },
-    {
-      "componentId": 17,
-      "name": "2nd Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 17,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 17,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 17,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 17,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 17,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 67.91999999999996,
-      "ypos": -1182.3624999999997
-    },
-    {
-      "componentId": 18,
-      "name": "1st Harmonic Oscillator",
-      "node_type": "ComponentNode",
-      "sockets": [
-        {
-          "hidden": true,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 18,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 18,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 18,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 18,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 18,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
-          }
-        }
-      ],
-      "xpos": 68.91999999999996,
-      "ypos": -1301.3624999999997
-    },
-    {
-      "componentId": 19,
       "name": "Base Oscillator",
       "node_type": "ComponentNode",
       "sockets": [
@@ -1874,46 +975,44 @@
           "spec": {
             "endpoints": [
               {
-                "componentId": 19,
+                "componentId": 0,
                 "parameter": "amplitude",
                 "socket": "Modulation Inbound"
               },
               {
-                "componentId": 19,
+                "componentId": 0,
                 "parameter": "frequency",
                 "socket": "Modulation Inbound"
               },
               {
-                "componentId": 19,
+                "componentId": 0,
                 "parameter": "phase",
                 "socket": "Modulation Inbound"
               }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs"
+            ]
           }
         },
         {
-          "hidden": true,
+          "hidden": false,
           "spec": {
-            "endpoint": {
-              "componentId": 19,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1"
+            "endpoints": [
+              {
+                "componentId": 0,
+                "socket": "MIDI Inbound"
+              }
+            ]
           }
         },
         {
-          "hidden": true,
+          "hidden": false,
           "spec": {
-            "endpoint": {
-              "componentId": 19,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1"
+            "endpoints": [
+              {
+                "componentId": 0,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
           }
         }
       ],
@@ -1921,25 +1020,919 @@
       "ypos": -1418.3624999999997
     },
     {
+      "componentId": 1,
+      "name": "1st Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 68.91999999999996,
+      "ypos": -1301.3624999999997
+    },
+    {
+      "componentId": 2,
+      "name": "2nd Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 67.91999999999996,
+      "ypos": -1182.3624999999997
+    },
+    {
+      "componentId": 3,
+      "name": "3rd Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 70.74712499999995,
+      "ypos": -1065.3114999999998
+    },
+    {
+      "componentId": 4,
+      "name": "4th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 71.96174999999994,
+      "ypos": -953.2789999999998
+    },
+    {
+      "componentId": 5,
+      "name": "5th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 71.91999999999996,
+      "ypos": -843.3624999999996
+    },
+    {
+      "componentId": 6,
+      "name": "6th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 73.88749999999993,
+      "ypos": -728.6399999999998
+    },
+    {
+      "componentId": 7,
+      "name": "7th Harmonic Oscillator",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 78.69156899810957,
+      "ypos": -613.5682561436669
+    },
+    {
+      "componentId": 8,
+      "name": "ADSR Envelope",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 8,
+                "parameter": "attack",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 8,
+                "parameter": "decay",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 8,
+                "parameter": "sustain",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 8,
+                "parameter": "release",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 8,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 8,
+                "socket": "MIDI Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 8,
+                "socket": "Modulation Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -514.6208518656639,
+      "ypos": 28.364535710312225
+    },
+    {
+      "componentId": 9,
+      "name": "Base Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 287.2821470906248,
+      "ypos": -1415.1305764093745
+    },
+    {
+      "componentId": 10,
+      "name": "1st Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 10,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 10,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 10,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 289.98797713124986,
+      "ypos": -1298.9623557734367
+    },
+    {
+      "componentId": 11,
+      "name": "2nd Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 11,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 11,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 11,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 278.22208346691366,
+      "ypos": -1188.3486360880459
+    },
+    {
+      "componentId": 12,
+      "name": "3rd Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 12,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 12,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 12,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 283.5120834669137,
+      "ypos": -1074.613636088046
+    },
+    {
+      "componentId": 13,
+      "name": "4th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 13,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 13,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 13,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 269.1629584669137,
+      "ypos": -946.992386088046
+    },
+    {
+      "componentId": 14,
+      "name": "5th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 14,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 14,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 14,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 284.83458346691367,
+      "ypos": -835.2411360880461
+    },
+    {
+      "componentId": 15,
+      "name": "6th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 15,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 15,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 15,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 284.8345834669138,
+      "ypos": -721.5061360880462
+    },
+    {
+      "componentId": 16,
+      "name": "7th Oscillator Gain",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 16,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 16,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 16,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 284.62212721015607,
+      "ypos": -601.1644929859372
+    },
+    {
+      "componentId": 17,
+      "name": "Oscilloscope",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 17,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 644.9067705874606,
+      "ypos": 28.004577475937253
+    },
+    {
+      "componentId": 18,
+      "name": "Spectrum Analyzer",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 18,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 642.3038744780856,
+      "ypos": -97.7140485396875
+    },
+    {
+      "componentId": 19,
+      "name": "Master Volume",
+      "node_type": "ComponentNode",
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 19,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 19,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 19,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 328.73070374996087,
+      "ypos": -76.07557850921864
+    },
+    {
       "componentIds": [
         0,
+        1,
         2,
         3,
         4,
         5,
         6,
         7,
-        8,
         9,
+        10,
+        11,
+        12,
         13,
         14,
         15,
-        16,
-        17,
-        18,
-        19
+        16
       ],
-      "groupId": 0,
+      "groupId": 1,
       "name": "Additive Synth",
       "node_type": "GroupNode",
       "sockets": [
@@ -1962,508 +1955,455 @@
                 "parameter": "phase",
                 "socket": "Modulation Inbound"
               }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (7th Harmonic Oscillator)"
+            ]
           }
         },
         {
           "hidden": false,
           "spec": {
-            "endpoint": {
-              "componentId": 0,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (7th Harmonic Oscillator)"
+            "endpoints": [
+              {
+                "componentId": 0,
+                "socket": "MIDI Inbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
           "spec": {
-            "endpoint": {
-              "componentId": 0,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (7th Harmonic Oscillator)"
+            "endpoints": [
+              {
+                "componentId": 0,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
           "spec": {
-            "endpoint": {
-              "componentId": 2,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (Base Oscillator Gain)"
+            "endpoints": [
+              {
+                "componentId": 1,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
           "spec": {
-            "endpoint": {
-              "componentId": 2,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (Base Oscillator Gain)"
+            "endpoints": [
+              {
+                "componentId": 2,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
           }
         },
         {
           "hidden": false,
           "spec": {
-            "endpoint": {
-              "componentId": 2,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (Base Oscillator Gain)"
+            "endpoints": [
+              {
+                "componentId": 9,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
           "spec": {
-            "endpoint": {
-              "componentId": 3,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (1st Oscillator Gain)"
+            "endpoints": [
+              {
+                "componentId": 10,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
           "spec": {
-            "endpoint": {
-              "componentId": 3,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (1st Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 3,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (1st Oscillator Gain)"
+            "endpoints": [
+              {
+                "componentId": 11,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
           "spec": {
-            "endpoint": {
-              "componentId": 4,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (2nd Oscillator Gain)"
+            "endpoints": [
+              {
+                "componentId": 12,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
           }
         },
         {
           "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 4,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (2nd Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 4,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (2nd Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 5,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (3rd Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 5,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (3rd Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 5,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (3rd Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 6,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (4th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 6,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (4th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 6,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (4th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 7,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (5th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 7,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (5th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 7,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (5th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 8,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (6th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 8,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (6th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 8,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (6th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 9,
-              "parameter": "scalar",
-              "socket": "Modulation Inbound"
-            },
-            "isGroup": false,
-            "name": "Modulation Inputs (7th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 9,
-              "index": 0,
-              "socket": "Signal Inbound"
-            },
-            "isGroup": false,
-            "name": "Audio Input 1 (7th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 9,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (7th Oscillator Gain)"
-          }
-        },
-        {
-          "hidden": false,
           "spec": {
             "endpoints": [
               {
                 "componentId": 13,
-                "parameter": "amplitude",
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 14,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 15,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 16,
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": true,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 10,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 11,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 12,
+                "parameter": "scalar",
                 "socket": "Modulation Inbound"
               },
               {
                 "componentId": 13,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 14,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 15,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 16,
+                "parameter": "scalar",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 0,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 0,
                 "parameter": "frequency",
                 "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 0,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 9,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 10,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 11,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 12,
+                "index": 0,
+                "socket": "Signal Outbound"
               },
               {
                 "componentId": 13,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (6th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 13,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (6th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 13,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (6th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 14,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
+                "index": 0,
+                "socket": "Signal Outbound"
               },
               {
                 "componentId": 14,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 14,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (5th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 14,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (5th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 14,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (5th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 15,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
+                "index": 0,
+                "socket": "Signal Outbound"
               },
               {
                 "componentId": 15,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 15,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (4th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 15,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (4th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 15,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (4th Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 16,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
+                "index": 0,
+                "socket": "Signal Outbound"
               },
               {
                 "componentId": 16,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 16,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
+                "index": 0,
+                "socket": "Signal Outbound"
               }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (3rd Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 16,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (3rd Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 16,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (3rd Harmonic Oscillator)"
+            ]
           }
         },
         {
@@ -2471,152 +2411,50 @@
           "spec": {
             "endpoints": [
               {
-                "componentId": 17,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
+                "componentId": 0,
+                "socket": "MIDI Inbound"
               },
               {
-                "componentId": 17,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
+                "componentId": 1,
+                "socket": "MIDI Inbound"
               },
               {
-                "componentId": 17,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
+                "componentId": 2,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 3,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 4,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 5,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 6,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 7,
+                "socket": "MIDI Inbound"
               }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (2nd Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 17,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (2nd Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 17,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (2nd Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 18,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 18,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 18,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (1st Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 18,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (1st Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 18,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (1st Harmonic Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "componentId": 19,
-                "parameter": "amplitude",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 19,
-                "parameter": "frequency",
-                "socket": "Modulation Inbound"
-              },
-              {
-                "componentId": 19,
-                "parameter": "phase",
-                "socket": "Modulation Inbound"
-              }
-            ],
-            "isGroup": true,
-            "name": "Modulation Inputs (Base Oscillator)"
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoint": {
-              "componentId": 19,
-              "socket": "MIDI Inbound"
-            },
-            "isGroup": false,
-            "name": "MIDI Input 1 (Base Oscillator)"
-          }
-        },
-        {
-          "hidden": true,
-          "spec": {
-            "endpoint": {
-              "componentId": 19,
-              "index": 0,
-              "socket": "Signal Outbound"
-            },
-            "isGroup": false,
-            "name": "Audio Output 1 (Base Oscillator)"
+            ]
           }
         }
       ],
-      "xpos": -64.85095586476069,
-      "ypos": -26.14801693115917
+      "xpos": -77.04478789599463,
+      "ypos": -6.528055889204012
     }
   ],
   "posts": null,
   "viewport": {
-    "xpos": 31.30434782608696,
-    "ypos": 81.73913043478262,
-    "zoom": 1.15
+    "xpos": -76.0,
+    "ypos": 48.0,
+    "zoom": 1.0000000000000002
   },
   "version": 1
 }

@@ -27,26 +27,22 @@
 #include "util/SocketSpec.hpp"
 
 using json = nlohmann::json ;
+using SocketPriority = size_t ;
 
 class GraphNode ; // forward declaration
-
-enum class SocketClaimBehavior {
-    Override, // claim when registered, doesn't track mapping changes
-    Reactive  // watch for mapping events, only claim if at least one matching endpoint is available to claiming
-};
-
 class SocketWidget : public QGraphicsObject {
     Q_OBJECT
 
 private:
     SocketSpec spec_ ;
     GraphNode* parent_ ;
+    SocketPriority priority_ ;
     bool isHovered_ = false ;
     bool hasClaims_ = false ; // hide based on not being an "active" socket (see SocketRegistry)
     bool userHidden_ = false ; // hide based on user action
     
 public:
-    SocketWidget(SocketSpec spec, SocketClaimBehavior claimBehavior, GraphNode* parent = nullptr);
+    SocketWidget(SocketSpec spec, SocketPriority priority, GraphNode* parent = nullptr);
     ~SocketWidget();
 
     enum { Type = UserType + 2 };
@@ -72,6 +68,8 @@ public:
 
     bool isInbound() const ;
     bool isOutbound() const ;
+
+    SocketPriority priority() const ;
     
     QPointF getConnectionPoint() const ;
 
@@ -82,9 +80,6 @@ private:
     using QGraphicsObject::setVisible ; // remove public access
 
     QColor getSocketColor(bool isHovered) const ;
-
-public slots:
-    void onMappingChanged();
 
 signals:
     void claimStatusChanged();

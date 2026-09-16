@@ -24,7 +24,7 @@
 #include <vector>
 
 ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGraphicsItem* parent): 
-    GraphNode(model->getName(), SocketClaimBehavior::Reactive, parent),
+    GraphNode(model->getName(), 0, parent),
     model_(model)
 {
     scene->addItem(this);
@@ -43,7 +43,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
             ));     
         }
         
-        SocketSpec spec("Modulation Inputs", endpoints);
+        SocketSpec spec(endpoints);
         specs.push_back(spec);
     }
     
@@ -51,7 +51,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::SignalInbound, i, model_->getId()
         );     
-        SocketSpec spec(QString("Audio Input %1").arg(i+1), e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 
@@ -59,7 +59,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::BufferInbound, i, model_->getId()
         );     
-        SocketSpec spec(QString("Buffer Input %1").arg(i+1), e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 
@@ -67,7 +67,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::MidiInbound, std::nullopt, model_->getId()
         );     
-        SocketSpec spec(QString("MIDI Input %1").arg(i+1), e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 
@@ -75,7 +75,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::SignalOutbound, i, model_->getId()
         );     
-        SocketSpec spec(QString("Audio Output %1").arg(i+1), e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 
@@ -83,7 +83,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::BufferOutbound, i, model_->getId()
         );     
-        SocketSpec spec(QString("Buffer Output %1").arg(i+1), e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 
@@ -91,7 +91,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::MidiOutbound, std::nullopt, model_->getId()
         );     
-        SocketSpec spec(QString("Midi Output %1").arg(i+1), e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 
@@ -99,7 +99,7 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::ModulationOutbound, std::nullopt, model_->getId()
         );     
-        SocketSpec spec("Modulation Output", e);
+        SocketSpec spec(e);
         specs.push_back(spec);
     }
 

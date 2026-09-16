@@ -16,55 +16,40 @@
  */
 
 #include "util/SocketSpec.hpp"
+#include "util/SocketNamer.hpp"
 
 #include <spdlog/spdlog.h>
 
-SocketSpec::SocketSpec(const QString& name, ConnectionEndpoint endpoint):
-    name_(name),
-    data_(std::move(endpoint))
-{}
-
-SocketSpec::SocketSpec(const QString& name, EndpointGroup points):
-    name_(name),
-    data_(initializeData(points))
+SocketSpec::SocketSpec(ConnectionEndpoint endpoint):
+    data_({endpoint})
 {
     if ( !valid() ){
         throw std::runtime_error("Cannot create an invalid Group SocketSpec.");
     }
+
+    updateName();
 }
 
-SocketSpec::DataVariant SocketSpec::initializeData(EndpointGroup points) const {
-    if ( points.size() == 0 ){
-        throw std::runtime_error("Cannot create a SocketSpec with 0 endpoints.");
+SocketSpec::SocketSpec(std::vector<ConnectionEndpoint> points):
+    data_(std::move(points))
+{
+    if ( !valid() ){
+        throw std::runtime_error("Cannot create an invalid Group SocketSpec.");
     }
 
-    if ( points.size() == 1 ){
-        return DataVariant(std::in_place_type<ConnectionEndpoint>, std::move(points[0]));
-    }
-
-    return DataVariant(std::in_place_type<EndpointGroup>, std::move(points));
+    updateName();
 }
 
 SocketType SocketSpec::type() const {
     return endpoints()[0].socket() ;
 }
 
-const QString& SocketSpec::name() const {
-    return name_ ;
-}
-
-void SocketSpec::setName(const QString& name){
-    name_ = name ;
-}
-
-bool SocketSpec::isGroup() const {
-    return std::holds_alternative<EndpointGroup>(data_);
+size_t SocketSpec::numEndpoints() const {
+    return data_.size();
 }
 
 std::span<const ConnectionEndpoint> SocketSpec::endpoints() const {
-    if (auto* single = std::get_if<ConnectionEndpoint>(&data_))
-        return {single, 1};
-    return std::get<EndpointGroup>(data_);
+    return data_ ;
 }
 
 std::set<int> SocketSpec::componentIds() const {
@@ -78,14 +63,14 @@ std::set<int> SocketSpec::componentIds() const {
 }
 
 bool SocketSpec::valid() const {
-    if ( std::holds_alternative<ConnectionEndpoint>(data_) ) return true ;
+    if ( numEndpoints() == 1 ) return true ;
 
     if ( endpoints().size() < 2 ){
         SPDLOG_ERROR("A Grouped SocketSpec cannot have less than 2 members.");
         return false ;
     }
 
-    const auto& componentId = endpoints()[0].componentId() ;
+    // const auto& componentId = endpoints()[0].componentId() ;
     for ( const auto& endpoint : endpoints() ){
         if ( endpoint.socket() != type() ){
             SPDLOG_ERROR(
@@ -93,12 +78,6 @@ bool SocketSpec::valid() const {
             );
             return false ;
         }
-        if ( type() == SocketType::ModulationInbound ){
-            if ( endpoint.componentId() != componentId ){
-                SPDLOG_ERROR("cannot create a group modulation inbound socket where all component ids do not match");
-                return false ;
-            }
-        } 
     }
 
     if ( type() == SocketType::ModulationOutbound ){
@@ -117,76 +96,70 @@ bool SocketSpec::includes(const ConnectionEndpoint& endpoint) const {
 }
 
 void SocketSpec::add(const ConnectionEndpoint& endpoint){
-    if ( !isGroup() ){
-        throw std::runtime_error("This is a single endpoint socket spec and doesn't support grouping");
-    }
+    auto e = endpoints();
+    auto it = std::find(e.begin(), e.end(), endpoint);
 
-    auto& points = std::get<EndpointGroup>(data_);
-    auto it = std::find(points.begin(), points.end(), endpoint);
-    if ( it != points.end() ){
+    if ( it != e.end() ){
         SPDLOG_WARN("spec is already a member of this group. ignoring add.");
         return ;
     }
-
-    points.push_back(endpoint);
+    data_.push_back(endpoint);
+    updateName();
 }
 
-SocketSpec::RemoveResult SocketSpec::remove(const ConnectionEndpoint& endpoint){
-    if ( !isGroup() ){
+bool SocketSpec::remove(const ConnectionEndpoint& endpoint){
+    if ( numEndpoints() == 1 ){
         throw std::runtime_error("cannot remove SocketSpec when this is not a group spec.");
     }
 
-    auto& points = std::get<EndpointGroup>(data_);
+    auto it = std::find(data_.begin(), data_.end(), endpoint);
+    if ( it == data_.end() ) return false ;
+        
+    data_.erase(it);
+    updateName();
+    
+    return true ;
+}
 
-    auto it = std::find(points.begin(), points.end(), endpoint);
-    if ( it == points.end() ){
-        return NotFound ;
+bool SocketSpec::mergeWith(const SocketSpec& other){
+    if ( other.type() != type() ){
+        SPDLOG_WARN("Cannot merge SocketSpec with differing type");
+        return false ;
     }
 
-    if ( points.size() <= 2 ){
-        return RequiresDispersal ;
+
+    for ( const auto& endpoint : other.endpoints() ){
+        if ( includes(endpoint) ) continue ;
+        add(endpoint);
     }
 
-    points.erase(it);
-    return Removed ;
+    return true ;
+}
+
+QString SocketSpec::name() const {
+    return name_ ;
+}
+
+void SocketSpec::updateName(){
+    name_ = QString::fromStdString(SocketNamer::compute(*this));
+}
+
+std::string SocketSpec::toString() const {
+    json j = *this ;
+    return j.dump();
 }
 
 // JSON (de)serialization
 
 SocketSpec nlohmann::adl_serializer<SocketSpec>::from_json(const json& j){
-    if ( !j.contains("name") || !j.at("name").is_string() ){
-        throw std::runtime_error("cannot deserialize SocketSpec: invalid or missing 'name'.");
+    if ( !j.contains("endpoints") || !j.at("endpoints").is_array() ){
+        throw std::runtime_error("'endpoints' are not defined. Cannot deserialize.");
     }
-    QString name = QString::fromStdString(j.at("name").get<std::string>());
 
-    if ( !j.contains("isGroup") || !j.at("isGroup").is_boolean() ){
-        throw std::runtime_error("cannot deserialize SocketSpec: invalid or missing 'isGroup'.");
-    }
-    
-    if ( j.at("isGroup").get<bool>() ){
-        if ( !j.contains("endpoints") || !j.at("endpoints").is_array() ){
-            throw std::runtime_error("'endpoints' are not defined. Cannot deserialize.");
-        }
-        EndpointGroup endpoints = j.at("endpoints");
-        return SocketSpec(name, endpoints);
-    } else {
-        if ( !j.contains("endpoint") ){
-            throw std::runtime_error("'endpoint' is not defined. cannot deserialize.");
-        }
-        ConnectionEndpoint endpoint = j.at("endpoint");
-        return SocketSpec(name, endpoint);
-    }
+    std::vector<ConnectionEndpoint> endpoints = j.at("endpoints");    
+    return SocketSpec(endpoints);
 }
 
 void nlohmann::adl_serializer<SocketSpec>::to_json(json& j, const SocketSpec& spec){
-    j["name"] = spec.name().toStdString();
-    j["isGroup"] = spec.isGroup();
-
-    if ( spec.isGroup() ){
-        j["isGroup"] = true ;
-        j["endpoints"] = spec.endpoints();
-    } else {
-        j["isGroup"] = false ;
-        j["endpoint"] = spec.endpoints()[0];
-    }
+    j["endpoints"] = spec.endpoints();
 }

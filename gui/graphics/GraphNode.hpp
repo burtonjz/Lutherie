@@ -35,7 +35,7 @@ class GraphNode :  public QGraphicsObject {
     Q_OBJECT
 
 private:
-    SocketClaimBehavior claimBehavior_ ;
+    SocketPriority socketPriority_ ;
     bool isDragging_ = false ;
     QPointF dragStartPos_ ;
     QString name_ ;
@@ -48,12 +48,16 @@ private:
 
 protected:
     std::vector<SocketWidget*> sockets_ ; 
+    std::set<SocketWidget*> native_ ;
+    std::set<SocketWidget*> derived_ ;
+    std::map<SocketType, std::vector<SocketWidget*>> socketsByType_ ;
+
     QGraphicsTextItem* titleText_ ;
 
 public:
     explicit GraphNode(
         QString name, 
-        SocketClaimBehavior claimBehavior, // = SocketClaimBehavior::Reactive,
+        SocketPriority priority, 
         QGraphicsItem* parent = nullptr
     );
     virtual ~GraphNode();
@@ -66,19 +70,25 @@ public:
 
     const std::vector<SocketWidget*>& getSockets() const ;
 
-    SocketWidget* getSingleSocketMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
-    std::vector<SocketWidget*> getSocketsMatchingSpec(const SocketSpec& spec) const ;
-    std::vector<SocketWidget*> getSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ;
-    std::vector<SocketWidget*> getVisibleSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const ; 
+    SocketWidget* getSocketFromSpec(const SocketSpec& spec) const ;
 
     const QString& getName() const { return name_ ; }
     QGraphicsTextItem* getNameItem() const { return titleText_ ; }
 
-    SocketWidget* insertSocket(SocketSpec spec);
+    // for sockets considered "native" to the node
+    SocketWidget* insertSocket(const SocketSpec& spec);
     void insertSockets(const std::vector<SocketSpec>& specs );
+
+    // for groups derived from native sockets
+    SocketWidget* createGroupSocketFromSpec(const SocketSpec& spec);
+    SocketWidget* createGroupSocket(const std::vector<SocketWidget*>& sockets);
+    void createAllValidGroupSockets();
 
     void removeSocket(SocketSpec spec);
     void removeSockets(const std::vector<SocketSpec>& specs);
+
+    bool hasDerivedSockets() const ;
+    void removeDerivedSockets();
 
     void hide();
     void show();
@@ -90,7 +100,9 @@ protected:
     // Graphics overrides
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
-    SocketWidget* createSocket(const SocketSpec& spec);
+    bool validateGroupSocketSpec(const SocketSpec& spec) const ;
+    SocketWidget* createSocket(const SocketSpec& spec, std::optional<SocketPriority> priority = std::nullopt );
+
     void layoutSockets();
     void reorderSockets();
     void positionSockets(QPointF newPos); 

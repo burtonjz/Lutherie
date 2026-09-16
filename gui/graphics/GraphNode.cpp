@@ -26,9 +26,9 @@
 #include <QPoint>
 #include <spdlog/spdlog.h>
 
-GraphNode::GraphNode(QString name, SocketClaimBehavior behavior, QGraphicsItem* parent): 
+GraphNode::GraphNode(QString name, SocketPriority priority, QGraphicsItem* parent): 
     QGraphicsObject(parent),
-    claimBehavior_(behavior),
+    socketPriority_(priority),
     name_(name)
 {
     // configure widget
@@ -82,54 +82,45 @@ const std::vector<SocketWidget*>& GraphNode::getSockets() const {
     return sockets_ ;
 }
 
-SocketWidget* GraphNode::getSingleSocketMatchingEndpoint(const ConnectionEndpoint& endpoint) const {
+SocketWidget* GraphNode::getSocketFromSpec(const SocketSpec& spec) const {
     for ( auto* socket : sockets_ ){
-        const SocketSpec& spec = socket->getSpec();
-        if ( spec.isGroup() ) continue ;
-        if ( spec.endpoints()[0] == endpoint ) return socket ;
+        if ( spec == socket->getSpec() ) return socket ;
     }
+    SPDLOG_DEBUG(
+        "No socket with spec {} found in node {}",
+        spec.toString(), name_.toStdString()
+    );
     return nullptr ;
 }
 
-std::vector<SocketWidget*> GraphNode::getSocketsMatchingSpec(const SocketSpec& spec) const {
-    std::vector<SocketWidget*> v ;
-    for ( auto* socket : sockets_ ){
-        if ( spec == socket->getSpec() ) v.push_back(socket);
-    }
-    return v ;
+SocketWidget* GraphNode::insertSocket(const SocketSpec& spec){
+    SocketWidget* socket = createSocket(spec);
+    native_.insert(socket);
+
+    layoutSockets();
+    reorderSockets();
+    positionSockets(scenePos());
+
+    return socket ;
 }
 
-std::vector<SocketWidget*> GraphNode::getSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const {
-    std::vector<SocketWidget*> v ;
-    for ( auto* socket : sockets_ ){
-        const SocketSpec& spec = socket->getSpec();
-        for ( const auto& e : spec.endpoints() ){
-            if ( e == endpoint ){
-                v.push_back(socket);
-                continue ;
-            }
-        }
+void GraphNode::insertSockets(const std::vector<SocketSpec>& specs){
+    std::vector<SocketWidget*> newSockets ;
+    for ( const auto& s : specs ){
+        SocketWidget* socket = createSocket(s);
+        native_.insert(socket);
     }
-    return v ;
+
+    layoutSockets();
+    reorderSockets();
+    positionSockets(scenePos());
 }
 
-std::vector<SocketWidget*> GraphNode::getVisibleSocketsMatchingEndpoint(const ConnectionEndpoint& endpoint) const {
-    std::vector<SocketWidget*> v ;
-    for ( auto socket : sockets_ ){
-        if ( !socket->isVisible() ) continue ;
-        const SocketSpec& spec = socket->getSpec();
-        for ( const auto& e : spec.endpoints() ){
-            if ( e == endpoint ){
-                v.push_back(socket);
-                continue ;
-            }
-        }
-    }
-    return v ;
-}
+SocketWidget* GraphNode::createGroupSocketFromSpec(const SocketSpec& spec){
+    if ( !validateGroupSocketSpec(spec) ) return nullptr ;
 
-SocketWidget* GraphNode::insertSocket(SocketSpec spec){
-    SocketWidget* s = createSocket(spec);
+    SocketWidget* s = createSocket(spec, socketPriority_ + 1);
+    derived_.insert(s);
 
     layoutSockets();
     reorderSockets();
@@ -138,15 +129,88 @@ SocketWidget* GraphNode::insertSocket(SocketSpec spec){
     return s ;
 }
 
-void GraphNode::insertSockets(const std::vector<SocketSpec>& specs){
-    std::vector<SocketWidget*> newSockets ;
-    for ( const auto& s : specs ){
-        createSocket(s);
+SocketWidget* GraphNode::createGroupSocket(const std::vector<SocketWidget*>& sockets){
+    if ( sockets.size() < 2 ){
+        SPDLOG_WARN("cannot create group socket from less than 2 sockets.");
+        return nullptr ;
+    } 
+
+    auto isValidSocket = [this](SocketWidget* s){
+        if ( !s ){
+            SPDLOG_WARN("Cannot create group socket: received nullptr");
+            return false ;
+        }
+        if ( s->getParent() != this){
+            SPDLOG_WARN("Cannot create group socket: received socket owned by another node.");
+            return false ;
+        }
+        return true ;
+    };
+
+    // use first socket as reference
+    if ( !isValidSocket(sockets[0]) ) return nullptr ;
+    SocketSpec spec = sockets[0]->getSpec(); 
+
+    bool allUserHidden = sockets[0]->userHidden();
+    std::vector<SocketWidget*> toRemove ; // remove
+    for ( size_t i = 1; i < sockets.size(); ++i ){
+        if ( !isValidSocket(sockets[i]) ) return nullptr ;
+        if ( !spec.mergeWith(sockets[i]->getSpec()) ) return nullptr ;
+        if ( derived_.contains(sockets[i]) ) toRemove.push_back(sockets[i]);
+        allUserHidden = allUserHidden && sockets[i]->userHidden();  
     }
+    
+    SocketRegistry::instance()->startBatch();
+    SocketWidget* socket = createSocket(spec, socketPriority_ + 1);
+    if ( allUserHidden ) socket->setUserHidden(true);
+    derived_.insert(socket);
+    for ( SocketWidget* s : toRemove ) removeSocket(s);
+    SocketRegistry::instance()->endBatch();
 
     layoutSockets();
     reorderSockets();
     positionSockets(scenePos());
+
+    return socket ;
+}
+
+void GraphNode::createAllValidGroupSockets(){
+    ConnectionManager* conn = ConnectionManager::instance();
+
+    // valid group sockets need to match on type
+    std::vector<std::vector<SocketWidget*>> groups ;
+    for ( const auto& [type, byType] : socketsByType_ ){
+        if ( byType.size() == 0 ) continue ;
+        
+        // key = reference socket, value = sockets to be grouped
+        std::map<SocketWidget*, std::vector<SocketWidget*>> smap ;
+        
+        for ( SocketWidget* candidate : byType ){
+            // see if socket matches an existing reference
+            bool placed = false ;
+            for ( auto& [ref, v]: smap ){
+                bool match = conn->specsHaveEquivalentConnections(ref->getSpec(), candidate->getSpec());
+                if ( match ){
+                    v.push_back(candidate);
+                    placed = true ;
+                    break ;
+                }
+            }
+            // otherwise, place this socket as a new reference for future loops
+            if ( !placed ) smap[candidate].push_back(candidate);
+        }
+
+        // create group sockets
+        for ( auto& [_, v] : smap ){
+            if ( v.size() > 1 ) groups.push_back(v);
+        }
+    }
+
+    SocketRegistry::instance()->startBatch();
+    for ( auto& g : groups ){
+        createGroupSocket(g);
+    }
+    SocketRegistry::instance()->endBatch();
 }
 
 void GraphNode::removeSocket(SocketSpec spec){
@@ -162,6 +226,16 @@ void GraphNode::removeSockets(const std::vector<SocketSpec>& specs){
     for ( const auto& spec : specs ){
         removeSocket(spec);
     }
+    SocketRegistry::instance()->endBatch();
+}
+
+bool GraphNode::hasDerivedSockets() const {
+    return derived_.size() > 0 ;
+}
+
+void GraphNode::removeDerivedSockets(){
+    SocketRegistry::instance()->startBatch();
+    while ( derived_.size() > 0 ) removeSocket(*derived_.begin());
     SocketRegistry::instance()->endBatch();
 }
 
@@ -189,10 +263,54 @@ void GraphNode::show(){
 #endif 
 }
 
-SocketWidget* GraphNode::createSocket(const SocketSpec& spec){
-    SocketWidget* socket = new SocketWidget(spec, claimBehavior_, this);
+bool GraphNode::validateGroupSocketSpec(const SocketSpec& spec) const {
+    std::unordered_set<SocketWidget*> involved_ ;
+
+    for ( const auto& endpoint : spec.endpoints() ){
+        auto it = std::find_if(
+            sockets_.begin(), sockets_.end(),
+            [&endpoint](SocketWidget* s){
+                if ( !s ) return false ;
+                for ( const ConnectionEndpoint& e : s->getSpec().endpoints() ){
+                    if ( e == endpoint ) return true ;
+                }
+                return false ;
+            }
+        );
+
+        if ( it == sockets_.end() ){
+            SPDLOG_WARN(
+                "SocketSpec {} is not a valid candidate for a group spec.",
+                spec.toString()
+            );
+            return false ;
+        }
+
+        involved_.insert(*it);
+    }
+
+    if ( involved_.size() < 2 ){
+        SPDLOG_WARN(
+            "SocketSpec {} resolves to a single socket. "
+            " a group spec must combine at least two.",
+            spec.toString()
+        );
+        return false ;
+    }
+
+    return true ;
+}
+
+SocketWidget* GraphNode::createSocket(const SocketSpec& spec, std::optional<SocketPriority> priority){
+    SocketPriority p ;
+    if ( priority.has_value() ) p = priority.value();
+    else p = socketPriority_ ;
+    
+    SocketWidget* socket = new SocketWidget(spec, p, this);
     if ( scene() ) scene()->addItem(socket);
+    
     sockets_.push_back(socket);
+    socketsByType_[socket->getSpec().type()].push_back(socket);
 
     connect(
         socket, &SocketWidget::claimStatusChanged,
@@ -320,7 +438,7 @@ void GraphNode::removeSockets(){
         if ( scene() ) scene()->removeItem(socket);
         socket->deleteLater();
     }
-    SocketRegistry::instance()->startBatch();
+    SocketRegistry::instance()->endBatch();
 
     sockets_.clear();
     leftSockets_.clear();
@@ -416,6 +534,16 @@ void GraphNode::deserialize(const json& node){
         setPos(node.at("xpos"), node.at("ypos"));
     }
 
+    /* 
+    SOCKET DESERIALIZATION:
+
+    'Native' sockets (see insertSocket[s]) during the creation of the node.
+    These just need to be deserialized. 
+
+    'Derived' sockets are created by user actions. These need to be fully
+    created during deserialization.
+    */
+    std::vector<SocketSpec> derived ; 
     if ( node.contains("sockets") && node.at("sockets").is_array() ){
         for ( const auto& s : node.at("sockets") ){
             std::optional<SocketSpec> spec = std::nullopt ;
@@ -426,13 +554,20 @@ void GraphNode::deserialize(const json& node){
                 continue ;
             }
 
-            const auto& sockets = getSocketsMatchingSpec(*spec);
-            for ( auto* socket : sockets ){
-                socket->deserialize(s);
+            // sanity check to not create peripheral sockets
+            if ( spec->componentIds().size() == 0 ) continue ;
+            
+            SocketWidget* socket = getSocketFromSpec(*spec);
+            if ( !socket ){
+                socket = createGroupSocketFromSpec(*spec);
             }
+            if ( !socket ){
+                SPDLOG_WARN("unsuccessful creation of group socket.");
+                continue ;
+            }
+            socket->deserialize(s);
         }
     }
-    update();
 }
 
 void GraphNode::onRename(QString name){
@@ -443,11 +578,18 @@ void GraphNode::onRename(QString name){
 void GraphNode::removeSocket(SocketWidget* socket){
     if ( !socket || socket->getParent() != this ) return ;
     
+    native_.erase(socket);
+    derived_.erase(socket);
     sockets_.erase(std::remove(
         sockets_.begin(), sockets_.end(), socket), 
         sockets_.end()
     );
-
+    auto& byType = socketsByType_[socket->getSpec().type()];
+    byType.erase(std::remove(
+        byType.begin(), byType.end(), socket),
+        byType.end()
+    );
+      
     scene()->removeItem(socket);
     delete socket ;
 
@@ -459,11 +601,9 @@ void GraphNode::removeSocket(SocketWidget* socket){
 void GraphNode::socketClaimStatusChanged(){
     for ( auto* socket : sockets_ ){
         if ( socket->hasClaims() ){
-            if ( !isVisible() ){
-                setVisible(true);
-            }
+            show();
             return ;
         }
     }
-    setVisible(false);
+    hide();
 }

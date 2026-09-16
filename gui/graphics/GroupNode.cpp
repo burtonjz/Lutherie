@@ -20,7 +20,8 @@
 #include <spdlog/spdlog.h>
 
 GroupNode::GroupNode(GroupModel* model, QGraphicsItem* parent):
-    GraphNode(model->getName(), SocketClaimBehavior::Override, parent),
+    // TODO: should group nesting be supported, smartly increment priority so outermost socket has highest priority
+    GraphNode(model->getName(), 1, parent), 
     model_(model)
 {}
 
@@ -67,9 +68,7 @@ void GroupNode::addComponentSockets(ComponentNode* node){
 
     std::vector<SocketSpec> specs ;
     for ( auto s : node->getSockets() ){
-        auto spec = s->getSpec();
-        spec.setName(spec.name() + " (" + node->getName() + ")");
-        specs.push_back(spec);
+        specs.push_back(s->getSpec());
     }
 
     insertSockets(specs);

@@ -17,7 +17,6 @@
 
 #include "managers/SocketRegistry.hpp"
 #include "graphics/SocketWidget.hpp"
-#include "graphics/GraphNode.hpp"
 #include <spdlog/spdlog.h>
 
 SocketRegistry* SocketRegistry::instance(){
@@ -39,130 +38,42 @@ std::set<SocketWidget*> SocketRegistry::findSockets(const SocketSpec& spec) cons
 }
 
 SocketWidget* SocketRegistry::findSocket(const ConnectionEndpoint& endpoint) const {
-    auto it = endpoint2Socket_.find(endpoint);
-    if ( it == endpoint2Socket_.end() ) return nullptr ;
-    return it->second ;
+    if ( endpoint2Socket_.contains(endpoint) ) return endpoint2Socket_.at(endpoint);
+    return nullptr ;
 }
 
 SocketWidget* SocketRegistry::findSocketAt(const QPointF& scenePos) const {
-    for ( SocketWidget* socket : registeredSockets_ ){
+    for ( SocketWidget* socket : registered_ ){
         QPointF localPos = socket->mapFromScene(scenePos);
-        if ( socket->boundingRect().contains(localPos) ) return socket ;
+        if ( socket->boundingRect().contains(localPos) && socket->isVisible() ) return socket ;
     }
     return nullptr ;
 }
 
-void SocketRegistry::registerSocket(SocketWidget* socket){
+void SocketRegistry::registerSocket(SocketWidget* socket, SocketPriority priority){
     if ( !socket ){
         SPDLOG_WARN("Cannot register socket. Null pointer received");
         return ;
     }
 
-    if ( registeredSockets_.contains(socket) ){
+    if ( registered_.contains(socket) ){
         SPDLOG_WARN("socket has already been registered");
         return ;
     }
 
-    registeredSockets_.insert(socket);
+    registered_.insert(socket);
+    registeredByPriority_[priority].insert(socket);
+
+    if ( evaluateSocketClaims(socket) ) claim(socket);
 }
 
 void SocketRegistry::unregisterSocket(SocketWidget* socket){
     if ( !socket ) return ;
 
-    auto it = socket2Endpoints_.find(socket);
-    if ( it != socket2Endpoints_.end() ){
-        const std::vector<ConnectionEndpoint> held(it->second.begin(), it->second.end());
-        release(held);
-    }
+    registered_.erase(socket);
+    registeredByPriority_[socket->priority()].erase(socket);
 
-    registeredSockets_.erase(socket);
-}
-
-void SocketRegistry::registerNodeSockets(GraphNode* node){
-    if ( !node ){
-        SPDLOG_WARN("Cannot register node. Null pointer received");
-        return ;
-    }
-
-    startBatch();
-    for ( auto* socket : node->getSockets() ){
-        registerSocket(socket);
-    }
-    endBatch();
-}
-
-void SocketRegistry::unregisterNodeSockets(GraphNode* node){
-    if ( !node ) return ;
-
-    startBatch();
-    for ( auto* socket : node->getSockets() ){
-        unregisterSocket(socket);
-    }
-    endBatch();
-}
-
-bool SocketRegistry::claim(SocketWidget* socket){
-    if ( !socket ){
-        SPDLOG_WARN("Cannot claim. Null pointer received");
-        return false ;
-    }
-
-    if ( !registeredSockets_.contains(socket) ){
-        SPDLOG_WARN("Cannot claim with an unregistered socket");
-        return false ;
-    }
-
-    startBatch();
-    for ( const auto& endpoint : socket->getSpec().endpoints() ){
-        // if the endpoint is owned by another, clear out its record
-        SocketWidget* previous = findSocket(endpoint);
-        if ( previous ){
-            auto& endpoints = socket2Endpoints_.at(previous);
-            endpoints.erase(endpoint);
-            if ( endpoints.empty() ){
-                socket2Endpoints_.erase(previous);
-                previous->setHasClaims(false); 
-            }
-        }
-         
-        endpoint2Socket_[endpoint] = socket ;
-        socket2Endpoints_[socket].insert(endpoint);
-    }
-    socket->setHasClaims(true);
-
-    batchDirty_ = true ;
-    endBatch();
-
-    return true ;
-}
-
-void SocketRegistry::release(std::span<const ConnectionEndpoint> endpoints){
-    if ( endpoints.empty() ) return ;
-
-    startBatch();
-    for ( const auto& endpoint : endpoints ){
-        if ( !endpoint2Socket_.contains(endpoint) ) continue ;
-        
-        SocketWidget* owner = endpoint2Socket_.at(endpoint);
-        endpoint2Socket_.erase(endpoint);
-
-        if ( !owner ) continue ;
-        if ( !socket2Endpoints_.contains(owner) ) continue ;
-
-        auto endpoints = socket2Endpoints_.at(owner);
-        endpoints.erase(endpoint);
-        if ( endpoints.empty() ){
-            socket2Endpoints_.erase(owner);
-            owner->setHasClaims(false);
-        }
-            
-        batchDirty_ = true ;
-    }
-    endBatch();
-}
-
-bool SocketRegistry::isClaimed(const ConnectionEndpoint& endpoint) const {
-    return endpoint2Socket_.contains(endpoint);
+    release(socket);
 }
 
 void SocketRegistry::startBatch(){
@@ -175,17 +86,178 @@ void SocketRegistry::endBatch(){
         return ;
     }
 
-    // if socketMapping changes trigger reactive claims,
-    // batchDirty_ gets reset during the emitted signal
-    // while loop keeps it in the loop until no sockets
-    // are changed
-    while ( batchDirty_ ){
-        batchDirty_ = false ;
-        emit socketMappingChanged();
-    }
+    --batchDepth_ ;
+    runClaimLoop();
 }
 
 bool SocketRegistry::isBatching() const {
     return batchDepth_ > 0 ;
 }
 
+bool SocketRegistry::isClaimed(const ConnectionEndpoint& endpoint) const {
+    return endpoint2Socket_.contains(endpoint);
+}
+
+bool SocketRegistry::evaluateSocketClaims(SocketWidget* socket) const {
+    if ( !socket ) return false ;
+
+    for ( const auto& endpoint : socket->getSpec().endpoints() ){
+        // at least one endpoint unclaimed 
+        if ( !isClaimed(endpoint) ) return true ;
+        
+        SocketWidget* claimer = endpoint2Socket_.at(endpoint);
+        if ( claimer == socket ) continue ;
+
+        // or if current socket with claim has lower priority
+        if ( socket->priority() > claimer->priority() ) return true ;
+    }
+    return false ;
+}
+
+bool SocketRegistry::claim(SocketWidget* socket){
+    if ( !socket ){
+        SPDLOG_WARN("Cannot claim. Null pointer received");
+        return false ;
+    }
+
+    startBatch();
+    for ( const auto& endpoint : socket->getSpec().endpoints() ){
+        // if the endpoint is owned by another, clear out its record
+        SocketWidget* previous = findSocket(endpoint);
+        if ( previous == socket ) continue ;
+        if ( previous ) release(previous);
+          
+        endpoint2Socket_[endpoint] = socket ;
+        socket2Endpoints_[socket].insert(endpoint);
+        dirty_ = true ;
+        socket->setHasClaims(true);
+    }
+    endBatch();
+
+    return true ;
+}
+
+void SocketRegistry::release(SocketWidget* socket){
+    if ( !socket2Endpoints_.contains(socket) ){
+        SPDLOG_WARN("SocketRegistry release called on socket with no claims");
+        return ;
+    }
+
+    while ( socket2Endpoints_.at(socket).size() > 0 ){
+        auto it = socket2Endpoints_.at(socket).begin();
+
+        endpoint2Socket_.erase(*it);
+        socket2Endpoints_.at(socket).erase(it);    
+    }
+    socket2Endpoints_.erase(socket);
+
+    socket->setHasClaims(false);
+    dirty_ = true ;
+    runClaimLoop();
+}
+
+void SocketRegistry::runClaimLoop(){
+    if ( isBatching() ) return ;
+
+    // loop through tiers to process claims
+    size_t iterations = 0 ;
+    auto tier = registeredByPriority_.begin();
+    while ( tier != registeredByPriority_.end() ){
+        if ( ++iterations > maxIterations ){
+            SPDLOG_WARN("claim resolution exceeded {} iterations. Breaking out.", maxIterations);
+            break ;
+        }
+
+        dirty_ = false ;
+        for ( auto* socket : tier->second ){
+            if ( evaluateSocketClaims(socket) ) claim(socket);
+        }
+
+        // if tier resulted in claim changes, start back at the top
+        if ( dirty_ ) tier = registeredByPriority_.begin();
+        else ++tier ;
+    }
+
+#ifdef DEBUG_BUILD
+    validate();
+#endif 
+
+    emit socketMappingChanged();
+}
+
+#ifdef DEBUG_BUILD
+void SocketRegistry::validate() const {
+    for ( SocketWidget* socket : registered_ ){
+        bool hasClaim = false ;
+        bool hasAllClaims = true ;
+        for ( const auto& endpoint : socket->getSpec().endpoints() ){
+            // a socket's endpoint should always be claimed by somebody
+            if ( !isClaimed(endpoint) ){
+                SPDLOG_WARN(
+                    "SocketRegistry validation: endpoint {} is currently unclaimed after batch resolution.",
+                    endpoint.toString()
+                );
+                hasAllClaims = false ;
+                break ;
+            }
+            
+            SocketWidget* claimer = endpoint2Socket_.at(endpoint);
+
+            // competing socket with claim should never have lower priority
+            if (  claimer != socket  ){
+                if ( socket->priority() > claimer->priority() ){
+                    SPDLOG_WARN(
+                        "SocketRegistry validation: Endpoint {} is currently claimed by Socket with endpoints {}, "
+                        "but Socket with Endpoints {} has higher priority ({} vs {})",
+                        endpoint.toString(), claimer->getSpec().toString(), socket->getSpec().toString(), 
+                        socket->priority(), claimer->priority()
+                    );
+                }
+                hasAllClaims = false ;
+                break ;
+            }
+
+            hasClaim = true ;
+        }
+
+        // if socket claims one endpoint, it's expected to claim all endpoints
+        if ( hasClaim && !hasAllClaims ){
+            SPDLOG_WARN(
+                "SocketRegistry validation: Socket with endpoints {} has at least one claim, "
+                "but does not claim all of its endpoints.", socket->getSpec().toString()
+            );
+        }
+        if ( !hasAllClaims ) continue ;
+
+        // socket->endpoint map should have entry for socket with claim
+        if ( !socket2Endpoints_.contains(socket) ){
+            SPDLOG_WARN(
+                "SocketRegistry validation: Socket with endpoints {} has claims in endpoint2Socket, "
+                "but the socket2Endpoint map is not properly populated", socket->getSpec().toString()
+            );
+            continue ;
+        }
+
+        // all claims are validated at this point
+        auto endpoints = socket2Endpoints_.at(socket);
+        if ( endpoints.size() != socket->getSpec().numEndpoints() ){
+            SPDLOG_WARN(
+                "SocketRegistry validation: Socket with endpoints {} "
+                "does not have the right number of claims in socket2Endpoints."
+                , socket->getSpec().toString()
+            );
+            continue ;
+        }
+
+        // all endpoints in socket->endpoints should match endpoint->socket
+        for ( const auto& endpoint : endpoints ){
+            if ( endpoint2Socket_.at(endpoint) != socket ){
+                SPDLOG_WARN(
+                    "SocketRegistry validation: endpoint2Socket map does not match "
+                    "socket2Endpoint with endpoint {}", endpoint.toString()
+                );
+            }
+        }
+    }
+}
+#endif // DEBUG_BUILD

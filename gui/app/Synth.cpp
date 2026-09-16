@@ -966,7 +966,6 @@ void Synth::onComponentRenamed(int componentId){
     // rename node
     auto n = graph_->getComponentNode(componentId);
     if ( n ){
-        SPDLOG_DEBUG("renaming component node...");
         n->onRename(m->getName());
     }
 
@@ -975,22 +974,12 @@ void Synth::onComponentRenamed(int componentId){
     if ( paramContent && parameterPanel_->hasContent(paramContent) ){
         auto paramSection = parameterPanel_->getSection(paramContent);
         if ( paramSection ) paramSection->setTitle(m->getName());
-    } else {
-        SPDLOG_DEBUG(
-            "not updating parameter panel. hasContent={}, contentInPanel={}",
-            fmt::ptr(paramContent), parameterPanel_->hasContent(paramContent)
-        );
-    }
+    } 
     
     auto modContent = ComponentManager::instance()->getModulationParameters(componentId);
     if ( modContent ){
         auto modSection = modulationPanel_->getSection(modContent);
         if ( modSection ) modSection->setTitle(m->getName());
-    } else {
-        SPDLOG_DEBUG(
-            "not updating modulation panel. hasContent={}, contentInPanel={}",
-            fmt::ptr(modContent), modulationPanel_->hasContent(modContent)
-        );
     }
     
     // if the component has a detail view, update that dock

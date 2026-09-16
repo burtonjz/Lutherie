@@ -148,7 +148,7 @@ void GraphPanel::addAudioOutput(){
         SocketType::SignalInbound, 0
     );    
     scene_->addItem(audioOut_);
-    audioOut_->insertSocket(SocketSpec("Audio In", endpoint));
+    audioOut_->insertSocket(SocketSpec(endpoint));
     
     audioOut_->moveBy(200, 0);
 
@@ -167,7 +167,7 @@ void GraphPanel::addMidiInput(){
     );    
     scene_->addItem(midiIn_);
 
-    midiIn_->insertSocket(SocketSpec("MIDI Out", endpoint));  
+    midiIn_->insertSocket(SocketSpec(endpoint));  
     midiIn_->moveBy(-200,0);
 
     nodes_.push_back(midiIn_);
@@ -526,35 +526,36 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
 void GraphPanel::onNodeRightClicked(GraphNode* node){
     QMenu menu ;
-    QMenu* showMenu = new QMenu("Show", &menu);
-    QMenu* socketMenu = menu.addMenu("Sockets");
- 
-    // show menu
-    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        if ( c->getModel()->getDescriptor().controllableParameters.size() > 0 ){
-            QAction* openParams = showMenu->addAction("Parameter Controls");
-            connect ( openParams, &QAction::triggered, [this,c](){
-                emit requestShowParameters(c->getModel()->getId());
+
+    ComponentNode*  cNode = dynamic_cast<ComponentNode*>(node);
+    PeripheralNode* pNode = dynamic_cast<PeripheralNode*>(node);
+    GroupNode*      gNode = dynamic_cast<GroupNode*>(node);
+
+    // SHOW MENU
+    QMenu* showMenu = new QMenu("Controls", &menu);
+    if ( cNode ){
+        if ( cNode->getModel()->getDescriptor().controllableParameters.size() > 0 ){
+            QAction* openParams = showMenu->addAction("Show parameter controls");
+            connect ( openParams, &QAction::triggered, [this,cNode](){
+                emit requestShowParameters(cNode->getModel()->getId());
             });
         }
-    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
-        QAction* openParams = showMenu->addAction("Parameter Controls");
-        connect ( openParams, &QAction::triggered, [this,g](){
-            emit requestShowGroupParameters(g->getModel()->getId());
-        });
-    }
+        if ( cNode->getModel()->getDescriptor().modulatableParameters.size() > 0 ){
+            QAction* openMod = showMenu->addAction("Show modulation controls");
+            connect ( openMod, &QAction::triggered, [this,cNode](){
+                emit requestShowModulation(cNode->getModel()->getId());
+            });
+        }
+    } 
     
-    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        if ( c->getModel()->getDescriptor().modulatableParameters.size() > 0 ){
-            QAction* openMod = showMenu->addAction("Modulation Controls");
-            connect ( openMod, &QAction::triggered, [this,c](){
-                emit requestShowModulation(c->getModel()->getId());
-            });
-        }
-    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
-        QAction* openMod = showMenu->addAction("Modulation Controls");
-        connect ( openMod, &QAction::triggered, [this,g](){
-            emit requestShowGroupModulation(g->getModel()->getId());
+    if ( gNode ){
+        QAction* openParams = showMenu->addAction("Show parameter controls");
+        connect ( openParams, &QAction::triggered, [this,gNode](){
+            emit requestShowGroupParameters(gNode->getModel()->getId());
+        });
+        QAction* openMod = showMenu->addAction("Show modulation controls");
+        connect ( openMod, &QAction::triggered, [this,gNode](){
+            emit requestShowGroupModulation(gNode->getModel()->getId());
         });
     }
 
@@ -562,75 +563,85 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
         menu.addMenu(showMenu);
     }
 
-    // socket menu
-    QAction* unhideAll = new QAction("Unhide All", socketMenu);
-    connect(unhideAll, &QAction::triggered, [node]{
-        for ( SocketWidget* s : node->getSockets() ){
-            s->setUserHidden(false);
-        }
-    });
-    socketMenu->addAction(unhideAll);
+    // SOCKET MENU
+    if ( !pNode ){
+        QMenu* socketMenu = menu.addMenu("Sockets");
 
-    QAction* hideDisconnected = new QAction("Hide Disconnected", socketMenu);
-    connect(hideDisconnected, &QAction::triggered, [node](){
-        for ( auto s : node->getSockets() ){
-        bool noConnection = ConnectionManager::instance()
-            ->getNumConnectionsMatchingSpec(s->getSpec()) == 0 ;
-        
-        if ( noConnection ){
-            s->setUserHidden(true);
-        }
-    }
-    });
-    socketMenu->addAction(hideDisconnected);
+        // hide / show
+        QAction* unhideAll = socketMenu->addAction("Unhide all");
+        connect(unhideAll, &QAction::triggered, [node]{
+            for ( SocketWidget* s : node->getSockets() ){
+                s->setUserHidden(false);
+            }
+        });
 
-    QAction* hideInternal = new QAction("Hide Internal Connections", socketMenu);
-    connect(hideInternal, &QAction::triggered, [node](){
-        for ( auto* socket : node->getSockets() ){
-            std::set<int> ids ;
-            if ( auto* cNode = dynamic_cast<ComponentNode*>(node) ){
-                ids.insert(cNode->getModel()->getId());
-            } else if ( auto* gNode = dynamic_cast<GroupNode*>(node) ){
-                ids = gNode->getModel()->getComponents();
-            } else continue ;
-
-            if ( !ConnectionManager::instance()->hasExternalConnections(socket->getSpec(), ids) ){
-                socket->setUserHidden(true);
+        QAction* hideDisconnected = socketMenu->addAction("Hide disconnected");
+        connect(hideDisconnected, &QAction::triggered, [node](){
+            for ( auto s : node->getSockets() ){
+            bool noConnection = ConnectionManager::instance()
+                ->getNumConnectionsMatchingSpec(s->getSpec()) == 0 ;
+            if ( noConnection ){
+                s->setUserHidden(true);
             }
         }
-    });
-    socketMenu->addAction(hideInternal);
-
-    socketMenu->addSeparator();
-
-    for ( auto s : node->getSockets() ){
-        if ( !s->hasClaims() || !s->userHidden() ) continue ;
-
-        QAction* unhideAction = new QAction("Unhide " + s->getSpec().name(), socketMenu);
-        connect ( unhideAction, &QAction::triggered, [s]{
-            s->setUserHidden(false);
         });
-        socketMenu->addAction(unhideAction);
-    }
 
+        QAction* hideInternal = socketMenu->addAction("Hide internal only");
+        connect(hideInternal, &QAction::triggered, [node](){
+            for ( auto* socket : node->getSockets() ){
+                std::set<int> ids ;
+                if ( auto* cNode = dynamic_cast<ComponentNode*>(node) ){
+                    ids.insert(cNode->getModel()->getId());
+                } else if ( auto* gNode = dynamic_cast<GroupNode*>(node) ){
+                    ids = gNode->getModel()->getComponents();
+                } else continue ;
+
+                if ( !ConnectionManager::instance()->hasExternalConnections(socket->getSpec(), ids) ){
+                    socket->setUserHidden(true);
+                }
+            }
+        });
+
+        QMenu* singleUnhideMenu = socketMenu->addMenu("Unhide socket");
+        for ( auto s : node->getSockets() ){
+            if ( !s->hasClaims() || !s->userHidden() ) continue ;
+
+            QAction* unhideAction = singleUnhideMenu->addAction("Unhide " + s->getSpec().name());
+            connect ( unhideAction, &QAction::triggered, [s]{
+                s->setUserHidden(false);
+            });
+        }
+
+        // group / ungroup
+        QAction* combineAction = socketMenu->addAction("Combine sockets");
+        connect (combineAction, &QAction::triggered, [node](){
+            node->createAllValidGroupSockets();
+        });
+
+        if ( node->hasDerivedSockets() ){
+            QAction* disperseAction = socketMenu->addAction("Remove combined sockets");
+            connect( disperseAction, &QAction::triggered, [node](){
+                node->removeDerivedSockets();
+            });
+        };
+    }
+    
     // MISC ACTIONS
 
     // rename
-    QAction* rename = new QAction("Rename", &menu);
+    QAction* rename = menu.addAction("Rename");
     connect (rename, &QAction::triggered, [this, node](){
         startRename(node);
     });
-    menu.addAction(rename);
 
     // export audio buffer
     if ( ComponentNode* componentNode = dynamic_cast<ComponentNode*>(node) ){
         const ComponentDescriptor& descriptor = componentNode->getModel()->getDescriptor();
         if ( descriptor.numBufferOutputs > 0 ){
-            QAction* exportBuffer = new QAction("Export Buffer", &menu);
+            QAction* exportBuffer = menu.addAction("Export Buffer");
             connect(exportBuffer, &QAction::triggered, [this, componentNode](){
                 requestSaveBuffer(componentNode->getModel()->getId());
             });
-            menu.addAction(exportBuffer);
         }
     }
 
@@ -1112,10 +1123,7 @@ void GraphPanel::updatePeripheralAudioChannels(size_t numChannels){
         ConnectionEndpoint e = ConnectionEndpoint::create(
             SocketType::SignalInbound, i
         );
-        specs.push_back(SocketSpec(
-            "Audio In " + QString::number(i),
-            e
-        ));
+        specs.push_back(SocketSpec(e));
     }
     
     audioOut_->insertSockets(specs);

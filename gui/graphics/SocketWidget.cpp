@@ -19,15 +19,17 @@
 #include "graphics/GraphNode.hpp"
 #include "app/Theme.hpp"
 #include "managers/SocketRegistry.hpp"
+#include "managers/ComponentManager.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsItem>
 #include <spdlog/spdlog.h>
 
-SocketWidget::SocketWidget(SocketSpec spec, SocketClaimBehavior claimBehavior, GraphNode* parent):
+SocketWidget::SocketWidget(SocketSpec spec, SocketPriority p, GraphNode* parent):
     QGraphicsObject(),
     spec_(spec),
-    parent_(parent)
+    parent_(parent),
+    priority_(p)
 {
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
@@ -36,29 +38,22 @@ SocketWidget::SocketWidget(SocketSpec spec, SocketClaimBehavior claimBehavior, G
     setZValue(-0.2); // we want the sockets just behind the GraphNode, with room to place the cable between
     setToolTip(spec_.name());
 
+    // socket registration
+    SocketRegistry::instance()->registerSocket(this, priority());
+
+    // other connections
     connect(
         this, &SocketWidget::positionChanged,
         parent, &GraphNode::socketPositionChanged
     );
-
-    // socket registration
-    SocketRegistry::instance()->registerSocket(this);
-
-    switch(claimBehavior){
-    case SocketClaimBehavior::Override:
-        SocketRegistry::instance()->claim(this);
-        break ;
-    case SocketClaimBehavior::Reactive:
-        connect(
-            SocketRegistry::instance(), &SocketRegistry::socketMappingChanged,
-            this, &SocketWidget::onMappingChanged
-        );
-        onMappingChanged();
-        break ;
-    default:
-        SPDLOG_WARN("invalid socket claim behavior specified");
-        break ;
-    }
+    connect(
+        ComponentManager::instance(), &ComponentManager::componentRenamed,
+        this, [this](int componentId){
+            if ( getSpec().componentIds().contains(componentId) ){
+                spec_.updateName();
+            }
+        }
+    );
 }
 
 SocketWidget::~SocketWidget(){
@@ -165,13 +160,16 @@ void SocketWidget::setUserHidden(bool hidden){
     }
 }
 
-
 bool SocketWidget::isOutbound() const {
     return !spec_.type().isInbound();
 }
 
 bool SocketWidget::isInbound() const {
     return spec_.type().isInbound();
+}
+
+SocketPriority SocketWidget::priority() const {
+    return priority_ ;
 }
 
 QPointF SocketWidget::getConnectionPoint() const {
@@ -199,16 +197,5 @@ void SocketWidget::deserialize(const json& msg){
 
     if ( msg.contains("hidden") && msg.at("hidden").is_boolean() ){
         setUserHidden(msg.at("hidden").get<bool>());
-    }
-}
-
-void SocketWidget::onMappingChanged(){
-    auto* registry = SocketRegistry::instance();
-
-    // if any of my endpoints are available, claim my endpoints
-    for ( const auto& endpoint : spec_.endpoints() ){
-        if ( registry->isClaimed(endpoint) ) continue ;
-        registry->claim(this);
-        return ;
     }
 }

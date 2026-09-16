@@ -15,28 +15,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "graphics/PeripheralNode.hpp"
+#ifndef SOCKET_NAMER_HPP_
+#define SOCKET_NAMER_HPP_
 
-PeripheralNode::PeripheralNode(int deviceId, const QString& name, QGraphicsItem* parent):
-    GraphNode(name, 0, parent),
-    deviceId_(deviceId)
-{}
+#include <string>
+#include "SocketSpec.hpp"
 
-int PeripheralNode::getId() const {
-    return deviceId_ ;
-}
+class SocketNamer {
+public:
+    static std::string compute(const SocketSpec& spec);
 
-json PeripheralNode::serialize() const {
-    json msg = GraphNode::serialize();
-    msg["node_type"] = "PeripheralNode" ;
-    msg["deviceId"] = deviceId_ ;
+private:
+    static std::string componentSuffix(const std::set<int>& ids);
+    static std::string indexSuffix(const SocketSpec& spec);
 
-    return msg ;
-}
+};
 
-void PeripheralNode::deserialize(const json& node){
-    GraphNode::deserialize(node);
-    if ( node.contains("deviceId") && node.at("deviceId").is_number() ){
-        deviceId_ = node.at("deviceId");
-    }
-}
+#endif // SOCKET_NAMER_HPP_
