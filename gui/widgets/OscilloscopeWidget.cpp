@@ -37,7 +37,7 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
 {
     Config::load();
 
-    sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
+    sampleRate_ = Config::get<double>("audio.sample_rate").value_or(44100);
     updateTimer_->setInterval(16); 
 
     int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 8 ;
@@ -53,13 +53,13 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     fadeTimer_.start();
 }
 
-void OscilloscopeWidget::setAmplitudeRange(float minAmp, float maxAmp){
+void OscilloscopeWidget::setAmplitudeRange(double minAmp, double maxAmp){
     minAmp_ = minAmp ;
     maxAmp_ = maxAmp ;
     update();
 }
 
-void OscilloscopeWidget::setSampleRate(float sampleRate){
+void OscilloscopeWidget::setSampleRate(double sampleRate){
     sampleRate_ = sampleRate ;
     update();
 }
@@ -84,12 +84,12 @@ void OscilloscopeWidget::toggleLayer(int componentId, bool enabled){
     controls_->toggleLayer(componentId, enabled);
 }
 
-void OscilloscopeWidget::onData(int componentId, const float* data, size_t count){
+void OscilloscopeWidget::onData(int componentId, const double* data, size_t count){
     if ( !controls_->isLayerPresent(componentId) ) return ;
 
     auto& layer = layerData_.at(componentId);
     layer.data.assign(data, data + count);
-    layer.lastUpdate.restart();
+    layer.dirty = true ;
 }
 
 void OscilloscopeWidget::onUpdateTimeout(){
@@ -152,7 +152,7 @@ void OscilloscopeWidget::drawGrid(QPainter& painter){
 
     // +0.5 and -0.5 lines
     painter.setPen(QPen(Theme::OSCILLOSCOPE_GRID_COLOR, 1, Qt::DotLine));
-    for ( float amp : {-0.5f, 0.5f} ){
+    for ( double amp : {-0.5f, 0.5f} ){
         int y = static_cast<int>(amplitudeToY(amp));
         painter.drawLine(Theme::OSCILLOSCOPE_MARGIN_LEFT, y,
                          Theme::OSCILLOSCOPE_MARGIN_LEFT + plotWidth, y);
@@ -170,17 +170,16 @@ void OscilloscopeWidget::drawGrid(QPainter& painter){
 void OscilloscopeWidget::drawWaveform(QPainter& painter){
     for ( auto& [id, layer] : layerData_ ){
         if ( 
-            layer.data.empty() || 
-            !controls_->isLayerEnabled(id) ||
-            layer.lastUpdate.elapsed() > Theme::ANALYZER_STALE_DATA_DURATION_MS
+            !layer.dirty || 
+            !controls_->isLayerEnabled(id)
         ) continue ;
 
         QPainterPath path ;
         bool firstPoint = true ;
 
         for ( size_t i = 0; i < layer.data.size(); ++i ){
-            float x = sampleToX(i, layer.data.size());
-            float y = amplitudeToY(std::clamp(layer.data[i], minAmp_, maxAmp_));
+            double x = sampleToX(i, layer.data.size());
+            double y = amplitudeToY(std::clamp(layer.data[i], minAmp_, maxAmp_));
 
             if ( firstPoint ){
                 path.moveTo(x, y);
@@ -192,6 +191,8 @@ void OscilloscopeWidget::drawWaveform(QPainter& painter){
 
         painter.setPen(QPen(controls_->layerColor(id), 1.5));
         painter.drawPath(path);
+
+        layer.dirty = false ;
     }
 }
 
@@ -205,7 +206,7 @@ void OscilloscopeWidget::drawLabels(QPainter& painter){
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
 
     // Y-axis amplitude labels
-    for ( float amp : Theme::OSCILLOSCOPE_AMPLITUDE_LABELS ){
+    for ( double amp : Theme::OSCILLOSCOPE_AMPLITUDE_LABELS ){
         int y = static_cast<int>(amplitudeToY(amp));
         QString label = QString::number(amp, 'f', 2);
         painter.drawText(5, y + 5, label);
@@ -216,7 +217,7 @@ void OscilloscopeWidget::drawLabels(QPainter& painter){
     int windowSize = Config::get<int>("analysis.oscilloscope.window_size").value_or(1024);
     for ( int d = 0; d <= divisions; ++d ){
         size_t sample = (windowSize * d) / divisions ;
-        float timeMs = (sample / sampleRate_) * 1000.0f ;
+        double timeMs = (sample / sampleRate_) * 1000.0f ;
         int x = Theme::OSCILLOSCOPE_MARGIN_LEFT + (plotWidth * d / divisions);
         QString label = QString::number(timeMs, 'f', 1) + "ms" ;
         painter.drawText(x - 12, plotHeight + Theme::OSCILLOSCOPE_MARGIN_TOP + 20, label);
@@ -235,14 +236,14 @@ void OscilloscopeWidget::renderToCache(){
     drawWaveform(painter);
 }
 
-float OscilloscopeWidget::sampleToX(size_t sampleIndex, size_t totalSamples) const {
+double OscilloscopeWidget::sampleToX(size_t sampleIndex, size_t totalSamples) const {
     int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT ;
-    float normalized = static_cast<float>(sampleIndex) / (totalSamples - 1);
+    double normalized = static_cast<double>(sampleIndex) / (totalSamples - 1);
     return Theme::OSCILLOSCOPE_MARGIN_LEFT + normalized * plotWidth ;
 }
 
-float OscilloscopeWidget::amplitudeToY(float amplitude) const {
+double OscilloscopeWidget::amplitudeToY(double amplitude) const {
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
-    float normalized = (amplitude - minAmp_) / (maxAmp_ - minAmp_);
+    double normalized = (amplitude - minAmp_) / (maxAmp_ - minAmp_);
     return Theme::OSCILLOSCOPE_MARGIN_TOP + (1.0f - normalized) * plotHeight ;
 }

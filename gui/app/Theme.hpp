@@ -181,27 +181,39 @@ public:
     static constexpr qreal PIANO_ROLL_SELECTED_ALPHA           = 150 ;
     static constexpr qreal PIANO_ROLL_VELOCITY_UPDATE_PIXELS   = 3 ;
     
-    static constexpr int ANALYZER_FADE_DURATION_MS       = 120 ;
-    static constexpr int ANALYZER_STALE_DATA_DURATION_MS = 200 ;
+    static constexpr double ANALYZER_FADE_DURATION_MS       = 400.0 ;
 
-    static constexpr int   SPECTRUM_MARGIN_LEFT      = 60 ;
-    static constexpr int   SPECTRUM_MARGIN_RIGHT     = 20 ;
-    static constexpr int   SPECTRUM_MARGIN_TOP       = 20 ;
-    static constexpr int   SPECTRUM_MARGIN_BOTTOM    = 120 ;
-    static constexpr int   SPECTRUM_PIXEL_RESOLUTION = 2 ;
-    static constexpr float SPECTRUM_MIN_FREQUENCY    = 10.0 ;
-    static constexpr float SPECTRUM_MAX_FREQUENCY    = 25000.0 ;
-    static constexpr float SPECTRUM_MIN_DECIBEL      = -100.0 ;
-    static constexpr float SPECTRUM_MAX_DECIBEL      = 5.0 ;
+    static constexpr int    SPECTRUM_MARGIN_LEFT      = 60 ;
+    static constexpr int    SPECTRUM_MARGIN_RIGHT     = 20 ;
+    static constexpr int    SPECTRUM_MARGIN_TOP       = 20 ;
+    static constexpr int    SPECTRUM_MARGIN_BOTTOM    = 120 ;
+    static constexpr double SPECTRUM_MIN_FREQUENCY    = 10.0 ;
+    static constexpr double SPECTRUM_MAX_FREQUENCY    = 25000.0 ;
+    static constexpr double SPECTRUM_UPDATE_MS        = 33 ;
+
+    
+    static constexpr std::initializer_list<double> SPECTRUM_DECIBEL_GRID = {
+        -100, -90, -80, -70, -60, -50, 
+        -40, -30, -20, -10, 0, 10
+    };
+
+    static constexpr std::initializer_list<double> SPECTRUM_FREQUENCY_GRID = {
+        20.0f,   50.0f,   100.0f,  200.0f,   500.0f, 
+        1000.0f, 2000.0f, 5000.0f, 10000.0f, 20000.0f
+    };
+    static constexpr std::initializer_list<const char*> SPECTRUM_FREQUENCY_LABELS = {
+        "20Hz", "50", "100", "200", "500",
+        "1kHz", "2k", "5k",  "10k", "20k"
+    };  
 
     static constexpr int   OSCILLOSCOPE_MARGIN_LEFT      = 60 ;
     static constexpr int   OSCILLOSCOPE_MARGIN_RIGHT     = 20 ;
     static constexpr int   OSCILLOSCOPE_MARGIN_TOP       = 20 ;
     static constexpr int   OSCILLOSCOPE_MARGIN_BOTTOM    = 120 ;
-    static constexpr float OSCILLOSCOPE_MIN_AMPLITUDE    = -.75 ;
-    static constexpr float OSCILLOSCOPE_MAX_AMPLITUDE    = .75 ;
-    static constexpr std::initializer_list<float> OSCILLOSCOPE_AMPLITUDE_LABELS = {
-        -0.75f, -0.5f, -0.25f, 0.0f, 0.25f, 0.5f, 0.75f 
+    static constexpr double OSCILLOSCOPE_MIN_AMPLITUDE    = -.75 ;
+    static constexpr double OSCILLOSCOPE_MAX_AMPLITUDE    = .75 ;
+    static constexpr std::initializer_list<double> OSCILLOSCOPE_AMPLITUDE_LABELS = {
+        -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75 
     };
 
     static constexpr int WAVEFORM_MARGIN_LEFT        = 40 ;

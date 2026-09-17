@@ -11,8 +11,7 @@
         },
         "spectrum_analyzer": {
             "buffer_size": 4096,
-            "smooth_factor": 0.7,
-            "frames_averaged": 4
+            "smooth_factor": 0.8
         },
         "stream_recorder": {
             "buffer_size": 4096

@@ -27,13 +27,12 @@ class kiss_fft_state ;
 class SpectrumAnalyzer : public AudioProbe {
 private:
     size_t fftSize_ ;
-    std::vector<double> fftBuffer_ ;
+    std::vector<float> fftBuffer_ ;
     kiss_fft_state* fftConfig_ ;
     size_t bufferPosition_ ;
 
     float smoothFactor_ ;
     std::vector<float> magnitudeHistory_ ;
-    int framesAveraged_ ;
 
 public:
     SpectrumAnalyzer(ComponentId, SpectrumAnalyzerConfig cfg);

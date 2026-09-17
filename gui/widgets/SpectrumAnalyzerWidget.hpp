@@ -33,39 +33,49 @@ class SpectrumAnalyzerWidget : public QWidget, public IAnalyzerWidget {
 
 private:
     GraphLayerControls* controls_ ;
-    
+    size_t expectedDataSize_ ;
+
+    // cache for bin frequency values so long as 
+    struct FrequencyBins { 
+        double start ; 
+        std::vector<double> right ;
+    };
+    FrequencyBins binCache_ ;
+    bool binCacheDirty_ = false ;
+
+    std::vector<int> gridFreqCache_ ;
+    std::vector<int> gridDbCache_ ;
+    bool gridCacheDirty_ = true ;
+
     struct LayerData {
-        std::vector<float> data ;
-        QElapsedTimer lastUpdate ;
+        std::vector<double> data ;
+        bool dirty = false ;
     };
     std::unordered_map<int, LayerData> layerData_ ;
 
-    float sampleRate_ ;
+    double sampleRate_ ;
     
     // Display ranges
-    float minFreq_ ;
-    float maxFreq_ ;
-    float minDb_ ;
-    float maxDb_ ;
+    double minFreq_ ;
+    double maxFreq_ ;
+    double minDb_ ;
+    double maxDb_ ;
     
     QTimer* updateTimer_ ;
-    QElapsedTimer fadeTimer_ ;
 
     QImage cachedFrame_ ;
+    QImage cachedGrid_ ;
+    QPolygonF lineBuffer_ ;
 
 public:
     explicit SpectrumAnalyzerWidget(QWidget *parent = nullptr);
-
-    void setFrequencyRange(float minHz, float maxHz);
-    void setMagnitudeRange(float minDb, float maxDb);
-    void setSampleRate(float sampleRate);
 
     // IAnalyzerWidget
     void addLayer(int componentId, const QString& label) override ;
     void removeLayer(int componentId) override ;
     void renameLayer(int componentId, const QString& label) override ;
     void toggleLayer(int componentId, bool enabled) override ;
-    void onData(int componentId, const float* data, size_t count) override ;
+    void onData(int componentId, const double* data, size_t count) override ;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -81,12 +91,12 @@ private:
     void drawLabels(QPainter &painter);
     void renderToCache();
 
+    void rebuildBinCache();
+    void rebuildGridCache();
+
     // coordinate manipulation
-    float freqToX(float freq) const ;
-    float xToFreq(float x) const ;
-    float dbToY(float db) const ;
-    float binToFreq(size_t bin, size_t count) const ;
-    size_t freqToBin(float freq, size_t count) const ;
+    double freqToX(double freq) const ;
+    double dbToY(double db) const ;
 };
 
 #endif // SPECTRUM_ANALYZER_WIDGET_HPP

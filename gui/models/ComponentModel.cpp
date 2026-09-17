@@ -95,7 +95,7 @@ void ComponentModel::setBuffer(size_t channel, std::vector<double> buffer){
     emit bufferUpdated(channel);
 }
 
-void ComponentModel::appendBuffer(size_t channel, const float* data, size_t count){
+void ComponentModel::appendBuffer(size_t channel, const double* data, size_t count){
     if ( !buffers_.contains(channel) ){
         buffers_[channel] = std::vector<double>(data, data + count);
         return ;

@@ -27,8 +27,7 @@ SpectrumAnalyzer::SpectrumAnalyzer(ComponentId id, [[maybe_unused]] SpectrumAnal
     fftSize_(Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value()),
     bufferPosition_(0),
     smoothFactor_(Config::get<float>("analysis.spectrum_analyzer.smooth_factor").value()),
-    magnitudeHistory_(fftSize_ / 2, 0.0f),
-    framesAveraged_(Config::get<int>("analysis.spectrum_analyzer.frames_averaged").value())
+    magnitudeHistory_(fftSize_ / 2, 0.0f)
 {
     fftBuffer_.resize(fftSize_);
     fftConfig_ = kiss_fft_alloc(fftSize_, 0, nullptr, nullptr);
@@ -62,9 +61,9 @@ void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
 
         if ( bufferPosition_ >= fftSize_ ){
             // apply Hann window
-            std::vector<double> windowedData = fftBuffer_ ;
+            std::vector<float> windowedData = fftBuffer_ ;
             for ( size_t j = 0; j < fftSize_; ++j ) {
-                double window = 0.5 * (1.0 - cos(2.0 * M_PI * j / (fftSize_ - 1)));
+                float window = 0.5f * (1.0f - cos(2.0f * M_PI * j / (fftSize_ - 1)));
                 windowedData[j] *= window ;
             }
 
@@ -91,7 +90,7 @@ void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
                 magnitudeHistory_[j] = smoothFactor_ * magnitudeHistory_[j] + (1.0f - smoothFactor_) * magnitude ;
 
                 // convert to db
-                magnitudes[j] = 20.0 * std::log10(magnitude);
+                magnitudes[j] = 20.0 * std::log10(magnitudeHistory_[j]);
             }
 
             DataApiHeader header = {

@@ -115,21 +115,24 @@ void StreamApiClient::onReadyRead(){
         DataApiHeader header ;
         std::memcpy(&header, datagram.data(), headerSize);
 
-        const float* data = reinterpret_cast<const float*>(datagram.data() + headerSize);
+        const float* raw = reinterpret_cast<const float*>(datagram.data() + headerSize);
         size_t count = (datagram.size() - headerSize) / sizeof(float);
 
+        // store data as double
+        std::vector<double> data(raw, raw + count);
+        
         // if it's a registered analyzer component
         if ( registeredComponents_.contains(header.componentId) ){
             ComponentType typ = registeredComponents_.at(header.componentId);
             if ( !analyzerWidgets_.contains(typ) ) return ;
-            analyzerWidgets_.at(typ)->onData(header.componentId, data, count);
+            analyzerWidgets_.at(typ)->onData(header.componentId, data.data(), count);
             return ;
         }
 
         // otherwise, just append the data to the relevant component model
         auto* model = ComponentManager::instance()->getModel(header.componentId);
         if ( !model ) return ;
-        model->appendBuffer(header.channel, data, count);
+        model->appendBuffer(header.channel, data.data(), count);
     }
 }
 

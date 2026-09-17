@@ -21,22 +21,30 @@
 #include <QPaintEvent>
 #include <QPainterPath>
 #include <cmath>
+#include <algorithm>
+#include <spdlog/spdlog.h>
 
 
 SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     QWidget(parent),
     controls_(new GraphLayerControls(this)),
+    gridFreqCache_(),
     layerData_(),
     minFreq_(Theme::SPECTRUM_MIN_FREQUENCY),
     maxFreq_(Theme::SPECTRUM_MAX_FREQUENCY),
-    minDb_(Theme::SPECTRUM_MIN_DECIBEL),
-    maxDb_(Theme::SPECTRUM_MAX_DECIBEL),
-    updateTimer_(new QTimer(this)),
-    fadeTimer_()
+    minDb_(*Theme::SPECTRUM_DECIBEL_GRID.begin()),
+    maxDb_(*(Theme::SPECTRUM_DECIBEL_GRID.end()-1)),
+    updateTimer_(new QTimer(this))
 {
     Config::load();
 
-    sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
+    sampleRate_ = Config::get<double>(
+        "audio.sample_rate").value_or(44100);
+
+    expectedDataSize_ = Config::get<unsigned int>(
+        "analysis.spectrum_analyzer.buffer_size").value() / 2 ;
+    
+    binCache_.right.resize(expectedDataSize_);
 
     int footerY = height() - Theme::SPECTRUM_MARGIN_BOTTOM + 8 ;
     controls_->setGeometry(
@@ -46,36 +54,19 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
         Theme::SPECTRUM_MARGIN_BOTTOM - 12 
     );
 
-    updateTimer_->setInterval(33); // ~30 FPS
+    updateTimer_->setInterval(Theme::SPECTRUM_UPDATE_MS);
     connect(
         updateTimer_, &QTimer::timeout, 
         this, &SpectrumAnalyzerWidget::onUpdateTimeout
     );
     updateTimer_->start();
-    fadeTimer_.start();
-}
-
-void SpectrumAnalyzerWidget::setFrequencyRange(float minHz, float maxHz) {
-    minFreq_ = minHz ;
-    maxFreq_ = maxHz ;
-    update();
-}
-
-void SpectrumAnalyzerWidget::setMagnitudeRange(float minDb, float maxDb) {
-    minDb_ = minDb ;
-    maxDb_ = maxDb ;
-    update();
-}
-
-void SpectrumAnalyzerWidget::setSampleRate(float sampleRate) {
-    sampleRate_ = sampleRate ;
-    update();
 }
 
 void SpectrumAnalyzerWidget::addLayer(int componentId, const QString& label){
     if ( controls_->isLayerPresent(componentId) ) return ;
     controls_->addLayer(componentId, label);
-    layerData_[componentId];
+    LayerData& d = layerData_[componentId];
+    d.data.resize(expectedDataSize_);
 }
 
 void SpectrumAnalyzerWidget::removeLayer(int componentId){
@@ -92,28 +83,49 @@ void SpectrumAnalyzerWidget::toggleLayer(int componentId, bool enabled){
     controls_->toggleLayer(componentId, enabled);
 }
 
-void SpectrumAnalyzerWidget::onData(int componentId, const float* data, size_t count){
+void SpectrumAnalyzerWidget::onData(int componentId, const double* data, size_t count){
+    // data received are magnitudes, there is no 
     if ( !controls_->isLayerPresent(componentId) ) return ;
 
     auto& layer = layerData_.at(componentId);
 
-    layer.data.resize(count);
-    layer.data.assign(data, data + count);
+    // it is not expected to get a data resize from the streaming engine
+    // as this is defined in config. if we do resize, it invalidates the binCache. 
+    if ( count != layer.data.size() ){
+        SPDLOG_WARN(
+            "Received different count {} than expected {} from Streaming API Client",
+            count, layer.data.size()
+        );
+        layer.data.resize(count);
+        binCache_.right.resize(count);
+        binCacheDirty_ = true ;
+    }
 
-    layer.lastUpdate.restart();
+    layer.data.assign(data, data + count);
+    layer.dirty = true ;
 }
 
-void SpectrumAnalyzerWidget::onUpdateTimeout() {
-    if ( !cachedFrame_.isNull() ){
-        // fade out analysis signal
-        auto elapsedMs = fadeTimer_.restart();
-        double decay = 1.0 - std::exp(-double(elapsedMs) / Theme::ANALYZER_FADE_DURATION_MS);
-        int alpha = std::clamp(int(decay * 255.0), 0, 255);
+void SpectrumAnalyzerWidget::onUpdateTimeout(){
+    bool anyDirty = std::any_of(
+        layerData_.begin(), layerData_.end(),
+        [](const auto& pair){ return pair.second.dirty ; }
+    );
 
+    if ( !anyDirty ) return ;
+
+    static const double fadeStepFactor = std::exp(
+        -Theme::SPECTRUM_UPDATE_MS / Theme::ANALYZER_FADE_DURATION_MS
+    );
+    static const int fadeAlpha = std::clamp(
+        int((1.0 - fadeStepFactor) * 255.0), 
+        0, 255
+    );
+
+    if ( !cachedFrame_.isNull() ){
         QPainter fade(&cachedFrame_);
         fade.fillRect(
             cachedFrame_.rect(), 
-            QColor(0, 0, 0, alpha)
+            QColor(0, 0, 0, fadeAlpha)
         );
     }
 
@@ -123,12 +135,21 @@ void SpectrumAnalyzerWidget::onUpdateTimeout() {
 
 void SpectrumAnalyzerWidget::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
+
     QPainter painter(this);
+
     if ( !cachedFrame_.isNull() ){
         painter.drawImage(0,0, cachedFrame_);
     }
-    drawGrid(painter);
-    drawLabels(painter);
+
+    if ( gridCacheDirty_ || cachedGrid_.size() != size() ){
+        rebuildGridCache();
+        gridCacheDirty_ = false ;
+    }
+
+    if ( !cachedGrid_.isNull() ){
+        painter.drawImage(0,0, cachedGrid_);
+    }
 }
 
 void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
@@ -147,8 +168,11 @@ void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
         width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT,
         Theme::SPECTRUM_MARGIN_BOTTOM - 12 
     );
+
+    binCacheDirty_ = true ;
+    gridCacheDirty_ = true ;
+
     update();
-    
 }
 
 void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
@@ -156,72 +180,83 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
     
     int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
-    
-    // Horizontal grid lines (dB)
-    for (float db = minDb_; db <= maxDb_; db += 10.0) {
-        int y = static_cast<int>(dbToY(db));
-        painter.drawLine(Theme::SPECTRUM_MARGIN_LEFT, y, Theme::SPECTRUM_MARGIN_LEFT + plotWidth, y);
+
+    // horizontal db grid lines
+    for ( auto& pos : gridDbCache_ ){
+        painter.drawLine(
+            Theme::SPECTRUM_MARGIN_LEFT, pos,
+            Theme::SPECTRUM_MARGIN_LEFT + plotWidth, pos
+        );
     }
-    
-    // Vertical grid lines (frequency, logarithmic)
-    std::vector<float> freqs = {20, 50, 100, 2.0, 500, 1000, 2000, 5000, 10000, 20000};
-    for (float freq : freqs) {
-        if (freq >= minFreq_ && freq <= maxFreq_) {
-            int x = static_cast<int>(freqToX(freq));
-            painter.drawLine(x, Theme::SPECTRUM_MARGIN_TOP, x, Theme::SPECTRUM_MARGIN_TOP + plotHeight);
-        }
+
+    // vertical db grid lines
+    for ( auto& pos : gridFreqCache_ ){
+        painter.drawLine(
+            pos, Theme::SPECTRUM_MARGIN_TOP,
+            pos, Theme::SPECTRUM_MARGIN_TOP + plotHeight
+        );
     }
 }
 
 void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
+    size_t numPoints = binCache_.right.size() * 2 ;
+    if ( lineBuffer_.capacity() < static_cast<int>(numPoints) ){
+        lineBuffer_.reserve(numPoints);
+    }
+
     for ( auto& [id, layer] : layerData_ ){
         if ( 
-            layer.data.empty() || 
             !controls_->isLayerEnabled(id) ||
-            layer.lastUpdate.elapsed() > Theme::ANALYZER_STALE_DATA_DURATION_MS
+            !layer.dirty 
         ) continue ;
 
-        QPainterPath path ;
-        bool firstPoint = true ;
+        if ( binCacheDirty_ ){
+            rebuildBinCache();
+            binCacheDirty_ = false ;
+        }
+
+        lineBuffer_.clear();
         
-        int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
+        // bins shouldn't be explicitly draw unless 
+        // we can actually draw at a reasonable resolution
+        double minPixelDist = 2.0 / this->devicePixelRatioF();
 
-        int sampleInterval = Theme::SPECTRUM_PIXEL_RESOLUTION ;
-        for ( int px = 0 ; px < plotWidth; px += sampleInterval ){
-            float xLeft  = Theme::SPECTRUM_MARGIN_LEFT + px ;
-            float xRight = Theme::SPECTRUM_MARGIN_LEFT + px + sampleInterval ;
+        // handle first bin
+        double mag = dbToY(layer.data[0]);
+        lineBuffer_.append(QPointF(binCache_.start, mag));
 
-            float freqLeft  = xToFreq(xLeft);
-            float freqRight = xToFreq(xRight);
+        // this is almost certainly true, but to be safe...
+        double pendingY = 0.0 ;
+        if ( binCache_.right[0] - binCache_.start > minPixelDist ){
+            lineBuffer_.append(QPointF(binCache_.right[0], mag));
+        } else {
+            pendingY = mag ;
+        }
 
-            if ( freqRight < minFreq_ || freqLeft > maxFreq_ ) continue ;
+        double pendingLeft = binCache_.right[0] ;
+        for ( size_t i = 1 ; i < binCache_.right.size() ; ++i ){ 
+            double right = binCache_.right[i] ;
+            double y = std::max(dbToY(layer.data[i]), pendingY);
 
-            size_t binLeft  = freqToBin(freqLeft,  layer.data.size());
-            size_t binRight = freqToBin(freqRight, layer.data.size());
-
-            binLeft  = std::min(binLeft,  layer.data.size() - 1);
-            binRight = std::min(binRight, layer.data.size() - 1);
-            if ( binRight < binLeft ) binRight = binLeft ;
-
-            float peakDb = layer.data[binLeft];
-            for ( size_t bin = binLeft + 1 ; bin <= binRight ; ++bin ){
-                peakDb = std::max(peakDb, layer.data[bin]);
+            if ( right - pendingLeft < minPixelDist ){
+                // not long enough for a line
+                // keep track of peak and move to next bin
+                pendingY = y ;
+                continue ; 
             }
 
-            float db = std::max(minDb_, std::min(maxDb_, peakDb));
-            float x = xLeft ;
-            float y = dbToY(db);
+            lineBuffer_.append(QPointF(pendingLeft, y));
+            lineBuffer_.append(QPointF(right, y));
 
-            if ( firstPoint ){
-                path.moveTo(x,y);
-                firstPoint = false ;
-            } else {
-                path.lineTo(x,y);
-            }
+            // reset for future runs
+            pendingLeft = right ;
+            pendingY = 0.0 ;
         }
         
         painter.setPen(QPen(controls_->layerColor(id), 2));
-        painter.drawPath(path);
+        painter.drawPolyline(lineBuffer_);
+
+        layer.dirty = false ;
     }
 }
 
@@ -234,32 +269,21 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     // int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
     
-    // Y-axis labels (dB)
-    for (float db = minDb_; db <= maxDb_; db += 20.0) {
-        int y = static_cast<int>(dbToY(db));
-        QString label = QString::number(static_cast<int>(db)) + " dB";
-        painter.drawText(5, y + 5, label);
-    }
-    
     // X-axis labels (frequency)
-    std::vector<std::pair<float, QString>> freqLabels = {
-        {20, "20Hz"},
-        {50, "50"},
-        {100, "100"},
-        {200, "200"},
-        {500, "500"},
-        {1000, "1kHz"},
-        {2000, "2k"},
-        {5000, "5k"},
-        {10000, "10k"},
-        {20000, "20k"}
-    };
-    
-    for (const auto& [freq, label] : freqLabels) {
-        if (freq >= minFreq_ && freq <= maxFreq_) {
-            int x = static_cast<int>(freqToX(freq));
-            painter.drawText(x - 8,  plotHeight + Theme::SPECTRUM_MARGIN_TOP + 20, label);
-        }
+    int i = 0 ;
+    for ( const auto& label : Theme::SPECTRUM_FREQUENCY_LABELS ){
+        painter.drawText(
+            gridFreqCache_[i++] - 8,  
+            plotHeight + Theme::SPECTRUM_MARGIN_TOP + 20, 
+            label
+        );
+    }
+
+    // Y-axis labels (dB)
+    i = 0 ;
+    for ( const double& db : Theme::SPECTRUM_DECIBEL_GRID ){
+        QString label = QString::number(static_cast<int>(db)) + " dB";
+        painter.drawText(5, gridDbCache_[i++] + 5, label);
     }
 }
 
@@ -270,46 +294,80 @@ void SpectrumAnalyzerWidget::renderToCache() {
     }
 
     QPainter painter(&cachedFrame_);
-    painter.setRenderHint(QPainter::Antialiasing);
-
     drawSpectrum(painter);
 }
 
-float SpectrumAnalyzerWidget::freqToX(float freq) const {
+void SpectrumAnalyzerWidget::rebuildBinCache(){
+    // recompute bin frequency positionings when bin is invalidated
+    const double binCenterFactor = sampleRate_ / ( binCache_.right.size() * 2 );    
+    const double halfBinWidth = binCenterFactor / 2.0 ;
+    
+    // center frequency of first bin is 0, but we're gonna push it
+    // to minFreq. first bin probably passes minFreq but just to 
+    // be safe let's clamp the right side as well.
+    binCache_.start = freqToX(minFreq_) ; 
+    binCache_.right[0] = halfBinWidth > minFreq_ ? freqToX(halfBinWidth) : binCache_.start ;
+    bool hitMax = false ;
+    for ( size_t i = 1 ; i < binCache_.right.size(); ++i ){
+        // if bins hit max, just keep copying that value instead of recomputing
+        if ( hitMax ){
+            binCache_.right[i] = binCache_.right[i-1];
+            continue ;
+        } 
+
+        double rightFreq = binCenterFactor * i + halfBinWidth ;
+
+        // safety clamp right
+        if ( rightFreq > maxFreq_ ){
+            rightFreq = maxFreq_ ;
+            hitMax = true ;
+        } 
+        binCache_.right[i] = freqToX(rightFreq);
+    }
+}
+
+void SpectrumAnalyzerWidget::rebuildGridCache(){
+    cachedGrid_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+    cachedGrid_.fill(Qt::transparent);
+
+    QPainter painter(&cachedGrid_);
+    painter.setRenderHint(QPainter::Antialiasing); // text/lines look better with it
+
+    // recompute grid data caches
+    auto& freq = Theme::SPECTRUM_FREQUENCY_GRID ;
+    
+    gridFreqCache_.resize(freq.size());
+    size_t i = 0 ;
+    for ( const auto& freq : freq ){
+        gridFreqCache_[i++] = static_cast<int>(freqToX(freq));
+    }
+
+    gridDbCache_.clear();
+    for ( const auto& db : Theme::SPECTRUM_DECIBEL_GRID ){
+        gridDbCache_.push_back(static_cast<int>(dbToY(db)));
+    }
+
+    drawGrid(painter);
+    drawLabels(painter);
+}
+
+double SpectrumAnalyzerWidget::freqToX(double freq) const {
     int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
     
     // Logarithmic mapping
-    float logMin = std::log10(minFreq_);
-    float logMax = std::log10(maxFreq_);
-    float logFreq = std::log10(freq);
+    double logMin = std::log10(minFreq_);
+    double logMax = std::log10(maxFreq_);
+    double logFreq = std::log10(freq);
     
-    float normalized = (logFreq - logMin) / (logMax - logMin);
+    double normalized = (logFreq - logMin) / (logMax - logMin);
     return Theme::SPECTRUM_MARGIN_LEFT + normalized * plotWidth;
 }
 
-float SpectrumAnalyzerWidget::xToFreq(float x) const {    
-    int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
-    float normalized = (x - Theme::SPECTRUM_MARGIN_LEFT) / plotWidth ;
-
-    float logMin = std::log10(minFreq_);
-    float logMax = std::log10(maxFreq_);
-    float logFreq = logMin + normalized * (logMax - logMin);
-
-    return std::pow(10.0, logFreq);
-}
-
-float SpectrumAnalyzerWidget::dbToY(float db) const {
+double SpectrumAnalyzerWidget::dbToY(double db) const {
     int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
+    db = std::clamp(db, minDb_, maxDb_);
     
     // Linear mapping (inverted - lower dB = higher on screen)
-    float normalized = (db - minDb_) / (maxDb_ - minDb_) ;
+    double normalized = (db - minDb_) / (maxDb_ - minDb_) ;
     return Theme::SPECTRUM_MARGIN_TOP + (1.0 - normalized) * plotHeight ;
-}
-
-float SpectrumAnalyzerWidget::binToFreq(size_t bin, size_t count) const {
-    return (bin * sampleRate_) / ( count * 2) ;
-}
-
-size_t SpectrumAnalyzerWidget::freqToBin(float freq, size_t count) const {
-    return static_cast<size_t>((freq * count * 2) / sampleRate_ );
 }

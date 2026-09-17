@@ -28,14 +28,14 @@ private:
     GraphLayerControls* controls_ ;
 
     struct LayerData {
-        std::vector<float> data ;
-        QElapsedTimer lastUpdate ;
+        std::vector<double> data ;
+        bool dirty = false ;
     };
     std::unordered_map<int, LayerData> layerData_ ;
-    float sampleRate_ ;
+    double sampleRate_ ;
 
-    float minAmp_ ;
-    float maxAmp_ ;
+    double minAmp_ ;
+    double maxAmp_ ;
     
     QTimer* updateTimer_ ;
     QElapsedTimer fadeTimer_ ;
@@ -44,15 +44,15 @@ private:
 
 public:
     explicit OscilloscopeWidget(QWidget* parent = nullptr);
-    void setAmplitudeRange(float minAmp, float maxAmp);
-    void setSampleRate(float sampleRate);
+    void setAmplitudeRange(double minAmp, double maxAmp);
+    void setSampleRate(double sampleRate);
 
     // IAnalyzerWidget
     void addLayer(int componentId, const QString& label) override ;
     void removeLayer(int componentId) override ;
     void renameLayer(int componentId, const QString& label) override ;
     void toggleLayer(int componentId, bool enabled) override ;
-    void onData(int componentId, const float* data, size_t count) override ;
+    void onData(int componentId, const double* data, size_t count) override ;
 
 protected:
     void paintEvent(QPaintEvent* event) override ;
@@ -69,7 +69,7 @@ private:
     void renderToCache();
     
     // coordinate helpers
-    float sampleToX(size_t sampleIndex, size_t totalSamples) const ;
-    float amplitudeToY(float amplitude) const ;
+    double sampleToX(size_t sampleIndex, size_t totalSamples) const ;
+    double amplitudeToY(double amplitude) const ;
 };
 
