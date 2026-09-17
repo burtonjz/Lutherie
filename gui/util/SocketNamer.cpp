@@ -72,7 +72,7 @@ std::string SocketNamer::indexSuffix(const SocketSpec& spec){
     if ( spec.numEndpoints() > 1 ) return "" ;
 
     auto endpoints = spec.endpoints();
-    if ( endpoints.size() != 1 || endpoints[0].index()) return "" ;
+    if ( endpoints.size() != 1 || !endpoints[0].index() ) return "" ;
 
     return std::to_string(*endpoints[0].index() + 1);
 }

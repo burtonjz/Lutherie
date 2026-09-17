@@ -30,8 +30,8 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     controls_(new GraphLayerControls(this)),
     gridFreqCache_(),
     layerData_(),
-    minFreq_(Theme::SPECTRUM_MIN_FREQUENCY),
-    maxFreq_(Theme::SPECTRUM_MAX_FREQUENCY),
+    minFreq_(*Theme::SPECTRUM_FREQUENCY_GRID.begin()),
+    maxFreq_(*(Theme::SPECTRUM_FREQUENCY_GRID.end()-1)),
     minDb_(*Theme::SPECTRUM_DECIBEL_GRID.begin()),
     maxDb_(*(Theme::SPECTRUM_DECIBEL_GRID.end()-1)),
     updateTimer_(new QTimer(this))
@@ -54,7 +54,7 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
         Theme::SPECTRUM_MARGIN_BOTTOM - 12 
     );
 
-    updateTimer_->setInterval(Theme::SPECTRUM_UPDATE_MS);
+    updateTimer_->setInterval(Theme::ANALYZER_UPDATE_MS);
     connect(
         updateTimer_, &QTimer::timeout, 
         this, &SpectrumAnalyzerWidget::onUpdateTimeout
@@ -84,7 +84,7 @@ void SpectrumAnalyzerWidget::toggleLayer(int componentId, bool enabled){
 }
 
 void SpectrumAnalyzerWidget::onData(int componentId, const double* data, size_t count){
-    // data received are magnitudes, there is no 
+    // data received are magnitudes only
     if ( !controls_->isLayerPresent(componentId) ) return ;
 
     auto& layer = layerData_.at(componentId);
@@ -114,7 +114,7 @@ void SpectrumAnalyzerWidget::onUpdateTimeout(){
     if ( !anyDirty ) return ;
 
     static const double fadeStepFactor = std::exp(
-        -Theme::SPECTRUM_UPDATE_MS / Theme::ANALYZER_FADE_DURATION_MS
+        -2.0 * Theme::ANALYZER_UPDATE_MS / Theme::ANALYZER_FADE_DURATION_MS
     );
     static const int fadeAlpha = std::clamp(
         int((1.0 - fadeStepFactor) * 255.0), 
@@ -204,16 +204,16 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
         lineBuffer_.reserve(numPoints);
     }
 
+    if ( binCacheDirty_ ){
+        rebuildBinCache();
+        binCacheDirty_ = false ;
+    }
+
     for ( auto& [id, layer] : layerData_ ){
         if ( 
             !controls_->isLayerEnabled(id) ||
             !layer.dirty 
         ) continue ;
-
-        if ( binCacheDirty_ ){
-            rebuildBinCache();
-            binCacheDirty_ = false ;
-        }
 
         lineBuffer_.clear();
         
@@ -221,20 +221,9 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
         // we can actually draw at a reasonable resolution
         double minPixelDist = 2.0 / this->devicePixelRatioF();
 
-        // handle first bin
-        double mag = dbToY(layer.data[0]);
-        lineBuffer_.append(QPointF(binCache_.start, mag));
-
-        // this is almost certainly true, but to be safe...
-        double pendingY = 0.0 ;
-        if ( binCache_.right[0] - binCache_.start > minPixelDist ){
-            lineBuffer_.append(QPointF(binCache_.right[0], mag));
-        } else {
-            pendingY = mag ;
-        }
-
-        double pendingLeft = binCache_.right[0] ;
-        for ( size_t i = 1 ; i < binCache_.right.size() ; ++i ){ 
+        double pendingLeft = binCache_.start ;
+        double pendingY = dbToY(0.0) ;
+        for ( size_t i = 0 ; i < binCache_.right.size() ; ++i ){ 
             double right = binCache_.right[i] ;
             double y = std::max(dbToY(layer.data[i]), pendingY);
 
@@ -266,7 +255,6 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     font.setPointSize(9);
     painter.setFont(font);
     
-    // int plotWidth = width() - Theme::SPECTRUM_MARGIN_LEFT - Theme::SPECTRUM_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::SPECTRUM_MARGIN_TOP - Theme::SPECTRUM_MARGIN_BOTTOM ;
     
     // X-axis labels (frequency)
@@ -339,12 +327,12 @@ void SpectrumAnalyzerWidget::rebuildGridCache(){
     gridFreqCache_.resize(freq.size());
     size_t i = 0 ;
     for ( const auto& freq : freq ){
-        gridFreqCache_[i++] = static_cast<int>(freqToX(freq));
+        gridFreqCache_[i++] = freqToX(freq);
     }
 
     gridDbCache_.clear();
     for ( const auto& db : Theme::SPECTRUM_DECIBEL_GRID ){
-        gridDbCache_.push_back(static_cast<int>(dbToY(db)));
+        gridDbCache_.push_back(dbToY(db));
     }
 
     drawGrid(painter);

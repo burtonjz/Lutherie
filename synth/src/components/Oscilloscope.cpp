@@ -122,9 +122,12 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
             }
 
             /*
-            STEP 4: Send the window to the engine. If a trigger wasn't found, we will freeze up
-            the output until we do trigger (the ui will fade this on its own)
+            STEP 4: Send the window to the engine. If a trigger wasn't found, we will send an empty window 
             */
+            DataApiHeader header = {
+                .componentId = static_cast<uint32_t>(id),
+                .channel = 0
+            };
             if ( triggered ){
                 [[maybe_unused]] double margin = bestScore - secondBestScore ;
                 [[maybe_unused]] auto& lastPos = lastTriggerPos_[id];
@@ -133,13 +136,14 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
                     "For componentId={}, oscilloscope has {} crossing candidates, chosen={:.1f} score={:.3f} margin={:.3f} deltaFromLast={:.1f}",
                     id, candidates.size(), bestCandidatePos, bestScore, margin, bestCandidatePos - lastPos
                 );
-                DataApiHeader header = {
-                    .componentId = static_cast<uint32_t>(id),
-                    .channel = 0
-                };
+                
                 StreamingApiHandler::instance()->send(header, bestWindow.data(), bestWindow.size());
                 prevWindow_[id] = std::move(bestWindow);
-            } 
+            } else {
+                std::vector<float> emptyWindow(windowSize_, 0.0f);
+                StreamingApiHandler::instance()->send(header, bestWindow.data(), bestWindow.size());
+                prevWindow_[id] = std::move(emptyWindow);
+            }
             bufferPosition_ = 0 ;
         }
     }

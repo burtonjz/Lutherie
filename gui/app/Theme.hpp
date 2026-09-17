@@ -181,16 +181,13 @@ public:
     static constexpr qreal PIANO_ROLL_SELECTED_ALPHA           = 150 ;
     static constexpr qreal PIANO_ROLL_VELOCITY_UPDATE_PIXELS   = 3 ;
     
-    static constexpr double ANALYZER_FADE_DURATION_MS       = 400.0 ;
+    static constexpr double ANALYZER_FADE_DURATION_MS = 320.0 ;
+    static constexpr double ANALYZER_UPDATE_MS        = 33 ;
 
     static constexpr int    SPECTRUM_MARGIN_LEFT      = 60 ;
     static constexpr int    SPECTRUM_MARGIN_RIGHT     = 20 ;
     static constexpr int    SPECTRUM_MARGIN_TOP       = 20 ;
     static constexpr int    SPECTRUM_MARGIN_BOTTOM    = 120 ;
-    static constexpr double SPECTRUM_MIN_FREQUENCY    = 10.0 ;
-    static constexpr double SPECTRUM_MAX_FREQUENCY    = 25000.0 ;
-    static constexpr double SPECTRUM_UPDATE_MS        = 33 ;
-
     
     static constexpr std::initializer_list<double> SPECTRUM_DECIBEL_GRID = {
         -100, -90, -80, -70, -60, -50, 
@@ -206,15 +203,16 @@ public:
         "1kHz", "2k", "5k",  "10k", "20k"
     };  
 
-    static constexpr int   OSCILLOSCOPE_MARGIN_LEFT      = 60 ;
-    static constexpr int   OSCILLOSCOPE_MARGIN_RIGHT     = 20 ;
-    static constexpr int   OSCILLOSCOPE_MARGIN_TOP       = 20 ;
-    static constexpr int   OSCILLOSCOPE_MARGIN_BOTTOM    = 120 ;
-    static constexpr double OSCILLOSCOPE_MIN_AMPLITUDE    = -.75 ;
-    static constexpr double OSCILLOSCOPE_MAX_AMPLITUDE    = .75 ;
-    static constexpr std::initializer_list<double> OSCILLOSCOPE_AMPLITUDE_LABELS = {
+    static constexpr int OSCILLOSCOPE_MARGIN_LEFT    = 60 ;
+    static constexpr int OSCILLOSCOPE_MARGIN_RIGHT   = 20 ;
+    static constexpr int OSCILLOSCOPE_MARGIN_TOP     = 20 ;
+    static constexpr int OSCILLOSCOPE_MARGIN_BOTTOM  = 120 ;
+    static constexpr int OSCILLOSCOPE_TIME_DIVISIONS = 8 ;
+    
+    static constexpr std::initializer_list<double> OSCILLOSCOPE_VOLTAGE_GRID = {
         -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75 
     };
+    
 
     static constexpr int WAVEFORM_MARGIN_LEFT        = 40 ;
     static constexpr int WAVEFORM_MARGIN_RIGHT       = 20 ;

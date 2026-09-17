@@ -14,7 +14,6 @@
 
 ### Misc
 - [Quick] bug: if a polyoscillator is connected to an envelope, and it is disconnected while an child oscillator is playing, it seems it will continue to respond to those note presses indefinitely. Probably just need to explicitly shut them down at time of disconnect.
-- [Medium] give oscilloscope same improvements spectrum analyzer received.
 
 ## Day 2
 

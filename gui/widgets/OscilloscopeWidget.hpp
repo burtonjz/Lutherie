@@ -20,12 +20,19 @@
 
 #include <QWidget>
 #include <QTimer>
-#include <QElapsedTimer>
 
- class OscilloscopeWidget : public QWidget, public IAnalyzerWidget {
+class OscilloscopeWidget : public QWidget, public IAnalyzerWidget {
     Q_OBJECT
 private:
     GraphLayerControls* controls_ ;
+    size_t expectedDataSize_ ;
+
+    std::vector<double> sampleCache_ ;
+    bool sampleCacheDirty_ = false ;
+
+    std::vector<double> gridVoltageCache_ ;
+    std::vector<std::pair<QString, double>> gridTimeCache_ ;
+    bool gridCacheDirty_ = true ;
 
     struct LayerData {
         std::vector<double> data ;
@@ -34,18 +41,19 @@ private:
     std::unordered_map<int, LayerData> layerData_ ;
     double sampleRate_ ;
 
-    double minAmp_ ;
-    double maxAmp_ ;
-    
+    double minTime_ ;
+    double maxTime_ ;
+    double minVolt_ ;
+    double maxVolt_ ;
+
     QTimer* updateTimer_ ;
-    QElapsedTimer fadeTimer_ ;
 
     QImage cachedFrame_ ;
+    QImage cachedGrid_ ;
+    QPolygonF lineBuffer_ ;
 
 public:
     explicit OscilloscopeWidget(QWidget* parent = nullptr);
-    void setAmplitudeRange(double minAmp, double maxAmp);
-    void setSampleRate(double sampleRate);
 
     // IAnalyzerWidget
     void addLayer(int componentId, const QString& label) override ;
@@ -67,9 +75,12 @@ private:
     void drawWaveform(QPainter& painter);
     void drawLabels(QPainter& painter);
     void renderToCache();
+
+    void rebuildSampleCache();
+    void rebuildGridCache();
     
     // coordinate helpers
-    double sampleToX(size_t sampleIndex, size_t totalSamples) const ;
-    double amplitudeToY(double amplitude) const ;
+    double sampleToX(size_t sampleIndex, size_t total) const ;
+    double voltageToY(double amplitude) const ;
 };
 

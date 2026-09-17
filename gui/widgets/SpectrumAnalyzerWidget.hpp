@@ -26,7 +26,6 @@
 #include <vector>
 #include <QPainter>
 #include <QTimer>
-#include <QElapsedTimer>
 
 class SpectrumAnalyzerWidget : public QWidget, public IAnalyzerWidget {
     Q_OBJECT
@@ -43,8 +42,8 @@ private:
     FrequencyBins binCache_ ;
     bool binCacheDirty_ = false ;
 
-    std::vector<int> gridFreqCache_ ;
-    std::vector<int> gridDbCache_ ;
+    std::vector<double> gridFreqCache_ ;
+    std::vector<double> gridDbCache_ ;
     bool gridCacheDirty_ = true ;
 
     struct LayerData {

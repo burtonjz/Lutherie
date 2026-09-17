@@ -70,6 +70,7 @@ if ( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     target_compile_definitions(lutherie-gui PUBLIC
         SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
         DEBUG_BUILD
+        _GLIBCXX_ASSERTIONS
     )
 else ()
     target_compile_definitions(lutherie-gui PUBLIC

@@ -30,15 +30,18 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     controls_(new GraphLayerControls(this)),
     layerData_(),
     sampleRate_(Config::get<double>("audio.sample_rate").value()),
-    minAmp_(Theme::OSCILLOSCOPE_MIN_AMPLITUDE),
-    maxAmp_(Theme::OSCILLOSCOPE_MAX_AMPLITUDE),
-    updateTimer_(new QTimer(this)),
-    fadeTimer_()
+    minTime_(0.0),
+    maxTime_(),
+    minVolt_(*Theme::OSCILLOSCOPE_VOLTAGE_GRID.begin()),
+    maxVolt_(*(Theme::OSCILLOSCOPE_VOLTAGE_GRID.end()-1)),
+    updateTimer_(new QTimer(this))
 {
     Config::load();
 
-    sampleRate_ = Config::get<double>("audio.sample_rate").value_or(44100);
-    updateTimer_->setInterval(16); 
+    sampleRate_ = Config::get<double>("audio.sample_rate").value();
+
+    expectedDataSize_ = Config::get<int>("analysis.oscilloscope.window_size").value();
+    sampleCache_.resize(expectedDataSize_);
 
     int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 8 ;
     controls_->setGeometry(
@@ -48,26 +51,19 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
         Theme::OSCILLOSCOPE_MARGIN_BOTTOM - 12
     );
 
-    connect(updateTimer_, &QTimer::timeout, this, &OscilloscopeWidget::onUpdateTimeout);
+    updateTimer_->setInterval(Theme::ANALYZER_UPDATE_MS);
+    connect(
+        updateTimer_, &QTimer::timeout, 
+        this, &OscilloscopeWidget::onUpdateTimeout
+    );
     updateTimer_->start();
-    fadeTimer_.start();
-}
-
-void OscilloscopeWidget::setAmplitudeRange(double minAmp, double maxAmp){
-    minAmp_ = minAmp ;
-    maxAmp_ = maxAmp ;
-    update();
-}
-
-void OscilloscopeWidget::setSampleRate(double sampleRate){
-    sampleRate_ = sampleRate ;
-    update();
 }
 
 void OscilloscopeWidget::addLayer(int componentId, const QString& label){
     if ( controls_->isLayerPresent(componentId) ) return ;
     controls_->addLayer(componentId, label);
-    layerData_[componentId];
+    LayerData& d = layerData_[componentId];
+    d.data.resize(expectedDataSize_);
 }
 
 void OscilloscopeWidget::removeLayer(int componentId){
@@ -88,21 +84,44 @@ void OscilloscopeWidget::onData(int componentId, const double* data, size_t coun
     if ( !controls_->isLayerPresent(componentId) ) return ;
 
     auto& layer = layerData_.at(componentId);
+
+    // it is not expected to get a data resize from the streaming engine
+    // as this is defined in config. if we do resize, it invalidates the sampleCache. 
+    if ( count != layer.data.size() ){
+        SPDLOG_WARN(
+            "Received different count {} than expected {} from Streaming API Client",
+            count, layer.data.size()
+        );
+        layer.data.resize(count);
+        sampleCache_.resize(count);
+        sampleCacheDirty_ = true ;
+    }
+
     layer.data.assign(data, data + count);
     layer.dirty = true ;
 }
 
 void OscilloscopeWidget::onUpdateTimeout(){
-    if ( !cachedFrame_.isNull() ){
-        // fade out analysis signal
-        auto elapsedMs = fadeTimer_.restart();
-        double decay = 1.0 - std::exp(-double(elapsedMs) / Theme::ANALYZER_FADE_DURATION_MS);
-        int alpha = std::clamp(int(decay * 255.0), 0, 255);
+    bool anyDirty = std::any_of(
+        layerData_.begin(), layerData_.end(),
+        [](const auto& pair){ return pair.second.dirty ; }
+    );
 
+    if ( !anyDirty ) return ;
+
+    static const double fadeStepFactor = std::exp(
+        -3.0 * Theme::ANALYZER_UPDATE_MS / Theme::ANALYZER_FADE_DURATION_MS
+    );
+    static const int fadeAlpha = std::clamp(
+        int((1.0 - fadeStepFactor) * 255.0), 
+        0, 255
+    );
+
+    if ( !cachedFrame_.isNull() ){
         QPainter fade(&cachedFrame_);
         fade.fillRect(
             cachedFrame_.rect(), 
-            QColor(0, 0, 0, alpha)
+            QColor(0, 0, 0, fadeAlpha)
         );
     }
     
@@ -112,12 +131,21 @@ void OscilloscopeWidget::onUpdateTimeout(){
 
 void OscilloscopeWidget::paintEvent(QPaintEvent* event){
     Q_UNUSED(event);
+
     QPainter painter(this);
+
     if ( !cachedFrame_.isNull() ){
         painter.drawImage(0, 0, cachedFrame_);
     }
-    drawGrid(painter);
-    drawLabels(painter);
+
+    if ( gridCacheDirty_ || cachedGrid_.size() != size() ){
+        rebuildGridCache();
+        gridCacheDirty_ = false ;
+    }
+
+    if ( !cachedGrid_.isNull() ){
+        painter.drawImage(0,0,cachedGrid_);
+    }
 }
 
 void OscilloscopeWidget::resizeEvent(QResizeEvent* event){
@@ -128,13 +156,17 @@ void OscilloscopeWidget::resizeEvent(QResizeEvent* event){
             Qt::SmoothTransformation
         );
     }
-    int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 28;
+    int footerY = height() - Theme::OSCILLOSCOPE_MARGIN_BOTTOM + 28 ;
     controls_->setGeometry(
         Theme::OSCILLOSCOPE_MARGIN_LEFT,
         footerY,
         width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT,
         Theme::OSCILLOSCOPE_MARGIN_BOTTOM - 12
     );
+
+    sampleCacheDirty_ = true ;
+    gridCacheDirty_ = true ;
+
     update();
 }
 
@@ -144,53 +176,51 @@ void OscilloscopeWidget::drawGrid(QPainter& painter){
     int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT;
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM;
 
-    // center line
-    int centerY = static_cast<int>(amplitudeToY(0.0f));
-    painter.setPen(QPen(Theme::OSCILLOSCOPE_GRID_COLOR, 1));
-    painter.drawLine(Theme::OSCILLOSCOPE_MARGIN_LEFT, centerY,
-                     Theme::OSCILLOSCOPE_MARGIN_LEFT + plotWidth, centerY);
-
-    // +0.5 and -0.5 lines
+    // voltage
     painter.setPen(QPen(Theme::OSCILLOSCOPE_GRID_COLOR, 1, Qt::DotLine));
-    for ( double amp : {-0.5f, 0.5f} ){
-        int y = static_cast<int>(amplitudeToY(amp));
-        painter.drawLine(Theme::OSCILLOSCOPE_MARGIN_LEFT, y,
-                         Theme::OSCILLOSCOPE_MARGIN_LEFT + plotWidth, y);
+    for ( auto& pos : gridVoltageCache_ ){
+        painter.drawLine(
+            Theme::OSCILLOSCOPE_MARGIN_LEFT, pos,
+            Theme::OSCILLOSCOPE_MARGIN_LEFT + plotWidth, pos
+        );
     }
 
-    // vertical time divisions
-    int divisions = 8 ;
-    for ( int d = 1; d < divisions; ++d ){
-        int x = Theme::OSCILLOSCOPE_MARGIN_LEFT + (plotWidth * d / divisions);
-        painter.drawLine(x, Theme::OSCILLOSCOPE_MARGIN_TOP,
-                         x, Theme::OSCILLOSCOPE_MARGIN_TOP + plotHeight);
+    // time
+    for ( auto& pos : gridTimeCache_ ){
+        painter.drawLine(
+            pos.second, Theme::OSCILLOSCOPE_MARGIN_TOP,
+            pos.second, Theme::OSCILLOSCOPE_MARGIN_TOP + plotHeight
+        );
     }
 }
 
 void OscilloscopeWidget::drawWaveform(QPainter& painter){
+    size_t numPoints = sampleCache_.size();
+    if ( lineBuffer_.capacity() < static_cast<int>(numPoints) ){
+        lineBuffer_.reserve(numPoints);
+    }
+
+    if ( sampleCacheDirty_ ){
+        rebuildSampleCache();
+        sampleCacheDirty_ = false ;
+    }
+
     for ( auto& [id, layer] : layerData_ ){
         if ( 
-            !layer.dirty || 
-            !controls_->isLayerEnabled(id)
+            !controls_->isLayerEnabled(id) ||
+            !layer.dirty 
         ) continue ;
 
-        QPainterPath path ;
-        bool firstPoint = true ;
+        lineBuffer_.clear();
+        for ( size_t i = 0; i < sampleCache_.size(); ++i ){
+            double samplePos = sampleCache_[i];
+            double y = voltageToY(layer.data[i]);
 
-        for ( size_t i = 0; i < layer.data.size(); ++i ){
-            double x = sampleToX(i, layer.data.size());
-            double y = amplitudeToY(std::clamp(layer.data[i], minAmp_, maxAmp_));
-
-            if ( firstPoint ){
-                path.moveTo(x, y);
-                firstPoint = false;
-            } else {
-                path.lineTo(x, y);
-            }
+            lineBuffer_.append(QPointF(samplePos, y));
         }
 
-        painter.setPen(QPen(controls_->layerColor(id), 1.5));
-        painter.drawPath(path);
+        painter.setPen(QPen(controls_->layerColor(id), 2));
+        painter.drawPolyline(lineBuffer_);
 
         layer.dirty = false ;
     }
@@ -202,25 +232,22 @@ void OscilloscopeWidget::drawLabels(QPainter& painter){
     font.setPointSize(9);
     painter.setFont(font);
 
-    int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
 
-    // Y-axis amplitude labels
-    for ( double amp : Theme::OSCILLOSCOPE_AMPLITUDE_LABELS ){
-        int y = static_cast<int>(amplitudeToY(amp));
-        QString label = QString::number(amp, 'f', 2);
-        painter.drawText(5, y + 5, label);
+    // X-axis labels (time)
+    for ( const auto& [label, pos] : gridTimeCache_ ){
+        painter.drawText(
+            pos - 8,
+            plotHeight + Theme::OSCILLOSCOPE_MARGIN_TOP + 20,
+            label
+        );
     }
 
-    // X-axis time division labels
-    int divisions = 8 ;
-    int windowSize = Config::get<int>("analysis.oscilloscope.window_size").value_or(1024);
-    for ( int d = 0; d <= divisions; ++d ){
-        size_t sample = (windowSize * d) / divisions ;
-        double timeMs = (sample / sampleRate_) * 1000.0f ;
-        int x = Theme::OSCILLOSCOPE_MARGIN_LEFT + (plotWidth * d / divisions);
-        QString label = QString::number(timeMs, 'f', 1) + "ms" ;
-        painter.drawText(x - 12, plotHeight + Theme::OSCILLOSCOPE_MARGIN_TOP + 20, label);
+    // Y-axis labels (voltage)
+    int i = 0 ;
+    for ( const double& v : Theme::OSCILLOSCOPE_VOLTAGE_GRID ){
+        QString label = QString::number(v) + " v" ;
+        painter.drawText(5, gridVoltageCache_[i++] + 5, label);
     }
 }
 
@@ -231,19 +258,55 @@ void OscilloscopeWidget::renderToCache(){
     }
 
     QPainter painter(&cachedFrame_);
-    painter.setRenderHint(QPainter::Antialiasing);
-
     drawWaveform(painter);
 }
 
-double OscilloscopeWidget::sampleToX(size_t sampleIndex, size_t totalSamples) const {
+void OscilloscopeWidget::rebuildSampleCache(){
+    size_t samples = sampleCache_.size();
+    for ( size_t i = 0 ; i < samples; ++i ){
+        sampleCache_[i] = sampleToX(i, samples);
+    }
+}
+
+void OscilloscopeWidget::rebuildGridCache(){
+    cachedGrid_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+    cachedGrid_.fill(Qt::transparent);
+
+    QPainter painter(&cachedGrid_);
+    painter.setRenderHint(QPainter::Antialiasing); // text/lines look better with it
+
+    // recompute grid data caches
+    const size_t divisions = Theme::OSCILLOSCOPE_TIME_DIVISIONS  ;
+    gridTimeCache_.resize(divisions + 1);
+
+    for ( size_t i = 0 ; i <= divisions; ++i ){
+        size_t sample = (sampleCache_.size() * i) / divisions ;
+        double timeMs = (sample / sampleRate_) * 1000.0f ;  
+        QString label = QString::number(timeMs, 'f', 1) + "ms" ;
+        gridTimeCache_[i] = {label, sampleToX(sample, sampleCache_.size())};
+    }
+    
+    auto& voltages = Theme::OSCILLOSCOPE_VOLTAGE_GRID ;
+    gridVoltageCache_.resize(voltages.size());
+    
+    size_t i = 0 ;
+    for ( const auto& v : voltages ){
+        gridVoltageCache_[i++] = voltageToY(v);
+    }
+
+    // draw 
+    drawGrid(painter);
+    drawLabels(painter);
+}
+
+double OscilloscopeWidget::sampleToX(size_t sampleIndex, size_t total) const {
     int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT ;
-    double normalized = static_cast<double>(sampleIndex) / (totalSamples - 1);
+    double normalized = static_cast<double>(sampleIndex) / (total - 1);
     return Theme::OSCILLOSCOPE_MARGIN_LEFT + normalized * plotWidth ;
 }
 
-double OscilloscopeWidget::amplitudeToY(double amplitude) const {
+double OscilloscopeWidget::voltageToY(double amplitude) const {
     int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
-    double normalized = (amplitude - minAmp_) / (maxAmp_ - minAmp_);
+    double normalized = (amplitude - minVolt_) / (maxVolt_ - minVolt_);
     return Theme::OSCILLOSCOPE_MARGIN_TOP + (1.0f - normalized) * plotHeight ;
 }
