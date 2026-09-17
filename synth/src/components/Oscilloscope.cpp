@@ -141,7 +141,7 @@ void Oscilloscope::process(const double* data, size_t size, ComponentId id){
                 prevWindow_[id] = std::move(bestWindow);
             } else {
                 std::vector<float> emptyWindow(windowSize_, 0.0f);
-                StreamingApiHandler::instance()->send(header, bestWindow.data(), bestWindow.size());
+                StreamingApiHandler::instance()->send(header, emptyWindow.data(), emptyWindow.size());
                 prevWindow_[id] = std::move(emptyWindow);
             }
             bufferPosition_ = 0 ;

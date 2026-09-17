@@ -173,8 +173,8 @@ void OscilloscopeWidget::resizeEvent(QResizeEvent* event){
 void OscilloscopeWidget::drawGrid(QPainter& painter){
     painter.setPen(Theme::OSCILLOSCOPE_GRID_COLOR);
 
-    int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT;
-    int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM;
+    int plotWidth = width() - Theme::OSCILLOSCOPE_MARGIN_LEFT - Theme::OSCILLOSCOPE_MARGIN_RIGHT ;
+    int plotHeight = height() - Theme::OSCILLOSCOPE_MARGIN_TOP - Theme::OSCILLOSCOPE_MARGIN_BOTTOM ;
 
     // voltage
     painter.setPen(QPen(Theme::OSCILLOSCOPE_GRID_COLOR, 1, Qt::DotLine));
@@ -219,7 +219,7 @@ void OscilloscopeWidget::drawWaveform(QPainter& painter){
             lineBuffer_.append(QPointF(samplePos, y));
         }
 
-        painter.setPen(QPen(controls_->layerColor(id), 2));
+        painter.setPen(QPen(Theme::OSCILLOSCOPE_GRID_COLOR, 1, Qt::SolidLine));
         painter.drawPolyline(lineBuffer_);
 
         layer.dirty = false ;
