@@ -1,7 +1,217 @@
 {
   "components": [
     {
-      "id": 8,
+      "id": 7,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": -15.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": 15.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 5,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": -10.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": 10.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 3,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": -5.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": 5.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 1,
+      "name": "Polyphonic Oscillator",
+      "parameters": {
+        "amplitude": {
+          "modulatorId": 0
+        },
+        "detune": {
+          "currentValue": 0.0,
+          "defaultValue": 0.0,
+          "maximumValue": 4800.0,
+          "minimumValue": -4800.0,
+          "modulatable": false
+        },
+        "gain": {
+          "currentValue": 0.28867512941360474,
+          "defaultValue": 1.0,
+          "maximumValue": 1.0,
+          "minimumValue": 0.0,
+          "modulatable": false
+        },
+        "waveform": {
+          "currentValue": 3,
+          "defaultValue": 0,
+          "maximumValue": 5,
+          "minimumValue": 0,
+          "modulatable": false
+        }
+      }
+    },
+    {
+      "id": 0,
       "name": "ADSR Envelope",
       "parameters": {
         "attack": {
@@ -40,241 +250,19 @@
           "modulatable": true
         }
       }
-    },
-    {
-      "id": 6,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": -15.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
-    },
-    {
-      "id": 5,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": 15.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
-    },
-    {
-      "id": 4,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": -10.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
-    },
-    {
-      "id": 3,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": 10.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
-    },
-    {
-      "id": 2,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": -5.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
-    },
-    {
-      "id": 1,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": 5.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
-    },
-    {
-      "id": 0,
-      "name": "Polyphonic Oscillator",
-      "parameters": {
-        "amplitude": {
-          "modulatorId": 8
-        },
-        "detune": {
-          "currentValue": 0.0,
-          "defaultValue": 0.0,
-          "maximumValue": 4800.0,
-          "minimumValue": -4800.0,
-          "modulatable": false
-        },
-        "gain": {
-          "currentValue": 0.28867512941360474,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": false
-        },
-        "waveform": {
-          "currentValue": 3,
-          "defaultValue": 0,
-          "maximumValue": 5,
-          "minimumValue": 0,
-          "modulatable": false
-        }
-      }
     }
   ],
   "connections": [
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 0,
-        "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
         "componentId": 1,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
+        "componentId": 0,
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -282,11 +270,11 @@
       "inbound": {
         "componentId": 2,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
+        "componentId": 0,
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -294,11 +282,11 @@
       "inbound": {
         "componentId": 3,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
+        "componentId": 0,
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -306,11 +294,11 @@
       "inbound": {
         "componentId": 4,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
+        "componentId": 0,
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -318,11 +306,11 @@
       "inbound": {
         "componentId": 5,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
+        "componentId": 0,
+        "socket": "Modulation Outbound"
       }
     },
     {
@@ -330,266 +318,278 @@
       "inbound": {
         "componentId": 6,
         "parameter": "amplitude",
-        "socketType": "Modulation Inbound"
-      },
-      "outbound": {
-        "componentId": 8,
-        "socketType": "Modulation Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Modulation Inbound"
       },
       "outbound": {
         "componentId": 0,
-        "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Modulation Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "componentId": 7,
+        "parameter": "amplitude",
+        "socket": "Modulation Inbound"
+      },
+      "outbound": {
+        "componentId": 0,
+        "socket": "Modulation Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 1,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 2,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 3,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 4,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 0,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 6,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
-        "index": 1,
-        "socketType": "Signal Inbound"
+        "index": 0,
+        "socket": "Signal Inbound"
       },
       "outbound": {
-        "componentId": 0,
+        "componentId": 7,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 1,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 2,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 3,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 4,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 5,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "index": 1,
-        "socketType": "Signal Inbound"
+        "socket": "Signal Inbound"
       },
       "outbound": {
         "componentId": 6,
         "index": 0,
-        "socketType": "Signal Outbound"
+        "socket": "Signal Outbound"
+      }
+    },
+    {
+      "action": "create_connection",
+      "inbound": {
+        "index": 1,
+        "socket": "Signal Inbound"
+      },
+      "outbound": {
+        "componentId": 7,
+        "index": 0,
+        "socket": "Signal Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 0,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 1,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 2,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 3,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 4,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 5,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
         "componentId": 6,
-        "socketType": "MIDI Inbound"
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "componentId": 8,
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     },
     {
       "action": "create_connection",
       "inbound": {
-        "componentId": 8,
-        "socketType": "MIDI Inbound"
+        "componentId": 7,
+        "socket": "MIDI Inbound"
       },
       "outbound": {
-        "socketType": "MIDI Outbound"
+        "componentId": 0,
+        "socket": "MIDI Outbound"
       }
     }
   ],
@@ -597,94 +597,1029 @@
   "nodes": [
     {
       "deviceId": 1,
-      "hidden_sockets": null,
       "name": "MIDI Input Device",
       "node_type": "PeripheralNode",
-      "xpos": -535.125,
-      "ypos": 19.15749999999999
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "socket": "MIDI Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -757.0,
+      "ypos": -71.0
     },
     {
       "deviceId": 0,
-      "hidden_sockets": null,
       "name": "Audio Output Device",
       "node_type": "PeripheralNode",
-      "xpos": 355.095,
-      "ypos": 22.15749999999999
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "index": 0,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "index": 1,
+                "socket": "Signal Inbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": 7.542625000000157,
+      "ypos": -62.56262499999999
     },
     {
       "componentId": 0,
-      "name": "Base Oscillator",
+      "name": "ADSR Envelope",
       "node_type": "ComponentNode",
-      "xpos": -46.0,
-      "ypos": -246.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 0,
+                "parameter": "attack",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 0,
+                "parameter": "decay",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 0,
+                "parameter": "sustain",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 0,
+                "parameter": "release",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 0,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 0,
+                "socket": "MIDI Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 0,
+                "socket": "Modulation Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -530.0,
+      "ypos": -59.5
     },
     {
       "componentId": 1,
-      "name": "Oscillator +5",
+      "name": "Saw 0",
       "node_type": "ComponentNode",
-      "xpos": -50.0,
-      "ypos": -134.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -168.0,
+      "ypos": -399.5
     },
     {
       "componentId": 2,
-      "name": "Oscillator -5",
+      "name": "Saw +5",
       "node_type": "ComponentNode",
-      "xpos": -49.0,
-      "ypos": -41.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -171.0,
+      "ypos": -293.5
     },
     {
       "componentId": 3,
-      "name": "Oscillator +10",
+      "name": "Saw -5",
       "node_type": "ComponentNode",
-      "xpos": -52.0,
-      "ypos": 50.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -172.0,
+      "ypos": -185.5
     },
     {
       "componentId": 4,
-      "name": "Oscillator -10",
+      "name": "Saw +10",
       "node_type": "ComponentNode",
-      "xpos": -46.0,
-      "ypos": 145.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -185.0,
+      "ypos": -77.5
     },
     {
       "componentId": 5,
-      "name": "Oscillator +15",
+      "name": "Saw -10",
       "node_type": "ComponentNode",
-      "xpos": -40.0,
-      "ypos": 249.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -170.0,
+      "ypos": 29.5
     },
     {
       "componentId": 6,
-      "name": "Oscillator -15",
+      "name": "Saw +15",
       "node_type": "ComponentNode",
-      "xpos": -43.0,
-      "ypos": 355.5
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -176.0,
+      "ypos": 147.5
     },
     {
-      "componentId": 8,
-      "hidden_sockets": null,
-      "name": "ADSR Envelope",
+      "componentId": 7,
+      "name": "Saw -15",
       "node_type": "ComponentNode",
-      "xpos": -325.89250000000004,
-      "ypos": 64.14125000000003
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -180.0,
+      "ypos": 265.5
     },
     {
       "componentIds": [
-        0,
         1,
         2,
         3,
         4,
         5,
-        6
+        6,
+        7
       ],
       "groupId": 0,
-      "hidden_sockets": null,
       "name": "SuperSaw",
       "node_type": "GroupNode",
-      "xpos": -112.41249999999997,
-      "ypos": -129.60500000000002
+      "sockets": [
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 2,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 3,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 4,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 5,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 6,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 7,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 1,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 2,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 3,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 4,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 5,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 6,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "amplitude",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "frequency",
+                "socket": "Modulation Inbound"
+              },
+              {
+                "componentId": 7,
+                "parameter": "phase",
+                "socket": "Modulation Inbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 2,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 3,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 4,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 5,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 6,
+                "index": 0,
+                "socket": "Signal Outbound"
+              },
+              {
+                "componentId": 7,
+                "index": 0,
+                "socket": "Signal Outbound"
+              }
+            ]
+          }
+        },
+        {
+          "hidden": false,
+          "spec": {
+            "endpoints": [
+              {
+                "componentId": 1,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 2,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 3,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 4,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 5,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 6,
+                "socket": "MIDI Inbound"
+              },
+              {
+                "componentId": 7,
+                "socket": "MIDI Inbound"
+              }
+            ]
+          }
+        }
+      ],
+      "xpos": -235.0,
+      "ypos": -70.0
     }
   ],
+  "posts": null,
+  "viewport": {
+    "xpos": -205.67107750472593,
+    "ypos": 295.6521739130435,
+    "zoom": 1.3224999999999998
+  },
   "version": 1
 }
