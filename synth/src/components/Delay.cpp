@@ -15,18 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Delay.hpp"
-#include "config/Config.hpp"
+#include "components/Delay.hpp"
 #include "params/ParameterMap.hpp"
 
 Delay::Delay(ComponentId id, DelayConfig cfg):
     BaseComponent(id, ComponentType::Delay),
     AudioSignalComponent(1,1),
-    delay_(cfg.max_delay_sec * Config::get<int>("audio.sample_rate").value())
+    delay_(cfg.max_delay_sec * sampleRate_)
 {
     parameters_->add<ParameterType::DELAY>(cfg.delay,true,0,cfg.max_delay_sec * sampleRate_);
-    parameters_->add<ParameterType::GAIN>(cfg.gain, true);
-
 }
 
 void Delay::calculateSample(){
@@ -34,7 +31,6 @@ void Delay::calculateSample(){
     delay_.write(input);
 
     size_t delay = parameters_->getParameter<ParameterType::DELAY>()->getInstantaneousValue() ; // in samples
-    double gain = parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue() ;
 
-    setBufferValue(0, delay_.read(delay) * gain) ;
+    setBufferValue(0, delay_.read(delay));
 }

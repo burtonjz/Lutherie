@@ -57,13 +57,6 @@
           "maximumValue": 5000,
           "minimumValue": 0,
           "modulatable": true
-        },
-        "gain": {
-          "currentValue": 1.0,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
-          "modulatable": true
         }
       }
     },
@@ -76,13 +69,6 @@
           "defaultValue": 0,
           "maximumValue": 5000,
           "minimumValue": 0,
-          "modulatable": true
-        },
-        "gain": {
-          "currentValue": 1.0,
-          "defaultValue": 1.0,
-          "maximumValue": 1.0,
-          "minimumValue": 0.0,
           "modulatable": true
         }
       }

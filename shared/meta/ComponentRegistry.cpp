@@ -123,8 +123,8 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Delay",
                 .type = ComponentType::Delay,
-                .modulatableParameters = {ParameterType::DELAY, ParameterType::GAIN},
-                .controllableParameters = {ParameterType::DELAY, ParameterType::GAIN},
+                .modulatableParameters = {ParameterType::DELAY},
+                .controllableParameters = {ParameterType::DELAY},
                 .numSignalInputs = 1,
                 .numSignalOutputs = 1,
             }
