@@ -621,6 +621,17 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
         );
     } else {
         // inbound is an audio sink
+        const size_t channels = SignalController::instance()->getNumChannels();
+        if ( inboundIdx >= channels ){
+            SPDLOG_WARN(
+                "Received signal connection request to audio output port {}, "
+                "but the current output device only has {} channels available. "
+                "Ignoring connection request.",
+                inboundIdx, channels
+            );
+            return true ; // TODO: future better enum status system?
+        }
+
         if ( request.remove() ){
             SignalController::instance()->unregisterSink(
                 outbound, outboundIdx, inboundIdx 

@@ -3,6 +3,7 @@
 #include "params/ParameterMap.hpp"
 #include "types/FilterType.hpp"
 #include "types/ParameterType.hpp"
+#include "units/decibel.hpp"
 #include <cmath>
 
 BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
@@ -16,14 +17,15 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     parameters_->add<ParameterType::FILTER_TYPE>(cfg.filterType, false);
     parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true, 
         20, sampleRate_ * 0.495); // limit to nyquist
-    parameters_->add<ParameterType::DBGAIN>(cfg.gain, true);
+    parameters_->add<ParameterType::GAIN>(cfg.gain, true, 
+        decibel::toLinear(-24.0), decibel::toLinear(24.0));
     parameters_->add<ParameterType::Q_FACTOR>(cfg.qFactor,true);
     parameters_->add<ParameterType::BANDWIDTH>(cfg.bandwidth,true);
     parameters_->add<ParameterType::SHELF>(cfg.shelfSlope,true);
 
     parameters_->getParameter(ParameterType::FILTER_TYPE)->addListener(this);
     parameters_->getParameter(ParameterType::FREQUENCY)->addListener(this);
-    parameters_->getParameter(ParameterType::DBGAIN)->addListener(this);
+    parameters_->getParameter(ParameterType::GAIN)->addListener(this);
     parameters_->getParameter(ParameterType::Q_FACTOR)->addListener(this);
     parameters_->getParameter(ParameterType::BANDWIDTH)->addListener(this);
     parameters_->getParameter(ParameterType::SHELF)->addListener(this);
@@ -83,7 +85,7 @@ void BiquadFilter::calculateCoefficients(){
         break;
     case FilterType::PeakingBell:
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
-        A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0);
+        A = biquadA(parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue());
         alpha = sin_w0 / (2.0 * Q);
         b0 = 1.0 + alpha * A;
         b1 = -2.0 * cos_w0;
@@ -94,7 +96,7 @@ void BiquadFilter::calculateCoefficients(){
         break;
     case FilterType::LowShelf:
         S = parameters_->getParameter<ParameterType::SHELF>()->getInstantaneousValue() ;
-        A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0 );
+        A = biquadA(parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue());
         alpha = (sin_w0 / 2.0) * std::sqrt((A + 1.0 / A) * ( 1.0 / S - 1.0 ) + 2.0 );
         b0 = A * ((A + 1.0) - (A - 1.0) * cos_w0 + 2.0 * std::sqrt(A) * alpha );
         b1 = 2.0 * A * ((A - 1.0) - (A + 1.0) * cos_w0);
@@ -105,7 +107,7 @@ void BiquadFilter::calculateCoefficients(){
         break ;
     case FilterType::HighShelf:
         S = parameters_->getParameter<ParameterType::SHELF>()->getInstantaneousValue() ;
-        A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0 );
+        A = biquadA(parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue());
         alpha = (sin_w0 / 2.0) * std::sqrt((A + 1.0 / A) * ( 1.0 / S - 1.0 ) + 2.0 );
         b0 = A * ((A + 1.0) + (A - 1.0) * cos_w0 + 2.0 * std::sqrt(A) * alpha );
         b1 = -2.0 * A * ((A - 1.0) + (A + 1.0) * cos_w0);
@@ -138,8 +140,8 @@ inline double BiquadFilter::getCurrentOutput(double input){
 
 inline double BiquadFilter::getCurrentOutput(double input, double& s1, double& s2) const {
     // Direct Form II transposed
-    double output = coefficients_[0] * input + state1_ ;
-    s1 = coefficients_[1] * input - coefficients_[3] * output + state2_ ;
+    double output = coefficients_[0] * input + s1 ;
+    s1 = coefficients_[1] * input - coefficients_[3] * output + s2 ;
     s2 = coefficients_[2] * input - coefficients_[4] * output ;
     return output ;
 }
@@ -185,3 +187,7 @@ void BiquadFilter::tick(){
 void BiquadFilter::onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection){
     dirty_ = true ;
 } 
+
+double BiquadFilter::biquadA(double g) const {
+    return std::sqrt(std::max(g, decibel::silenceFloor));
+}

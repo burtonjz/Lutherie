@@ -97,6 +97,51 @@ private:
     size_t value2sample(int val) const ;
 };
 
+class GainWidget : public ParameterWidget {
+    Q_OBJECT
+
+private:
+    QLabel* label_ ;
+    KnobWidget* knob_ ;
+    QToolButton* unitToggle_ ;
+    QLabel* valueLabel_ ;
+ 
+    double linear_ ;
+    double minLinear_ ;   
+    double maxLinear_ ;
+    double dbMin_ ; 
+    double dbMax_ ;
+ 
+public:
+    explicit GainWidget(QWidget* parent = nullptr);
+ 
+    ParameterType getType() const override ;
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
+    std::pair<double, double> getRange() const override ;
+    void setRange(const ParameterValue& min, const ParameterValue& max, bool block = false) override ;
+ 
+protected:
+    void mouseDoubleClickEvent(QMouseEvent* event) override ;
+ 
+private:
+    void setupUI();
+    void connectSignals();
+ 
+    bool dbMode() const ;
+    double linScale() const ; 
+    double dbScale() const ;   
+ 
+    void updateDbRange();
+    void applyRangeToKnob();  // sets knob min/max for the active unit (signals blocked)
+    void syncKnobToValue();   // positions knob from linear_ (signals blocked)
+    void updateDisplay();
+ 
+    void setLinear(double v, bool block);
+    int linearToKnob(double lin) const ;
+    double knobToLinear(int pos) const ;
+};
+
 class WaveformWidget : public ParameterWidget {
 private:
     QLabel* label_ ;

@@ -51,7 +51,6 @@ To add a ParameterType, the following is required:
     X(FREQUENCY) \
     X(AMPLITUDE) \
     X(GAIN) \
-    X(DBGAIN) \
     X(PHASE) \
     X(PAN) \
     X(DETUNE) \
@@ -242,28 +241,12 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
     using ValueType = double ;
     static constexpr std::string_view name = "gain" ;
     static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 1.0 ;
+    static constexpr float maximum = 16.0 ; // a bit above +24 db
     static constexpr float defaultValue = 1.0 ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::MULTIPLICATIVE_ZERO},
         {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
         {ModulatorRange::UNKNOWN, ModulationStrategy::MULTIPLICATIVE_ZERO},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::DBGAIN>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "gain (db)" ;
-    static constexpr float minimum = -24.0 ;
-    static constexpr float maximum = 24.0 ;
-    static constexpr float defaultValue = 0.0 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
     }};
 
     static constexpr size_t uiPrecision = 3 ; // num decimals

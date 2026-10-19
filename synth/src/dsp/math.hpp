@@ -17,7 +17,6 @@
 
 #ifndef __DSP_MATH_HPP_
 #define __DSP_MATH_HPP_
-
 namespace dsp {
     inline double fastAtan(double inp){
         return inp / (1.0 + 0.28 * inp * inp);

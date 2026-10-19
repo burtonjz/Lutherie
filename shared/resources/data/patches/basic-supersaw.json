@@ -424,90 +424,6 @@
     {
       "action": "create_connection",
       "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 1,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 2,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 3,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 4,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 5,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 6,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 7,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
         "componentId": 0,
         "socket": "MIDI Inbound"
       },
@@ -625,17 +541,6 @@
             "endpoints": [
               {
                 "index": 0,
-                "socket": "Signal Inbound"
-              }
-            ]
-          }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "index": 1,
                 "socket": "Signal Inbound"
               }
             ]

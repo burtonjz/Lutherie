@@ -45,6 +45,10 @@ private:
     inline double getCurrentOutput(double input);
     inline double getCurrentOutput(double input, double& s1, double& s2) const ;
 
+    // RBJ cookbook amplitude term for peaking/shelf filters:
+    // A = 10^(dB/40) = sqrt(linear gain)
+    double biquadA(double g) const ;
+
 };
 
 #endif // __BIQUAD_FILTER_HPP_

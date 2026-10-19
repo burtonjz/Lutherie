@@ -31,7 +31,7 @@ class BiquadFilter ;
 struct BiquadFilterConfig {
     FilterType filterType = FilterType::LowPass ;
     double frequency = 1000 ;
-    double gain = 0.0 ;
+    double gain = 1.0 ;
     double qFactor = 0.707 ;
     double bandwidth = 1.0 ;
     double shelfSlope = 2.0 ;

@@ -1,0 +1,945 @@
+{
+    "components": [
+      {
+        "id": 6,
+        "name": "Oscillator",
+        "parameters": {
+          "amplitude": {
+            "currentValue": 1,
+            "defaultValue": 1,
+            "maximumValue": 1,
+            "minimumValue": 0,
+            "modulatable": true
+          },
+          "frequency": {
+            "currentValue": 1.2,
+            "defaultValue": 440,
+            "maximumValue": 24000,
+            "minimumValue": 0,
+            "modulatable": true
+          },
+          "gain": {
+            "currentValue": 1,
+            "defaultValue": 1,
+            "maximumValue": 1,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "waveform": {
+            "currentValue": 2,
+            "defaultValue": 0,
+            "maximumValue": 5,
+            "minimumValue": 0,
+            "modulatable": false
+          }
+        }
+      },
+      {
+        "id": 5,
+        "name": "Biquad Filter",
+        "parameters": {
+          "bandwidth": {
+            "currentValue": 1,
+            "defaultValue": 1,
+            "maximumValue": 4,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          },
+          "filter type": {
+            "currentValue": 7,
+            "defaultValue": 0,
+            "maximumValue": 8,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "frequency": {
+            "currentValue": 400,
+            "defaultValue": 1000,
+            "maximumValue": 30000,
+            "minimumValue": 0,
+            "modulatable": true,
+            "modulatorId": 6
+          },
+          "gain": {
+            "currentValue": 1.0,
+            "defaultValue": 1.0,
+            "maximumValue": 15.848932,
+            "minimumValue": 0.063096,
+            "modulatable": true
+          },
+          "q factor": {
+            "currentValue": 0.7070000171661377,
+            "defaultValue": 0.7070000171661377,
+            "maximumValue": 10,
+            "minimumValue": 0.5,
+            "modulatable": true
+          },
+          "shelf slope": {
+            "currentValue": 2,
+            "defaultValue": 2,
+            "maximumValue": 2,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          }
+        }
+      },
+      {
+        "id": 4,
+        "name": "Biquad Filter",
+        "parameters": {
+          "bandwidth": {
+            "currentValue": 1,
+            "defaultValue": 1,
+            "maximumValue": 4,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          },
+          "filter type": {
+            "currentValue": 7,
+            "defaultValue": 0,
+            "maximumValue": 8,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "frequency": {
+            "currentValue": 800,
+            "defaultValue": 1000,
+            "maximumValue": 30000,
+            "minimumValue": 0,
+            "modulatable": true,
+            "modulatorId": 6
+          },
+          "gain": {
+            "currentValue": 1.0,
+            "defaultValue": 1.0,
+            "maximumValue": 15.848932,
+            "minimumValue": 0.063096,
+            "modulatable": true
+          },
+          "q factor": {
+            "currentValue": 1.7999999523162842,
+            "defaultValue": 0.7070000171661377,
+            "maximumValue": 10,
+            "minimumValue": 0.5,
+            "modulatable": true
+          },
+          "shelf slope": {
+            "currentValue": 2,
+            "defaultValue": 2,
+            "maximumValue": 2,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          }
+        }
+      },
+      {
+        "id": 3,
+        "name": "Biquad Filter",
+        "parameters": {
+          "bandwidth": {
+            "currentValue": 1,
+            "defaultValue": 1,
+            "maximumValue": 4,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          },
+          "filter type": {
+            "currentValue": 7,
+            "defaultValue": 0,
+            "maximumValue": 8,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "frequency": {
+            "currentValue": 1200,
+            "defaultValue": 1000,
+            "maximumValue": 30000,
+            "minimumValue": 0,
+            "modulatable": true,
+            "modulatorId": 6
+          },
+          "gain": {
+            "currentValue": 1.0,
+            "defaultValue": 1.0,
+            "maximumValue": 15.848932,
+            "minimumValue": 0.063096,
+            "modulatable": true
+          },
+          "q factor": {
+            "currentValue": 0.7070000171661377,
+            "defaultValue": 0.7070000171661377,
+            "maximumValue": 10,
+            "minimumValue": 0.5,
+            "modulatable": true
+          },
+          "shelf slope": {
+            "currentValue": 2,
+            "defaultValue": 2,
+            "maximumValue": 2,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          }
+        }
+      },
+      {
+        "id": 2,
+        "name": "ADSR Envelope",
+        "parameters": {
+          "attack": {
+            "currentValue": 0.10000000149011612,
+            "defaultValue": 0.10000000149011612,
+            "maximumValue": 4,
+            "minimumValue": 0.0010000000474974513,
+            "modulatable": true
+          },
+          "decay": {
+            "currentValue": 0.10000000149011612,
+            "defaultValue": 0.10000000149011612,
+            "maximumValue": 4,
+            "minimumValue": 0.0010000000474974513,
+            "modulatable": true
+          },
+          "release": {
+            "currentValue": 0.10000000149011612,
+            "defaultValue": 0.10000000149011612,
+            "maximumValue": 4,
+            "minimumValue": 0,
+            "modulatable": true
+          },
+          "retrigger": {
+            "currentValue": 0,
+            "defaultValue": 0,
+            "maximumValue": 3,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "sustain": {
+            "currentValue": 0.800000011920929,
+            "defaultValue": 0.800000011920929,
+            "maximumValue": 1,
+            "minimumValue": 0,
+            "modulatable": true
+          }
+        }
+      },
+      {
+        "id": 1,
+        "name": "Polyphonic Oscillator",
+        "parameters": {
+          "amplitude": {
+            "modulatorId": 2
+          },
+          "detune": {
+            "currentValue": 0,
+            "defaultValue": 0,
+            "maximumValue": 4800.0,
+            "minimumValue": -4800.0,
+            "modulatable": false
+          },
+          "gain": {
+            "currentValue": 0.28867512941360474,
+            "defaultValue": 1,
+            "maximumValue": 1,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "waveform": {
+            "currentValue": 1,
+            "defaultValue": 0,
+            "maximumValue": 5,
+            "minimumValue": 0,
+            "modulatable": false
+          }
+        }
+      },
+      {
+        "id": 0,
+        "name": "Biquad Filter",
+        "parameters": {
+          "bandwidth": {
+            "currentValue": 1,
+            "defaultValue": 1,
+            "maximumValue": 4,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          },
+          "filter type": {
+            "currentValue": 7,
+            "defaultValue": 0,
+            "maximumValue": 8,
+            "minimumValue": 0,
+            "modulatable": false
+          },
+          "frequency": {
+            "currentValue": 200,
+            "defaultValue": 1000,
+            "maximumValue": 30000,
+            "minimumValue": 0,
+            "modulatable": true,
+            "modulatorId": 6
+          },
+          "gain": {
+            "currentValue": 1.0,
+            "defaultValue": 1.0,
+            "maximumValue": 15.848932,
+            "minimumValue": 0.063096,
+            "modulatable": true
+          },
+          "q factor": {
+            "currentValue": 1.5,
+            "defaultValue": 0.7070000171661377,
+            "maximumValue": 10,
+            "minimumValue": 0.5,
+            "modulatable": true
+          },
+          "shelf slope": {
+            "currentValue": 2,
+            "defaultValue": 2,
+            "maximumValue": 2,
+            "minimumValue": 0.10000000149011612,
+            "modulatable": true
+          }
+        }
+      }
+    ],
+    "connections": [
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 5,
+          "parameter": "frequency",
+          "socket": "Modulation Inbound"
+        },
+        "outbound": {
+          "componentId": 6,
+          "socket": "Modulation Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 4,
+          "parameter": "frequency",
+          "socket": "Modulation Inbound"
+        },
+        "outbound": {
+          "componentId": 6,
+          "socket": "Modulation Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 3,
+          "parameter": "frequency",
+          "socket": "Modulation Inbound"
+        },
+        "outbound": {
+          "componentId": 6,
+          "socket": "Modulation Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 1,
+          "parameter": "amplitude",
+          "socket": "Modulation Inbound"
+        },
+        "outbound": {
+          "componentId": 2,
+          "socket": "Modulation Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 0,
+          "parameter": "frequency",
+          "socket": "Modulation Inbound"
+        },
+        "outbound": {
+          "componentId": 6,
+          "socket": "Modulation Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "index": 0,
+          "socket": "Signal Inbound"
+        },
+        "outbound": {
+          "componentId": 3,
+          "index": 0,
+          "socket": "Signal Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "index": 0,
+          "socket": "Signal Inbound"
+        },
+        "outbound": {
+          "componentId": 1,
+          "index": 0,
+          "socket": "Signal Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 5,
+          "index": 0,
+          "socket": "Signal Inbound"
+        },
+        "outbound": {
+          "componentId": 0,
+          "index": 0,
+          "socket": "Signal Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 4,
+          "index": 0,
+          "socket": "Signal Inbound"
+        },
+        "outbound": {
+          "componentId": 5,
+          "index": 0,
+          "socket": "Signal Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 3,
+          "index": 0,
+          "socket": "Signal Inbound"
+        },
+        "outbound": {
+          "componentId": 4,
+          "index": 0,
+          "socket": "Signal Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 0,
+          "index": 0,
+          "socket": "Signal Inbound"
+        },
+        "outbound": {
+          "componentId": 1,
+          "index": 0,
+          "socket": "Signal Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 2,
+          "socket": "MIDI Inbound"
+        },
+        "outbound": {
+          "socket": "MIDI Outbound"
+        }
+      },
+      {
+        "action": "create_connection",
+        "inbound": {
+          "componentId": 1,
+          "socket": "MIDI Inbound"
+        },
+        "outbound": {
+          "componentId": 2,
+          "socket": "MIDI Outbound"
+        }
+      }
+    ],
+    "midi_controls": null,
+    "nodes": [
+      {
+        "deviceId": 1,
+        "name": "MIDI Input Device",
+        "node_type": "PeripheralNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "socket": "MIDI Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": -878.0,
+        "ypos": 0.0
+      },
+      {
+        "deviceId": 0,
+        "name": "Audio Output Device",
+        "node_type": "PeripheralNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "index": 0,
+                  "socket": "Signal Inbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": 643.0,
+        "ypos": 0.0
+      },
+      {
+        "componentId": 0,
+        "name": "Biquad Filter",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 0,
+                  "parameter": "frequency",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 0,
+                  "parameter": "bandwidth",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 0,
+                  "parameter": "q factor",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 0,
+                  "parameter": "shelf slope",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 0,
+                  "parameter": "gain",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 0,
+                  "index": 0,
+                  "socket": "Signal Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 0,
+                  "index": 0,
+                  "socket": "Signal Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": -177.0,
+        "ypos": 36.0
+      },
+      {
+        "componentId": 1,
+        "name": "Polyphonic Oscillator",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 1,
+                  "parameter": "amplitude",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 1,
+                  "parameter": "frequency",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 1,
+                  "parameter": "phase",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 1,
+                  "socket": "MIDI Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 1,
+                  "index": 0,
+                  "socket": "Signal Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": -384.0,
+        "ypos": -44.0
+      },
+      {
+        "componentId": 2,
+        "name": "ADSR Envelope",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 2,
+                  "parameter": "attack",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 2,
+                  "parameter": "decay",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 2,
+                  "parameter": "sustain",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 2,
+                  "parameter": "release",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 2,
+                  "socket": "MIDI Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 2,
+                  "socket": "MIDI Outbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 2,
+                  "socket": "Modulation Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": -578.0,
+        "ypos": -37.0
+      },
+      {
+        "componentId": 3,
+        "name": "Biquad Filter",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 3,
+                  "parameter": "frequency",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 3,
+                  "parameter": "bandwidth",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 3,
+                  "parameter": "q factor",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 3,
+                  "parameter": "shelf slope",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 3,
+                  "parameter": "gain",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 3,
+                  "index": 0,
+                  "socket": "Signal Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 3,
+                  "index": 0,
+                  "socket": "Signal Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": 343.0,
+        "ypos": 37.0
+      },
+      {
+        "componentId": 4,
+        "name": "Biquad Filter",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 4,
+                  "parameter": "frequency",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 4,
+                  "parameter": "bandwidth",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 4,
+                  "parameter": "q factor",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 4,
+                  "parameter": "shelf slope",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 4,
+                  "parameter": "gain",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 4,
+                  "index": 0,
+                  "socket": "Signal Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 4,
+                  "index": 0,
+                  "socket": "Signal Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": 177.0,
+        "ypos": 34.0
+      },
+      {
+        "componentId": 5,
+        "name": "Biquad Filter",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 5,
+                  "parameter": "frequency",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 5,
+                  "parameter": "bandwidth",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 5,
+                  "parameter": "q factor",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 5,
+                  "parameter": "shelf slope",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 5,
+                  "parameter": "gain",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 5,
+                  "index": 0,
+                  "socket": "Signal Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 5,
+                  "index": 0,
+                  "socket": "Signal Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": 7.0,
+        "ypos": 35.0
+      },
+      {
+        "componentId": 6,
+        "name": "Oscillator",
+        "node_type": "ComponentNode",
+        "sockets": [
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 6,
+                  "parameter": "amplitude",
+                  "socket": "Modulation Inbound"
+                },
+                {
+                  "componentId": 6,
+                  "parameter": "frequency",
+                  "socket": "Modulation Inbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 6,
+                  "index": 0,
+                  "socket": "Signal Outbound"
+                }
+              ]
+            }
+          },
+          {
+            "hidden": false,
+            "spec": {
+              "endpoints": [
+                {
+                  "componentId": 6,
+                  "socket": "Modulation Outbound"
+                }
+              ]
+            }
+          }
+        ],
+        "xpos": -410.0,
+        "ypos": 221.0
+      }
+    ],
+    "posts": null,
+    "viewport": {
+      "xpos": 0.0,
+      "ypos": 0.0,
+      "zoom": 1.0
+    },
+    "version": 1
+  }

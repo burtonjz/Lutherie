@@ -118,6 +118,8 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
     case ParameterType::RECORD:
         w = new RecordWidget(this);
         break ;
+    case ParameterType::GAIN:
+        w = new GainWidget(this);
     default:
         w = new SliderWidget(p, this);
         break ;

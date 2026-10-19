@@ -21,6 +21,7 @@
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
+#include "units/decibel.hpp"
 #include "widgets/MidiLearnWidget.hpp"
 #include "widgets/RangeSlider.hpp"
 #include "widgets/WheelGuard.hpp"
@@ -1162,3 +1163,240 @@ int DetuneWidget::scaleByPrecision(double v, int precision) const {
     return static_cast<int>(v * std::pow(10, precision));
 }
 
+GainWidget::GainWidget(QWidget* parent):
+    ParameterWidget(parent),
+    label_(nullptr),
+    knob_(nullptr),
+    unitToggle_(new QToolButton()),
+    valueLabel_(nullptr),
+    linear_(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, defaultValue)),
+    minLinear_(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, minimum)),
+    maxLinear_(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, maximum)),
+    dbMin_(0),
+    dbMax_(0)
+{
+    updateDbRange();
+    setupUI();
+    connectSignals();
+    applyRangeToKnob();
+    syncKnobToValue();
+    updateDisplay();
+}
+ 
+ParameterType GainWidget::getType() const {
+    return ParameterType::GAIN ;
+}
+ 
+ParameterValue GainWidget::getValue() const {
+    return linear_ ;
+}
+ 
+void GainWidget::setValue(const ParameterValue& value, bool block){
+    using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::GAIN);
+    size_t v = std::get<ValueType>(value);
+    
+    setLinear(v, block);
+}
+ 
+std::pair<double, double> GainWidget::getRange() const {
+    return { minLinear_, maxLinear_ };
+}
+ 
+void GainWidget::setRange(const ParameterValue& min, const ParameterValue& max, [[maybe_unused]] bool block){
+    using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::GAIN);
+    minLinear_ = std::get<ValueType>(min);
+    maxLinear_ = std::get<ValueType>(max);
+ 
+    updateDbRange();
+    applyRangeToKnob();
+ 
+    linear_ = std::clamp(linear_, minLinear_, maxLinear_);
+    syncKnobToValue();
+    updateDisplay();
+}
+ 
+void GainWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
+    const bool db = dbMode();
+ 
+    auto* edit = new QLineEdit(this);
+    edit->setAlignment(Qt::AlignCenter);
+    edit->setGeometry(valueLabel_->geometry());
+
+    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
+ 
+    if ( db ){
+        edit->setText(QString::number(decibel::fromLinear(linear_), 'f', precision));
+        edit->setValidator(new QDoubleValidator(dbMin_, dbMax_, precision, edit));
+    } else {
+        edit->setText(QString::number(linear_, 'f', precision));
+        edit->setValidator(new QDoubleValidator(minLinear_, maxLinear_, precision, edit));
+    }
+ 
+    edit->show();
+    edit->setFocus();
+    edit->selectAll();
+ 
+    connect(
+        edit, &QLineEdit::editingFinished,
+        this, [this, edit, db]()
+    {
+        if ( !edit->hasAcceptableInput() ){
+            edit->deleteLater();
+            return ;
+        }
+ 
+        double val = edit->text().toDouble();
+        edit->deleteLater();
+ 
+        double lin;
+        if ( db ){
+            // typing the bottom of the dB range means "as quiet as allowed" (true min, may be 0)
+            lin = ( val <= dbMin_ ) ? minLinear_ : decibel::toLinear(val);
+        } else {
+            lin = val;
+        }
+        setLinear(lin, false);
+    });
+}
+ 
+void GainWidget::setupUI(){
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
+    setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
+ 
+    // widget label
+    label_ = new QLabel(QString::fromStdString(
+        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, name))
+    ));
+    label_->setAlignment(Qt::AlignCenter);
+    layout->addWidget(label_);
+ 
+    // value label
+    valueLabel_ = new QLabel("0");
+    QFontMetrics fm(valueLabel_->fontMetrics());
+    valueLabel_->setMinimumWidth(fm.horizontalAdvance("-00.000"));
+    valueLabel_->setAlignment(Qt::AlignRight);
+ 
+    // unit selector (unchecked = linear, checked = dB)
+    unitToggle_->setAttribute(Qt::WA_Hover, true);
+    unitToggle_->setText("lin");
+    unitToggle_->setCheckable(true);
+    unitToggle_->setChecked(false);
+    unitToggle_->setAutoRaise(true);
+    unitToggle_->setToolTip("Toggle between linear gain and decibels");
+    unitToggle_->setProperty("textToggleBtn", true);
+ 
+    QHBoxLayout* valueRow = new QHBoxLayout();
+    valueRow->setContentsMargins(0, 0, 0, 0);
+    valueRow->addStretch();
+    valueRow->addWidget(valueLabel_);
+    valueRow->addWidget(unitToggle_);
+    valueRow->addStretch();
+    layout->addLayout(valueRow);
+ 
+    // knob (range and position are filled in by applyRangeToKnob / syncKnobToValue)
+    knob_ = new KnobWidget(Qt::Horizontal);
+    knob_->setEnabled(true);
+ 
+    QHBoxLayout* knobRow = new QHBoxLayout();
+    knobRow->setContentsMargins(0, 0, 0, 0);
+    knobRow->addStretch();
+    knobRow->addWidget(knob_);
+    knobRow->addStretch();
+    layout->addLayout(knobRow);
+}
+ 
+void GainWidget::connectSignals(){
+    // user dragged the knob
+    connect(knob_, &QSlider::valueChanged, this, [this](int pos){
+        linear_ = knobToLinear(pos);
+        updateDisplay();
+        emit valueChanged();
+    });
+ 
+    // changing units re-maps the knob but never changes the value or sends updates
+    connect(unitToggle_, &QToolButton::toggled, this, [this](bool db){
+        unitToggle_->setText(db ? "dB" : "lin");
+        applyRangeToKnob();
+        syncKnobToValue();
+        updateDisplay();
+    });
+}
+ 
+bool GainWidget::dbMode() const {
+    return unitToggle_->isChecked();
+}
+ 
+double GainWidget::linScale() const {
+    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
+    return std::pow(10.0, precision);
+}
+ 
+double GainWidget::dbScale() const {
+    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
+    return std::pow(10.0, precision);
+}
+ 
+void GainWidget::updateDbRange(){
+    dbMin_ = decibel::fromLinear(minLinear_);
+    dbMax_ = decibel::fromLinear(maxLinear_);
+}
+ 
+void GainWidget::applyRangeToKnob(){
+    QSignalBlocker blocker(knob_);
+    if ( dbMode() ){
+        knob_->setMinimum(static_cast<int>(std::lround(dbMin_ * dbScale())));
+        knob_->setMaximum(static_cast<int>(std::lround(dbMax_ * dbScale())));
+    } else {
+        knob_->setMinimum(static_cast<int>(std::lround(minLinear_ * linScale())));
+        knob_->setMaximum(static_cast<int>(std::lround(maxLinear_ * linScale())));
+    }
+}
+ 
+void GainWidget::syncKnobToValue(){
+    QSignalBlocker blocker(knob_);
+    knob_->setValue(linearToKnob(linear_));
+}
+ 
+void GainWidget::updateDisplay(){
+    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
+    if ( dbMode() ){
+        if ( linear_ <= decibel::silenceFloor ){
+            valueLabel_->setText(QStringLiteral("-inf"));
+        } else {
+            valueLabel_->setText(QString::number(decibel::fromLinear(linear_), 'f', precision));
+        }
+    } else {
+        valueLabel_->setText(QString::number(linear_, 'f', precision));
+    }
+}
+ 
+void GainWidget::setLinear(double v, bool block){
+    linear_ = std::clamp(v, minLinear_, maxLinear_);
+    syncKnobToValue(); 
+    updateDisplay();
+    if ( !block ) emit valueChanged();
+}
+ 
+int GainWidget::linearToKnob(double lin) const {
+    lin = std::clamp(lin, minLinear_, maxLinear_);
+    if ( dbMode() ){
+        double db = std::clamp(decibel::fromLinear(lin), dbMin_, dbMax_);
+        return static_cast<int>(std::lround(db * dbScale()));
+    }
+    return static_cast<int>(std::lround(lin * linScale()));
+}
+ 
+double GainWidget::knobToLinear(int pos) const {
+    double lin;
+    if ( dbMode() ){
+        if ( pos <= knob_->minimum() && minLinear_ <= decibel::silenceFloor ){
+            return minLinear_;
+        }
+        lin = decibel::toLinear(pos / dbScale());
+    } else {
+        lin = pos / linScale();
+    }
+    return std::clamp(lin, minLinear_, maxLinear_);
+}

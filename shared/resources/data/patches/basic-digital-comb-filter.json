@@ -124,18 +124,6 @@
     {
       "action": "create_connection",
       "inbound": {
-        "index": 1,
-        "socket": "Signal Inbound"
-      },
-      "outbound": {
-        "componentId": 5,
-        "index": 0,
-        "socket": "Signal Outbound"
-      }
-    },
-    {
-      "action": "create_connection",
-      "inbound": {
         "componentId": 1,
         "index": 0,
         "socket": "Signal Inbound"

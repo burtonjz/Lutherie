@@ -949,17 +949,6 @@
               }
             ]
           }
-        },
-        {
-          "hidden": false,
-          "spec": {
-            "endpoints": [
-              {
-                "index": 1,
-                "socket": "Signal Inbound"
-              }
-            ]
-          }
         }
       ],
       "xpos": 652.085398134336,

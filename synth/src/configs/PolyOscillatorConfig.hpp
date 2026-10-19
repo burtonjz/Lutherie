@@ -30,6 +30,8 @@ class PolyOscillator ;
 // define default configuration
 struct PolyOscillatorConfig {
     Waveform waveform = Waveform::SINE ;
+    double minGain = 0.0 ;
+    double maxGain = 1.0 ;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PolyOscillatorConfig, waveform) // macro to serialize/deserialize json <-> structs

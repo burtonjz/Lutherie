@@ -87,8 +87,8 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Biquad Filter",
                 .type = ComponentType::BiquadFilter,
-                .modulatableParameters = {ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
-                .controllableParameters = {ParameterType::FILTER_TYPE, ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
+                .modulatableParameters = {ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::GAIN},
+                .controllableParameters = {ParameterType::FILTER_TYPE, ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::GAIN},
                 .numSignalInputs = 1,
                 .numSignalOutputs = 1,
                 .canModulate = true

@@ -114,6 +114,7 @@ void ComponentManager::remove(ComponentId id){
     audioSignals_.erase(id);
     audioProbes_.erase(id);
 
+    SPDLOG_DEBUG("deleting component id {} at address {}.", id, fmt::ptr(component));
     components_.erase(id); // deletes unique ptr & frees memory
 }
 

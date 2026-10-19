@@ -98,6 +98,12 @@ void SignalChain::calculateTopologicalOrder(){
     for ( const auto& conn: pseudoSinks_ ){
         topologicalSort(conn.component, visited_, topologicalOrder_);
     }
+
+    std::string debug = "Current Topological Order: " ;
+    for ( const auto c : topologicalOrder_ ){
+        debug += fmt::format("{}, ", fmt::ptr(c));
+    }
+    SPDLOG_DEBUG(debug);
 }
 
 void SignalChain::reset(){

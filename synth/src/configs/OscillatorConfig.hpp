@@ -31,6 +31,8 @@ class Oscillator ;
 struct OscillatorConfig {
     Waveform waveform = Waveform::SINE ;
     double frequency = 440.0 ;
+    double minGain = 0.0 ;
+    double maxGain = 1.0 ;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OscillatorConfig, waveform) // macro to serialize/deserialize json <-> structs

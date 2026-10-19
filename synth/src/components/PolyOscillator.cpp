@@ -38,7 +38,7 @@ PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     modulationData_({})
 {
     parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
-    parameters_->add<ParameterType::GAIN>(1.0 , false);
+    parameters_->add<ParameterType::GAIN>(1.0 , false, cfg.minGain, cfg.maxGain);
     parameters_->add<ParameterType::DETUNE>(0, false);
 
     updateGain();

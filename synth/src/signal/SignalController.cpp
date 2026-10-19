@@ -47,6 +47,10 @@ void SignalController::connect(
     if ( inbound->getNumOutputs() == 0 ){
         signalChain_.addPseudoSink(inbound, inboundIndex);
     }
+    SPDLOG_DEBUG(
+        "outbound signal {} index {} connected to inbound {} index {}. re-calculating topological order",
+        fmt::ptr(outbound), outboundIndex, fmt::ptr(inbound), inboundIndex
+    );
     signalChain_.calculateTopologicalOrder();
 }
 
@@ -60,6 +64,10 @@ void SignalController::disconnect(
     if ( inbound->getNumOutputs() == 0 ){
         signalChain_.removePseudoSink(inbound, inboundIndex);
     }
+    SPDLOG_DEBUG(
+        "outbound signal {} index {} disconnected from inbound {} index {}. re-calculating topological order",
+        fmt::ptr(outbound), outboundIndex, fmt::ptr(inbound), inboundIndex
+    );
     signalChain_.calculateTopologicalOrder();
 }
 
