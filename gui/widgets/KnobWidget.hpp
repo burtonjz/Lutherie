@@ -24,9 +24,6 @@
 #include <QPainterPath>
 #include <QSizePolicy>
 
-// A rotary knob widget that is a drop-in replacement for QSlider.
-// Inherits QAbstractSlider, so minimum/maximum/value/setValue/valueChanged
-// all work identically. Drag vertically or scroll to change value.
 class KnobWidget : public QAbstractSlider
 {
     Q_OBJECT
@@ -35,6 +32,7 @@ private:
     bool dragging_ = false ;
     int dragStartY = 0 ;
     int dragStartValue_ = 0 ;
+    int precision_ = 0 ;
 
 public:
     explicit KnobWidget(
@@ -44,6 +42,25 @@ public:
 
     QSize sizeHint() const override ;
     QSize minimumSizeHint() const override ;
+
+    int precision() const { return precision_ ; }
+    void setPrecision(int p);
+
+    double value() const    { return fromRaw(QAbstractSlider::value()); }
+    
+    double minimum() const  { return fromRaw(QAbstractSlider::minimum()); }
+    void setMinimum(double v)  { QAbstractSlider::setMinimum(toRaw(v)); }
+
+    double maximum() const  { return fromRaw(QAbstractSlider::maximum()); }
+    void setMaximum(double v)  { QAbstractSlider::setMaximum(toRaw(v)); }
+
+    void setRange(double lo, double hi) { QAbstractSlider::setRange(toRaw(lo), toRaw(hi)); }
+
+    double singleStep() const { return fromRaw(QAbstractSlider::singleStep()); }
+    void setSingleStep(double v) { QAbstractSlider::setSingleStep(toRaw(v)); }
+    
+    double pageStep() const   { return fromRaw(QAbstractSlider::pageStep()); }
+    void setPageStep(double v)   { QAbstractSlider::setPageStep(toRaw(v)); }
 
 protected:
     void paintEvent(QPaintEvent* event) override ;
@@ -55,8 +72,14 @@ protected:
 
 private:
     double normalisedValue() const ;
+    int toRaw(double v) const ;
+    double fromRaw(int v) const ;
 
-    int normToSlider(double t) const ;
+public slots:
+    void setValue(double v, bool block = false);
+
+signals:
+    void valueChanged(double value);
 
 };
 

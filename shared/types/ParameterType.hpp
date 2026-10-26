@@ -129,9 +129,9 @@ template <ParameterType Type> struct ParameterTraits ;
 template <> struct ParameterTraits<ParameterType::SCALAR>{
     using ValueType = float ;
     static constexpr std::string_view name = "scalar" ;
-    static constexpr float minimum = -1.0 ;
-    static constexpr float maximum = 1.0 ;
-    static constexpr float defaultValue = 1.0 ;
+    static constexpr float minimum = -1.0f ;
+    static constexpr float maximum = 1.0f ;
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -144,9 +144,9 @@ template <> struct ParameterTraits<ParameterType::SCALAR>{
 template <> struct ParameterTraits<ParameterType::DELAY>{
     using ValueType = int ; // number of samples
     static constexpr std::string_view name = "delay" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 48000 * 4.0 ;
-    static constexpr float defaultValue = 0 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 48000.0f * 4.0f ;
+    static constexpr float defaultValue = 0.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -160,9 +160,9 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
 template <> struct ParameterTraits<ParameterType::DEPTH>{
     using ValueType = double ;
     static constexpr std::string_view name = "depth" ;
-    static constexpr float minimum = -10.0 ;
-    static constexpr float maximum = 10.0 ;
-    static constexpr float defaultValue = 1.0 ;
+    static constexpr float minimum = -10.0f ;
+    static constexpr float maximum = 10.0f ;
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -176,9 +176,9 @@ template <> struct ParameterTraits<ParameterType::DEPTH>{
 template <> struct ParameterTraits<ParameterType::STATUS>{
     using ValueType = bool ;
     static constexpr std::string_view name = "status" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 1 ;
-    static constexpr float defaultValue = 1 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 1.0f ;
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
@@ -192,7 +192,7 @@ template <> struct ParameterTraits<ParameterType::STATUS>{
 template <> struct ParameterTraits<ParameterType::WAVEFORM>{
     using ValueType = uint8_t ;
     static constexpr std::string_view name = "waveform" ;
-    static constexpr float minimum = 0 ;
+    static constexpr float minimum = 0.0f ;
     static constexpr float maximum = Waveform::count ;
     static constexpr float defaultValue = Waveform::SINE ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
@@ -208,9 +208,9 @@ template <> struct ParameterTraits<ParameterType::WAVEFORM>{
 template <> struct ParameterTraits<ParameterType::FREQUENCY>{
     using ValueType = double ;
     static constexpr std::string_view name = "frequency" ;
-    static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 30000 ; // static safeguard, implementation should use dynamic nyquist 
-    static constexpr float defaultValue = 440.0 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 30000.0f ; // static safeguard, implementation should use dynamic nyquist 
+    static constexpr float defaultValue = 440.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
@@ -224,9 +224,9 @@ template <> struct ParameterTraits<ParameterType::FREQUENCY>{
 template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
     using ValueType = double ;
     static constexpr std::string_view name = "amplitude" ;
-    static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 1.0 ;
-    static constexpr float defaultValue = 1.0 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 1.0f ;
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::MULTIPLICATIVE_ZERO},
         {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
@@ -240,25 +240,26 @@ template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
 template <> struct ParameterTraits<ParameterType::GAIN>{
     using ValueType = double ;
     static constexpr std::string_view name = "gain" ;
-    static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 16.0 ; // a bit above +24 db
-    static constexpr float defaultValue = 1.0 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 16.0f ; // a bit above +24 db
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::MULTIPLICATIVE_ZERO},
         {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
         {ModulatorRange::UNKNOWN, ModulationStrategy::MULTIPLICATIVE_ZERO},
     }};
 
-    static constexpr size_t uiPrecision = 3 ; // num decimals
+    static constexpr size_t uiPrecision = 3 ; 
+    static constexpr size_t uiPrecisionDb = 1 ;
     static constexpr bool supportRangeUpdate = true ;
 };
 
 template <> struct ParameterTraits<ParameterType::PHASE>{
     using ValueType = double ;
     static constexpr std::string_view name = "phase" ;
-    static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 1.0 ;
-    static constexpr float defaultValue = 1.0 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 1.0f ;
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -272,9 +273,9 @@ template <> struct ParameterTraits<ParameterType::PHASE>{
 template <> struct ParameterTraits<ParameterType::PAN>{
     using ValueType = float ;
     static constexpr std::string_view name = "pan" ;
-    static constexpr float minimum = -1.0 ;
-    static constexpr float maximum = 1.0 ;
-    static constexpr float defaultValue = 0.0 ;
+    static constexpr float minimum = -1.0f ;
+    static constexpr float maximum = 1.0f ;
+    static constexpr float defaultValue = 0.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -290,7 +291,7 @@ template <> struct ParameterTraits<ParameterType::DETUNE>{
     static constexpr std::string_view name = "detune" ;
     static constexpr float minimum = -4800.0f ;
     static constexpr float maximum = 4800.0f ;
-    static constexpr float defaultValue = 0.0 ;
+    static constexpr float defaultValue = 0.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
@@ -312,9 +313,9 @@ template <> struct ParameterTraits<ParameterType::DETUNE>{
 template <> struct ParameterTraits<ParameterType::ATTACK>{
     using ValueType = float ;
     static constexpr std::string_view name = "attack" ;
-    static constexpr float minimum = 0.001 ;
-    static constexpr float maximum = 4.00 ;
-    static constexpr float defaultValue = 0.01 ;
+    static constexpr float minimum = 0.001f ;
+    static constexpr float maximum = 4.00f ;
+    static constexpr float defaultValue = 0.01f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
@@ -329,9 +330,9 @@ template <> struct ParameterTraits<ParameterType::ATTACK>{
 template <> struct ParameterTraits<ParameterType::DECAY>{
     using ValueType = float ;
     static constexpr std::string_view name = "decay" ;
-    static constexpr float minimum = 0.001 ;
-    static constexpr float maximum = 4.0 ;
-    static constexpr float defaultValue = 0.01 ;
+    static constexpr float minimum = 0.001f ;
+    static constexpr float maximum = 4.0f ;
+    static constexpr float defaultValue = 0.01f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
@@ -345,9 +346,9 @@ template <> struct ParameterTraits<ParameterType::DECAY>{
 template <> struct ParameterTraits<ParameterType::SUSTAIN>{
     using ValueType = float ;
     static constexpr std::string_view name = "sustain" ;
-    static constexpr float minimum = 0.0 ;
-    static constexpr float maximum = 1.0 ;
-    static constexpr float defaultValue = 0.8 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 1.0f ;
+    static constexpr float defaultValue = 0.8f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -361,9 +362,9 @@ template <> struct ParameterTraits<ParameterType::SUSTAIN>{
 template <> struct ParameterTraits<ParameterType::RELEASE>{
     using ValueType = float ;
     static constexpr std::string_view name = "release" ;
-    static constexpr float minimum = 0.001 ;
-    static constexpr float maximum = 4.0 ;
-    static constexpr float defaultValue = 0.01 ;
+    static constexpr float minimum = 0.001f ;
+    static constexpr float maximum = 4.0f ;
+    static constexpr float defaultValue = 0.01f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
@@ -457,9 +458,9 @@ template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
 template <> struct ParameterTraits<ParameterType::BPM>{
     using ValueType = int ;
     static constexpr std::string_view name = "bpm";
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 1000 ;
-    static constexpr float defaultValue = 120 ;
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 1000.0f ;
+    static constexpr float defaultValue = 120.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
         {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
@@ -617,9 +618,9 @@ template <> struct ParameterTraits<ParameterType::LOOP>{
 template <> struct ParameterTraits<ParameterType::PLAYBACK_RATE>{
     using ValueType = float ;
     static constexpr std::string_view name = "playback rate" ;
-    static constexpr float minimum = 0.05 ;
-    static constexpr float maximum = 8.0 ;
-    static constexpr float defaultValue = 1.0 ;
+    static constexpr float minimum = 0.05f ;
+    static constexpr float maximum = 8.0f ;
+    static constexpr float defaultValue = 1.0f ;
     static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
         {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
         {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},

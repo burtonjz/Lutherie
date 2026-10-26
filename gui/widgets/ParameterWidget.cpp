@@ -180,12 +180,12 @@ DelayWidget::DelayWidget(QWidget* parent):
     knob_(nullptr),
     unitToggle_(new QToolButton()),
     valueLabel_(nullptr),
+    sampleRate_(Config::get<double>("audio.sample_rate").value()),
     minSamples_(0),
     minMs_(0),
     maxSamples_(0),
     maxMs_(0)
 {
-    sampleRate_ = Config::get<double>("audio.sample_rate").value();
     setupUI();
     connectSignals();
     updateDisplay();
@@ -196,10 +196,8 @@ ParameterType DelayWidget::getType() const {
 }
 
 ParameterValue DelayWidget::getValue() const {
-    QString unit = unitToggle_->text();
-
-    if ( unitToggle_->text() == "ms") { 
-            return static_cast<int>(knob_->value() / 1000.0f * sampleRate_);
+    if ( unitToggle_->isChecked() ){ 
+        return static_cast<int>(knob_->value() / 1000.0f * sampleRate_);
     } else {
         return static_cast<int>(knob_->value());
     }
@@ -214,14 +212,11 @@ void DelayWidget::setValue(const ParameterValue& value, bool block){
 }
 
 void DelayWidget::setValue(size_t samples, bool block){
-    QString unit = unitToggle_->text();
-    
     QSignalBlocker blocker(knob_);
     if ( !block ) blocker.unblock();
     
-    
-    if (unit == "ms") { 
-        knob_->setValue((samples / sampleRate_) * 1000.0f) ;
+    if ( unitToggle_->isChecked() ){ 
+        knob_->setValue((samples / sampleRate_) * 1000.0f);
     } else {
         knob_->setValue(samples);
     }
@@ -259,8 +254,7 @@ void DelayWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
     edit->setGeometry(valueLabel_->geometry());
 
     // Enforce min/max based on current unit
-    QString unit = unitToggle_->text();
-    if (unit == "ms") {
+    if ( unitToggle_->isChecked() ){
         edit->setValidator(new QDoubleValidator(minMs_, maxMs_, 1, edit));
     } else {
         edit->setValidator(new QIntValidator(minSamples_, maxSamples_, edit));
@@ -272,18 +266,16 @@ void DelayWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
 
     connect(
         edit, &QLineEdit::editingFinished,
-        this, [this, edit]()
-    {
-        if ( !edit->hasAcceptableInput()){
+        this, [this, edit](){
+        if ( !edit->hasAcceptableInput() ){
             edit->deleteLater();
             return ;
         }
-
-        QString unit = unitToggle_->text();
+        
         double val = edit->text().toDouble();
         edit->deleteLater();
 
-        if ( unit == "ms" ){
+        if ( unitToggle_->isChecked() ){
             setValue(val / 1000.0 * sampleRate_, false);
         } else {
             setValue(val, false);
@@ -307,12 +299,12 @@ void DelayWidget::setupUI(){
     // value label    
     valueLabel_ = new QLabel("0");
     QFontMetrics fm(valueLabel_->fontMetrics());
-    valueLabel_->setMinimumWidth(fm.horizontalAdvance("0000"));
+    valueLabel_->setMinimumWidth(fm.horizontalAdvance("00000000"));
     valueLabel_->setAlignment(Qt::AlignRight);
 
     layout->addWidget(valueLabel_);
     
-    // unit selector
+    // unit selector (unchecked = samples, checked = ms)
     unitToggle_->setAttribute(Qt::WA_Hover, true);
     unitToggle_->setText("samples");
     unitToggle_->setCheckable(true);
@@ -329,7 +321,7 @@ void DelayWidget::setupUI(){
     valueRow->addStretch();
     layout->addLayout(valueRow);
 
-    // value slider
+    // knob
     minSamples_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, minimum);
     minMs_ = minSamples_ / sampleRate_ * 1000 ;
 
@@ -337,9 +329,10 @@ void DelayWidget::setupUI(){
     maxMs_ = maxSamples_ / sampleRate_ * 1000 ;
 
     knob_ = new KnobWidget(Qt::Horizontal);
+    knob_->setPrecision(precisionSample_);
     knob_->setMinimum(minSamples_);
     knob_->setMaximum(maxSamples_);  
-    knob_->setValue(0);
+    knob_->setValue(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, defaultValue));
     knob_->setEnabled(true);
 
     QHBoxLayout* knobRow = new QHBoxLayout();
@@ -348,11 +341,10 @@ void DelayWidget::setupUI(){
     knobRow->addWidget(knob_);
     knobRow->addStretch();
     layout->addLayout(knobRow);
-    
 }
 
 void DelayWidget::connectSignals(){
-    connect(knob_, &QSlider::valueChanged, this, [this](){
+    connect(knob_, &KnobWidget::valueChanged, this, [this](){
         updateDisplay();
         emit valueChanged();
     });
@@ -360,37 +352,29 @@ void DelayWidget::connectSignals(){
     // changing units updates the slider but doesn't send updates
     connect(unitToggle_, &QToolButton::toggled,
         this, [this](bool ms){
-        unitToggle_->setText(ms ? "ms" : "samples");
+        const double sampleRate = Config::get<double>("audio.sample_rate").value();        
         
-        // convert current knob value to samples regardless of old unit
-        double sampleRate = Config::get<double>("audio.sample_rate").value();
-        size_t samples = ms 
-            ? static_cast<size_t>(knob_->value())  
-            : static_cast<size_t>(knob_->value() / 1000.0 * sampleRate);                      
+        const int min = ms ? minMs_ : minSamples_ ;
+        const int max = ms ? maxMs_ : maxSamples_ ;
+        
+        const int precision = ms ? precisionMs_ : precisionSample_ ;
+        const double val = ms 
+            ? (knob_->value() / sampleRate * 1000.0)
+            : (knob_->value() / 1000.0 * sampleRate);
 
-        // update knob range and restore value in new unit
-        if ( ms ){
-            knob_->setMinimum(minMs_);
-            knob_->setMaximum(maxMs_);
-            knob_->setValue(samples / sampleRate * 1000.0);
-        } else {
-            knob_->setMinimum(minSamples_);
-            knob_->setMaximum(maxSamples_);
-            knob_->setValue(samples);
-        }
+        unitToggle_->setText(ms ? "ms" : "samples");
+        knob_->setPrecision(precision);
+        knob_->setRange(min, max);
+        knob_->setValue(val, true);
+        
         updateDisplay();
     });
 }
 
 void DelayWidget::updateDisplay(){
-    QString unit = unitToggle_->text();
-    int val = knob_->value();
-
-    if (unit == "ms") {
-        valueLabel_->setText(QString::number(val, 'f', 1));
-    } else {
-        valueLabel_->setText(QString::number(val));
-    }
+    const double val = knob_->value();
+    const int precision = unitToggle_->isChecked() ? precisionMs_ : precisionSample_ ;
+    valueLabel_->setText(QString::number(val, 'f', precision));
 }
 
 /*
@@ -752,7 +736,6 @@ SliderWidget::SliderWidget(ParameterType p, QWidget* parent):
     knob_(nullptr),
     valueLabel_(nullptr)
 {
-    precision_ = GET_PARAMETER_TRAIT_MEMBER(p, uiPrecision);
     setupUI();
     connectSignals();
 }
@@ -762,7 +745,7 @@ ParameterType SliderWidget::getType() const {
 }
 
 ParameterValue SliderWidget::getValue() const {
-    double v = knob_->value() * std::pow(10, -1.0 * precision_);
+    const double v = knob_->value();
     switch(param_){
         #define X(name) \
             case ParameterType::name: \
@@ -786,9 +769,7 @@ void SliderWidget::setValue(const ParameterValue& value, bool block){
     switch(param_){
         #define X(name) \
             case ParameterType::name: \
-                knob_->setValue( \
-                    scaleByPrecision(std::get<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(value)) \
-                ); \
+                knob_->setValue(std::get<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(value)); \
                 break ; 
             PARAMETER_TYPE_LIST
         #undef X
@@ -802,10 +783,7 @@ void SliderWidget::setValue(const ParameterValue& value, bool block){
 }
 
 std::pair<double, double> SliderWidget::getRange() const {
-    return { 
-        knob_->minimum() * std::pow(10, -1.0 * precision_),
-        knob_->maximum() * std::pow(10, -1.0 * precision_)
-    };
+    return { knob_->minimum(), knob_->maximum() };
 }
 
 void SliderWidget::setRange(const ParameterValue& min, const ParameterValue& max, bool block){
@@ -825,22 +803,20 @@ void SliderWidget::setRange(const ParameterValue& min, const ParameterValue& max
     QSignalBlocker blocker(knob_);
     if ( !block ) blocker.unblock();
 
-    knob_->setMinimum(scaleByPrecision(newMin));
-    knob_->setMaximum(scaleByPrecision(newMax));
+    knob_->setMinimum(newMin);
+    knob_->setMaximum(newMax);
 
     if ( block ) updateDisplay();
 }
 
 void SliderWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
-    auto s2v = [this](int v){ return v * std::pow(10, -1.0 * precision_);};
-
     auto* edit = new QLineEdit(this);
-    edit->setText(QString::number(s2v(knob_->value())));
+    edit->setText(QString::number(knob_->value()));
     edit->setGeometry(valueLabel_->geometry());
 
-    double min = s2v(knob_->minimum());
-    double max = s2v(knob_->maximum());
-    edit->setValidator(new QDoubleValidator(min, max, precision_, edit));
+    const double min = knob_->minimum();
+    const double max = knob_->maximum();
+    edit->setValidator(new QDoubleValidator(min, max, knob_->precision(), edit));
     
     edit->show();
     edit->setFocus();
@@ -855,7 +831,7 @@ void SliderWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
             return ;
         }
 
-        double val = edit->text().toDouble();
+        const double val = edit->text().toDouble();
         edit->deleteLater();
 
         switch(param_){
@@ -893,12 +869,13 @@ void SliderWidget::setupUI(){
     
     // value knob
     knob_ = new KnobWidget();
-    knob_->setMinimum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_, minimum)));
+    knob_->setPrecision(GET_PARAMETER_TRAIT_MEMBER(param_, uiPrecision));
+    knob_->setMinimum(GET_PARAMETER_TRAIT_MEMBER(param_, minimum));
 
     if ( param_ == ParameterType::FREQUENCY ){ // nyquist override
-        knob_->setMaximum(scaleByPrecision(Config::get<double>("audio.sample_rate").value() / 2.0)); 
+        knob_->setMaximum(Config::get<double>("audio.sample_rate").value() / 2.0); 
     } else {
-        knob_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
+        knob_->setMaximum(GET_PARAMETER_TRAIT_MEMBER(param_,maximum));  
     }
     
     knob_->setEnabled(true);
@@ -928,18 +905,14 @@ void SliderWidget::setupUI(){
 }
 
 void SliderWidget::connectSignals(){
-    connect(knob_, &QSlider::valueChanged, this, [this](){
+    connect(knob_, &KnobWidget::valueChanged, this, [this](){
         updateDisplay();
         emit valueChanged();
     });
 }
 
 void SliderWidget::updateDisplay(){
-    valueLabel_->setText(QString::number(knob_->value() * std::pow(10, -1.0 * precision_)));
-}
-
-int SliderWidget::scaleByPrecision(double v) const {
-    return v * std::pow(10, precision_);
+    valueLabel_->setText(QString::number(knob_->value() * std::pow(10, -1.0 * knob_->precision())));
 }
 
 /*
@@ -971,17 +944,9 @@ ParameterType DetuneWidget::getType() const {
     return ParameterType::DETUNE;
 }
 
-double DetuneWidget::harmonicValue() const {
-    return harmonicKnob_->value() * std::pow(10, -1.0 * harmonicPrecision_);
-}
-
-double DetuneWidget::detuneValue() const {
-    return detuneKnob_->value() * std::pow(10, -1.0 * detunePrecision_);
-}
-
 double DetuneWidget::combinedValue() const {
-    double harmonicCents = 1200.0 * std::log2(harmonicValue());
-    return harmonicCents + detuneValue();
+    double harmonicCents = 1200.0 * std::log2(harmonicKnob_->value());
+    return harmonicCents + detuneKnob_->value();
 }
 
 void DetuneWidget::setFromCombined(double combined, bool block){
@@ -997,8 +962,8 @@ void DetuneWidget::setFromCombined(double combined, bool block){
     double harmonicRatio = std::round(totalRatio * scale) / scale ;
 
     // clamp harmonic
-    double harmonicMin = harmonicKnob_->minimum() * std::pow(10, -1.0 * harmonicPrecision_);
-    double harmonicMax = harmonicKnob_->maximum() * std::pow(10, -1.0 * harmonicPrecision_);
+    double harmonicMin = harmonicKnob_->minimum();
+    double harmonicMax = harmonicKnob_->maximum();
     harmonicRatio = std::clamp(harmonicRatio, harmonicMin, harmonicMax);
 
     // remainder goes to detune
@@ -1006,8 +971,8 @@ void DetuneWidget::setFromCombined(double combined, bool block){
     double detuneCents = combined - harmonicCents ;
 
     // clamp detune
-    double detuneMin = detuneKnob_->minimum() * std::pow(10, -1.0 * detunePrecision_);
-    double detuneMax = detuneKnob_->maximum() * std::pow(10, -1.0 * detunePrecision_);
+    double detuneMin = detuneKnob_->minimum();
+    double detuneMax = detuneKnob_->maximum();
     detuneCents = std::clamp(detuneCents, detuneMin, detuneMax);
     
     QSignalBlocker hBlocker(harmonicKnob_);
@@ -1017,8 +982,8 @@ void DetuneWidget::setFromCombined(double combined, bool block){
         dBlocker.unblock();
     }
     
-    harmonicKnob_->setValue(scaleByPrecision(harmonicRatio, harmonicPrecision_));
-    detuneKnob_->setValue(scaleByPrecision(detuneCents, detunePrecision_));
+    harmonicKnob_->setValue(harmonicRatio);
+    detuneKnob_->setValue(detuneCents);
 
     updateDisplays();
 }
@@ -1051,12 +1016,11 @@ void DetuneWidget::setupUI(){
     harmonicValueLabel_->setAlignment(Qt::AlignCenter);
     hLayout->addWidget(harmonicValueLabel_);
 
-    harmonicKnob_ = new KnobWidget(Qt::Horizontal);
-    auto hMin = ParameterTraits<ParameterType::DETUNE>::harmonicMin ;
-    harmonicKnob_->setMinimum(scaleByPrecision(hMin, harmonicPrecision_));
-    auto hMax = ParameterTraits<ParameterType::DETUNE>::harmonicMax ;
-    harmonicKnob_->setMaximum(scaleByPrecision(hMax, harmonicPrecision_));
-    harmonicKnob_->setSingleStep(scaleByPrecision(1.0, harmonicPrecision_)); 
+    harmonicKnob_ = new KnobWidget();
+    harmonicKnob_->setPrecision(harmonicPrecision_);
+    harmonicKnob_->setMinimum(ParameterTraits<ParameterType::DETUNE>::harmonicMin);
+    harmonicKnob_->setMaximum(ParameterTraits<ParameterType::DETUNE>::harmonicMax);
+    harmonicKnob_->setSingleStep(1.0); 
 
     QHBoxLayout* hKnobRow = new QHBoxLayout();
     hKnobRow->setContentsMargins(0,0,0,0);
@@ -1079,11 +1043,12 @@ void DetuneWidget::setupUI(){
     detuneValueLabel_->setAlignment(Qt::AlignCenter);
     dLayout->addWidget(detuneValueLabel_);
 
-    detuneKnob_ = new KnobWidget(Qt::Horizontal);
-    auto dMin = ParameterTraits<ParameterType::DETUNE>::detuneCentsMin ;
-    detuneKnob_->setMinimum(scaleByPrecision(dMin, detunePrecision_));
-    auto dMax = ParameterTraits<ParameterType::DETUNE>::detuneCentsMax ;
-    detuneKnob_->setMaximum(scaleByPrecision(dMax, detunePrecision_));
+    detuneKnob_ = new KnobWidget();
+    detuneKnob_->setPrecision(detunePrecision_);
+    detuneKnob_->setMinimum(ParameterTraits<ParameterType::DETUNE>::detuneCentsMin);
+    detuneKnob_->setMaximum(ParameterTraits<ParameterType::DETUNE>::detuneCentsMax);
+    detuneKnob_->setSingleStep(1.0);
+
     QHBoxLayout* dKnobRow = new QHBoxLayout();
     dKnobRow->setContentsMargins(0,0,0,0);
     dKnobRow->addStretch();
@@ -1098,22 +1063,20 @@ void DetuneWidget::setupUI(){
 
 
 void DetuneWidget::connectSignals(){
-    connect(harmonicKnob_, &QSlider::valueChanged, this, [this](){
+    connect(harmonicKnob_, &KnobWidget::valueChanged, this, [this](){
         updateDisplays();
         emit valueChanged();
     });
-    connect(detuneKnob_, &QSlider::valueChanged, this, [this](){
+    connect(detuneKnob_, &KnobWidget::valueChanged, this, [this](){
         updateDisplays();
         emit valueChanged();
     });
 }
 
 void DetuneWidget::updateDisplays(){
-    harmonicValueLabel_->setText(
-        QString::number(harmonicValue(), 'f', harmonicPrecision_)
-    );
+    harmonicValueLabel_->setText(QString::number(harmonicKnob_->value()));
     detuneValueLabel_->setText(
-        QString::number(detuneValue(), 'f', detunePrecision_) + " ct"
+        QString::number(detuneKnob_->value(), 'f', detunePrecision_) + " ct"
     );
 }
 
@@ -1133,14 +1096,14 @@ void DetuneWidget::showEditor(QLabel* valueLabel, KnobWidget* knob, int precisio
     edit->show();
     edit->setFocus();
     edit->selectAll();
-    connect(edit, &QLineEdit::editingFinished, this, [this, edit, knob, precision](){
+    connect(edit, &QLineEdit::editingFinished, this, [edit, knob](){
         if ( !edit->hasAcceptableInput() ){
             edit->deleteLater();
-            return;
+            return ;
         }
         double val = edit->text().toDouble();
         edit->deleteLater();
-        knob->setValue(scaleByPrecision(val, precision));
+        knob->setValue(val);
     });
 }
 
@@ -1159,10 +1122,6 @@ void DetuneWidget::mouseDoubleClickEvent(QMouseEvent* event){
     }
 }
 
-int DetuneWidget::scaleByPrecision(double v, int precision) const {
-    return static_cast<int>(v * std::pow(10, precision));
-}
-
 GainWidget::GainWidget(QWidget* parent):
     ParameterWidget(parent),
     label_(nullptr),
@@ -1172,14 +1131,11 @@ GainWidget::GainWidget(QWidget* parent):
     linear_(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, defaultValue)),
     minLinear_(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, minimum)),
     maxLinear_(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, maximum)),
-    dbMin_(0),
-    dbMax_(0)
+    minDb_(0),
+    maxDb_(0)
 {
-    updateDbRange();
     setupUI();
     connectSignals();
-    applyRangeToKnob();
-    syncKnobToValue();
     updateDisplay();
 }
  
@@ -1193,11 +1149,24 @@ ParameterValue GainWidget::getValue() const {
  
 void GainWidget::setValue(const ParameterValue& value, bool block){
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::GAIN);
-    size_t v = std::get<ValueType>(value);
-    
-    setLinear(v, block);
+    ValueType v = std::get<ValueType>(value);
+    setValue(v, block);
 }
- 
+
+void GainWidget::setValue(double linear, bool block){
+    QSignalBlocker blocker(knob_);
+    if ( !block ) blocker.unblock();
+
+    linear_ = linear ;
+    if ( unitToggle_->isChecked() ){
+        knob_->setValue(decibel::fromLinear(linear_));
+    } else {
+        knob_->setValue(linear_);
+    }
+
+    updateDisplay();
+}
+
 std::pair<double, double> GainWidget::getRange() const {
     return { minLinear_, maxLinear_ };
 }
@@ -1206,69 +1175,69 @@ void GainWidget::setRange(const ParameterValue& min, const ParameterValue& max, 
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::GAIN);
     minLinear_ = std::get<ValueType>(min);
     maxLinear_ = std::get<ValueType>(max);
- 
-    updateDbRange();
-    applyRangeToKnob();
- 
-    linear_ = std::clamp(linear_, minLinear_, maxLinear_);
-    syncKnobToValue();
-    updateDisplay();
+
+    minDb_ = decibel::fromLinear(minLinear_);
+    maxDb_ = decibel::fromLinear(maxLinear_);
+
+    SPDLOG_DEBUG("db: min={} max={}. linear: min={} max={}", minDb_, maxDb_, minLinear_, maxLinear_);
+    QSignalBlocker blocker(knob_);
+    if ( !block ) blocker.unblock();
+
+    if ( unitToggle_->isChecked() ){
+        knob_->setMinimum(minDb_);
+        knob_->setMaximum(maxDb_);
+    } else {
+        knob_->setMinimum(minLinear_);
+        knob_->setMaximum(maxLinear_);
+    }
 }
  
 void GainWidget::mouseDoubleClickEvent([[maybe_unused]] QMouseEvent* event){
-    const bool db = dbMode();
- 
+    const bool db = unitToggle_->isChecked();
+    const int precision = db ? 1 : 3 ;
+
+    const double min = db ? minDb_ : minLinear_ ;
+    const double max = db ? maxDb_ : maxLinear_ ;
+    const double val = knob_->value();
+
     auto* edit = new QLineEdit(this);
     edit->setAlignment(Qt::AlignCenter);
+    edit->setText(QString::number(val));
     edit->setGeometry(valueLabel_->geometry());
-
-    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
- 
-    if ( db ){
-        edit->setText(QString::number(decibel::fromLinear(linear_), 'f', precision));
-        edit->setValidator(new QDoubleValidator(dbMin_, dbMax_, precision, edit));
-    } else {
-        edit->setText(QString::number(linear_, 'f', precision));
-        edit->setValidator(new QDoubleValidator(minLinear_, maxLinear_, precision, edit));
-    }
- 
+    edit->setValidator(new QDoubleValidator(min, max, precision, edit));
+    
     edit->show();
     edit->setFocus();
     edit->selectAll();
- 
+
     connect(
         edit, &QLineEdit::editingFinished,
-        this, [this, edit, db]()
-    {
+        this, [this, edit](){
         if ( !edit->hasAcceptableInput() ){
             edit->deleteLater();
             return ;
         }
- 
+
         double val = edit->text().toDouble();
         edit->deleteLater();
- 
-        double lin;
-        if ( db ){
-            // typing the bottom of the dB range means "as quiet as allowed" (true min, may be 0)
-            lin = ( val <= dbMin_ ) ? minLinear_ : decibel::toLinear(val);
-        } else {
-            lin = val;
-        }
-        setLinear(lin, false);
+
+        linear_ = unitToggle_->isChecked()
+            ? decibel::toLinear(val)
+            : val ;
+        setValue(linear_, false);
     });
 }
  
 void GainWidget::setupUI(){
+    // default setup is in linear
+    // can toggle to decibel
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(Theme::PARAMETER_WIDGET_SPACING);
     setFixedWidth(Theme::PARAMETER_WIDGET_WIDTH);
  
     // widget label
-    label_ = new QLabel(QString::fromStdString(
-        std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, name))
-    ));
+    label_ = new QLabel(QString::fromStdString(std::string(GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, name))));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
  
@@ -1277,10 +1246,11 @@ void GainWidget::setupUI(){
     QFontMetrics fm(valueLabel_->fontMetrics());
     valueLabel_->setMinimumWidth(fm.horizontalAdvance("-00.000"));
     valueLabel_->setAlignment(Qt::AlignRight);
+    layout->addWidget(valueLabel_);
  
     // unit selector (unchecked = linear, checked = dB)
     unitToggle_->setAttribute(Qt::WA_Hover, true);
-    unitToggle_->setText("lin");
+    unitToggle_->setText("linear");
     unitToggle_->setCheckable(true);
     unitToggle_->setChecked(false);
     unitToggle_->setAutoRaise(true);
@@ -1295,8 +1265,18 @@ void GainWidget::setupUI(){
     valueRow->addStretch();
     layout->addLayout(valueRow);
  
-    // knob (range and position are filled in by applyRangeToKnob / syncKnobToValue)
-    knob_ = new KnobWidget(Qt::Horizontal);
+    // knob
+    minLinear_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, minimum);
+    minDb_ = decibel::fromLinear(minLinear_);
+
+    maxLinear_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::GAIN, maximum);
+    maxDb_ = decibel::fromLinear(maxLinear_);
+
+    knob_ = new KnobWidget();
+    knob_->setPrecision(precisionLinear_);
+    knob_->setMinimum(minLinear_);
+    knob_->setMaximum(maxLinear_);
+    knob_->setValue(linear_);
     knob_->setEnabled(true);
  
     QHBoxLayout* knobRow = new QHBoxLayout();
@@ -1308,95 +1288,34 @@ void GainWidget::setupUI(){
 }
  
 void GainWidget::connectSignals(){
-    // user dragged the knob
-    connect(knob_, &QSlider::valueChanged, this, [this](int pos){
-        linear_ = knobToLinear(pos);
+    connect(knob_, &KnobWidget::valueChanged, this, [this](){
+        linear_ = unitToggle_->isChecked() 
+            ? decibel::toLinear(knob_->value())
+            : knob_->value();
         updateDisplay();
         emit valueChanged();
     });
  
     // changing units re-maps the knob but never changes the value or sends updates
     connect(unitToggle_, &QToolButton::toggled, this, [this](bool db){
-        unitToggle_->setText(db ? "dB" : "lin");
-        applyRangeToKnob();
-        syncKnobToValue();
+        const double min = db ? minDb_ : minLinear_ ;
+        const double max = db ? maxDb_ : maxLinear_ ;
+        const int precision = db ? precisionDb_ : precisionLinear_ ;
+        const double val = db
+            ? decibel::fromLinear(linear_)
+            : linear_ ;
+        
+        unitToggle_->setText(db ? "dB" : "linear");
+        knob_->setPrecision(precision);
+        knob_->setRange(min, max);
+        knob_->setValue(val, true);
+
         updateDisplay();
     });
 }
- 
-bool GainWidget::dbMode() const {
-    return unitToggle_->isChecked();
-}
- 
-double GainWidget::linScale() const {
-    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
-    return std::pow(10.0, precision);
-}
- 
-double GainWidget::dbScale() const {
-    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
-    return std::pow(10.0, precision);
-}
- 
-void GainWidget::updateDbRange(){
-    dbMin_ = decibel::fromLinear(minLinear_);
-    dbMax_ = decibel::fromLinear(maxLinear_);
-}
- 
-void GainWidget::applyRangeToKnob(){
-    QSignalBlocker blocker(knob_);
-    if ( dbMode() ){
-        knob_->setMinimum(static_cast<int>(std::lround(dbMin_ * dbScale())));
-        knob_->setMaximum(static_cast<int>(std::lround(dbMax_ * dbScale())));
-    } else {
-        knob_->setMinimum(static_cast<int>(std::lround(minLinear_ * linScale())));
-        knob_->setMaximum(static_cast<int>(std::lround(maxLinear_ * linScale())));
-    }
-}
- 
-void GainWidget::syncKnobToValue(){
-    QSignalBlocker blocker(knob_);
-    knob_->setValue(linearToKnob(linear_));
-}
- 
+
 void GainWidget::updateDisplay(){
-    const int precision = GET_PARAMETER_TRAIT_MEMBER(getType(), uiPrecision);
-    if ( dbMode() ){
-        if ( linear_ <= decibel::silenceFloor ){
-            valueLabel_->setText(QStringLiteral("-inf"));
-        } else {
-            valueLabel_->setText(QString::number(decibel::fromLinear(linear_), 'f', precision));
-        }
-    } else {
-        valueLabel_->setText(QString::number(linear_, 'f', precision));
-    }
-}
- 
-void GainWidget::setLinear(double v, bool block){
-    linear_ = std::clamp(v, minLinear_, maxLinear_);
-    syncKnobToValue(); 
-    updateDisplay();
-    if ( !block ) emit valueChanged();
-}
- 
-int GainWidget::linearToKnob(double lin) const {
-    lin = std::clamp(lin, minLinear_, maxLinear_);
-    if ( dbMode() ){
-        double db = std::clamp(decibel::fromLinear(lin), dbMin_, dbMax_);
-        return static_cast<int>(std::lround(db * dbScale()));
-    }
-    return static_cast<int>(std::lround(lin * linScale()));
-}
- 
-double GainWidget::knobToLinear(int pos) const {
-    double lin;
-    if ( dbMode() ){
-        if ( pos <= knob_->minimum() && minLinear_ <= decibel::silenceFloor ){
-            return minLinear_;
-        }
-        lin = decibel::toLinear(pos / dbScale());
-    } else {
-        lin = pos / linScale();
-    }
-    return std::clamp(lin, minLinear_, maxLinear_);
+    const double val = knob_->value();
+    const int precision = unitToggle_->isChecked() ? precisionDb_ : precisionLinear_ ;
+    valueLabel_->setText(QString::number(val, 'f', precision));
 }

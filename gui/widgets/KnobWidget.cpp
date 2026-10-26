@@ -23,6 +23,7 @@
 #include <QKeyEvent>
 #include <QtMath>
 #include <algorithm>
+#include <qabstractslider.h>
 
 KnobWidget::KnobWidget(Qt::Orientation orientation, QWidget* parent): 
     QAbstractSlider(parent)
@@ -43,15 +44,37 @@ QSize KnobWidget::minimumSizeHint() const {
     return sizeHint();
 }
 
+void KnobWidget::setPrecision(int p){
+    const double v = value();
+    const double min = minimum();
+    const double max = maximum();
+
+    precision_ = p ;
+
+    QAbstractSlider::setValue(toRaw(v));
+    QAbstractSlider::setMinimum(toRaw(min));
+    QAbstractSlider::setMaximum(toRaw(max));
+}
+
+void KnobWidget::setValue(double v, bool block){
+    const int raw = toRaw(v);
+    QAbstractSlider::setValue(raw);
+
+    if ( !block ) emit valueChanged(raw);
+}
+
 double KnobWidget::normalisedValue() const {
     if ( maximum() == minimum() ) return 0.0 ;
     return static_cast<double>(value() - minimum()) /
            static_cast<double>(maximum() - minimum());
 }
 
-int KnobWidget::normToSlider(double t) const {
-    t = std::clamp(t, 0.0, 1.0);
-    return minimum() + static_cast<int>(std::round(t * (maximum() - minimum())));
+int KnobWidget::toRaw(double v) const {
+    return static_cast<int>(v * std::pow(10, 1 * precision()));
+}
+
+double KnobWidget::fromRaw(int v) const {
+    return static_cast<double>(v * std::pow(10, -1 * precision()));
 }
 
 void KnobWidget::paintEvent(QPaintEvent*){
@@ -67,14 +90,12 @@ void KnobWidget::paintEvent(QPaintEvent*){
     const double knobRadius = side * 0.28 ;
     const double arcWidth   = Theme::KNOB_WIDGET_ARC_WIDTH;
 
-    // Arc angles: Qt uses 1/16th degree units, measured clockwise from 3 o'clock.
-    // QPainter::drawArc uses counter-clockwise spans, so sweep is negative.
     const double startDeg = Theme::KNOB_WIDGET_START_ANGLE ;
     const double sweepDeg = Theme::KNOB_WIDGET_SWEEP_ANGLE ;
     const double t = normalisedValue();
     const double valueDeg = sweepDeg * t ;
 
-    const int qtStart = static_cast<int>((startDeg) * 16.0); // convert to Qt angle space
+    const int qtStart = static_cast<int>((startDeg) * 16.0); 
     const int qtSweep = static_cast<int>(-sweepDeg * 16.0);
     const int qtValSweep = static_cast<int>(-valueDeg * 16.0);
 
@@ -111,7 +132,6 @@ void KnobWidget::paintEvent(QPaintEvent*){
     p.drawEllipse(knobRect);
 
     // Notch (pointer line)
-    // Angle of current value in Qt painter space (degrees from 3 o'clock, CCW positive)
     const double notchDeg = startDeg - valueDeg ;
     const double notchRad = qDegreesToRadians(notchDeg);
     const QPointF inner(
@@ -147,7 +167,7 @@ void KnobWidget::mouseMoveEvent(QMouseEvent* event){
     const double range = static_cast<double>(maximum() - minimum());
     const double delta = (static_cast<double>(dy) / Theme::KNOB_WIDGET_DRAG_SENSITIVITY) * range ;
     const int newVal = std::clamp(
-        static_cast<int>(std::round(dragStartValue_ + delta)),
+        std::round(dragStartValue_ + delta),
         minimum(), maximum()
     );
 

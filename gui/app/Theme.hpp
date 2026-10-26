@@ -159,7 +159,7 @@ public:
     static constexpr qreal CABLE_ARROW_BASE_WIDTH   = 6.0 ; 
 
     static constexpr qreal PARAMETER_WIDGET_SPACING = 10 ;
-    static constexpr qreal PARAMETER_WIDGET_WIDTH   = 120 ;
+    static constexpr qreal PARAMETER_WIDGET_WIDTH   = 150 ;
     static constexpr qreal PARAMETER_WIDGET_MARGINS = 20 ;
     static constexpr int   PARAMETER_GRID_N_COLS    = 2 ;
 

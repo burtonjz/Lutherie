@@ -76,6 +76,9 @@ private:
     int maxSamples_ ;
     int maxMs_ ;
 
+    int precisionSample_ = 0 ;
+    int precisionMs_     = 1 ;
+
 public:
     explicit DelayWidget(QWidget* parent = nullptr);
 
@@ -109,8 +112,11 @@ private:
     double linear_ ;
     double minLinear_ ;   
     double maxLinear_ ;
-    double dbMin_ ; 
-    double dbMax_ ;
+    double minDb_ ; 
+    double maxDb_ ;
+
+    int precisionLinear_ = 3 ;
+    int precisionDb_     = 1 ;
  
 public:
     explicit GainWidget(QWidget* parent = nullptr);
@@ -118,6 +124,8 @@ public:
     ParameterType getType() const override ;
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value, bool block = false) override ;
+    void setValue(double linear, bool block = true);
+
     std::pair<double, double> getRange() const override ;
     void setRange(const ParameterValue& min, const ParameterValue& max, bool block = false) override ;
  
@@ -127,19 +135,7 @@ protected:
 private:
     void setupUI();
     void connectSignals();
- 
-    bool dbMode() const ;
-    double linScale() const ; 
-    double dbScale() const ;   
- 
-    void updateDbRange();
-    void applyRangeToKnob();  // sets knob min/max for the active unit (signals blocked)
-    void syncKnobToValue();   // positions knob from linear_ (signals blocked)
     void updateDisplay();
- 
-    void setLinear(double v, bool block);
-    int linearToKnob(double lin) const ;
-    double knobToLinear(int pos) const ;
 };
 
 class WaveformWidget : public ParameterWidget {
@@ -216,7 +212,6 @@ private:
 class SliderWidget : public ParameterWidget {
 private:
     ParameterType param_ ;
-    size_t precision_ ; // number of decimals
     QLabel* label_ ;
     KnobWidget* knob_ ;
     QLabel* valueLabel_ ;
@@ -238,7 +233,6 @@ private:
     void setupUI();
     void connectSignals();
     void updateDisplay();
-    int scaleByPrecision(double v) const ;
 };
 
 class DetuneWidget : public ParameterWidget {
@@ -269,11 +263,8 @@ private:
     void connectSignals();
     void updateDisplays();
     void showEditor(QLabel* valueLabel, KnobWidget* knob, int precision);
-    double harmonicValue() const;
-    double detuneValue() const;
-    double combinedValue() const;
+    double combinedValue() const ;
     void setFromCombined(double combined, bool block = false);
-    int scaleByPrecision(double v, int precision) const;
 };
 
 #endif // PARAMETER_WIDGET_HPP_

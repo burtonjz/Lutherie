@@ -120,6 +120,7 @@ ParameterWidget* ComponentParameters::createParameterWidget(ParameterType p){
         break ;
     case ParameterType::GAIN:
         w = new GainWidget(this);
+        break ;
     default:
         w = new SliderWidget(p, this);
         break ;
