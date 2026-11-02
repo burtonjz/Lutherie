@@ -18,54 +18,20 @@
 #ifndef __MODULATOR_HPP_
 #define __MODULATOR_HPP_
 
-#include "params/ModulationParameter.hpp"
-#include "routing/ModulationTarget.hpp"
+#include "interfaces/ModulationSource.hpp"
 
-// forward declarations
-class Node ;
-
-#include <set>
-
-/**
- * @brief base class for all Modulators.
-*/
 class Modulator {
-protected:
-    std::set<ModulationParameter> expectedParams_ ; 
-    std::set<ModulationTarget> modulated_ ; 
-
-    void addModulationTarget(ModulationTarget t){
-        modulated_.insert(t);
-    }
-
-    void removeModulationTarget(ModulationTarget t){
-        modulated_.erase(t);
-    }
+private:
+    const ModulationSource& source_ ;
 
 public:
-    Modulator(){};
+    explicit Modulator(const ModulationSource& source):
+        source_(source)
+    {}
 
-    virtual ~Modulator() = default ;
-
-    virtual double modulate(double value, ModulationData* mData ) const = 0 ;
-
-    const std::set<ModulationParameter>& getRequiredModulationParameters() const {
-        return expectedParams_ ;
+    const ModulationSource& source() const {
+        return source_ ;
     }
-    
-    virtual ModulatorRange getModulatorRange() const {
-        return ModulatorRange::UNKNOWN ;
-    }
-
-    std::set<ModulationTarget>& getModulationTargets(){
-        return modulated_ ;
-    }
-
-    // allows recipricol tracking of modulation targets
-    friend void BaseComponent::removeParameterModulation(ParameterType p);
-    friend void BaseComponent::setParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d);
-    friend void BaseComponent::removeParameterDepthModulation(ParameterType p);
-    friend void BaseComponent::setParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d);
 };
 
 #endif // __MODULATOR_HPP_
