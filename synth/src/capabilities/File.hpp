@@ -15,30 +15,45 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
- #ifndef FILE_COMPONENT_HPP_
- #define FILE_COMPONENT_HPP_
+ #ifndef FILE_HPP_
+ #define FILE_HPP_
+
+#include "interfaces/FileListener.hpp"
 
 #include <filesystem>
+#include <nlohmann/json.hpp>
 
-class FileComponent {
+using json = nlohmann::json ;
+
+class File {
 protected:
-    std::filesystem::path filePath_ ;
+    std::filesystem::path path_ ;
+    FileListener* listener_ ;
     
 public:
-    FileComponent():
-        filePath_("")
+    explicit File(FileListener* listener = nullptr):
+        path_(""),
+        listener_(listener)
     {}
 
     const std::filesystem::path& getPath() const {
-        return filePath_ ;
+        return path_ ;
     }
 
-    void setPath(std::string fPath){
-        filePath_ = fPath ;
-        onSetPath();
+    FileResult setPath(const std::string& path){
+        path_ = path ;
+        if ( !std::filesystem::exists(path) ) return FileResult::NotFound ;
+        if ( listener_ ) return listener_->onPathSet(path_);
+        return FileResult::Ok ;
     }
 
-    virtual void onSetPath(){
+    void toJson(json& out) const { 
+        out["path"] = path_.string(); 
+    }
+
+    FileResult fromJson(const json& j){
+        if ( !j.contains("path") ) return FileResult::Ok ;
+        return setPath(j["path"].get<std::string>());
     }
 };
 
