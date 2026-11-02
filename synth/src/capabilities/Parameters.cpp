@@ -48,43 +48,43 @@ const ParameterMap& Parameters::map() const {
 }
 
 // Modulation
-ParamResult Parameters::setModulation(ParameterType p, const ModulationSource* m, ModulationData d ){
+ParamStatus Parameters::setModulation(ParameterType p, const ModulationSource* m, ModulationData d ){
     auto* param = map_.getParameter(p);
-    if ( !param )                  return ParamResult::NoSuchParameter ;
-    if ( !m )                      return ParamResult::NullSource ;
-    if ( !param->isModulatable() ) return ParamResult::NotModulatable ;
+    if ( !param )                  return ParamStatus::NoSuchParameter ;
+    if ( !m )                      return ParamStatus::NullSource ;
+    if ( !param->isModulatable() ) return ParamStatus::NotModulatable ;
     param->setModulation(m, withRequiredDefaults(m, std::move(d)));
-    return ParamResult::Ok ;
+    return ParamStatus::Ok ;
 }
 
-ParamResult Parameters::removeModulation(ParameterType p){
+ParamStatus Parameters::removeModulation(ParameterType p){
     auto* param = map_.getParameter(p);
-    if ( !param ) return ParamResult::NoSuchParameter ;
+    if ( !param ) return ParamStatus::NoSuchParameter ;
     param->removeModulation();
-    return ParamResult::Ok ;
+    return ParamStatus::Ok ;
 }
 
-ParamResult Parameters::setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d ){
+ParamStatus Parameters::setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d ){
     auto* param = map_.getParameter(p);
-    if ( !param ) return ParamResult::NoSuchParameter ;
+    if ( !param ) return ParamStatus::NoSuchParameter ;
 
     auto* depth = param->getDepth();
-    if ( !depth )                  return ParamResult::NoDepth ;                
-    if ( !m )                      return ParamResult::NullSource ;
-    if ( !depth->isModulatable() ) return ParamResult::NotModulatable ;
+    if ( !depth )                  return ParamStatus::NoDepth ;                
+    if ( !m )                      return ParamStatus::NullSource ;
+    if ( !depth->isModulatable() ) return ParamStatus::NotModulatable ;
     depth->setModulation(m, withRequiredDefaults(m, std::move(d)));
-    return ParamResult::Ok ;
+    return ParamStatus::Ok ;
 }
 
-ParamResult Parameters::removeDepthModulation(ParameterType p){
+ParamStatus Parameters::removeDepthModulation(ParameterType p){
     auto* param = map_.getParameter(p);
-    if ( !param ) return ParamResult::NoSuchParameter ;
+    if ( !param ) return ParamStatus::NoSuchParameter ;
     
     auto* depth = param->getDepth();
-    if ( !depth ) return ParamResult::NoDepth ;                
+    if ( !depth ) return ParamStatus::NoDepth ;                
 
     depth->removeModulation();
-    return ParamResult::Ok ;
+    return ParamStatus::Ok ;
 }
 
 const ModulationSource* Parameters::getModulator(ParameterType p){
@@ -105,15 +105,15 @@ std::optional<double> Parameters::getDepth(ParameterType p) const {
     return depth->getValue();
 }
 
-ParamResult Parameters::setDepth(ParameterType p, double v){
+ParamStatus Parameters::setDepth(ParameterType p, double v){
     auto* param = map_.getParameter(p);
-    if ( !param ) return ParamResult::NoSuchParameter ;
+    if ( !param ) return ParamStatus::NoSuchParameter ;
 
     auto* depth = param->getDepth();
-    if ( !depth ) return ParamResult::NoDepth ;
+    if ( !depth ) return ParamStatus::NoDepth ;
 
     depth->setValue(v);
-    return ParamResult::Ok ;
+    return ParamStatus::Ok ;
 }
 
 std::optional<ModulationStrategy> Parameters::getStrategy(ParameterType p) const {
@@ -122,12 +122,12 @@ std::optional<ModulationStrategy> Parameters::getStrategy(ParameterType p) const
     return param->getModulationStrategy();
 }
 
-ParamResult Parameters::setStrategy(ParameterType p, ModulationStrategy s){
+ParamStatus Parameters::setStrategy(ParameterType p, ModulationStrategy s){
     auto* param = map_.getParameter(p);
-    if ( !param ) return ParamResult::NoSuchParameter ;
+    if ( !param ) return ParamStatus::NoSuchParameter ;
 
     param->setModulationStrategy(s);
-    return ParamResult::Ok ;
+    return ParamStatus::Ok ;
 }
 
 ModulationData Parameters::withRequiredDefaults(const ModulationSource* m, ModulationData d){

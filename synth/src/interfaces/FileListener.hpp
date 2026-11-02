@@ -18,17 +18,12 @@
 #ifndef FILE_LISTENER_HPP_
 #define FILE_LISTENER_HPP_
 
+#include "status/FileStatus.hpp"
 #include <filesystem>
-
-enum class FileResult {
-    Ok,
-    NotFound,
-    LoadFailed
-};
 
 struct FileListener {
     virtual ~FileListener() = default ;
-    virtual FileResult onPathSet([[maybe_unused]] const std::filesystem::path& path){}
+    virtual FileStatus onPathSet([[maybe_unused]] const std::filesystem::path& path){}
 };
 
 #endif // FILE_LISTENER_HPP_

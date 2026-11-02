@@ -20,8 +20,7 @@
 
 #include "types/ParameterType.hpp"
 
-class ParameterListener {
-public:
+struct ParameterListener {
     virtual ~ParameterListener() = default ;
     virtual void onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection = false){} ;
 };

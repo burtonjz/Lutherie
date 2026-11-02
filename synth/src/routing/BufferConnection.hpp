@@ -26,17 +26,17 @@
 class BufferIO ;
 
 struct BufferConnection {
-    BufferIO* component ;
-    size_t index ;
+    BufferIO* buffer ;
+    size_t channel ;
 
     bool operator==(const BufferConnection& other) const {
-        return component == other.component && index == other.index ;
+        return buffer == other.buffer && channel == other.channel ;
     }
 };
 
 struct BufferHash {
     std::size_t operator()(const BufferConnection& conn) const {
-        return std::hash<BufferIO*>()(conn.component) ^ (std::hash<size_t>()(conn.index) << 1);
+        return std::hash<BufferIO*>()(conn.buffer) ^ (std::hash<size_t>()(conn.channel) << 1);
     }
 };
 

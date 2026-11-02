@@ -19,22 +19,13 @@
 #define PARAMETER_CAPABILITIES_HPP_
 
 #include "params/ParameterMap.hpp"
+#include "status/ParamStatus.hpp"
 #include "interfaces/ParameterListener.hpp"
-
-#include <unordered_set>
 
 // forward declarations
 class ParameterMap ;
 class AudioIO ;
 class Modulator ;
-
-enum class ParamResult {
-    Ok,
-    NoSuchParameter,
-    NotModulatable,
-    NoDepth,
-    NullSource
-};
 
 class Parameters {
 private:
@@ -73,23 +64,23 @@ public:
     const ParameterMap& map() const ;
 
     // Modulation
-    ParamResult setModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
-    ParamResult removeModulation(ParameterType p);
-    ParamResult setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
-    ParamResult removeDepthModulation(ParameterType p);
+    ParamStatus setModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
+    ParamStatus removeModulation(ParameterType p);
+    ParamStatus setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
+    ParamStatus removeDepthModulation(ParameterType p);
 
     const ModulationSource* getModulator(ParameterType p);
     const ModulationSource* getDepthModulator(ParameterType p);
 
     std::optional<double> getDepth(ParameterType p) const ;
-    ParamResult setDepth(ParameterType p, double v);
+    ParamStatus setDepth(ParameterType p, double v);
 
     std::optional<ModulationStrategy> getStrategy(ParameterType p) const ;
-    ParamResult setStrategy(ParameterType p, ModulationStrategy s);
+    ParamStatus setStrategy(ParameterType p, ModulationStrategy s);
 
     json toJson(json& output) const ;
     void fromJson(const json& j);
-    
+
 private:
     static ModulationData withRequiredDefaults(const ModulationSource* m, ModulationData d);
 

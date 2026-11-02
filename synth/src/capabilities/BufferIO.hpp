@@ -22,45 +22,67 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
+#include "contexts/AudioContext.hpp"
+#include "interfaces/BufferProcessor.hpp"
+#include "interfaces/BufferObserver.hpp"
+#include "interfaces/BufferRW.hpp"
+#include "status/FileStatus.hpp"
 #include "routing/BufferConnection.hpp"
 
 class BufferIO {
-protected:
-    size_t nInputs_ ;
-    size_t nOutputs_ ;
-    
-    std::vector<BufferConnectionSet> inboundConnections_ ;
-    std::vector<BufferConnectionSet> outboundConnections_ ;
-    std::vector<std::vector<double>> buffers_ ;
+private:
+    enum class Hook { Connected, Disconnected, Updated };
+
+    BufferProcessor& processor_ ;
+    std::vector<BufferObserver*> observers_ ;
+
+    size_t numInputs_ ;
+    size_t numOutputs_ ;
+
+    std::vector<std::vector<double>> outputs_ ;
+    std::vector<BufferStatus> status_ ;
+
+    // cache connections in class for edge walking
+    std::vector<BufferConnectionSet> inputEdges_ ;
+    std::vector<BufferConnectionSet> outputEdges_ ;
 
     double sampleRate_ ;
 
 public:
-    BufferIO(size_t in, size_t out);
+    BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs, size_t outputs);
 
-    bool connectInput(BufferIO* source, size_t input, size_t sourceOutput);
-    bool disconnectInput(BufferIO* source, size_t input, size_t sourceOutput);
-    
-    const std::vector<double>& getBuffer(size_t idx) const ;
+    void addInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
+    void removeInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
+
+    void addOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
+    void removeOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
+
+    void addObserver(BufferObserver* observer);
+    void removeObserver(BufferObserver* observer);
 
     size_t getNumInputs() const ;
     size_t getNumOutputs() const ;
-    
-    const BufferConnectionSet& getInputs(size_t inp) const ;
-    const BufferConnectionSet& getOutputs(size_t out) const ;
 
-    bool saveBuffer(std::string savePath);
+    FileStatus exportBuffer(std::string savePath);
         
-protected:
-    virtual void onInputConnect();
-    virtual void onInputDisconnect();
-    virtual void onInputUpdated();
+private:
+    friend class BufferContext ;
 
-    void notifyDownstream(size_t index);
+    BufferReads createInputsReadOnly(size_t channel) const ;
+
+    std::optional<BufferRead> createOutputReadOnly(size_t channel) const ;
+    BufferReads createOutputsReadOnly() const ;
+
+    BufferWrite createOutputWrite(size_t channel);
+    BufferWrites createOutputsWrite();
+
+    void process(Hook h, size_t changedInput);
+    void notifyDownstream();
 
     size_t getMaxBufferFrames() const ;
     std::vector<double> getInterleavedBuffers(const SF_INFO& info) const ;
-        
+
+    void notifyObservers();
 };
 
 #endif // BUFFER_IO_HPP_

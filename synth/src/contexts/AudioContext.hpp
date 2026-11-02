@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2026 Jared Burton
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef AUDIO_CONTEXT_HPP_
+#define AUDIO_CONTEXT_HPP_
+
+#include <cstdint>
+
+struct AudioContext {
+    uint32_t sampleRate ;
+    uint32_t bufferSize ;
+};
+
+#endif // AUDIO_CONTEXT_HPP_

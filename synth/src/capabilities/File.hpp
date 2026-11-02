@@ -40,19 +40,19 @@ public:
         return path_ ;
     }
 
-    FileResult setPath(const std::string& path){
+    FileStatus setPath(const std::string& path){
         path_ = path ;
-        if ( !std::filesystem::exists(path) ) return FileResult::NotFound ;
+        if ( !std::filesystem::exists(path) ) return FileStatus::NotFound ;
         if ( listener_ ) return listener_->onPathSet(path_);
-        return FileResult::Ok ;
+        return FileStatus::Ok ;
     }
 
     void toJson(json& out) const { 
         out["path"] = path_.string(); 
     }
 
-    FileResult fromJson(const json& j){
-        if ( !j.contains("path") ) return FileResult::Ok ;
+    FileStatus fromJson(const json& j){
+        if ( !j.contains("path") ) return FileStatus::Ok ;
         return setPath(j["path"].get<std::string>());
     }
 };

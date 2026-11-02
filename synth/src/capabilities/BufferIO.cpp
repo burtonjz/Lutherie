@@ -16,66 +16,75 @@
  */
 
 #include "capabilities/BufferIO.hpp"
-#include "api/DataApiHandler.hpp"
-#include "config/Config.hpp"
+#include "routing/BufferConnection.hpp"
+#include "status/BufferStatus.hpp"
+#include <spdlog/spdlog.h>
 
- BufferIO::BufferIO(size_t in, size_t out):
-    nInputs_(in),
-    nOutputs_(out),
-    inboundConnections_(in),
-    outboundConnections_(out),
-    buffers_(out)
-{
-    sampleRate_ = Config::get<double>("audio.sample_rate").value();
+BufferIO::BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs, size_t outputs):
+    processor_(processor),
+    observers_(),
+    numInputs_(inputs),
+    numOutputs_(outputs),
+    outputs_(outputs, std::vector<double>()),
+    status_(outputs, BufferStatus::NotReady),
+    inputEdges_(inputs),
+    outputEdges_(outputs),
+    sampleRate_(audio.sampleRate)
+{}
+
+void BufferIO::addInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
+    inputEdges_.at(toChannel).insert({edge, edgeChannel});
+    process(Hook::Connected, toChannel);
 }
 
-bool BufferIO::connectInput(BufferIO* source, size_t input, size_t sourceOutput){
-    if ( input >= nInputs_ || sourceOutput >= source->nOutputs_){
-        SPDLOG_ERROR("cannot connect input: Invalid channel specified.");
-        return false ;
-    };
-
-    inboundConnections_[input].insert({source, sourceOutput});
-    source->outboundConnections_[sourceOutput].insert({this, input});
-    SPDLOG_DEBUG("input from source {} outbound channel {} connected to inbound channel {}. Current number of inputs: {}", 
-        fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
-    onInputConnect();
-    return true ;
+void BufferIO::removeInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
+    inputEdges_.at(toChannel).erase({edge, edgeChannel});
+    process(Hook::Disconnected, toChannel);
 }
 
-bool BufferIO::disconnectInput(BufferIO* source, size_t input, size_t sourceOutput){
-    if ( input >= nInputs_ || sourceOutput >= source->nOutputs_){
-        SPDLOG_ERROR("cannot connect input: Invalid channel specified.");
-        return false ;
-    };
-
-    inboundConnections_[input].erase({source, sourceOutput});
-    source->outboundConnections_[sourceOutput].erase({this, input});
-    SPDLOG_DEBUG("input from source {} outbound channel {} disconnected from inbound channel {}. Current number of inputs: {}", 
-        fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
-    onInputDisconnect();
-    return true ;
+void BufferIO::addOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
+    outputEdges_.at(toChannel).insert({edge, edgeChannel});
 }
 
-const std::vector<double>& BufferIO::getBuffer(size_t idx) const {
-    if ( idx >= nOutputs_ ){
-        std::string err = fmt::format("Cannot get buffer of index {}. Out of range (size={})", idx, nOutputs_);
-        SPDLOG_CRITICAL(err);
-        throw std::runtime_error(err);
+void BufferIO::removeOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
+    outputEdges_.at(toChannel).erase({edge, edgeChannel});
+}
+
+void BufferIO::addObserver(BufferObserver* observer){
+    if ( !observer ){
+        SPDLOG_ERROR("cannot add nullptr observer.");
+        return ;
     }
+    auto it = std::find(observers_.begin(), observers_.end(), observer);
+    if ( it != observers_.end() ){
+        SPDLOG_ERROR("observer already added.");
+        return ;
+    }
+    observers_.push_back(observer);
+}
 
-    return buffers_.at(idx);
+void BufferIO::removeObserver(BufferObserver* observer){
+    if ( !observer ){
+        SPDLOG_ERROR("cannot remove nullptr observer.");
+        return ;
+    }
+    auto it = std::find(observers_.begin(), observers_.end(), observer);
+    if ( it == observers_.end() ){
+        SPDLOG_ERROR("observer not currently added. Nothing to do.");
+        return ;
+    }
+    observers_.erase(it);
 }
 
 size_t BufferIO::getNumInputs() const {
-    return nInputs_ ; 
+    return numInputs_ ;
 }
 
 size_t BufferIO::getNumOutputs() const {
-    return nOutputs_ ;
+    return numOutputs_ ;
 }
 
-bool BufferIO::saveBuffer(std::string savePath){
+FileStatus BufferIO::exportBuffer(std::string savePath){
     int saveFormat ;
     if ( savePath.ends_with(".wav") ) saveFormat = SF_FORMAT_WAV | SF_FORMAT_DOUBLE ;
     else if ( savePath.ends_with(".mp3") ) saveFormat = SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III ;
@@ -88,20 +97,20 @@ bool BufferIO::saveBuffer(std::string savePath){
     
     SF_INFO sfinfo{};
     sfinfo.samplerate = static_cast<int>(sampleRate_);
-    sfinfo.channels   = static_cast<int>(nOutputs_);
+    sfinfo.channels   = static_cast<int>(numOutputs_);
     sfinfo.format     = saveFormat ;
 
     bool validFormat = sf_format_check(&sfinfo);
     if ( !validFormat ){
         SPDLOG_ERROR("sndfile formatting error. please investigate.");
-        return false ;
+        return FileStatus::LoadFailed ;
     }
 
     SNDFILE* file = sf_open(savePath.c_str(), SFM_WRITE, &sfinfo);
     
     if ( !file ){
         SPDLOG_ERROR("Error opening file for write: {}", sf_strerror(nullptr));
-        return false ;
+        return FileStatus::LoadFailed ;
     }
 
     sfinfo.frames = static_cast<sf_count_t>(getMaxBufferFrames());
@@ -115,42 +124,85 @@ bool BufferIO::saveBuffer(std::string savePath){
     sf_close(file);
 
     SPDLOG_INFO("wrote {} samples to file {}", count, savePath);
-    return true ;
+    return FileStatus::Ok ;
 }
 
-const BufferConnectionSet& BufferIO::getInputs(size_t inp) const {    
-    assert( inp < nInputs_ );
-    return inboundConnections_[inp] ;
+BufferReads BufferIO::createInputsReadOnly(size_t channel) const {
+    std::vector<std::optional<BufferRead>> v ;
+    for ( const BufferConnection& c : inputEdges_.at(channel) ){
+        v.push_back(c.buffer->createOutputReadOnly(c.channel));
+    }
+    return BufferReads(std::move(v));
 }
 
-const BufferConnectionSet& BufferIO::getOutputs(size_t out) const {
-    assert( out < nOutputs_ );
-    return outboundConnections_[out] ;
+std::optional<BufferRead> BufferIO::createOutputReadOnly(size_t channel) const {
+    if ( status_.at(channel) == BufferStatus::Ready ){
+        return BufferRead(std::span<const double>(outputs_.at(channel)));
+    }
+    return std::nullopt ;
 }
 
-void BufferIO::onInputConnect(){};
-void BufferIO::onInputDisconnect(){};
-void BufferIO::onInputUpdated(){};
+BufferReads BufferIO::createOutputsReadOnly() const {
+    std::vector<std::optional<BufferRead>> v ;
+    for ( size_t ch = 0; ch < numOutputs_ ; ++ch ){
+        v.push_back(createOutputReadOnly(ch));
+    }
+    return BufferReads(std::move(v));
+}
 
-void BufferIO::notifyDownstream(size_t channel){
-    for ( size_t i = 0 ; i < nOutputs_ ; ++i ){
-        for ( const auto& conn : getOutputs(i) ){
-            conn.component->onInputUpdated();
+BufferWrite BufferIO::createOutputWrite(size_t channel){
+    return BufferWrite(outputs_.at(channel));
+}
+
+BufferWrites BufferIO::createOutputsWrite(){
+    std::vector<BufferWrite> v ;
+    for ( size_t ch = 0; ch < numOutputs_ ; ++ch ){
+        v.push_back(createOutputWrite(ch));
+    }
+    return BufferWrites(std::move(v));
+}
+
+void BufferIO::process(Hook h, size_t changedInput){
+    BufferContext ctx(*this, changedInput);
+
+    switch (h){
+    case Hook::Connected:
+        processor_.onInputConnected(ctx);
+        break ;
+    case Hook::Disconnected:
+        processor_.onInputDisconnected(ctx);
+        break ;
+    case Hook::Updated:
+        processor_.onInputUpdated(ctx);
+        break ;
+    }
+
+    status_ = ctx.status_ ;
+    notifyDownstream();
+}
+
+void BufferIO::notifyDownstream(){
+    for ( size_t ch = 0; ch < numOutputs_; ++ch ){
+        const bool ready = status_.at(ch) == BufferStatus::Ready ;
+
+        if ( ready ){
+            BufferRead out = BufferRead(std::span<const double>(outputs_[ch]));
+            for ( auto& obs : observers_ ){
+                obs->onOutputChannelReady(ch, out);
+            }
+        }
+        
+        for ( const auto& conn : outputEdges_.at(ch) ){
+            conn.buffer->process(Hook::Updated, ch);
         }
     }
-    DataApiHeader header = {
-        .componentId = static_cast<uint32_t>(getId()),
-        .channel = static_cast<uint32_t>(channel)
-    };
-    const auto& buf = getBuffer(channel);
-    DataApiHandler::instance()->sendApiData(header, buf.data(), buf.size());
 }
 
 size_t BufferIO::getMaxBufferFrames() const {
     size_t numFrames = 0 ;
-    for ( const auto& buf : buffers_ ){
-        if ( buf.size() > numFrames ){
-            numFrames = buf.size();
+    for ( const auto& out : outputs_ ){
+        if ( out.size() > numFrames ){
+            numFrames = out.size();
         }
     }
     return numFrames ;
@@ -160,7 +212,11 @@ std::vector<double> BufferIO::getInterleavedBuffers(const SF_INFO& info) const {
     std::vector<double> interleaved(info.frames * info.channels);
     for ( sf_count_t frame = 0 ; frame < info.frames ; ++frame ){
         for ( int channel = 0 ; channel < info.channels; ++channel ){
-            interleaved[frame * info.channels + channel] = buffers_[channel][frame];
+            const auto& buf = outputs_[channel];
+            interleaved[frame * info.channels + channel] = 
+                frame < static_cast<sf_count_t>(buf.size())
+                    ? buf[frame]
+                    : 0.0 ;
         }
     }
     return interleaved ;
