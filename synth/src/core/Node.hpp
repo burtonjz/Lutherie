@@ -30,27 +30,26 @@
 class ParameterMap ; 
 class BaseComponent ;
 class ModulatorComponent ;
-class AudioSignalComponent ;
+class AudioIO ;
 
 using json = nlohmann::json ;
-using ComponentId = int ;
 
 class BaseComponent : public ParameterListener {
 protected:
-    std::optional<ComponentId> id_ ;
+    int id_ ;
     ComponentType type_ ;
     ParameterMap* parameters_ ; 
-    std::unordered_set<AudioSignalComponent*> modulationModules_ ; // used only for tracking, see SignalChain for context
+    std::unordered_set<AudioIO*> modulationModules_ ; // used only for tracking, see SignalChain for context
 
 public:
-    BaseComponent(std::optional<ComponentId> id = std::nullopt, ComponentType type = ComponentType::Unknown);
+    BaseComponent(int id = -1, ComponentType type = ComponentType::Unknown);
 
     virtual ~BaseComponent();
     
-    std::optional<ComponentId> getId() const { return id_ ; }
+    int getId() const { return id_ ; }
     ComponentType getType() const { return type_ ; }
     ParameterMap* getParameters() { return parameters_ ;}
-    std::unordered_set<AudioSignalComponent*>& getModulationInputs() ;
+    std::unordered_set<AudioIO*>& getModulationInputs() ;
 
     /* depth/modulation are managed from component instead of parameterMap, to allow for
      parent/child component setups. Non-virtual functions in this section have

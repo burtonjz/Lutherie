@@ -15,43 +15,49 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/AudioBufferComponent.hpp"
+#include "capabilities/BufferIO.hpp"
 #include "api/DataApiHandler.hpp"
+#include "config/Config.hpp"
 
- AudioBufferComponent::AudioBufferComponent(size_t in, size_t out):
+ BufferIO::BufferIO(size_t in, size_t out):
     nInputs_(in),
     nOutputs_(out),
     inboundConnections_(in),
     outboundConnections_(out),
     buffers_(out)
 {
-    Config::load();
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
 }
 
-void AudioBufferComponent::connectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
-    assert( input < nInputs_ );
-    assert( sourceOutput < source->nOutputs_ );
+bool BufferIO::connectInput(BufferIO* source, size_t input, size_t sourceOutput){
+    if ( input >= nInputs_ || sourceOutput >= source->nOutputs_){
+        SPDLOG_ERROR("cannot connect input: Invalid channel specified.");
+        return false ;
+    };
 
     inboundConnections_[input].insert({source, sourceOutput});
     source->outboundConnections_[sourceOutput].insert({this, input});
     SPDLOG_DEBUG("input from source {} outbound channel {} connected to inbound channel {}. Current number of inputs: {}", 
         fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
     onInputConnect();
+    return true ;
 }
 
-void AudioBufferComponent::disconnectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput){
-    assert ( input < nInputs_ );
-    assert ( sourceOutput < source->nOutputs_ );
+bool BufferIO::disconnectInput(BufferIO* source, size_t input, size_t sourceOutput){
+    if ( input >= nInputs_ || sourceOutput >= source->nOutputs_){
+        SPDLOG_ERROR("cannot connect input: Invalid channel specified.");
+        return false ;
+    };
 
     inboundConnections_[input].erase({source, sourceOutput});
     source->outboundConnections_[sourceOutput].erase({this, input});
     SPDLOG_DEBUG("input from source {} outbound channel {} disconnected from inbound channel {}. Current number of inputs: {}", 
         fmt::ptr(source), sourceOutput, input, inboundConnections_[input].size());
     onInputDisconnect();
+    return true ;
 }
 
-const std::vector<double>& AudioBufferComponent::getBuffer(size_t idx) const {
+const std::vector<double>& BufferIO::getBuffer(size_t idx) const {
     if ( idx >= nOutputs_ ){
         std::string err = fmt::format("Cannot get buffer of index {}. Out of range (size={})", idx, nOutputs_);
         SPDLOG_CRITICAL(err);
@@ -61,15 +67,15 @@ const std::vector<double>& AudioBufferComponent::getBuffer(size_t idx) const {
     return buffers_.at(idx);
 }
 
-size_t AudioBufferComponent::getNumInputs() const {
+size_t BufferIO::getNumInputs() const {
     return nInputs_ ; 
 }
 
-size_t AudioBufferComponent::getNumOutputs() const {
+size_t BufferIO::getNumOutputs() const {
     return nOutputs_ ;
 }
 
-bool AudioBufferComponent::saveBuffer(std::string savePath){
+bool BufferIO::saveBuffer(std::string savePath){
     int saveFormat ;
     if ( savePath.ends_with(".wav") ) saveFormat = SF_FORMAT_WAV | SF_FORMAT_DOUBLE ;
     else if ( savePath.ends_with(".mp3") ) saveFormat = SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III ;
@@ -112,35 +118,35 @@ bool AudioBufferComponent::saveBuffer(std::string savePath){
     return true ;
 }
 
-const BufferConnectionSet& AudioBufferComponent::getInputs(size_t inp) const {    
+const BufferConnectionSet& BufferIO::getInputs(size_t inp) const {    
     assert( inp < nInputs_ );
     return inboundConnections_[inp] ;
 }
 
-const BufferConnectionSet& AudioBufferComponent::getOutputs(size_t out) const {
+const BufferConnectionSet& BufferIO::getOutputs(size_t out) const {
     assert( out < nOutputs_ );
     return outboundConnections_[out] ;
 }
 
-void AudioBufferComponent::onInputConnect(){};
-void AudioBufferComponent::onInputDisconnect(){};
-void AudioBufferComponent::onInputUpdated(){};
+void BufferIO::onInputConnect(){};
+void BufferIO::onInputDisconnect(){};
+void BufferIO::onInputUpdated(){};
 
-void AudioBufferComponent::notifyDownstream(size_t channel){
+void BufferIO::notifyDownstream(size_t channel){
     for ( size_t i = 0 ; i < nOutputs_ ; ++i ){
         for ( const auto& conn : getOutputs(i) ){
             conn.component->onInputUpdated();
         }
     }
     DataApiHeader header = {
-        .componentId = static_cast<uint32_t>(getId().value()),
+        .componentId = static_cast<uint32_t>(getId()),
         .channel = static_cast<uint32_t>(channel)
     };
     const auto& buf = getBuffer(channel);
     DataApiHandler::instance()->sendApiData(header, buf.data(), buf.size());
 }
 
-size_t AudioBufferComponent::getMaxBufferFrames() const {
+size_t BufferIO::getMaxBufferFrames() const {
     size_t numFrames = 0 ;
     for ( const auto& buf : buffers_ ){
         if ( buf.size() > numFrames ){
@@ -150,7 +156,7 @@ size_t AudioBufferComponent::getMaxBufferFrames() const {
     return numFrames ;
 }
 
-std::vector<double> AudioBufferComponent::getInterleavedBuffers(const SF_INFO& info) const {
+std::vector<double> BufferIO::getInterleavedBuffers(const SF_INFO& info) const {
     std::vector<double> interleaved(info.frames * info.channels);
     for ( sf_count_t frame = 0 ; frame < info.frames ; ++frame ){
         for ( int channel = 0 ; channel < info.channels; ++channel ){

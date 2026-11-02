@@ -15,35 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef AUDIO_BUFFER_COMPONENT_HPP_
-#define AUDIO_BUFFER_COMPONENT_HPP_
-
-#include "core/BaseComponent.hpp"
+#ifndef BUFFER_IO_HPP_
+#define BUFFER_IO_HPP_
 
 #include <sndfile.h>
 #include <spdlog/spdlog.h>
 #include <vector>
 
-class AudioBufferComponent ;
+#include "routing/BufferConnection.hpp"
 
-struct BufferConnection {
-    AudioBufferComponent* component ;
-    size_t index ;
-
-    bool operator==(const BufferConnection& other) const {
-        return component == other.component && index == other.index ;
-    }
-};
-
-struct BufferHash {
-    std::size_t operator()(const BufferConnection& conn) const {
-        return std::hash<AudioBufferComponent*>()(conn.component) ^ (std::hash<size_t>()(conn.index) << 1);
-    }
-};
-
-using BufferConnectionSet = std::unordered_set<BufferConnection, BufferHash> ;
-
-class AudioBufferComponent: public virtual BaseComponent {
+class BufferIO {
 protected:
     size_t nInputs_ ;
     size_t nOutputs_ ;
@@ -55,10 +36,10 @@ protected:
     double sampleRate_ ;
 
 public:
-    AudioBufferComponent(size_t in, size_t out);
+    BufferIO(size_t in, size_t out);
 
-    void connectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput);
-    void disconnectInput(AudioBufferComponent* source, size_t input, size_t sourceOutput);
+    bool connectInput(BufferIO* source, size_t input, size_t sourceOutput);
+    bool disconnectInput(BufferIO* source, size_t input, size_t sourceOutput);
     
     const std::vector<double>& getBuffer(size_t idx) const ;
 
@@ -82,4 +63,4 @@ protected:
         
 };
 
-#endif // AUDIO_BUFFER_COMPONENT_HPP_
+#endif // BUFFER_IO_HPP_

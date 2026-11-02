@@ -15,17 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MIDI_EVENT_HANDLER_HPP_
-#define __MIDI_EVENT_HANDLER_HPP_
+#ifndef MIDI_HANDLER_HPP_
+#define MIDI_HANDLER_HPP_
 
-#include "core/BaseComponent.hpp"
+#include "capabilities/MidiListener.hpp"
 #include "midi/MidiNote.hpp"
-#include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
 
 #include <vector>
 
-class MidiEventHandler : public MidiEventListener, public virtual BaseComponent {
+class MidiHandler : public MidiListener {
 protected:
     std::array<ActiveNote,128> notes_ ;
     std::array<uint8_t,128> noteIndices_ ;
@@ -34,12 +33,12 @@ protected:
     uint8_t lastPressedNote_ = 255 ;
     uint8_t lastReleasedNote_ = 255 ;
     
-    std::vector<MidiEventListener*> listeners_ ;
+    std::vector<MidiListener*> listeners_ ;
     MidiEventQueue queue_ ;
 
     /**
      * The below functions broadcast handler events to downstream objects
-     * Note: MidiEventHandlers will broadcast to chained handlers such that 
+     * Note: MidiHandlers will broadcast to chained handlers such that 
      * each handler is able to act as if it is receiving raw midi. This allows
      * a chained midi event handler to act in isolation in determining when a
      * note should be killed.
@@ -58,12 +57,12 @@ protected:
     void notifyPitchbend(uint16_t pitchbend);
 
 public:
-    MidiEventHandler();
-    virtual ~MidiEventHandler() = default ;
+    MidiHandler();
+    virtual ~MidiHandler() = default ;
 
-    void addListener(MidiEventListener* listener);
-    void removeListener(MidiEventListener* listener);
-    std::vector<MidiEventListener*>& getListeners();
+    void addListener(MidiListener* listener);
+    void removeListener(MidiListener* listener);
+    std::vector<MidiListener*>& getListeners();
     
     bool isNoteActive(uint8_t n) const ;
     void activateNote(const ActiveNote& anote);
@@ -98,4 +97,4 @@ protected:
     virtual void onReset();
 };
 
-#endif // __MIDI_EVENT_HANDLER_HPP_
+#endif // MIDI_HANDLER_HPP_

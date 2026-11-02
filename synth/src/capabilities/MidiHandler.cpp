@@ -15,13 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "MidiEventHandler.hpp"
+#include "MidiHandler.hpp"
 #include <algorithm>
 #include <spdlog/spdlog.h>
 
-void MidiEventHandler::notifyKeyPressed(const ActiveNote* note, bool rePressed) {
+void MidiHandler::notifyKeyPressed(const ActiveNote* note, bool rePressed) {
     for ( auto* li : listeners_ ){
-        if (auto h = dynamic_cast<MidiEventHandler*>(li)){
+        if (auto h = dynamic_cast<MidiHandler*>(li)){
             h->handleKeyPressed(note->note);
         } else {
             li->onKeyPressed(note, rePressed);
@@ -30,19 +30,19 @@ void MidiEventHandler::notifyKeyPressed(const ActiveNote* note, bool rePressed) 
 }
 
 // notify downstream listeners of a key release event (only if not handler)
-void MidiEventHandler::notifyKeyReleased(const ActiveNote& note) {
+void MidiHandler::notifyKeyReleased(const ActiveNote& note) {
     for ( auto* li : listeners_ ){
         // only notify end node listeners of release events
-        if ( !dynamic_cast<MidiEventHandler*>(li) ){
+        if ( !dynamic_cast<MidiHandler*>(li) ){
             li->onKeyReleased(note);
         }
     } 
 }
 
 // notify downstream listeners of a key off event (release if handler)
-void MidiEventHandler::notifyKeyOff(const ActiveNote& note) {
+void MidiHandler::notifyKeyOff(const ActiveNote& note) {
     for ( auto* li : listeners_ ){
-        if ( auto h = dynamic_cast<MidiEventHandler*>(li) ){
+        if ( auto h = dynamic_cast<MidiHandler*>(li) ){
             h->handleKeyReleased(note.note);
         } else {
             li->onKeyOff(note);
@@ -50,24 +50,23 @@ void MidiEventHandler::notifyKeyOff(const ActiveNote& note) {
     } 
 }
 
-void MidiEventHandler::notifyPitchbend(uint16_t pitchbend) {
+void MidiHandler::notifyPitchbend(uint16_t pitchbend) {
     for ( auto* li : listeners_ ) li->onPitchbend(pitchbend);
 }
 
-MidiEventHandler::MidiEventHandler():
-    BaseComponent(),
+MidiHandler::MidiHandler():
     notes_(),
     noteIndices_()
 {}
 
-void MidiEventHandler::addListener(MidiEventListener* listener){
+void MidiHandler::addListener(MidiListener* listener){
     if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;
     listeners_.push_back(listener);
     listener->addHandler(this);
     onListenerAdded();
 }
 
-void MidiEventHandler::removeListener(MidiEventListener* listener){
+void MidiHandler::removeListener(MidiListener* listener){
     auto it = std::find(listeners_.begin(), listeners_.end(), listener);
     if ( it != listeners_.end() ){
         listener->removeHandler(this);
@@ -76,11 +75,11 @@ void MidiEventHandler::removeListener(MidiEventListener* listener){
     }
 }
 
-std::vector<MidiEventListener*>& MidiEventHandler::getListeners(){
+std::vector<MidiListener*>& MidiHandler::getListeners(){
     return listeners_ ;
 }
 
-bool MidiEventHandler::isNoteActive(uint8_t n) const {
+bool MidiHandler::isNoteActive(uint8_t n) const {
     for ( uint8_t i = 0 ; i < activeCount_; ++i ){
         if (noteIndices_[i] == n ){
             return !notes_.at(noteIndices_[i]).pendingOff ;
@@ -89,7 +88,7 @@ bool MidiEventHandler::isNoteActive(uint8_t n) const {
     return false ;
 }
 
-void MidiEventHandler::activateNote(const ActiveNote& anote){
+void MidiHandler::activateNote(const ActiveNote& anote){
     uint8_t midiNote = anote.note.getMidiNote() ;
     notes_[midiNote] = anote ;
     lastPressedNote_ = midiNote ;
@@ -100,7 +99,7 @@ void MidiEventHandler::activateNote(const ActiveNote& anote){
     noteIndices_[activeCount_++] = midiNote ;
 }
 
-void MidiEventHandler::deactivateNote(uint8_t n){
+void MidiHandler::deactivateNote(uint8_t n){
     lastReleasedNote_ = n ;
     for ( uint8_t i = 0 ; i < activeCount_; ++i ){
         if ( noteIndices_[i] == n ){
@@ -110,28 +109,28 @@ void MidiEventHandler::deactivateNote(uint8_t n){
     }
 }
 
-void MidiEventHandler::onKeyPressed(const ActiveNote* note, bool rePressed ){
+void MidiHandler::onKeyPressed(const ActiveNote* note, bool rePressed ){
     MidiEvent e = { MidiEvent::Type::NotePressed, *note, rePressed };
     queue_.push(e);
 }
 
-void MidiEventHandler::onKeyReleased(ActiveNote anote){
+void MidiHandler::onKeyReleased(ActiveNote anote){
     anote.resetTime();
     MidiEvent e = { MidiEvent::Type::NoteReleased, anote };
     queue_.push(e);
 }
 
-void MidiEventHandler::onKeyOff(ActiveNote anote){
+void MidiHandler::onKeyOff(ActiveNote anote){
     MidiEvent e = { MidiEvent::Type::NoteOff, anote };
     queue_.push(e);
 }
 
-void MidiEventHandler::onPitchbend(uint16_t pitchbend){
+void MidiHandler::onPitchbend(uint16_t pitchbend){
     notifyPitchbend(pitchbend);
 }
 
 // handler functions for root-level midi input from midi state
-void MidiEventHandler::handleKeyPressed(const MidiNote note){
+void MidiHandler::handleKeyPressed(const MidiNote note){
     ActiveNote n{note};
 
     bool rePress = false ;
@@ -141,21 +140,21 @@ void MidiEventHandler::handleKeyPressed(const MidiNote note){
     onKeyPressed(&n, rePress);
 };
 
-void MidiEventHandler::handleKeyReleased(const MidiNote note){
+void MidiHandler::handleKeyReleased(const MidiNote note){
     auto anote = notes_[note.getMidiNote()] ;
     anote.note = note ;
     onKeyReleased(anote);
 };
 
-void MidiEventHandler::handlePitchbend(uint16_t pitchbend){
+void MidiHandler::handlePitchbend(uint16_t pitchbend){
     onPitchbend(pitchbend);
 };
 
-bool MidiEventHandler::shouldKillNote(const ActiveNote& anote) const {
+bool MidiHandler::shouldKillNote(const ActiveNote& anote) const {
     return !anote.note.getStatus() ;
 }
 
-void MidiEventHandler::processEvents(){
+void MidiHandler::processEvents(){
     MidiEvent e ;
     while (queue_.pop(e)){    
         ActiveNote anote = e.anote ;
@@ -177,7 +176,7 @@ void MidiEventHandler::processEvents(){
     }
 }
 
-void MidiEventHandler::tick(float dt){
+void MidiHandler::tick(float dt){
     onTick(dt); 
 
     for ( uint8_t i = 0; i < activeCount_ ; ++i ){
@@ -195,10 +194,10 @@ void MidiEventHandler::tick(float dt){
     }
 }
 
-void MidiEventHandler::onTick([[maybe_unused]] float dt){
+void MidiHandler::onTick([[maybe_unused]] float dt){
 }
 
-void MidiEventHandler::reset(){
+void MidiHandler::reset(){
     processEvents();
 
     onReset(); 
@@ -215,6 +214,6 @@ void MidiEventHandler::reset(){
     processEvents();
 }
 
-void MidiEventHandler::onReset(){}
-void MidiEventHandler::onListenerAdded(){}
-void MidiEventHandler::onListenerRemoved(){}
+void MidiHandler::onReset(){}
+void MidiHandler::onListenerAdded(){}
+void MidiHandler::onListenerRemoved(){}

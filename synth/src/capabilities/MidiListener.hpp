@@ -15,28 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MIDI_OBSERVER_HPP_
-#define __MIDI_OBSERVER_HPP_
+#ifndef MIDI_LISTENER_HPP_
+#define MIDI_LISTENER_HPP_
 
-#include "core/BaseComponent.hpp"
 #include "midi/MidiNote.hpp"
 #include <vector>
 
 //forward declaration
-class MidiEventHandler ;
+class MidiHandler ;
 
-class MidiEventListener : public virtual BaseComponent {
-    friend class MidiEventHandler ;
+class MidiListener {
+    friend class MidiHandler ;
 private:
-    std::vector<MidiEventHandler*> handlers_ ;
+    std::vector<MidiHandler*> handlers_ ;
 
-    void addHandler(MidiEventHandler* handler);
-    void removeHandler(MidiEventHandler* handler);
+    void addHandler(MidiHandler* handler);
+    void removeHandler(MidiHandler* handler);
 
 public:
-    virtual ~MidiEventListener() = default ;
+    virtual ~MidiListener() = default ;
 
-    std::vector<MidiEventHandler*> getHandlers() const ;
+    std::vector<MidiHandler*> getHandlers() const ;
     size_t getNumHandlers() const ;
 
     virtual void onKeyPressed(const ActiveNote* note, bool rePress = false) ;
@@ -51,4 +50,4 @@ public:
     
 };
 
-#endif // __MIDI_OBSERVER_HPP_
+#endif // MIDI_LISTENER_HPP_

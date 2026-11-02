@@ -15,16 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "midi/MidiEventListener.hpp"
+#include "capabilities/MidiListener.hpp"
 #include <algorithm>
 
-void MidiEventListener::addHandler(MidiEventHandler* handler){
+void MidiListener::addHandler(MidiHandler* handler){
     if ( std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end() ) return ;
     handlers_.push_back(handler);
     onHandlerAdded();
 }
 
-void MidiEventListener::removeHandler(MidiEventHandler* handler){
+void MidiListener::removeHandler(MidiHandler* handler){
     auto it = std::find(handlers_.begin(), handlers_.end(), handler);
     if ( it != handlers_.end() ){
         handlers_.erase(it);
@@ -32,25 +32,25 @@ void MidiEventListener::removeHandler(MidiEventHandler* handler){
     onHandlerRemoved();
 }
 
-std::vector<MidiEventHandler*> MidiEventListener::getHandlers() const {
+std::vector<MidiHandler*> MidiListener::getHandlers() const {
     return handlers_ ;
 }
 
-size_t MidiEventListener::getNumHandlers() const {
+size_t MidiListener::getNumHandlers() const {
     return handlers_.size();
 }
 
-void MidiEventListener::onKeyPressed([[maybe_unused]] const ActiveNote* note, [[maybe_unused]] bool repress){
+void MidiListener::onKeyPressed([[maybe_unused]] const ActiveNote* note, [[maybe_unused]] bool repress){
 } 
-void MidiEventListener::onKeyReleased([[maybe_unused]] ActiveNote anote){
+void MidiListener::onKeyReleased([[maybe_unused]] ActiveNote anote){
 }
-void MidiEventListener::onKeyOff([[maybe_unused]] ActiveNote anote){
+void MidiListener::onKeyOff([[maybe_unused]] ActiveNote anote){
 }
-void MidiEventListener::onPitchbend([[maybe_unused]] uint16_t pitchbend ){
+void MidiListener::onPitchbend([[maybe_unused]] uint16_t pitchbend ){
 }
 
-// void MidiEventListener::onMidiControlEvent(MidiControlMessage messageType, uint8_t value){
+// void MidiListener::onMidiControlEvent(MidiControlMessage messageType, uint8_t value){
 // }
 
-void MidiEventListener::onHandlerAdded(){}
-void MidiEventListener::onHandlerRemoved(){}
+void MidiListener::onHandlerAdded(){}
+void MidiListener::onHandlerRemoved(){}

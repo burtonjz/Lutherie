@@ -21,34 +21,16 @@
 #include <cstddef>
 #include <cstring>
 #include <memory>
+#include <nlohmann/json.hpp>
 
-#include "core/BaseComponent.hpp"
 #include "config/Config.hpp"
 
-#include <nlohmann/json.hpp>
 using json = nlohmann::json ;
 
 // forward declaration
 class Analyzer ;
 
-struct SignalConnection {
-    AudioSignalComponent* component ; // connecting module
-    size_t index ; // buffer index (channel)
-
-    bool operator==(const SignalConnection& other) const {
-        return component == other.component && index == other.index ;
-    }
-};
-
-struct ConnectionHash {
-    std::size_t operator()(const SignalConnection& conn) const {
-        return std::hash<AudioSignalComponent*>()(conn.component) ^ (std::hash<size_t>()(conn.index) << 1);
-    }
-};
-
-using SignalConnectionSet = std::unordered_set<SignalConnection, ConnectionHash> ;
-
-class AudioSignalComponent : public virtual BaseComponent {
+class AudioIO {
 protected:
     size_t bufferIndex_ ;
     size_t nInputs_ ;
@@ -57,13 +39,13 @@ protected:
     double sampleRate_ ;
     std::size_t bufferSize_ ;
 
-    std::vector<SignalConnectionSet> signalInputs_ ;
-    std::vector<SignalConnectionSet> signalOutputs_ ;
+    std::vector<AudioConnectionSet> signalInputs_ ;
+    std::vector<AudioConnectionSet> signalOutputs_ ;
     std::vector<std::unique_ptr<double[]>> buffers_ ;
 
 public:
-    AudioSignalComponent(size_t in, size_t out);
-    virtual ~AudioSignalComponent() = default ;
+    AudioIO(size_t in, size_t out);
+    virtual ~AudioIO() = default ;
 
     void setBufferIndex(size_t index);
     
@@ -80,11 +62,11 @@ public:
     size_t getNumInputs() const ;
     size_t getNumOutputs() const ;
 
-    void connectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput);
-    void disconnectInput(AudioSignalComponent* source, size_t input, size_t sourceOutput);
+    bool connectInput(AudioIO* source, size_t input, size_t sourceOutput);
+    bool disconnectInput(AudioIO* source, size_t input, size_t sourceOutput);
 
-    const SignalConnectionSet& getInputs(size_t inp) const ;
-    const SignalConnectionSet& getOutputs(size_t out) const ;
+    const AudioConnectionSet& getInputs(size_t inp) const ;
+    const AudioConnectionSet& getOutputs(size_t out) const ;
 
     virtual void tick();
 
@@ -100,6 +82,6 @@ protected:
 };
 
 
-inline void to_json(json& j, const SignalConnection& conn);
+inline void to_json(json& j, const AudioConnection& conn);
 
 #endif // __MODULE_HPP_

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "views/PeripheralConfig.hpp"
+#include "views/DeviceConfig.hpp"
 #include "managers/StateManager.hpp"
 #include "api/ControlApiClient.hpp"
 #include "app/Theme.hpp"
@@ -25,7 +25,7 @@
 #include <QDialogButtonBox>
 #include <spdlog/spdlog.h>
 
-PeripheralConfig::PeripheralConfig(QWidget* parent): 
+DeviceConfig::DeviceConfig(QWidget* parent): 
     QWidget(parent),
     audioComboBox_(new QComboBox(this)),
     midiComboBox_(new QComboBox(this)),
@@ -43,11 +43,11 @@ PeripheralConfig::PeripheralConfig(QWidget* parent):
     QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(
         buttons, &QDialogButtonBox::accepted, 
-        this, &PeripheralConfig::accept
+        this, &DeviceConfig::accept
     );
     connect(
         buttons, &QDialogButtonBox::rejected, 
-        this, &PeripheralConfig::reject
+        this, &DeviceConfig::reject
     );
 
     QVBoxLayout* layout = new QVBoxLayout(this);
@@ -57,7 +57,7 @@ PeripheralConfig::PeripheralConfig(QWidget* parent):
     // send initial device queries
     connect(
         ControlApiClient::instance(), &ControlApiClient::dataReceived, 
-        this, &PeripheralConfig::onControlMessageReceived
+        this, &DeviceConfig::onControlMessageReceived
     );
 
     if ( ControlApiClient::instance()->isConnected() ){
@@ -65,12 +65,12 @@ PeripheralConfig::PeripheralConfig(QWidget* parent):
     } else {
         connect(
             ControlApiClient::instance(), &ControlApiClient::connected,
-            this, &PeripheralConfig::requestData, Qt::SingleShotConnection
+            this, &DeviceConfig::requestData, Qt::SingleShotConnection
         );
     }
 }
 
-void PeripheralConfig::setAudioDeviceId(int id, bool block){
+void DeviceConfig::setAudioDeviceId(int id, bool block){
     int idx = audioComboBox_->findData(id);
     if ( idx == -1 ){
         SPDLOG_ERROR("Audio peripheral device ID={} is not a recognized device.", id);
@@ -87,7 +87,7 @@ void PeripheralConfig::setAudioDeviceId(int id, bool block){
 
 }
 
-void PeripheralConfig::setMidiDeviceId(int id, bool block){
+void DeviceConfig::setMidiDeviceId(int id, bool block){
     int idx = midiComboBox_->findData(id);
     if ( idx == -1 ){
         SPDLOG_ERROR("MIDI peripheral device ID={} is not a recognized device.", id);
@@ -103,7 +103,7 @@ void PeripheralConfig::setMidiDeviceId(int id, bool block){
     ControlApiClient::instance()->sendMessage(j);
 }
 
-void PeripheralConfig::requestData(){
+void DeviceConfig::requestData(){
     json j ;
     j["action"] = "get_audio_devices" ;
     ControlApiClient::instance()->sendMessage(j);
@@ -112,7 +112,7 @@ void PeripheralConfig::requestData(){
     ControlApiClient::instance()->sendMessage(j); 
 }
 
-void PeripheralConfig::populateComboBox(QComboBox* box, const json& data){
+void DeviceConfig::populateComboBox(QComboBox* box, const json& data){
     if ( !data.is_array() ){
         SPDLOG_WARN("data is not in expected format. Exiting.");
         return ;
@@ -132,10 +132,8 @@ void PeripheralConfig::populateComboBox(QComboBox* box, const json& data){
     }
 }
 
-void PeripheralConfig::attemptAutoSetup(){
+void DeviceConfig::attemptAutoSetup(){
     SPDLOG_INFO("Attempting auto configuration from user config.");
-
-    Config::load();
     bool complete = true ;
 
     int audioId = Config::get<int>("audio.preferred_device_id").value_or(-1);
@@ -179,7 +177,7 @@ void PeripheralConfig::attemptAutoSetup(){
     }
 }
 
-void PeripheralConfig::onControlMessageReceived(const json& json){
+void DeviceConfig::onControlMessageReceived(const json& json){
     QString action = QString::fromStdString(json["action"]);
 
     if ( action == "get_audio_devices" ){
@@ -215,7 +213,7 @@ void PeripheralConfig::onControlMessageReceived(const json& json){
     }
 }
 
-void PeripheralConfig::submit(){
+void DeviceConfig::submit(){
     json j ;
     j["action"] = "set_audio_device" ;
     j["device_id"] = audioComboBox_->currentData().toInt();

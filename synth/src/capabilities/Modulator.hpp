@@ -18,33 +18,18 @@
 #ifndef __MODULATOR_HPP_
 #define __MODULATOR_HPP_
 
-#include "core/BaseComponent.hpp"
 #include "params/ModulationParameter.hpp"
+#include "routing/ModulationTarget.hpp"
 
-struct ModulationTarget {
-    BaseComponent* component ;
-    ParameterType param ;
-    bool depth = false ;
-};
-
-inline bool operator<(const ModulationTarget& a, const ModulationTarget& b){
-    if ( a.component != b.component ){
-        return a.component < b.component ;
-    }
-
-    if ( a.param != b.param ){
-        return a.param < b.param ;
-    }
-
-    return a.depth < b.depth ;
-}
+// forward declarations
+class Node ;
 
 #include <set>
 
 /**
  * @brief base class for all Modulators.
 */
-class ModulatorComponent : public virtual BaseComponent {
+class Modulator {
 protected:
     std::set<ModulationParameter> expectedParams_ ; 
     std::set<ModulationTarget> modulated_ ; 
@@ -58,9 +43,9 @@ protected:
     }
 
 public:
-    ModulatorComponent(){};
+    Modulator(){};
 
-    virtual ~ModulatorComponent() = default ;
+    virtual ~Modulator() = default ;
 
     virtual double modulate(double value, ModulationData* mData ) const = 0 ;
 

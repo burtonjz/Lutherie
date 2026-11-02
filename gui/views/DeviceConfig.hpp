@@ -28,7 +28,7 @@
 
 using json = nlohmann::json ;
 
-class PeripheralConfig : public QWidget {
+class DeviceConfig : public QWidget {
     Q_OBJECT
 
 private:
@@ -42,7 +42,7 @@ private:
     bool autoSetupAttempted_ = false ;
 
 public:
-    explicit PeripheralConfig(QWidget* parent = nullptr);
+    explicit DeviceConfig(QWidget* parent = nullptr);
 
     void setAudioDeviceId(int id, bool block = true);
     void setMidiDeviceId(int id, bool block = true);
