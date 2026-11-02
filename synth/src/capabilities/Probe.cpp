@@ -15,14 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/AudioProbe.hpp"
+#include "capabilities/Probe.hpp"
 #include "api/StreamingApiHandler.hpp"
 #include "api/StreamingContext.hpp"
 #include "meta/ComponentRegistry.hpp"
-#include "core/AudioSignalComponent.hpp"
+#include "core/AudioIO.hpp"
 
 AudioProbe::AudioProbe():
-    AudioSignalComponent(1,0),
     analysisBuffer_(),
     context_(nullptr)
 {
@@ -67,7 +66,7 @@ void AudioProbe::createStreamingContext(){
     }
 
     context_ = new StreamingContext(size, scratchSize.value_or(4096),
-        [this](const double* data, size_t size, ComponentId id){
+        [this](const double* data, size_t size, int id){
             process(data, size, id);
         }
     );

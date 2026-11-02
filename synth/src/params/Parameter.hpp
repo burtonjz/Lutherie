@@ -19,8 +19,10 @@
 #define __PARAMETER_HPP_
 
 #include "types/ParameterType.hpp"
-#include "params/ParameterListener.hpp"
-#include "core/ModulatorComponent.hpp"
+#include "interfaces/ParameterListener.hpp"
+#include "interfaces/ModulationSource.hpp"
+#include "params/ParameterSlot.hpp"
+
 #include <spdlog/spdlog.h>
 #include <variant>
 #include <vector>
@@ -32,7 +34,7 @@ class ParameterBase {
 protected:
     ParameterType type_ ;
     bool modulatable_ ;
-    ModulatorComponent* modulator_ ;
+    const ModulationSource* modulator_ ;
     ModulationStrategy modStrategy_ ;
     ModulationData modData_ ;
 
@@ -47,7 +49,7 @@ public:
     ParameterBase(
         ParameterType typ, 
         bool modulatable,
-        ModulatorComponent* modulator = nullptr,
+        const ModulationSource* modulator = nullptr,
         ModulationData modData = {}
     ):
         type_(typ),
@@ -57,6 +59,7 @@ public:
         modData_(modData)    
     {}
 
+    virtual ~ParameterBase() = default ;
     ParameterBase(const ParameterBase&) = delete ;
     ParameterBase& operator=(const ParameterBase&) = delete ;
 
@@ -68,7 +71,7 @@ public:
         return modulatable_ ; 
     }
 
-    void setModulation(ModulatorComponent* modulator, ModulationData modData){
+    void setModulation(const ModulationSource* modulator, ModulationData modData){
         if ( modulator){
             modData_ = modData ;
             modulator_ = modulator ;
@@ -83,7 +86,7 @@ public:
         modData_ = {} ;
     }
 
-    ModulatorComponent* getModulator() const { 
+    const ModulationSource* getModulator() const { 
         return modulator_ ;
     }
     
@@ -156,7 +159,7 @@ class Parameter : public ParameterBase {
             ValueType defaultValue, bool modulatable, 
             ValueType minValue = ParameterTraits<typ>::minimum, 
             ValueType maxValue = ParameterTraits<typ>::maximum,
-            ModulatorComponent* modulator = nullptr, ModulationData modData = {}
+            const ModulationSource* modulator = nullptr, ModulationData modData = {}
         ):
             ParameterBase(typ,modulatable,modulator,modData),
             minValue_(minValue),
@@ -246,38 +249,21 @@ class Parameter : public ParameterBase {
 
         void modulate(){
             // don't modulate booleans
-            if constexpr (std::is_same_v<ValueType, bool>) {
+            if constexpr ( std::is_same_v<ValueType, bool> ){
                 return ;
             } else {
                 // modulate this parameter's depth, if it exists
                 auto* depth = getDepth();
-                double instDepth = 1 ;
+                double instDepth = 1.0 ;
                 if ( depth  && depth->isModulatable() ){
-                    getDepth()->modulate();
-                    instDepth = getDepth()->getInstantaneousValue();
+                    depth->modulate();
+                    instDepth = depth->getInstantaneousValue();
                 }
 
                 // now, modulate this parameter itself
-                if( !modulatable_ || !modulator_ ) return ;
-
-                switch(modStrategy_){
-                case ModulationStrategy::ADDITIVE:
-                    setInstantaneousValue(value_ + instDepth * modulator_->modulate(value_, &modData_));
-                    return ;
-                case ModulationStrategy::MULTIPLICATIVE_ZERO:
-                    setInstantaneousValue( value_ * instDepth * modulator_->modulate(value_, &modData_));
-                    return ;
-                case ModulationStrategy::MULTIPLICATIVE_UNITY:
-                    setInstantaneousValue( value_ * ( 1 + instDepth * modulator_->modulate(value_, &modData_)));
-                    return ;
-                case ModulationStrategy::EXPONENTIAL:
-                    setInstantaneousValue(value_ * exp2f(instDepth * modulator_->modulate(value_, &modData_)));
-                    return ;
-                case ModulationStrategy::REPLACE:
-                    setInstantaneousValue(instDepth * modulator_->modulate(value_, &modData_));
-                    return ;
-                default:
-                    return ;
+                ValueType v ;
+                if ( applyStrategy(value_, instDepth, modData_, v) ){
+                    setInstantaneousValue(v);
                 }
             }
         }
@@ -286,12 +272,83 @@ class Parameter : public ParameterBase {
             return depth_ ;
         }
 
+        // Slots allow us to specify just the pieces of a parameter 
+        // that are used by individual voices. 
+        using Slot = ParameterSlot<ValueType>;
+
+        // Initialise a voice slot from this parameter's configuration.
+        void seedSlot(Slot& s, ValueType base) const {
+            s.base = limitToRange(base);
+            s.value.instantaneous = s.base ;
+            s.value.modData = modData_ ;
+            if constexpr ( typ != ParameterType::DEPTH ){
+                if ( depth_ ){
+                    s.depth.instantaneous = depth_->getValue();
+                    s.depth.modData = *depth_->getModulationData();
+                }
+            }
+        }
+
+        void evaluate(Slot& s) const {
+            if constexpr ( std::is_same_v<ValueType, bool> ){
+                s.value.instantaneous = limitToRange(s.base);
+            } else {
+                double instDepth = 1.0 ;
+                if constexpr (typ != ParameterType::DEPTH) {
+                    if (depth_ && depth_->isModulatable()) {
+                        s.depth.instantaneous =
+                            depth_->evaluateWith(depth_->getValue(), 1.0, s.depth.modData);
+                        instDepth = s.depth.instantaneous ;
+                    }
+                }
+                s.value.instantaneous = evaluateWith(s.base, instDepth, s.value.modData);
+            }
+        }
+
+        // Pure evaluation from explicit inputs. Unmodulated returns the limited base.
+        ValueType evaluateWith(ValueType base, double instDepth, ModulationData& md) const {
+            ValueType out ;
+            if ( applyStrategy(base, instDepth, md, out) ) return limitToRange(out);
+            return limitToRange(base);
+        }
+
     private:
         void setInstantaneousValue(ValueType v, bool notify = true){
             v = limitToRange(v);
             if ( v != instantaneousValue_ ){
                 instantaneousValue_ = v ;
                 if ( notify ) notifyListeners();
+            }
+        }
+
+        bool applyStrategy(
+            [[maybe_unused]] ValueType base, [[maybe_unused]] double instDepth,
+            [[maybe_unused]] ModulationData& md, [[maybe_unused]] ValueType& out
+        ) const {
+            if constexpr ( std::is_same_v<ValueType, bool> ){
+                return false ;
+            } else {
+                if ( !modulatable_ || !modulator_ ) return false ;
+
+                switch(modStrategy_){
+                case ModulationStrategy::ADDITIVE:
+                    out = static_cast<ValueType>(base + instDepth * modulator_->modulate(base, &md));
+                    return true ;
+                case ModulationStrategy::MULTIPLICATIVE_ZERO:
+                    out = static_cast<ValueType>(base * instDepth * modulator_->modulate(base, &md));
+                    return true ;
+                case ModulationStrategy::MULTIPLICATIVE_UNITY:
+                    out = static_cast<ValueType>(base * (1 + instDepth * modulator_->modulate(base, &md)));
+                    return true ;
+                case ModulationStrategy::EXPONENTIAL:
+                    out = static_cast<ValueType>(base * exp2f(instDepth * modulator_->modulate(base, &md)));
+                    return true ;
+                case ModulationStrategy::REPLACE:
+                    out = static_cast<ValueType>(instDepth * modulator_->modulate(base, &md));
+                    return true ;
+                default:
+                    return false ;
+                }
             }
         }
 };

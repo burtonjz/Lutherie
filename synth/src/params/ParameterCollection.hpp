@@ -19,7 +19,7 @@
 #define PARAMETER_COLLECTION_HPP_
 
 #include "types/ParameterType.hpp"
-#include "params/ParameterListener.hpp"
+#include "interfaces/ParameterListener.hpp"
 
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -37,6 +37,7 @@ public:
         type_(typ)
     {}
 
+    virtual ~ParameterCollectionBase() = default ;
     ParameterCollectionBase(const ParameterCollectionBase&) = delete ;
     ParameterCollectionBase& operator=(const ParameterCollectionBase&) = delete ;
 

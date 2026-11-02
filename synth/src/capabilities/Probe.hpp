@@ -16,22 +16,14 @@
  */
 
 
-#ifndef AUDIO_PROBE_HPP_
-#define AUDIO_PROBE_HPP_
-
-#include "core/BaseComponent.hpp"
-#include "core/AudioSignalComponent.hpp"
+#ifndef PROBE_HPP_
+#define PROBE_HPP_
 
 #include <cstddef>
 #include <cstring>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json ;
-
 struct StreamingContext ;
-class AudioProbe : public AudioSignalComponent {
+class AudioProbe {
 protected:
-    std::unique_ptr<double[]> analysisBuffer_ ;
     StreamingContext* context_ ;
     bool collecting_ = false ;
 
@@ -42,10 +34,9 @@ public:
     /**
      * @brief define how raw data should be processed and pushed through analysis engine
      */
-    virtual void process(const double* data, size_t size, ComponentId id) = 0 ;
+    virtual void process(const double* data, size_t size, int id) = 0 ;
 
-    void flush();
-    void calculateSample() override ;
+    void flush(); 
     StreamingContext* getStreamingContext() const ;
 
 private:
@@ -53,4 +44,4 @@ private:
 };
 
 
-#endif // AUDIO_PROBE_HPP_
+#endif // PROBE_HPP_

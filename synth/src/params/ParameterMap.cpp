@@ -19,8 +19,13 @@
 
 ParameterMap::ParameterMap():
     modulatable_(),
-    reference_()
+    perVoice_()
 {}
+
+ParameterMap::~ParameterMap(){
+    for ( auto* p : parameters_ ) delete p ;
+    for ( auto* c : collections_ ) delete c ;
+}
 
 ParameterBase* ParameterMap::getParameter(ParameterType p) const {
     return parameters_[static_cast<size_t>(p)];
@@ -28,20 +33,6 @@ ParameterBase* ParameterMap::getParameter(ParameterType p) const {
 
 ParameterCollectionBase* ParameterMap::getCollection(ParameterType p) const {
     return collections_[static_cast<size_t>(p)];
-}
-
-void ParameterMap::addReferences(ParameterMap& other){
-    const params& otherParams = other.parameters_ ;
-    for ( size_t i = 0 ; i < otherParams.size() ; ++i ){
-        if ( !otherParams[i] ) continue ;
-
-        parameters_[i] = otherParams[i] ;
-        reference_.insert(ParameterType(i)) ;
-
-        // we won't actually perform the modulation in the child object,
-        // but we still need to track modulatable parameters
-        if(otherParams[i]->isModulatable()) modulatable_.insert(ParameterType(i)); 
-    }
 }
 
 std::set<ParameterType> ParameterMap::getModulatableParameters() const {
@@ -52,6 +43,21 @@ void ParameterMap::modulate(){
     for (auto it = modulatable_.begin(); it != modulatable_.end(); ++it ){
         modulateParameter(*it);
     }
+}
+
+void ParameterMap::markPerVoice(ParameterType p){
+    if ( !getParameter(p) ){
+        SPDLOG_ERROR(
+            "Cannot mark missing parameter {} as per-voice.",
+            GET_PARAMETER_TRAIT_MEMBER(p, name)
+        );
+        return ;
+    }
+    perVoice_.insert(p);
+}
+
+bool ParameterMap::isPerVoice(ParameterType p) const {
+    return perVoice_.count(p) > 0 ;
 }
 
 json ParameterMap::getValueDispatch(ParameterType p) const {
@@ -345,7 +351,7 @@ json ParameterMap::toJson(json& output) const {
         ParameterType typ = static_cast<ParameterType>(p);
 
         // normal parameters
-        if ( parameters_[p] && reference_.find(typ) == reference_.end() ){
+        if ( parameters_[p] ){
             auto& param = output["parameters"][GET_PARAMETER_TRAIT_MEMBER(typ, name)];
             param["currentValue"] = getValueDispatch(typ);
             param["defaultValue"] = getDefaultDispatch(typ);
@@ -367,9 +373,7 @@ void ParameterMap::fromJson(const json& j){
 
 void ParameterMap::modulateParameter(ParameterType typ){
     auto p = getParameter(typ);
-    auto r = reference_.find(typ);
 
-    if ( ! p || r != reference_.end() ) return ;
-
+    if ( !p || perVoice_.count(typ) ) return ;
     p->modulate();
 }

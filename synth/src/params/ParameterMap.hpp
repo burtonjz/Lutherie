@@ -20,8 +20,8 @@
 
 #include "params/Parameter.hpp"
 #include "params/ModulationParameter.hpp"
-#include "types/ParameterType.hpp"
 #include "params/ParameterCollection.hpp"
+#include "types/ParameterType.hpp"
 
 #include "config/Config.hpp"
 
@@ -45,21 +45,25 @@ class ParameterMap {
     private:
         params parameters_{} ;
         std::set<ParameterType> modulatable_ ; 
-        std::set<ParameterType> reference_ ; // parameters that are reference only to a parent parameter map (like a polyOscillator managing child oscillators)
+        std::set<ParameterType> perVoice_ ; // evaluate by voices, not by modulate()
 
         collections collections_{} ;
 
     public:
         ParameterMap();
+        ~ParameterMap();
+        ParameterMap(const ParameterMap&) = delete ;
+        ParameterMap& operator=(const ParameterMap&) = delete ;
 
         ParameterBase* getParameter(ParameterType p) const ;
         ParameterCollectionBase* getCollection(ParameterType p) const ;
 
-        void addReferences(ParameterMap& other);
-
         std::set<ParameterType> getModulatableParameters() const ;
         void modulate();
         
+        void markPerVoice(ParameterType p);
+        bool isPerVoice(ParameterType p) const ;
+
         // Parameter Dispatcher Functions
         json getValueDispatch(ParameterType p) const ;
         bool setValueDispatch(ParameterType p, const json& value);
@@ -111,7 +115,7 @@ class ParameterMap {
             bool modulatable,
             GET_PARAMETER_VALUE_TYPE(typ) minValue = GET_PARAMETER_TRAIT_MEMBER(typ, minimum), 
             GET_PARAMETER_VALUE_TYPE(typ) maxValue = GET_PARAMETER_TRAIT_MEMBER(typ, maximum),
-            ModulatorComponent* modulator = nullptr, ModulationData modData = {}
+            const ModulationSource* modulator = nullptr, ModulationData modData = {}
         ){
             if ( getParameter(typ) ){
                 SPDLOG_ERROR("Parameter {} already in map.", GET_PARAMETER_TRAIT_MEMBER(typ, name));

@@ -1,0 +1,39 @@
+/*
+ * Copyright (C) 2026 Jared Burton
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef PARAMETER_SLOT_HPP_
+#define PARAMETER_SLOT_HPP_
+
+#include "types/ParameterType.hpp"
+#include "params/ModulationParameter.hpp"
+
+template <typename T>
+struct ModulationState {
+    T instantaneous ;
+    ModulationData modData ;
+};
+
+template <typename T>
+struct ParameterSlot {
+    using DepthType = GET_PARAMETER_VALUE_TYPE(ParameterType::DEPTH);
+
+    T base{} ;                           
+    ModulationState<T> value ;           
+    ModulationState<DepthType> depth ;   
+};
+
+#endif // PARAMETER_SLOT_HPP_
