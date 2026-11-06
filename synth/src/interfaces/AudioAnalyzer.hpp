@@ -15,26 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef STREAMING_CONTEXT_HPP_
-#define STREAMING_CONTEXT_HPP_
 
-#include "containers/LockFreeRingBuffer.hpp"
-#include <functional>
+#ifndef PROBE_HPP_
+#define PROBE_HPP_
 
-struct StreamingContext {
-    LockFreeRingBuffer<double> buffer ;
-    std::function<void(const double*, size_t, int)> processFunc ;
-    std::vector<double> scratch ;
+#include <cstddef>
+#include <cstring>
+#include <span>
 
-    StreamingContext(
-        size_t bufferSize,
-        size_t scratchSize,
-        std::function<void(const double*, size_t, int)> func
-    ) :
-        buffer(bufferSize),
-        processFunc(std::move(func)),
-        scratch(scratchSize)
-    {}
+class AudioAnalyzer {
+public:
+    virtual ~AudioAnalyzer() = default ;
+    virtual size_t maxOutputSize() const = 0 ;
+    virtual size_t process(std::span<const float> input, std::span<float> output) = 0 ;
 };
 
-#endif // STREAMING_CONTEXT_HPP_
+#endif // PROBE_HPP_

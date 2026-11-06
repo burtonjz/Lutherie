@@ -42,6 +42,9 @@ private:
     std::vector<std::vector<double>> outputs_ ;
     std::vector<BufferStatus> status_ ;
 
+    std::vector<std::vector<BufferRead>> inputViews_ ;
+    std::vector<BufferRead>              outputViews_ ;
+
     // cache connections in class for edge walking
     std::vector<BufferConnectionSet> inputEdges_ ;
     std::vector<BufferConnectionSet> outputEdges_ ;
@@ -50,6 +53,9 @@ private:
 
 public:
     BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs, size_t outputs);
+
+    BufferIO(const BufferIO&) = delete ;
+    BufferIO& operator=(const BufferIO&) = delete ;
 
     void addInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
     void removeInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
@@ -68,19 +74,24 @@ public:
 private:
     friend class BufferContext ;
 
-    BufferReads createInputsReadOnly(size_t channel) const ;
+    // read only view of all input edges connected to specified channel.
+    // Empty/Not Ready buffer is empty span.
+    std::span<const BufferRead> getInputView(size_t channel) const ;
+    void rebuildInputViews(size_t channel);
 
-    std::optional<BufferRead> createOutputReadOnly(size_t channel) const ;
-    BufferReads createOutputsReadOnly() const ;
+    const BufferRead getOutputView(size_t channel) const ;
+    void rebuildOutputView(size_t channel);
 
-    BufferWrite createOutputWrite(size_t channel);
-    BufferWrites createOutputsWrite();
+    BufferResize getOutputResize(size_t channel);
 
     void process(Hook h, size_t changedInput);
     void notifyDownstream();
 
     size_t getMaxBufferFrames() const ;
     std::vector<double> getInterleavedBuffers(const SF_INFO& info) const ;
+
+    void setStatus(size_t channel, BufferStatus s);
+    void setAllStatus(BufferStatus s);
 
     void notifyObservers();
 };

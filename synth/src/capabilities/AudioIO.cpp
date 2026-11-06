@@ -15,128 +15,158 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/AudioIO.hpp"
+#include "capabilities/AudioIO.hpp"
+#include "interfaces/AudioProcessor.hpp"
 #include <spdlog/spdlog.h>
 
+AudioIO::AudioIO(
+    AudioProcessor& processor, AudioContext audio,
+    size_t inputs, size_t outputs
+):
+    processor_(processor),
+    observers_(),
+    currentFrame_(0),
+    sampleRate_(audio.sampleRate),
+    bufferSize_(audio.bufferSize),
+    numInputs_(inputs),
+    numOutputs_(outputs),
+    input_(numInputs_, std::vector<double>(bufferSize_)),
+    output_(numOutputs_, std::vector<double>(bufferSize_)),
+    inputView_(makeAccessor<BufferRead>(input_)),
+    outputView_(makeAccessor<BufferRead>(output_)),
+    outputWrite_(makeAccessor<BufferWrite>(output_)),
+    accessor_(inputView_, outputWrite_, bufferSize_, sampleRate_),
+    inputEdges_(numInputs_),
+    outputEdges_(numOutputs_)
+{}
 
-AudioIO::AudioIO(size_t in, size_t out):
-    bufferIndex_(0),
-    nInputs_(in),
-    nOutputs_(out),
-    signalInputs_(in),
-    signalOutputs_(out),
-    buffers_(out)
-{
-    sampleRate_ = Config::get<double>("audio.sample_rate").value();
-    bufferSize_ = Config::get<size_t>("audio.buffer_size").value();
+void AudioIO::prepare(AudioContext audio){
+    sampleRate_ = audio.sampleRate ;
+    if ( audio.bufferSize == bufferSize_ ) return ;
+    bufferSize_ = audio.bufferSize ;
 
-    for ( size_t i = 0; i < out; ++i){
-        buffers_[i] = std::make_unique<double[]>(bufferSize_);
+    for ( auto& inp : input_ ){
+        inp.resize(audio.bufferSize);
     }
-}
 
-void AudioIO::setBufferIndex(size_t index){
-    bufferIndex_ = index ;
-}
-
-void AudioIO::calculateSample(){}
-
-double AudioIO::getCurrentSample(size_t output) const {
-    assert( output < nOutputs_ );
-    return buffers_[output][bufferIndex_];
-}
-
-double AudioIO::getLastSample(size_t output) const {
-    assert( output < nOutputs_ );
-    return buffers_[output][(bufferIndex_ + bufferSize_ - 1) % bufferSize_ ];
-}
-
-void AudioIO::clearBuffer(){
-    for ( auto& buf : buffers_ ){
-        std::fill(buf.get(), buf.get() + bufferSize_, 0.0);
+    for ( auto& out : output_ ){
+        out.resize(audio.bufferSize);
     }
+
+    inputView_   = makeAccessor<BufferRead>(input_);
+    outputView_  = makeAccessor<BufferRead>(input_);
+    outputWrite_ = makeAccessor<BufferWrite>(input_);
+
+    accessor_ = AudioAccessor(
+        inputView_, outputWrite_, 
+        bufferSize_, sampleRate_
+    );
+
+    currentFrame_ = 0 ;
 }
 
-const double* AudioIO::data(size_t output) const {
-    assert( output < nOutputs_ );
-    return buffers_[output].get() ;
+void AudioIO::addInputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel){
+    inputEdges_.at(toChannel).insert({edge, edgeChannel});
 }
 
-std::size_t AudioIO::size() const {
-    return bufferSize_ ;
+void AudioIO::removeInputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel){
+    inputEdges_.at(toChannel).erase({edge, edgeChannel});
+}
+
+void AudioIO::addOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel){
+    outputEdges_.at(toChannel).insert({edge, edgeChannel});
+}
+
+void AudioIO::removeOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel){
+    outputEdges_.at(toChannel).erase({edge, edgeChannel});
+}
+
+void AudioIO::addObserver(AudioObserver* observer, size_t channel){
+    if ( !observer ){
+        SPDLOG_ERROR("cannot add nullptr observer.");
+        return ;
+    }
+    auto& observers = observers_[channel];
+    auto it = std::find(observers.begin(), observers.end(), observer);
+    if ( it != observers.end() ){
+        SPDLOG_ERROR("observer already added.");
+        return ;
+    }
+    observers.push_back(observer);
+}
+
+void AudioIO::removeObserver(AudioObserver* observer, size_t channel){
+    if ( !observer ){
+        SPDLOG_ERROR("cannot remove nullptr observer.");
+        return ;
+    }
+    auto& observers = observers_[channel];
+    auto it = std::find(observers.begin(), observers.end(), observer);
+    if ( it == observers.end() ){
+        SPDLOG_ERROR("observer not currently added. Nothing to do.");
+        return ;
+    }
+    observers.erase(it);
 }
 
 size_t AudioIO::getNumInputs() const {
-    return nInputs_ ;
+    return numInputs_ ;
 }
 
 size_t AudioIO::getNumOutputs() const {
-    return nOutputs_ ;
+    return numOutputs_ ;
 }
 
-bool AudioIO::connectInput(AudioIO* source, size_t input, size_t sourceOutput){
-    if ( input >= nInputs_ || sourceOutput >= source->nOutputs_){
-        SPDLOG_ERROR("cannot connect input: Invalid channel specified.");
-        return false ;
-    };
-    signalInputs_[input].insert({source, sourceOutput});
-    source->signalOutputs_[sourceOutput].insert({this, input});
-    onInputConnect();
-    return true ;
+double AudioIO::getCurrentSample(size_t channel) const {
+    return output_[channel][currentFrame_];
 }
 
-bool AudioIO::disconnectInput(AudioIO* source, size_t input, size_t sourceOutput){
-    if ( input >= nInputs_ || sourceOutput >= source->nOutputs_){
-        SPDLOG_ERROR("cannot disconnect input: Invalid channel specified.");
-        return false ;
-    };
-    signalInputs_[input].erase({source, sourceOutput});
-    source->signalOutputs_[sourceOutput].erase({this, input});
-    onInputDisconnect();
-    return true ;
+double AudioIO::getLastSample(size_t channel) const {
+    size_t last = currentFrame_ == 0
+        ? bufferSize_ - 1
+        : currentFrame_ - 1 ;
+
+    return output_[channel][last];
 }
 
-const AudioConnectionSet& AudioIO::getInputs(size_t inp) const {    
-    assert( inp < nInputs_ );
-    return signalInputs_[inp] ;
+BufferRead AudioIO::output(size_t channel) const {
+    return outputView_[channel];
 }
 
-const AudioConnectionSet& AudioIO::getOutputs(size_t out) const {
-    assert( out < nOutputs_ );
-    return signalOutputs_[out] ;
+const AudioConnectionSet& AudioIO::getInputEdges(size_t channel) const {
+    return inputEdges_[channel];
+}
+const AudioConnectionSet& AudioIO::getOutputEdges(size_t channel) const {
+    return outputEdges_[channel];
+}
+
+void AudioIO::processFrame(){
+    aggregateInputFrame();
+    processor_.processFrame(accessor_, currentFrame_);
 }
 
 void AudioIO::tick(){
-    bufferIndex_ = std::fmod(bufferIndex_ + 1, bufferSize_);
+    bool bufferEnd = ++currentFrame_ == bufferSize_ ;
+    if ( bufferEnd )  currentFrame_ = 0 ;
+    
+    processor_.onTick(currentFrame_);
+
+    if ( bufferEnd ) notifyObservers();
 }
 
-bool AudioIO::isGenerative() const { 
-    return false ; 
-}
-bool AudioIO::isPolyphonic() const { 
-    return false ; 
-}
-
-void AudioIO::onInputConnect(){
-}
-
-void AudioIO::onInputDisconnect(){
+void AudioIO::aggregateInputFrame(){
+    for ( size_t ch = 0; ch < numInputs_; ++ch ){
+        double& out = output_[ch][currentFrame_];
+        for ( const auto& edge : inputEdges_[ch] ){
+            out += edge.audio->getLastSample(edge.channel);
+        }
+    } 
 }
 
-double AudioIO::aggregateInputs(size_t idx) const {
-    assert( idx < nInputs_ );
-    double sum = 0.0 ;
-    for ( const auto& conn : signalInputs_[idx] ){
-        sum += conn.component->getLastSample(conn.index);
+void AudioIO::notifyObservers() const {
+    for ( size_t ch = 0; ch < numOutputs_; ++ch ){
+        for ( auto& obs : observers_[ch] ){
+            obs->onData(outputView_[ch]);
+        }
     }
-    return sum ;
 }
-
-void AudioIO::setBufferValue(size_t idx, double val){
-    assert( idx < nOutputs_ );
-    buffers_[idx][bufferIndex_] = val ;
-}
-
-inline void to_json(json& j, const AudioConnection& conn){
-    j["index"] = conn.index ;
-};

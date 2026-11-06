@@ -18,16 +18,19 @@
 #ifndef DATA_API_HEADER_HPP_
 #define DATA_API_HEADER_HPP_
 
+#include "types/NodeType.hpp"
 #include <cstdint>
 #include <string>
 
 struct DataApiHeader {
-    uint32_t componentId ;
+    NodeType type ;
+    uint32_t id ;
     uint32_t channel ;
     uint64_t size = 0 ;
 
     std::string toString() const {
-        return std::to_string(componentId) 
+        return type.toString() 
+            + std::to_string(id) 
             + std::to_string(channel);
     }
 
@@ -36,17 +39,18 @@ struct DataApiHeader {
     }
 
     bool operator==(const DataApiHeader& other) const {
-        return componentId == other.componentId && 
-            channel == other.channel ;
+        return type == other.type
+            && id == other.id
+            && channel == other.channel ;
     }
 };
 
 struct DataDescriptorHash {
-    std::size_t operator()(const DataApiHeader& desc) const {
+    size_t operator()(const DataApiHeader& desc) const {
         return desc.hash() ;
     }
 };
 
-static_assert(sizeof(DataApiHeader) == 16);
+static_assert(sizeof(DataApiHeader) == 24);
 
 #endif // DATA_API_HEADER_HPP_

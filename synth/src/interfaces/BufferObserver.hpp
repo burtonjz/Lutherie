@@ -21,7 +21,7 @@
 #include "interfaces/BufferRW.hpp"
 
 struct BufferObserver {
-    virtual void onOutputChannelReady(size_t channel, BufferRead output) = 0 ;
+    virtual void onOutputChannelReady(BufferRead output, size_t channel) = 0 ;
     virtual ~BufferObserver() = default ;
 };
 

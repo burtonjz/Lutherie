@@ -21,94 +21,48 @@
 #include "status/BufferStatus.hpp"
 
 #include <cstddef>
-#include <optional>
 #include <span>
 #include <vector>
 
 // forward declarations
 class BufferIO ;
+class AudioIO ;
 
-// read-only view of a single buffer channel
-class BufferRead {
+// read-only can be span
+using BufferRead = std::span<const double> ;
+
+// writeable can edit values but not resize
+using BufferWrite = std::span<double> ;
+
+// writable and resizeable
+// resize nullifies span, so need wrapper class
+class BufferResize {
 public:
-    const double* data() const { return data_.data(); }
-    size_t size() const { return data_.size(); }
-    bool empty() const { return data_.empty(); }
-    
-    const double& operator[](size_t i) const { return data_[i]; }
-    std::span<const double> span() const { return data_ ; }
+    BufferResize(const BufferResize&) = delete ;
+    BufferResize& operator=(const BufferResize&) = delete ;
 
-private:
-    friend class BufferIO ;
-    explicit BufferRead(std::span<const double> data):
-        data_(data)
-    {}
+    BufferRead  read()  const { return *buf_ ; }
+    BufferWrite write() const { return *buf_ ; }
 
-    std::span<const double> data_ ;
-};
+    size_t size() const { return buf_->size(); }
+    size_t capacity() const { return buf_->capacity(); }
+    bool empty() const { return buf_->empty(); }
 
-// read-only view of all buffers
-class BufferReads {
-public:
-    size_t size() const { return channels_.size(); }
-    const BufferRead* operator[](size_t channel) const {
-        if ( channel >= channels_.size() || !channels_[channel] ){
-            return nullptr ;
-        }
-
-        return &channels_[channel].value();
-    }
-
-private:
-    friend class BufferIO ;
-    BufferReads(std::vector<std::optional<BufferRead>> channels):
-        channels_(std::move(channels))
-    {}
-
-    std::vector<std::optional<BufferRead>> channels_ ;
-};
-
-class BufferWrite {
-public:
-    double* data(){ return buffer_->data() ; }
-    double& operator[](size_t i){ return (*buffer_)[i]; }
-
-    size_t size() const { return buffer_->size(); }
-    size_t capacity() const { return buffer_->capacity(); }
-    bool empty() const { return buffer_->empty(); }
+    void resize(size_t n) { buf_->resize(n); }
+    void reserve(size_t n) { buf_->reserve(n); }
+    void clear() { buf_->clear(); }
 
     template <typename It> 
-    void assign(It first, It last){ buffer_->assign(first, last); }
-
-    void resize(size_t n){ buffer_->resize(n); }
-    void reserve(size_t capacity){ buffer_->reserve(capacity); }
-    void clear(){ buffer_->clear(); }
-
-    std::span<double> span(){ return *buffer_ ; }
-    
-private:
-    friend class BufferIO ;
-    explicit BufferWrite(std::vector<double>& buffer):
-        buffer_(&buffer)
-    {}
-
-    std::vector<double>* buffer_ = nullptr ;
-
-};
-
-class BufferWrites {
-public:
-    size_t numOutputs() const { return channels_.size(); }
-    BufferWrite& output(size_t i){ return channels_.at(i); }
-    const BufferWrite& output(size_t i) const { return channels_.at(i); }
+    void assign(It first, It last) { buf_->assign(first, last); }
 
 private:
     friend class BufferIO ;
-    explicit BufferWrites(std::vector<BufferWrite> channels):
-        channels_(std::move(channels))
-    {}
     
-    std::vector<BufferWrite> channels_ ;
+    explicit BufferResize(std::vector<double>& b): 
+        buf_(&b)
+    {}
+
+    std::vector<double>* buf_ ;
 };
 
 class BufferResults {
@@ -117,6 +71,7 @@ public:
     void setAll(BufferStatus s){ for ( auto& st : status_ ) st = s ; }
 private:
     friend class BufferIO ;
+
     explicit BufferResults(size_t channels):
         status_(channels, BufferStatus::Failed)
     {}

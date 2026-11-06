@@ -15,73 +15,84 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULE_HPP_
-#define __MODULE_HPP_
+#ifndef AUDIO_IO_HPP_
+#define AUDIO_IO_HPP_
 
 #include <cstddef>
-#include <cstring>
-#include <memory>
-#include <nlohmann/json.hpp>
 
-#include "config/Config.hpp"
-
-using json = nlohmann::json ;
-
-// forward declaration
-class Analyzer ;
+#include "contexts/AudioContext.hpp"
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/AudioObserver.hpp"
+#include "interfaces/BufferRW.hpp"
+#include "routing/AudioConnection.hpp"
 
 class AudioIO {
-protected:
-    size_t bufferIndex_ ;
-    size_t nInputs_ ;
-    size_t nOutputs_ ;
+private:
+    AudioProcessor& processor_ ;
+    std::vector<std::vector<AudioObserver*>> observers_ ;
 
+    size_t currentFrame_ ;
     double sampleRate_ ;
-    std::size_t bufferSize_ ;
+    size_t bufferSize_ ;
 
-    std::vector<AudioConnectionSet> signalInputs_ ;
-    std::vector<AudioConnectionSet> signalOutputs_ ;
-    std::vector<std::unique_ptr<double[]>> buffers_ ;
+    size_t numInputs_ ;
+    size_t numOutputs_ ;
+
+    std::vector<std::vector<double>> input_ ; // aggregated per-sample
+    std::vector<std::vector<double>> output_ ;
+
+    std::vector<BufferRead> inputView_ ;
+    std::vector<BufferRead> outputView_ ;
+    std::vector<BufferWrite> outputWrite_ ;
+
+    AudioAccessor accessor_ ;
+
+    std::vector<AudioConnectionSet> inputEdges_ ;
+    std::vector<AudioConnectionSet> outputEdges_ ;
 
 public:
-    AudioIO(size_t in, size_t out);
-    virtual ~AudioIO() = default ;
-
-    void setBufferIndex(size_t index);
+    AudioIO(AudioProcessor& processor, AudioContext audio, size_t inputs, size_t outputs);
     
-    virtual void calculateSample();
+    AudioIO(const AudioIO&) = delete ;
+    AudioIO& operator=(const AudioIO&) = delete ;
 
-    double getCurrentSample(size_t output) const ;
-    double getLastSample(size_t output) const ;
+    void prepare(AudioContext audio);
 
-    virtual void clearBuffer();
+    void addInputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel);
+    void removeInputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel);
 
-    const double* data(size_t output = 0) const ;
-    std::size_t size() const ;
+    void addOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel);
+    void removeOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel);
+
+    void addObserver(AudioObserver* observer, size_t channel);
+    void removeObserver(AudioObserver* observer, size_t channel);
 
     size_t getNumInputs() const ;
     size_t getNumOutputs() const ;
 
-    bool connectInput(AudioIO* source, size_t input, size_t sourceOutput);
-    bool disconnectInput(AudioIO* source, size_t input, size_t sourceOutput);
+    double getCurrentSample(size_t channel) const ;
+    double getLastSample(size_t channel) const ;
 
-    const AudioConnectionSet& getInputs(size_t inp) const ;
-    const AudioConnectionSet& getOutputs(size_t out) const ;
+    BufferRead output(size_t channel) const ;
 
-    virtual void tick();
+    const AudioConnectionSet& getInputEdges(size_t channel) const ;
+    const AudioConnectionSet& getOutputEdges(size_t channel) const ;
 
-    virtual bool isGenerative() const ;
-    virtual bool isPolyphonic() const ;
-
-    virtual void onInputConnect();
-    virtual void onInputDisconnect();
+    void processFrame();
+    void tick();
     
-protected:
-    double aggregateInputs(size_t idx = 0) const ;
-    void setBufferValue(size_t idx, double val);
+private:
+    void aggregateInputFrame();
+    void notifyObservers() const ;
+
+    template <typename Span>
+    static std::vector<Span> makeAccessor(std::vector<std::vector<double>>& src){
+        std::vector<Span> views ;
+        views.reserve(src.size());
+        for (auto& v : src)
+            views.emplace_back(v);
+        return views ;
+    }
 };
 
-
-inline void to_json(json& j, const AudioConnection& conn);
-
-#endif // __MODULE_HPP_
+#endif // AUDIO_IO_HPP_

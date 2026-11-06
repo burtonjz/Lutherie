@@ -24,36 +24,36 @@
 // forward declarations
 class BufferIO ;
 
-class BufferContext {
+class BufferAccessor {
 public:
     size_t changedInput() const ;
     size_t numInputs() const ;
     size_t numOutputs() const ;
 
-    BufferReads inputs(size_t channel) const ;
-    BufferWrite output(size_t channel) const ;
+    std::span<const BufferRead> inputs(size_t channel) const ;
+    BufferResize output(size_t channel) const ;
 
     void setStatus(size_t channel, BufferStatus s);
     void setAllStatus(BufferStatus s);
 
 private:
     friend class BufferIO ;
-    BufferContext(BufferIO& io, size_t changed);
+
+    BufferAccessor(BufferIO& io, size_t changed);
 
     BufferIO& io_ ;
     size_t changed_ ;
-    std::vector<BufferStatus> status_ ;
 };
 
 struct BufferProcessor {
-    virtual void onInputUpdated(BufferContext& ctx) = 0 ;
+    virtual void onInputUpdated(BufferAccessor& accessor) = 0 ;
 
-    virtual void onInputConnected(BufferContext& ctx){
-        return onInputUpdated(ctx);
+    virtual void onInputConnected(BufferAccessor& accessor){
+        return onInputUpdated(accessor);
     }
 
-    virtual void onInputDisconnected(BufferContext& ctx){
-        return onInputUpdated(ctx);
+    virtual void onInputDisconnected(BufferAccessor& accessor){
+        return onInputUpdated(accessor);
     }
 
     virtual ~BufferProcessor() = default ;

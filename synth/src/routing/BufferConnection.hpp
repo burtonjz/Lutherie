@@ -35,7 +35,7 @@ struct BufferConnection {
 };
 
 struct BufferHash {
-    std::size_t operator()(const BufferConnection& conn) const {
+    size_t operator()(const BufferConnection& conn) const {
         return std::hash<BufferIO*>()(conn.buffer) ^ (std::hash<size_t>()(conn.channel) << 1);
     }
 };

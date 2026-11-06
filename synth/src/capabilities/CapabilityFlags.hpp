@@ -28,7 +28,8 @@ enum class CapabilityFlags : uint32_t {
     MidiHandler  = 1u << 3,
     MidiListener = 1u << 4,
     Modulator    = 1u << 5,
-    File         = 1u << 6
+    AudioProbe   = 1u << 6,
+    File         = 1u << 7
 };
 
 constexpr CapabilityFlags operator|(CapabilityFlags a, CapabilityFlags b){

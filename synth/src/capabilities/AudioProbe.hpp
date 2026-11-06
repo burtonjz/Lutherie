@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2026 Jared Burton
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#ifndef AUDIO_PROBE_HPP_
+#define AUDIO_PROBE_HPP_
+
+#include "interfaces/AudioObserver.hpp"
+#include "interfaces/AudioAnalyzer.hpp"
+#include "interfaces/DataSink.hpp"
+#include "containers/LockFreeRingBuffer.hpp"
+#include "contexts/NodeContext.hpp"
+
+class AudioProbe : public AudioObserver {
+private:
+    NodeContext node_ ;
+    AudioAnalyzer& analyzer_ ;
+    DataSink& sink_ ;
+
+    LockFreeRingBuffer<float> buffer_ ;
+    std::vector<float> scratch_ ;
+    std::vector<float> result_ ;
+
+    bool collecting_ = false ;
+
+public:
+    explicit AudioProbe(
+        NodeContext node,
+        AudioAnalyzer& analyzer, DataSink& sink, 
+        size_t bufferSize, size_t scratchSize
+    );
+
+    bool collecting() const ;
+    void setCollecting(bool c);
+
+    void onData(std::span<const double> data) noexcept override ;
+
+private:
+    void processLoop();
+
+    
+};
+
+#endif // AUDIO_PROBE_HPP_

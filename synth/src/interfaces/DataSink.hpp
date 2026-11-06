@@ -15,33 +15,16 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef DATA_SINK_HPP_
+#define DATA_SINK_HPP_
 
-#ifndef PROBE_HPP_
-#define PROBE_HPP_
+#include <span>
+#include "requests/DataApiHeader.hpp"
 
-#include <cstddef>
-#include <cstring>
-struct StreamingContext ;
-class AudioProbe {
-protected:
-    StreamingContext* context_ ;
-    bool collecting_ = false ;
-
+class DataSink {
 public:
-    AudioProbe();
-    ~AudioProbe();
-
-    /**
-     * @brief define how raw data should be processed and pushed through analysis engine
-     */
-    virtual void process(const double* data, size_t size, int id) = 0 ;
-
-    void flush(); 
-    StreamingContext* getStreamingContext() const ;
-
-private:
-    void createStreamingContext();
+    virtual void onResult(DataApiHeader header, std::span<const float> data) = 0 ;
+    virtual ~DataSink() = default ;
 };
 
-
-#endif // PROBE_HPP_
+#endif // DATA_SINK_HPP_

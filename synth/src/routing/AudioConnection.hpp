@@ -26,17 +26,17 @@
 class AudioIO ;
 
 struct AudioConnection {
-    AudioIO* component ; // connecting module
-    size_t index ; // buffer index (channel)
+    AudioIO* audio ; 
+    size_t channel ; 
 
     bool operator==(const AudioConnection& other) const {
-        return component == other.component && index == other.index ;
+        return audio == other.audio && channel == other.channel ;
     }
 };
 
 struct ConnectionHash {
     size_t operator()(const AudioConnection& conn) const {
-        return std::hash<AudioIO*>()(conn.component) ^ (std::hash<size_t>()(conn.index) << 1);
+        return std::hash<AudioIO*>()(conn.audio) ^ (std::hash<size_t>()(conn.channel) << 1);
     }
 };
 

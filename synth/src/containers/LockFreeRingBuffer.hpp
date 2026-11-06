@@ -19,56 +19,87 @@
  #define __LOCK_FREE_BUFF_HPP_
 
 #include <atomic>
+#include <bit>
+#include <cstring>
 #include <vector>
 
 template<typename T>
 class LockFreeRingBuffer {
 private:
     std::vector<T> buffer_;
-    std::atomic<size_t> writePos_{0};
-    std::atomic<size_t> readPos_{0};
-    size_t capacity_;
+    
+    const size_t capacity_ ;
+    const size_t mask_ ;
+
+    alignas(64) std::atomic<size_t> writePos_{0};
+    alignas(64) std::atomic<size_t> readPos_{0};
 
 public:
-    LockFreeRingBuffer(size_t capacity): 
-        buffer_(capacity), 
-        capacity_(capacity) 
+    LockFreeRingBuffer(size_t minCapacity): 
+        LockFreeRingBuffer(std::bit_ceil(minCapacity), 0)
     {}
-    
-    bool push(const T* data, size_t count) {
-        size_t write = writePos_.load(std::memory_order_relaxed);
-        size_t read = readPos_.load(std::memory_order_acquire);
-        size_t available = (read > write) 
-            ? (read - write - 1) 
-            : (capacity_ - write + read - 1);
-        
-        if (count > available) {
-            return false;
-        }
-        
-        for (size_t i = 0; i < count; ++i) {
-            buffer_[(write + i) % capacity_] = data[i];
-        }
-        
-        writePos_.store((write + count) % capacity_, std::memory_order_release);
-        return true;
+
+    size_t writeSpace() const {
+        return capacity_ - 
+            writePos_.load(std::memory_order_acquire) -
+            readPos_.load(std::memory_order_relaxed);
+    }
+
+    size_t readSpace() const {
+        return writePos_.load(std::memory_order_acquire)
+            - readPos_.load(std::memory_order_relaxed);
+    }
+
+    bool pushStrided(const T* src, size_t stride, size_t count){
+        return pushStrided<T>(src, stride, count);
     }
     
-    size_t pop(T* data, size_t maxCount) {
-        size_t write = writePos_.load(std::memory_order_acquire);
-        size_t read = readPos_.load(std::memory_order_relaxed);
-        size_t available = (write >= read) 
-            ? (write - read) 
-            : (capacity_ - read + write);
-        
-        size_t toRead = std::min(maxCount, available);
-        for (size_t i = 0; i < toRead; ++i) {
-            data[i] = buffer_[(read + i) % capacity_];
-        }
-        
-        readPos_.store((read + toRead) % capacity_, std::memory_order_release);
-        return toRead;
+    // for handling data conversions during the push loop
+    template<typename S>
+    bool pushStrided(const S* src, size_t stride, size_t count){
+        size_t w = writePos_.load(std::memory_order_relaxed);
+        size_t r = readPos_.load(std::memory_order_acquire);
+        if ( count > capacity_ - (w-r) ) return false ;
+
+        size_t idx = w & mask_ ;
+        size_t first = std::min(count, capacity_ - idx);
+        for ( size_t i = 0 ; i < first; ++i )    buffer_[idx + i] = static_cast<T>(src[i * stride]);
+        for ( size_t i = first; i < count; ++i ) buffer_[i - first] = static_cast<T>(src[i * stride]);
+
+        writePos_.store(w + count, std::memory_order_release);
+        return true ;
+    };
+
+    template<typename S>
+    bool push(const S* data, size_t count){
+        return pushStrided(data, 1, count);
     }
+    
+    bool push(const T* data, size_t count){
+        return pushStrided(data, 1, count);
+    }
+    
+    size_t pop(T* data, size_t maxCount){
+        size_t r = readPos_.load(std::memory_order_relaxed);
+        size_t w = writePos_.load(std::memory_order_acquire);
+        size_t n = std::min(maxCount, w - r);
+
+        size_t idx = r & mask_ ;
+        size_t first = std::min(n, capacity_ - idx);
+        
+        std::memcpy(data, &buffer_[idx], (n-first) * sizeof(T));
+        std::memcpy(data + first, &buffer_[0], (n - first) * sizeof(T));
+
+        readPos_.store(r + n, std::memory_order_release);
+        return n ;
+    }
+
+private:
+    LockFreeRingBuffer(size_t cap, int):
+        buffer_(cap), 
+        capacity_(cap),
+        mask_(cap - 1)
+    {}
 };
 
  #endif // __LOCK_FREE_BUFF_HPP_

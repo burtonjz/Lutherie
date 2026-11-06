@@ -20,8 +20,7 @@
 
 BufferContext::BufferContext(BufferIO& io, size_t changed):
     io_(io),
-    changed_(changed),
-    status_(io_.getNumOutputs(), BufferStatus::Failed)
+    changed_(changed)
 {}
 
 size_t BufferContext::changedInput() const {
@@ -36,18 +35,18 @@ size_t BufferContext::numOutputs() const {
     return io_.getNumOutputs();
 }
 
-BufferReads BufferContext::inputs(size_t channel) const {
-    return io_.createInputsReadOnly(channel);
+std::span<const BufferRead> BufferContext::inputs(size_t channel) const {
+    return io_.getInputView(channel);
 }
 
-BufferWrite BufferContext::output(size_t channel) const {
-    return io_.createOutputWrite(channel);
+BufferResize BufferContext::output(size_t channel) const {
+    return io_.getOutputResize(channel);
 }
 
 void BufferContext::setStatus(size_t channel, BufferStatus s){
-    status_[channel] = s ;
+    io_.setStatus(channel, s);
 }
 
 void BufferContext::setAllStatus(BufferStatus s){
-    for ( auto& st : status_ ) st = s ;
+    io_.setAllStatus(s);
 }

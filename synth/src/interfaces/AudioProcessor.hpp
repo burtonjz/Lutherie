@@ -18,4 +18,46 @@
 #ifndef AUDIO_PROCESSOR_HPP_
 #define AUDIO_PROCESSOR_HPP_
 
+#include "interfaces/BufferRW.hpp"
+#include <cstddef>
+
+// forward declarations
+class AudioIO ;
+
+class AudioAccessor {
+public:
+    size_t numInputs() const { return inputs_.size(); }
+    size_t numOutputs() const { return outputs_.size(); }
+    size_t frames() const { return frames_; }
+    double sampleRate() const { return sampleRate_; }
+
+    BufferRead  input(size_t i) const  { return inputs_[i]; }   // never empty: silence if unconnected
+    BufferWrite output(size_t i) const { return outputs_[i]; }  // fixed size, can't resize
+
+private:
+    friend class AudioIO ;
+
+    AudioAccessor(
+        std::span<const BufferRead> in, 
+        std::span<const BufferWrite> out,
+        size_t frames, double sampleRate
+    ):
+        inputs_(in), 
+        outputs_(out), 
+        frames_(frames), 
+        sampleRate_(sampleRate)
+    {}
+
+    std::span<const BufferRead>  inputs_ ;
+    std::span<const BufferWrite> outputs_ ;
+    size_t frames_ ;
+    double sampleRate_ ;
+};
+
+struct AudioProcessor {
+    virtual void processFrame(const AudioAccessor& accessor, size_t frame) noexcept = 0 ;
+    virtual void onTick(size_t /*newFrame*/){}
+    virtual ~AudioProcessor() = default ;
+};
+
 #endif // AUDIO_PROCESSOR_HPP_

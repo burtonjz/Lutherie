@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ENDPOINT_TYPE_HPP_
-#define ENDPOINT_TYPE_HPP_
+#ifndef NODE_TYPE_HPP_
+#define NODE_TYPE_HPP_
 
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
 
-class EndpointType {
+class NodeType {
 public:
     enum Value : uint8_t {
         DEVICE,
@@ -30,8 +30,8 @@ public:
         N_ENDPOINT_TYPES
     };
 
-    EndpointType() = default ;
-    constexpr EndpointType(Value v) : value_(v){}
+    NodeType() = default ;
+    constexpr NodeType(Value v) : value_(v){}
 
     constexpr operator Value() const { return value_ ; }
 
@@ -39,21 +39,21 @@ public:
         return std::string(names_[value_]);
     }
 
-    static EndpointType fromString(std::string_view str){
+    static NodeType fromString(std::string_view str){
         for (int i = 0; i < N_ENDPOINT_TYPES; ++i){
             if ( names_[i] == str){
                 return static_cast<Value>(i);
             }
         }   
-        throw std::invalid_argument("unknown EndpointType: " + std::string(str));
+        throw std::invalid_argument("unknown NodeType: " + std::string(str));
     }
 
     uint8_t to_uint8() const {
         return value_ ;
     }
 
-    static EndpointType from_uint8(uint8_t val){
-        return EndpointType(static_cast<Value>(val));
+    static NodeType from_uint8(uint8_t val){
+        return NodeType(static_cast<Value>(val));
     }
 
     static const std::array<std::string_view, N_ENDPOINT_TYPES>& getNames(){
@@ -71,12 +71,12 @@ private:
     };
 };
 
-inline void from_json(const json& j, EndpointType& t) {
-    t = EndpointType::fromString(j.get_ref<const std::string&>());
+inline void from_json(const json& j, NodeType& t) {
+    t = NodeType::fromString(j.get_ref<const std::string&>());
 }
 
-inline void to_json(json& j, const EndpointType& t) {
+inline void to_json(json& j, const NodeType& t) {
     j = t.toString();
 }
 
-#endif // ENDPOINT_TYPE_HPP_
+#endif // NODE_TYPE_HPP_

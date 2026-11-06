@@ -16,6 +16,7 @@
  */
 
 #include "capabilities/BufferIO.hpp"
+#include "interfaces/BufferRW.hpp"
 #include "routing/BufferConnection.hpp"
 #include "status/BufferStatus.hpp"
 #include <spdlog/spdlog.h>
@@ -27,6 +28,8 @@ BufferIO::BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs
     numOutputs_(outputs),
     outputs_(outputs, std::vector<double>()),
     status_(outputs, BufferStatus::NotReady),
+    inputViews_(inputs),
+    outputViews_(outputs),
     inputEdges_(inputs),
     outputEdges_(outputs),
     sampleRate_(audio.sampleRate)
@@ -127,57 +130,60 @@ FileStatus BufferIO::exportBuffer(std::string savePath){
     return FileStatus::Ok ;
 }
 
-BufferReads BufferIO::createInputsReadOnly(size_t channel) const {
-    std::vector<std::optional<BufferRead>> v ;
-    for ( const BufferConnection& c : inputEdges_.at(channel) ){
-        v.push_back(c.buffer->createOutputReadOnly(c.channel));
-    }
-    return BufferReads(std::move(v));
+std::span<const BufferRead> BufferIO::getInputView(size_t channel) const {
+    return inputViews_[channel];
 }
 
-std::optional<BufferRead> BufferIO::createOutputReadOnly(size_t channel) const {
+void BufferIO::rebuildInputViews(size_t channel){
+    auto& v = inputViews_[channel];
+    v.clear();
+    v.reserve(inputEdges_[channel].size());
+    for ( const BufferConnection& c : inputEdges_.at(channel)){
+        v.push_back(c.buffer->getOutputView(c.channel));
+    }
+}
+
+const BufferRead BufferIO::getOutputView(size_t channel) const {
+    return outputViews_[channel];
+}
+
+void BufferIO::rebuildOutputView(size_t channel){
+    auto& v = outputViews_[channel];
     if ( status_.at(channel) == BufferStatus::Ready ){
-        return BufferRead(std::span<const double>(outputs_.at(channel)));
+        v = BufferRead(std::span<const double>(outputs_.at(channel)));
+        return ;
     }
-    return std::nullopt ;
+    v = BufferRead();
+    return ;
 }
 
-BufferReads BufferIO::createOutputsReadOnly() const {
-    std::vector<std::optional<BufferRead>> v ;
-    for ( size_t ch = 0; ch < numOutputs_ ; ++ch ){
-        v.push_back(createOutputReadOnly(ch));
-    }
-    return BufferReads(std::move(v));
-}
-
-BufferWrite BufferIO::createOutputWrite(size_t channel){
-    return BufferWrite(outputs_.at(channel));
-}
-
-BufferWrites BufferIO::createOutputsWrite(){
-    std::vector<BufferWrite> v ;
-    for ( size_t ch = 0; ch < numOutputs_ ; ++ch ){
-        v.push_back(createOutputWrite(ch));
-    }
-    return BufferWrites(std::move(v));
+BufferResize BufferIO::getOutputResize(size_t channel){
+    return BufferResize(outputs_.at(channel));
 }
 
 void BufferIO::process(Hook h, size_t changedInput){
-    BufferContext ctx(*this, changedInput);
+    BufferAccessor accessor(*this, changedInput);
+
+    rebuildInputViews(changedInput);
 
     switch (h){
     case Hook::Connected:
-        processor_.onInputConnected(ctx);
+        processor_.onInputConnected(accessor);
         break ;
     case Hook::Disconnected:
-        processor_.onInputDisconnected(ctx);
+        processor_.onInputDisconnected(accessor);
         break ;
     case Hook::Updated:
-        processor_.onInputUpdated(ctx);
+        processor_.onInputUpdated(accessor);
         break ;
     }
 
-    status_ = ctx.status_ ;
+    // processor has full write access to all output channels
+    // so rebuild them all.
+    for ( size_t ch = 0 ; ch < numOutputs_; ++ch ){
+        rebuildOutputView(ch);
+    }
+
     notifyDownstream();
 }
 
@@ -186,9 +192,8 @@ void BufferIO::notifyDownstream(){
         const bool ready = status_.at(ch) == BufferStatus::Ready ;
 
         if ( ready ){
-            BufferRead out = BufferRead(std::span<const double>(outputs_[ch]));
             for ( auto& obs : observers_ ){
-                obs->onOutputChannelReady(ch, out);
+                obs->onOutputChannelReady(getOutputView(ch), ch);
             }
         }
         
@@ -220,4 +225,12 @@ std::vector<double> BufferIO::getInterleavedBuffers(const SF_INFO& info) const {
         }
     }
     return interleaved ;
+}
+
+void BufferIO::setStatus(size_t channel, BufferStatus s){
+    status_[channel] = s ;
+}
+
+void BufferIO::setAllStatus(BufferStatus s){
+    for ( auto& st : status_ ) st = s ;
 }
