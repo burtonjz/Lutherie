@@ -549,21 +549,21 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
     // handle modulation connection tracking
     if ( req.inbound().socket() == SocketType::ModulationInbound ){
         auto modParams = getModulationParameters(
-            req.inbound().componentId().value());
+            req.inbound().id());
         if ( !modParams ) return ;
         modParams->setConnectionStatus(req.inbound().modulatedParam().value(), true);
     }
 
     // handle upstream buffer tracking
     if ( req.inbound().socket() == SocketType::BufferInbound ){
-        ComponentModel* inbound = getModel(req.inbound().componentId().value());
-        ComponentModel* outbound = getModel(req.outbound().componentId().value());
+        ComponentModel* inbound = getModel(req.inbound().id());
+        ComponentModel* outbound = getModel(req.outbound().id());
 
         if ( !outbound ){
             SPDLOG_WARN(
                 "buffer connection created, but the outbound component (ID={})"
                 " does not exist.",
-                req.outbound().componentId().value()
+                req.outbound().id()
             );
             return ;
         }
@@ -571,7 +571,7 @@ void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
             SPDLOG_WARN(
                 "buffer connection created, but the inbound component (ID={})"
                 " does not exist.",
-                req.inbound().componentId().value()
+                req.inbound().id()
             );
             return ;
         }
@@ -587,14 +587,14 @@ void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
     // handle modulation connection tracking
     if ( req.inbound().socket() == SocketType::ModulationInbound ){
         auto modParams = getModulationParameters(
-            req.inbound().componentId().value());
+            req.inbound().id());
         if ( !modParams ) return ;
         modParams->setConnectionStatus(req.inbound().modulatedParam().value(), false);
     }
 
     // handle upstream buffer tracking
     if ( req.inbound().socket() == SocketType::BufferInbound ){
-        ComponentModel* inbound = getModel(req.inbound().componentId().value());
+        ComponentModel* inbound = getModel(req.inbound().id());
 
         if ( !inbound ) return ;
         

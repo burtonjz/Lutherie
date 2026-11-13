@@ -118,10 +118,10 @@ std::string ConnectionRequest::toString() const {
     return j.dump();
 }
 
-std::size_t ConnectionRequestHash::operator()(const ConnectionRequest& req) const {
+size_t ConnectionRequestHash::operator()(const ConnectionRequest& req) const {
     EndpointHash endpointHash ;
 
-    std::size_t h = endpointHash(req.outbound());
+    size_t h = endpointHash(req.outbound());
     h ^= endpointHash(req.inbound()) << 1 ;
     h ^= std::hash<bool>()(req.modulatingDepth()) << 1 ;
     return h ;

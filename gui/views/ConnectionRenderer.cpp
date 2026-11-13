@@ -341,7 +341,7 @@ ConnectionRenderer::ModulationParameter ConnectionRenderer::requestModulationPar
         bool exists = ConnectionManager::instance()
             ->hasModulationConnections(endpoint);
         if ( !exists ){
-            int id = endpoint.componentId().value();
+            int id = endpoint.id();
             ParameterType p = endpoint.modulatedParam().value();
             QAction* param = menu.addAction(createActionName(id, p));
             connect(
@@ -359,7 +359,7 @@ ConnectionRenderer::ModulationParameter ConnectionRenderer::requestModulationPar
         bool depthExists = ConnectionManager::instance()
             ->hasModulationDepthConnections(endpoint);
         if ( !depthExists ){
-            int id = endpoint.componentId().value();
+            int id = endpoint.id();
             ParameterType p = endpoint.modulatedParam().value();
             QAction* param = menu.addAction(createActionName(id, p, true));
             connect(

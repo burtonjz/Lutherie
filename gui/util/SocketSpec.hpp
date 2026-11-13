@@ -45,7 +45,7 @@ public:
     size_t numEndpoints() const ;
     std::span<const ConnectionEndpoint> endpoints() const ;
 
-    std::set<int> componentIds() const ;
+    std::set<int> ids() const ;
 
     bool valid() const ;
 

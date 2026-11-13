@@ -18,6 +18,7 @@
 #ifndef CONNECTION_ENDPOINT_HPP_
 #define CONNECTION_ENDPOINT_HPP_
 
+#include "types/NodeType.hpp"
 #include "types/SocketType.hpp"
 #include "types/ParameterType.hpp"
 
@@ -26,47 +27,53 @@
 
 using json = nlohmann::json ;
 
+
 class ConnectionEndpoint {
 private:
+    NodeType type_ ;
     SocketType socket_ ;
+    int id_ ; 
+
     std::optional<size_t> index_ ; 
-    std::optional<int> id_ ; 
     std::optional<ParameterType> param_ ; 
     
 public:
     static ConnectionEndpoint create(
+        NodeType type_,
         SocketType socket,
+        int id,
         std::optional<size_t> index = std::nullopt,
-        std::optional<int> componentId = std::nullopt,
         std::optional<ParameterType> modulatedParam = std::nullopt 
     );
 
     auto operator<=>(const ConnectionEndpoint& ) const = default ;
 
+    NodeType type() const ;
     SocketType socket() const ;
     
     const std::optional<size_t>& index() const ;
-    const std::optional<int>& componentId() const ;
+    int id() const ;
     const std::optional<ParameterType>& modulatedParam() const ;
     
     std::string toString() const ;
 
 private:
     ConnectionEndpoint(
+        NodeType type,
         SocketType socket,
+        int id,
         std::optional<size_t> index = std::nullopt,
-        std::optional<int> componentId = std::nullopt,
         std::optional<ParameterType> modulatedParam = std::nullopt 
     );
 
-    static ConnectionEndpoint standard(SocketType socket, std::optional<int> componentId);
-    static ConnectionEndpoint audio(SocketType socket, size_t index, std::optional<int> componentId);
-    static ConnectionEndpoint modulationIn(SocketType socket, int componentId, ParameterType param);
+    static ConnectionEndpoint standard(NodeType type, SocketType socket, int id);
+    static ConnectionEndpoint audio(NodeType type, SocketType socket, size_t index, int id);
+    static ConnectionEndpoint modulationIn(NodeType type, SocketType socket, int id, ParameterType param);
     
 };
 
 struct EndpointHash {
-    std::size_t operator()(const ConnectionEndpoint& endpoint) const ;
+    size_t operator()(const ConnectionEndpoint& endpoint) const ;
 };
 
 // JSON (de)serialization

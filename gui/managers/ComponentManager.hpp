@@ -94,7 +94,7 @@ public slots:
     void onConnectionRemoved(const ConnectionRequest& req);
 
 signals:
-    void componentAdded(int ComponentId, ComponentType typ);
+    void componentAdded(int componentId, ComponentType typ);
     void componentRemoved(int componentId);
     void componentRenamed(int componentId);
 };

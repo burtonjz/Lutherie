@@ -59,7 +59,7 @@ public:
 };
 
 struct ConnectionRequestHash {
-    std::size_t operator()(const ConnectionRequest& req) const ;
+    size_t operator()(const ConnectionRequest& req) const ;
 };
 
 // JSON (de)serialization

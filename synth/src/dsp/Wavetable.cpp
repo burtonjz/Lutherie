@@ -29,13 +29,12 @@ WaveMap Wavetable::waves_ ;
 
 // define functions
 
-const Wave Wavetable::getWavetable(Waveform waveform) {
+const Wave Wavetable::getWavetable(Waveform waveform){
     return { waves_[waveform].data(), waves_[waveform].size() } ;
 }
 
 void Wavetable::generate(){
-    std::call_once(initFlag_, []() {
-        Config::load();
+    std::call_once(initFlag_, [](){
         int s = Config::get<int>("oscillator.wavetable_size").value() ;
         for ( auto& v : waves_ ){
             v.resize(s);
@@ -49,7 +48,7 @@ void Wavetable::generate(){
     });
 }
 
-void Wavetable::generateSineWavetable(){\
+void Wavetable::generateSineWavetable(){
     std::vector<double>& w = waves_[Waveform::SINE];
     double phase ;
 
@@ -62,11 +61,11 @@ void Wavetable::generateSineWavetable(){\
 void Wavetable::generateSquareWavetable(){
     std::vector<double>& w = waves_[Waveform::SQUARE];
 
-    double dt = 1.0 / w.size() ;
+    double dt = 1.0 / w.size();
     double phase ;
     double sample ;
 
-    for(size_t i = 0; i < w.size(); ++i){
+    for ( size_t i = 0; i < w.size(); ++i ){
         phase = static_cast<double>(i) / w.size() ;
 
         sample = phase < 0.5 ? 1.0 : -1.0 ;
@@ -83,9 +82,9 @@ void Wavetable::generateTriangleWavetable(){
 
     // triangle is an integral of a square wave, we'll do a reimann sum
     double dt = 1.0 / w.size() ;
-    double square_integral = -1.0;
-    for(size_t i = 0; i < w.size(); ++i){
-        square_integral += square[i] * dt * 4.0;
+    double square_integral = -1.0 ;
+    for ( size_t i = 0; i < w.size(); ++i ){
+        square_integral += square[i] * dt * 4.0 ;
         w[i] = square_integral ;
     }
 }
@@ -94,9 +93,9 @@ void Wavetable::generateSawWavetable(){
     std::vector<double>& w = waves_[Waveform::SAW];
     double sample ;
     double t ;
-    double dt = 1.0 / w.size() ;
+    double dt = 1.0 / w.size();
 
-    for(size_t i = 0; i < w.size(); ++i){
+    for ( size_t i = 0; i < w.size(); ++i ){
         t = i * dt ;    
         sample = -1.0 + 2.0 * t ;
         sample -= polyBlep(t, dt);
@@ -111,21 +110,21 @@ void Wavetable::generateNoiseWavetable(){
     std::mt19937 rng(rd());
     std::uniform_real_distribution<double> distr(-1.0, 1.0);
     
-    for(size_t i = 0; i < w.size(); ++i){
+    for ( size_t i = 0; i < w.size(); ++i ){
         w[i] = distr(rng);
     }
 }
 
 double Wavetable::polyBlep(double t, double dt){
-    if (t < dt){
+    if ( t < dt ){
         t /= dt ;
         return t + t - t * t - 1.0 ;
     } 
 
-    if (t > 1.0 - dt){
+    if ( t > 1.0 - dt ){
         t = (t - 1.0) / dt;
         return t * t + t + t + 1.0;
     }
 
-    return 0.0;
+    return 0.0 ;
 }

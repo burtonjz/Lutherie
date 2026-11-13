@@ -18,6 +18,7 @@
 #include "graphics/ComponentNode.hpp"
 #include "graphics/SocketWidget.hpp"
 #include "types/ConnectionEndpoint.hpp"
+#include "types/NodeType.hpp"
 
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
@@ -38,8 +39,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
         std::vector<ConnectionEndpoint> endpoints ;
         for ( const auto& p : d.modulatableParameters ){
             endpoints.push_back(ConnectionEndpoint::create(
-                SocketType::ModulationInbound, std::nullopt, 
-                model_->getId(), p
+                NodeType::COMPONENT, SocketType::ModulationInbound, 
+                model_->getId(), std::nullopt, p
             ));     
         }
         
@@ -49,7 +50,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
     
     for ( size_t i = 0; i < d.numSignalInputs; ++i ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::SignalInbound, i, model_->getId()
+            NodeType::COMPONENT, SocketType::SignalInbound, 
+            model_->getId(), i
         );     
         SocketSpec spec(e);
         specs.push_back(spec);
@@ -57,7 +59,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
 
     for ( size_t i = 0; i < d.numBufferInputs; ++i ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::BufferInbound, i, model_->getId()
+            NodeType::COMPONENT, SocketType::BufferInbound, 
+            model_->getId(), i
         );     
         SocketSpec spec(e);
         specs.push_back(spec);
@@ -65,7 +68,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
 
     for ( size_t i = 0; i < d.numMidiInputs; ++i ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::MidiInbound, std::nullopt, model_->getId()
+            NodeType::COMPONENT, SocketType::MidiInbound, 
+            model_->getId()
         );     
         SocketSpec spec(e);
         specs.push_back(spec);
@@ -73,7 +77,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
 
     for ( size_t i = 0; i < d.numSignalOutputs; ++i ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::SignalOutbound, i, model_->getId()
+            NodeType::COMPONENT, SocketType::SignalOutbound, 
+            model_->getId(), i
         );     
         SocketSpec spec(e);
         specs.push_back(spec);
@@ -81,7 +86,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
 
     for ( size_t i = 0; i < d.numBufferOutputs; ++i ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::BufferOutbound, i, model_->getId()
+            NodeType::COMPONENT, SocketType::BufferOutbound, 
+            model_->getId(), i
         );     
         SocketSpec spec(e);
         specs.push_back(spec);
@@ -89,7 +95,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
 
     for ( size_t i = 0; i < d.numMidiOutputs; ++i ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::MidiOutbound, std::nullopt, model_->getId()
+            NodeType::COMPONENT, SocketType::MidiOutbound,
+            model_->getId()
         );     
         SocketSpec spec(e);
         specs.push_back(spec);
@@ -97,7 +104,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsScene* scene, QGrap
 
     if ( d.isModulator() ){
         ConnectionEndpoint e = ConnectionEndpoint::create(
-            SocketType::ModulationOutbound, std::nullopt, model_->getId()
+            NodeType::COMPONENT, SocketType::ModulationOutbound,
+            model_->getId()
         );     
         SocketSpec spec(e);
         specs.push_back(spec);

@@ -52,12 +52,10 @@ std::span<const ConnectionEndpoint> SocketSpec::endpoints() const {
     return data_ ;
 }
 
-std::set<int> SocketSpec::componentIds() const {
+std::set<int> SocketSpec::ids() const {
     std::set<int> v ;
     for ( const auto& endpoint : endpoints() ){
-        if ( endpoint.componentId().has_value () ){
-            v.insert(endpoint.componentId().value());
-        }
+        v.insert(endpoint.id());
     }
     return v ;
 }

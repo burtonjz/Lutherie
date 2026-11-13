@@ -42,7 +42,7 @@ public:
     ConnectionManager& operator=(ConnectionManager&&) = delete ;
 
     // convenient connection lookups
-    bool hasExternalConnections(const SocketSpec& spec, const std::set<int>& ids) const ;
+    bool hasDeviceConnection(const SocketSpec& spec, const std::set<int>& ids) const ;
 
     bool hasModulationConnections(const ConnectionEndpoint& endpoint) const ;
     bool hasModulationDepthConnections(const ConnectionEndpoint& endpoint) const ;

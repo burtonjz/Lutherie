@@ -18,6 +18,7 @@
 #include "managers/ConnectionManager.hpp"
 #include "requests/ConnectionRequest.hpp"
 #include "api/ControlApiClient.hpp"
+#include "types/NodeType.hpp"
 
 #include <QGraphicsItem>
 #include <algorithm>
@@ -38,18 +39,11 @@ ConnectionManager::ConnectionManager(QObject* parent):
     );
 }
 
-bool ConnectionManager::hasExternalConnections(const SocketSpec& spec, const std::set<int>& ids) const {
-    auto isExternal = [&](const ConnectionEndpoint& endpoint){
-        // peripheral always external
-        if ( !endpoint.componentId().has_value() ) return true ; 
-        // otherwise only if spec doesn't include id
-        return !ids.contains(endpoint.componentId().value());
-    };
-
+bool ConnectionManager::hasDeviceConnection(const SocketSpec& spec, const std::set<int>& ids) const {
     for ( const auto& c : connections_ ){
         for ( const auto& e : spec.endpoints() ){
-            if ( c.inbound() == e  && isExternal(c.outbound()) ) return true ;
-            if ( c.outbound() == e && isExternal(c.inbound())  ) return true ;
+            if ( c.inbound().type() == NodeType::DEVICE )  return true ;
+            if ( c.outbound().type() == NodeType::DEVICE ) return true ;
         }
     }
     return false ;

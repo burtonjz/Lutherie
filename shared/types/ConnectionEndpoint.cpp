@@ -20,21 +20,24 @@
 #include <spdlog/spdlog.h>
 
 ConnectionEndpoint::ConnectionEndpoint(
+    NodeType type,
     SocketType socket,
+    int id,
     std::optional<size_t> index,
-    std::optional<int> componentId,
     std::optional<ParameterType> modulatedParam 
 ):
+    type_(type),
     socket_(socket),
+    id_(id),
     index_(index),
-    id_(componentId),
     param_(modulatedParam)
 {}
 
 ConnectionEndpoint ConnectionEndpoint::create(
+        NodeType type,
         SocketType socket,
+        int id,
         std::optional<size_t> index,
-        std::optional<int> componentId,
         std::optional<ParameterType> modulatedParam 
 ){
     if ( socket.isAudio() ){
@@ -47,11 +50,11 @@ ConnectionEndpoint ConnectionEndpoint::create(
             SPDLOG_ERROR(err);
             throw std::runtime_error(err);
         }
-        return audio(socket, index.value(),componentId);
+        return audio(type, socket, index.value(),id);
     } 
     
     if ( socket == SocketType::ModulationInbound ){
-        if ( !componentId.has_value() || !modulatedParam.has_value() ){
+        if ( !modulatedParam.has_value() ){
             std::string err = fmt::format(
                 "cannot create ConnectionEndpoint with SocketType {}"
                 " without a valid component id and modulated parameter.",
@@ -60,22 +63,26 @@ ConnectionEndpoint ConnectionEndpoint::create(
             SPDLOG_ERROR(err);
             throw std::runtime_error(err);
         }
-        return modulationIn(socket, componentId.value(), modulatedParam.value());
+        return modulationIn(type, socket, id, modulatedParam.value());
     } 
 
-    return standard(socket, componentId);
+    return standard(type, socket, id);
 }
 
-ConnectionEndpoint ConnectionEndpoint::standard(SocketType socket, std::optional<int> componentId){
-    return ConnectionEndpoint(socket, std::nullopt, componentId, std::nullopt);
+ConnectionEndpoint ConnectionEndpoint::standard(NodeType type, SocketType socket, int id){
+    return ConnectionEndpoint(type, socket, id, std::nullopt, std::nullopt);
 }
 
-ConnectionEndpoint ConnectionEndpoint::audio(SocketType socket, size_t index, std::optional<int> componentId){
-    return ConnectionEndpoint(socket, index, componentId, std::nullopt);
+ConnectionEndpoint ConnectionEndpoint::audio(NodeType type, SocketType socket, size_t index, int id){
+    return ConnectionEndpoint(type, socket, id, index, std::nullopt);
 }
 
-ConnectionEndpoint ConnectionEndpoint::modulationIn(SocketType socket, int componentId, ParameterType param){
-    return ConnectionEndpoint(socket, std::nullopt, componentId, param);
+ConnectionEndpoint ConnectionEndpoint::modulationIn(NodeType type, SocketType socket, int id, ParameterType param){
+    return ConnectionEndpoint(type, socket, id, std::nullopt, param);
+}
+
+NodeType ConnectionEndpoint::type() const {
+    return type_ ;
 }
 
 SocketType ConnectionEndpoint::socket() const {
@@ -86,7 +93,7 @@ const std::optional<size_t>& ConnectionEndpoint::index() const {
     return index_ ;
 }
 
-const std::optional<int>& ConnectionEndpoint::componentId() const {
+int ConnectionEndpoint::id() const {
     return id_ ;
 }
 
@@ -99,16 +106,14 @@ std::string ConnectionEndpoint::toString() const {
     return j.dump();
 }
 
-std::size_t EndpointHash::operator()(const ConnectionEndpoint& endpoint) const {
-    std::size_t h = std::hash<SocketType::Value>()(endpoint.socket());
-    
+size_t EndpointHash::operator()(const ConnectionEndpoint& endpoint) const {
+    size_t h = std::hash<NodeType::Value>()(endpoint.type());
+    h ^= std::hash<SocketType::Value>()(endpoint.socket()) << 1 ;
+    h ^= std::hash<int>()(endpoint.id()) << 1 ;
+
     const auto& index = endpoint.index();
     h ^= std::hash<bool>()(index.has_value()) << 1 ;
     if ( index ) h ^= std::hash<size_t>()(*index) << 1 ;
-
-    const auto& componentId = endpoint.componentId();
-    h ^= std::hash<bool>()(componentId.has_value()) << 1 ;
-    if ( componentId ) h ^= std::hash<int>()(*componentId) << 1 ;
 
     const auto& param = endpoint.modulatedParam();
     h ^= std::hash<bool>()(param.has_value()) << 1 ;
@@ -117,19 +122,24 @@ std::size_t EndpointHash::operator()(const ConnectionEndpoint& endpoint) const {
 }
 
 ConnectionEndpoint nlohmann::adl_serializer<ConnectionEndpoint>::from_json(const json& j){
+    if ( !j.contains("type") ){
+        throw std::runtime_error("'type' not present in json");
+    }
+    NodeType type = j.at("type");
+
     if ( !j.contains("socket") ){
-        throw std::runtime_error("socket not present in json");
+        throw std::runtime_error("'socket' not present in json");
     }
     SocketType socket = j.at("socket");
 
+    if ( !j.contains("id") ){
+        throw std::runtime_error("'id' not present in json");
+    }
+    int id = j.at("id");
+    
     std::optional<size_t> index = std::nullopt ;
     if ( j.contains("index") && j.at("index").is_number_integer() ){
         index = j.at("index");
-    }
-
-    std::optional<int> componentId = std::nullopt ;
-    if ( j.contains("componentId") && j.at("componentId").is_number_integer() ){
-        componentId = j.at("componentId");
     }
 
     std::optional<ParameterType> param = std::nullopt ;
@@ -138,17 +148,16 @@ ConnectionEndpoint nlohmann::adl_serializer<ConnectionEndpoint>::from_json(const
         param = p ;
     }
 
-    return ConnectionEndpoint::create(socket, index, componentId, param);
+    return ConnectionEndpoint::create(type, socket, id, index, param);
 }
 
 void nlohmann::adl_serializer<ConnectionEndpoint>::to_json(json& j, const ConnectionEndpoint& endpoint){
+    j["type"] = endpoint.type();
     j["socket"] = endpoint.socket();
+    j["id"] = endpoint.id();
 
     const auto& index = endpoint.index();
     if ( index.has_value() ) j["index"] = index.value();
-
-    const auto& id = endpoint.componentId();
-    if ( id.has_value() ) j["componentId"] = id.value();
 
     const auto& param = endpoint.modulatedParam();
     if ( param.has_value() ) j["parameter"] = GET_PARAMETER_TRAIT_MEMBER(param.value(), name);
