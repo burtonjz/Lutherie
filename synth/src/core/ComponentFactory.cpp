@@ -2,7 +2,7 @@
 #include "configs/ComponentConfig.hpp"
 #include "components/Components.hpp"
 
-ComponentId ComponentFactory::createFromJson(ComponentType type, const std::string& name, const json& j ){
+int ComponentFactory::createFromJson(ComponentType type, const std::string& name, const json& j ){
     switch(type){
         #define X(NAME) \
             case ComponentType::NAME: return ComponentManager::instance()->create<ComponentType::NAME>(name, j.get<NAME##Config>());

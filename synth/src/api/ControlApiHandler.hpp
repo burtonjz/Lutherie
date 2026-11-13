@@ -119,8 +119,8 @@ private:
     
     // load functions
     bool loadCreateComponent(const json& components, IdMap& idMap);
-    bool loadCreateComponentSetParameters(ComponentId id, const json& params);
-    bool loadCreateComponentSetCollection(ComponentId id, const json& collection);
+    bool loadCreateComponentSetParameters(int id, const json& params);
+    bool loadCreateComponentSetCollection(int id, const json& collection);
 
     bool loadConnectComponent(const json& config);
     bool loadMidiControls(const json& controls);

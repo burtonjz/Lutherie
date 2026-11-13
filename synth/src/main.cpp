@@ -32,7 +32,6 @@ int main() {
 #endif
     SPDLOG_INFO("RtAudio version: " + RtAudio::getVersion());
     SPDLOG_INFO("RtMidi version: " + RtMidi::getVersion());
-    Config::load();
     Engine::instance()->initialize();
     
     // cleanup

@@ -62,8 +62,7 @@ void StreamingApiHandler::stop(){
     closeSocket();
 }
 
-void StreamingApiHandler::initSocket() {
-    Config::load();
+void StreamingApiHandler::initSocket(){
 #ifdef _WIN32
     if ( !wsaInitialized_ ) {
         WSADATA wsaData;
@@ -93,7 +92,7 @@ void StreamingApiHandler::initSocket() {
 #endif
 }
 
-void StreamingApiHandler::closeSocket() {
+void StreamingApiHandler::closeSocket(){
     if (udpSocket_ != INVALID_SOCKET) {
 #ifdef _WIN32
         closesocket(udpSocket_);

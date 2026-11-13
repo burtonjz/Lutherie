@@ -60,7 +60,6 @@ ControlApiClient::ControlApiClient(QObject *parent):
 }
 
 void ControlApiClient::connectToBackend(){
-    Config::load();
     QString serverAddress = QString::fromStdString(Config::get<std::string>("server.address").value()) ;
     int serverPort = Config::get<int>("server.control_port").value() ;
     SPDLOG_INFO("connecting to {} port {}", serverAddress.toStdString(), serverPort);

@@ -37,7 +37,7 @@ namespace KDDWQt = KDDockWidgets::QtWidgets ;
 class GraphPanel ;
 class ComponentParameters ;
 class ControlPanel ;
-class PeripheralConfig ;
+class DeviceConfig ;
 class Synth : public KDDWQt::MainWindow {
     Q_OBJECT
 
@@ -56,7 +56,7 @@ private:
     std::unordered_map<int, KDDWQt::DockWidget*> componentDetailDocks_ ;
 
     // Floating Window Content
-    PeripheralConfig* peripheralConfig_ ;
+    DeviceConfig* deviceConfig_ ;
 
     // save/load 
     QString saveFilePath_ ;
@@ -74,7 +74,7 @@ private:
     QAction* actionShowModulationPanel_ ;
 
     // toolbar 
-    QAction* actionPeripheralConfig_ ;
+    QAction* actionDeviceConfig_ ;
     QAction* actionStart_ ;
     QAction* actionStop_ ;
 
@@ -102,7 +102,7 @@ private:
     void configureMenu();
     void configureToolBar();
     void configureDocks();
-    void makeExternalConnections();
+    void makeDeviceConnections();
 
     QMenu* buildComponentMenu();
     QMenu* buildPostMenu();
@@ -120,7 +120,7 @@ private slots:
     void onEngineStatusChange(bool status);
 
     // tool bar menu actions
-    void onActionPeripheralConfig();
+    void onActionDeviceConfig();
     void onActionStart();
     void onActionStop();
 

@@ -21,7 +21,7 @@
 #include "signal/SignalController.hpp"
 #include "config/Config.hpp"
 #include "types/ConnectionEndpoint.hpp"
-#include "types/EndpointType.hpp"
+#include "types/NodeType.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -190,7 +190,7 @@ void AudioEngine::getDeviceConnections(int id, std::vector<ConnectionRequest>& r
             for ( const auto& s : SignalController::instance()->getSinks(ep) ){
                 if ( s.component == m ){
                     auto devEp = ConnectionEndpoint::create(
-                        EndpointType::COMPONENT, SocketType::SignalOutbound,
+                        NodeType::COMPONENT, SocketType::SignalOutbound,
                         id, s.index
                     );
                     requests.push_back(ConnectionRequest(devEp, ep));
@@ -202,7 +202,7 @@ void AudioEngine::getDeviceConnections(int id, std::vector<ConnectionRequest>& r
             for ( const auto& s : SignalController::instance()->getSources(ep) ){
                 if ( s.component == m ){
                     auto devEp = ConnectionEndpoint::create(
-                        EndpointType::COMPONENT, SocketType::SignalOutbound,
+                        NodeType::COMPONENT, SocketType::SignalOutbound,
                         id, s.index
                     );
                     requests.push_back(ConnectionRequest(devEp, ep));

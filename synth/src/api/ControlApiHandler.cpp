@@ -381,7 +381,7 @@ json ControlApiHandler::addComponent(const json& request){
     name = response.at("name");
     type = ComponentRegistry::getComponentDescriptor(name).type ;
 
-    ComponentId id = ComponentFactory::createFromJson(type, name, getDefaultConfig(type));
+    int id = ComponentFactory::createFromJson(type, name, getDefaultConfig(type));
     response["componentId"] = id ;
 
     return response ;
@@ -389,7 +389,7 @@ json ControlApiHandler::addComponent(const json& request){
 
 json ControlApiHandler::removeComponent(const json& request){
     json response = request ;
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
 
     id = response.at("componentId");
     
@@ -458,7 +458,7 @@ json ControlApiHandler::parseConnectionRequest(const json& request){
 
 json ControlApiHandler::getParameter(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
     auto c = ComponentManager::instance()->getRaw(id);
@@ -475,7 +475,7 @@ json ControlApiHandler::getParameter(const json& request){
 
 json ControlApiHandler::setParameter(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
     auto c = ComponentManager::instance()->getRaw(id);
@@ -498,7 +498,7 @@ json ControlApiHandler::setParameter(const json& request){
 
 json ControlApiHandler::getParameterDefault(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
     
     auto c = ComponentManager::instance()->getRaw(id);
@@ -515,7 +515,7 @@ json ControlApiHandler::getParameterDefault(const json& request){
 
 json ControlApiHandler::setParameterDefault(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
     auto c = ComponentManager::instance()->getRaw(id);
@@ -535,7 +535,7 @@ json ControlApiHandler::setParameterDefault(const json& request){
 
 json ControlApiHandler::getParameterValueRange(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
     auto c = ComponentManager::instance()->getRaw(id);
@@ -554,7 +554,7 @@ json ControlApiHandler::getParameterValueRange(const json& request){
 
 json ControlApiHandler::setParameterValueRange(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
     auto c = ComponentManager::instance()->getRaw(id);
@@ -578,7 +578,7 @@ json ControlApiHandler::setParameterValueRange(const json& request){
 
 json ControlApiHandler::resetParameter(const json& request){
     json response = request ;
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType param = stringToParameter(response.at("parameter"));
 
     auto c = ComponentManager::instance()->getRaw(id);
@@ -595,7 +595,7 @@ json ControlApiHandler::resetParameter(const json& request){
 
 json ControlApiHandler::parseCollectionRequest(const json& request){
     json response = request ;
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
 
     auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
@@ -881,7 +881,7 @@ json ControlApiHandler::resetCollection(BaseComponent* c, const CollectionDescri
 }
 
 json ControlApiHandler::getModulationStrategy(const json& request){
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
     json response = request ;
 
@@ -909,7 +909,7 @@ json ControlApiHandler::getModulationStrategy(const json& request){
 }
 
 json ControlApiHandler::setModulationStrategy(const json& request){
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
     ModulationStrategy s = static_cast<ModulationStrategy>(request.at("strategy"));
     json response = request ;
@@ -938,7 +938,7 @@ json ControlApiHandler::setModulationStrategy(const json& request){
 }
 
 json ControlApiHandler::getModulationDepth(const json& request){
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
 
     auto component = ComponentManager::instance()->getRaw(id);
@@ -967,7 +967,7 @@ json ControlApiHandler::getModulationDepth(const json& request){
 
 
 json ControlApiHandler::setModulationDepth(const json& request){
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
     double depth = request.at("depth");
     json response = request ;
@@ -994,7 +994,7 @@ json ControlApiHandler::setModulationDepth(const json& request){
 
 json ControlApiHandler::getFilePath(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
 
     FileComponent* c = ComponentManager::instance()->getFileComponent(id);
     if ( !c ){
@@ -1011,7 +1011,7 @@ json ControlApiHandler::getFilePath(const json& request){
 
 json ControlApiHandler::setFilePath(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     std::string path = response.at("path");
 
     FileComponent* c = ComponentManager::instance()->getFileComponent(id);
@@ -1028,10 +1028,10 @@ json ControlApiHandler::setFilePath(const json& request){
 
 json ControlApiHandler::saveBuffer(const json& request){
     json response = request ;
-    ComponentId id = response.at("componentId");
+    int id = response.at("componentId");
     std::string path = response.at("path");
 
-    AudioBufferComponent* c = ComponentManager::instance()->getBufferComponent(id);
+    BufferIO* c = ComponentManager::instance()->getBufferComponent(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Buffer component with id {} not found",
@@ -1045,11 +1045,11 @@ json ControlApiHandler::saveBuffer(const json& request){
 
 json ControlApiHandler::getBufferData(const json& request){
     json response = request ;
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     size_t channel = response.at("channel");
 
 
-    AudioBufferComponent* c = ComponentManager::instance()->getBufferComponent(id);
+    BufferIO* c = ComponentManager::instance()->getBufferComponent(id);
     if ( !c ){
         throw std::runtime_error(fmt::format(
             "Buffer component with id {} not found",
@@ -1091,7 +1091,7 @@ json ControlApiHandler::midiLearn(const json& request){
 }
 
 json ControlApiHandler::getMidiControl(const json& request){
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
 
     BaseComponent* c = ComponentManager::instance()->getRaw(id);
@@ -1119,7 +1119,7 @@ json ControlApiHandler::getMidiControl(const json& request){
 }
 
 json ControlApiHandler::setMidiControl(const json& request){
-    ComponentId id = request.at("componentId");
+    int id = request.at("componentId");
     ParameterType p = stringToParameter(request.at("parameter"));
     uint8_t ctrl = request.at("value");
 
@@ -1165,7 +1165,7 @@ bool ControlApiHandler::routeConnectionRequest(const ConnectionRequest& request)
     case SocketType::MidiInbound:
         return Engine::instance()->handleMidiConnection(request);
     case SocketType::SignalInbound:
-        return Engine::instance()->handleSignalConnection(request);
+        return Engine::instance()->handleAudioConnection(request);
     case SocketType::BufferInbound:
         return Engine::instance()->handleBufferConnection(request);
     case SocketType::ModulationInbound:
@@ -1181,7 +1181,7 @@ bool ControlApiHandler::routeConnectionRequest(const ConnectionRequest& request)
 
 bool ControlApiHandler::loadCreateComponent(const json& components, IdMap& idMap){
     json params ;
-    ComponentId id ;
+    int id ;
     json componentRequest ;
     json componentResponse ;
 
@@ -1211,7 +1211,7 @@ bool ControlApiHandler::loadCreateComponent(const json& components, IdMap& idMap
     return success ;
 }
 
-bool ControlApiHandler::loadCreateComponentSetParameters(ComponentId id, const json& params){
+bool ControlApiHandler::loadCreateComponentSetParameters(int id, const json& params){
     bool success = true ;
     try {
         for ( const auto& [p, data] : params.items() ){
@@ -1246,7 +1246,7 @@ bool ControlApiHandler::loadCreateComponentSetParameters(ComponentId id, const j
     return success ;
 }
 
-bool ControlApiHandler::loadCreateComponentSetCollection(ComponentId id, const json& collection){
+bool ControlApiHandler::loadCreateComponentSetCollection(int id, const json& collection){
     auto c = ComponentManager::instance()->getRaw(id);
     if ( !c ){
         SPDLOG_ERROR("cannot process collection request for a component that doesn't exist");
@@ -1315,7 +1315,7 @@ bool ControlApiHandler::loadMidiControls(const json& controls){
 void ControlApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap){
     if ( j.is_object() ) {
         // Update known ID fields in objects
-        std::vector<std::string> idKeys = {"id", "ComponentId", "componentId", "modulatorId"};
+        std::vector<std::string> idKeys = {"id", "int", "componentId", "modulatorId"};
         for ( const auto& key : idKeys ) {
             if ( j.contains(key) && j[key].is_number_integer() ) {
                 int currentId = j[key];

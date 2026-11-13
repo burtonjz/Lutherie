@@ -38,7 +38,6 @@ BufferWaveform::BufferWaveform(ComponentModel* model, size_t channel, QWidget* p
     voltages_(),
     resizeDebounce_(new QTimer(this))
 {
-    Config::load();
     sampleRate_ = Config::get<float>("audio.sample_rate").value();
 
     setBufferModel(model);

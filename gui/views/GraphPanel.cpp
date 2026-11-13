@@ -596,7 +596,7 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
                     ids = gNode->getModel()->getComponents();
                 } else continue ;
 
-                if ( !ConnectionManager::instance()->hasExternalConnections(socket->getSpec(), ids) ){
+                if ( !ConnectionManager::instance()->hasDeviceConnection(socket->getSpec(), ids) ){
                     socket->setUserHidden(true);
                 }
             }

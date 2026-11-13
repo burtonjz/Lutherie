@@ -33,15 +33,13 @@ private:
 public:
     static json getTemplateConfig();
 
-    static void load();
-    static void save();
-
     static void set(const std::string& dottedKey, const json& value);
 
     template <typename T>
     static std::optional<T> get(const std::string& dottedKey){
+        load();
+
         std::shared_lock lock(mutex_);
-        
         std::string_view keyView = dottedKey ;
         const json* jsonPtr = &configData_ ;
 
@@ -66,16 +64,20 @@ public:
             keyView.remove_prefix(dotPos + 1);
         }
 
-    if (jsonPtr->is_null()) {
-        return std::nullopt ;
+        if (jsonPtr->is_null()) {
+            return std::nullopt ;
+        }
+
+        try {
+            return jsonPtr->get<T>() ;
+        } catch (const json::exception& e){
+            return std::nullopt ;
+        } 
     }
 
-    try {
-        return jsonPtr->get<T>() ;
-    } catch (const json::exception& e){
-        return std::nullopt ;
-    } 
-}
+private:
+    static void load();
+    static void save();
 };
 
 #endif // __CONFIG_HPP_

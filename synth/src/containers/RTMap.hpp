@@ -56,7 +56,7 @@
  *
  *  RTMaps support random access iterators as std::array did.
  */
-template <typename _Key, typename _Tp, std::size_t _Nm>
+template <typename _Key, typename _Tp, size_t _Nm>
 class RTMap : protected std::array <std::pair<_Key, _Tp>, _Nm>
 {
 public:
@@ -70,7 +70,7 @@ public:
     typedef const value_type& const_reference;
     typedef value_type* iterator;
     typedef const value_type* const_iterator;
-    typedef std::size_t size_type;
+    typedef size_t size_type;
     typedef std::ptrdiff_t difference_type;
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
@@ -85,7 +85,7 @@ public:
     };
 
 protected:
-    std::size_t _size;
+    size_t _size;
     Error _err;
 
 public:

@@ -89,6 +89,8 @@ void Config::save(){
 }
 
 void Config::set(const std::string& dottedKey, const json& value){
+    load();
+    
     {
         std::unique_lock lock(mutex_);
 

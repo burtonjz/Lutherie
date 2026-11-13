@@ -26,7 +26,7 @@
 #include <utility>
 
 using WaveMap = std::array<std::vector<double>, Waveform::count> ;
-using Wave = std::pair<double*, std::size_t> ;
+using Wave = std::pair<double*, size_t> ;
 
 /**
  * class stores all wavetables available to an Oscillator

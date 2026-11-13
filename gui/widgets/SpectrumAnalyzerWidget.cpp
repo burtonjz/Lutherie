@@ -36,8 +36,6 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     maxDb_(*(Theme::SPECTRUM_DECIBEL_GRID.end()-1)),
     updateTimer_(new QTimer(this))
 {
-    Config::load();
-
     sampleRate_ = Config::get<double>(
         "audio.sample_rate").value_or(44100);
 

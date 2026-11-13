@@ -150,7 +150,7 @@ void AudioDevice::configureEndpoints(){
     inbound_.clear();
     for ( uint32_t i = 0 ; i < inboundChannels(); ++i ){
         inbound_.push_back(ConnectionEndpoint::create(
-            EndpointType::DEVICE, 
+            NodeType::DEVICE, 
             SocketType::SignalInbound,
             info_.ID
         ));
@@ -159,7 +159,7 @@ void AudioDevice::configureEndpoints(){
     outbound_.clear();
     for ( uint32_t i = 0 ; i < outboundChannels(); ++i ){
         outbound_.push_back(ConnectionEndpoint::create(
-            EndpointType::DEVICE, 
+            NodeType::DEVICE, 
             SocketType::SignalOutbound,
             info_.ID
         ));

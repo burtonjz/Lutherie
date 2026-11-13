@@ -28,7 +28,7 @@ using json = nlohmann::json ;
 
 class ComponentFactory {
 public:
-    static ComponentId createFromJson(ComponentType type, const std::string& name, const json& j );
+    static int createFromJson(ComponentType type, const std::string& name, const json& j );
 };
 
 #endif // __COMPONENT_FACTORY_HPP_

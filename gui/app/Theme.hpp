@@ -307,7 +307,7 @@ public:
     static constexpr const char* POST_NOTE_ITALIC_BTN_TEXT    = "I" ;
     static constexpr const char* POST_NOTE_UNDERLINE_BTN_TEXT = "U" ;
 
-    static constexpr const char* DOCK_NAME_PERIPHERAL_CONFIG  = "__PeripheralConfigDialogDock" ;
+    static constexpr const char* DOCK_NAME_PERIPHERAL_CONFIG  = "__DeviceConfigDialogDock" ;
     static constexpr const char* DOCK_TITLE_PERIPHERAL_CONFIG = "Device Configuration" ;
 
     static constexpr const char* DOCK_NAME_HYPERLINK_CREATOR   = "__HyperlinkCreatorDialogDock" ;

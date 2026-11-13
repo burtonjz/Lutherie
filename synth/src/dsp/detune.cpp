@@ -7,15 +7,13 @@
 
 namespace dsp {
     namespace {
-        std::vector<double> detuneLUT;
-        bool initialized = false;
-        size_t maxDetune;
+        std::vector<double> detuneLUT ;
+        bool initialized = false ;
+        size_t maxDetune ;
     }
     
     void initializeDetuneLUT() {
-        if (initialized) return;
-        
-        Config::load();
+        if ( initialized ) return ;
         maxDetune = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DETUNE, maximum);
         
         size_t lutSize = maxDetune * 2 + 1;
@@ -26,7 +24,7 @@ namespace dsp {
             detuneLUT[i] = std::pow(2.0, c / 1200.0);
         }
         
-        initialized = true;
+        initialized = true ;
     }
     
     double getDetuneScale(int cents) {

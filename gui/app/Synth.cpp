@@ -20,7 +20,7 @@
 #include "managers/ComponentManager.hpp"
 #include "managers/GroupManager.hpp"
 #include "api/StreamApiClient.hpp"
-#include "views/PeripheralConfig.hpp"
+#include "views/DeviceConfig.hpp"
 #include "views/GraphPanel.hpp"
 #include "views/ControlPanel.hpp"
 #include "views/DockDialog.hpp"
@@ -67,7 +67,7 @@ Synth::Synth(QWidget* parent):
     modulationDock_(new KDDWQt::DockWidget("__modulationDock")),
     analyzerDocks_(),
     componentDetailDocks_(),
-    peripheralConfig_(new PeripheralConfig(this))
+    deviceConfig_(new DeviceConfig(this))
 {
     StateManager::instance();
     setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
@@ -76,7 +76,7 @@ Synth::Synth(QWidget* parent):
     configureMenu();
     configureToolBar();
 
-    makeExternalConnections();
+    makeDeviceConnections();
 
     current_ = this ;
 }
@@ -167,9 +167,9 @@ void Synth::configureToolBar(){
     toolBar_->setFixedHeight(Theme::TOOLBAR_HEIGHT);
     toolBar_->setMovable(false);
 
-    actionPeripheralConfig_ = new QAction("Setup", this);
-    actionPeripheralConfig_->setMenuRole(QAction::NoRole);
-    toolBar_->addAction(actionPeripheralConfig_);
+    actionDeviceConfig_ = new QAction("Setup", this);
+    actionDeviceConfig_->setMenuRole(QAction::NoRole);
+    toolBar_->addAction(actionDeviceConfig_);
 
     actionStart_ = new QAction("Start", this);
     actionStart_->setMenuRole(QAction::NoRole);
@@ -218,8 +218,8 @@ void Synth::configureToolBar(){
         this, &Synth::onEngineStatusChange
     );
     connect(
-        actionPeripheralConfig_, &QAction::triggered, 
-        this, &Synth::onActionPeripheralConfig
+        actionDeviceConfig_, &QAction::triggered, 
+        this, &Synth::onActionDeviceConfig
     );
     connect(
         actionStart_, &QAction::triggered, 
@@ -260,7 +260,7 @@ void Synth::configureDocks(){
     }
 }
 
-void Synth::makeExternalConnections(){
+void Synth::makeDeviceConnections(){
     // api client
     connect(
         ControlApiClient::instance(), &ControlApiClient::connected, 
@@ -537,7 +537,7 @@ void Synth::onControlMessageReceived(const json& j){
     }
 }
 
-void Synth::onActionPeripheralConfig(){
+void Synth::onActionDeviceConfig(){
     auto* doc = KDDW::DockRegistry::self()->dockByName(Theme::DOCK_NAME_PERIPHERAL_CONFIG);
     if ( doc ){
         SPDLOG_DEBUG("peripheral config dock already loaded. Raising.");
@@ -547,20 +547,20 @@ void Synth::onActionPeripheralConfig(){
     DockDialog dialog(
         Theme::DOCK_NAME_PERIPHERAL_CONFIG, 
         Theme::DOCK_TITLE_PERIPHERAL_CONFIG,
-        peripheralConfig_
+        deviceConfig_
     );
     connect(
-        peripheralConfig_, &PeripheralConfig::accept,
+        deviceConfig_, &DeviceConfig::accept,
         &dialog, &DockDialog::accept
     );
     connect(
-        peripheralConfig_, &PeripheralConfig::reject,
+        deviceConfig_, &DeviceConfig::reject,
         &dialog, &DockDialog::reject
     );
     
     DockDialog::Result result = dialog.exec();
     if ( result == DockDialog::Accepted ){
-        peripheralConfig_->submit();
+        deviceConfig_->submit();
     }
 }
 
@@ -589,7 +589,7 @@ void Synth::onEngineStatusChange(bool status){
     StateManager::instance()->setRunning(status);
     actionStart_->setVisible(!status);
     actionStop_->setVisible(status);
-    actionPeripheralConfig_->setDisabled(status);
+    actionDeviceConfig_->setDisabled(status);
 }
 
 void Synth::onActionLoad(){

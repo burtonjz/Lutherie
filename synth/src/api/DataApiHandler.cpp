@@ -158,7 +158,7 @@ void DataApiHandler::sendApiData(DataApiHeader header, const double* data, const
     );
 }
 
-bool DataApiHandler::sendAll(int sock, const uint8_t* data, std::size_t len){
+bool DataApiHandler::sendAll(int sock, const uint8_t* data, size_t len){
     size_t totalSent = 0 ;
     while ( totalSent < len ){
         ssize_t sent = send(sock, data + totalSent, len - totalSent, 0);

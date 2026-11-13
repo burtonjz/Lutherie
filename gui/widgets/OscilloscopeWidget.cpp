@@ -36,8 +36,6 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget* parent):
     maxVolt_(*(Theme::OSCILLOSCOPE_VOLTAGE_GRID.end()-1)),
     updateTimer_(new QTimer(this))
 {
-    Config::load();
-
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
 
     expectedDataSize_ = Config::get<int>("analysis.oscilloscope.window_size").value();
