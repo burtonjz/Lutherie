@@ -18,13 +18,15 @@
 #ifndef AUDIO_PROBE_HPP_
 #define AUDIO_PROBE_HPP_
 
+#include "capabilities/CapabilityFlags.hpp"
 #include "interfaces/AudioObserver.hpp"
 #include "interfaces/AudioAnalyzer.hpp"
+#include "interfaces/Capability.hpp"
 #include "interfaces/DataSink.hpp"
 #include "containers/LockFreeRingBuffer.hpp"
 #include "contexts/NodeContext.hpp"
 
-class AudioProbe : public AudioObserver {
+class AudioProbe : public Capability, public AudioObserver {
 private:
     NodeContext node_ ;
     AudioAnalyzer& analyzer_ ;
@@ -50,8 +52,12 @@ public:
 
 private:
     void processLoop();
-
-    
+  
 };
+
+template<>
+struct CapabilityTraits<CapabilityFlags::AudioProbe> {
+    using Type = AudioProbe ;
+}; 
 
 #endif // AUDIO_PROBE_HPP_

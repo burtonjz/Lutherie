@@ -18,13 +18,14 @@
 #ifndef MIDI_LISTENER_HPP_
 #define MIDI_LISTENER_HPP_
 
-#include "midi/MidiNote.hpp"
+#include "interfaces/Capability.hpp"
+#include "interfaces/MidiObserver.hpp"
 #include <vector>
 
 //forward declaration
 class MidiHandler ;
 
-class MidiListener {
+class MidiListener : public Capability, public MidiObserver {
     friend class MidiHandler ;
 private:
     std::vector<MidiHandler*> handlers_ ;
@@ -37,16 +38,6 @@ public:
 
     std::vector<MidiHandler*> getHandlers() const ;
     size_t getNumHandlers() const ;
-
-    virtual void onKeyPressed(const ActiveNote* note, bool rePress = false) ;
-    virtual void onKeyReleased(ActiveNote anote) ; 
-    virtual void onKeyOff(ActiveNote anote) ;
-    virtual void onPitchbend(uint16_t pitchbend );
-    // virtual void onMidiControlEvent(MidiControlMessage messageType, uint8_t value);
-
-    // observer functions for responding to connection events
-    virtual void onHandlerAdded();
-    virtual void onHandlerRemoved();
     
 };
 

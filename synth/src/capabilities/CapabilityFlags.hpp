@@ -56,4 +56,8 @@ constexpr CapabilityFlags& operator&=(CapabilityFlags& a, CapabilityFlags b) {
     return a = a & b ;
 }
 
+// for mapping Flag <-> Class
+template<CapabilityFlags>
+struct CapabilityTraits ;
+
 #endif // CAPABILITY_FLAGS_HPP_

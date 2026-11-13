@@ -20,38 +20,38 @@
 #include <spdlog/spdlog.h>
 
 void MidiHandler::notifyKeyPressed(const ActiveNote* note, bool rePressed) {
-    for ( auto* li : listeners_ ){
-        if (auto h = dynamic_cast<MidiHandler*>(li)){
+    for ( auto* obs : observers_ ){
+        if ( auto h = dynamic_cast<MidiHandler*>(obs) ){
             h->handleKeyPressed(note->note);
         } else {
-            li->onKeyPressed(note, rePressed);
+            obs->onKeyPressed(note, rePressed);
         }
     }
 }
 
-// notify downstream listeners of a key release event (only if not handler)
+// notify downstream observers of a key release event (only if not handler)
 void MidiHandler::notifyKeyReleased(const ActiveNote& note) {
-    for ( auto* li : listeners_ ){
-        // only notify end node listeners of release events
-        if ( !dynamic_cast<MidiHandler*>(li) ){
-            li->onKeyReleased(note);
+    for ( auto* obs : observers_ ){
+        // only notify end node observers of release events
+        if ( !dynamic_cast<MidiHandler*>(obs) ){
+            obs->onKeyReleased(note);
         }
     } 
 }
 
-// notify downstream listeners of a key off event (release if handler)
+// notify downstream observers of a key off event (release if handler)
 void MidiHandler::notifyKeyOff(const ActiveNote& note) {
-    for ( auto* li : listeners_ ){
-        if ( auto h = dynamic_cast<MidiHandler*>(li) ){
+    for ( auto* obs : observers_ ){
+        if ( auto h = dynamic_cast<MidiHandler*>(obs) ){
             h->handleKeyReleased(note.note);
         } else {
-            li->onKeyOff(note);
+            obs->onKeyOff(note);
         }
     } 
 }
 
 void MidiHandler::notifyPitchbend(uint16_t pitchbend) {
-    for ( auto* li : listeners_ ) li->onPitchbend(pitchbend);
+    for ( auto* obs : observers_ ) obs->onPitchbend(pitchbend);
 }
 
 MidiHandler::MidiHandler():
@@ -59,24 +59,21 @@ MidiHandler::MidiHandler():
     noteIndices_()
 {}
 
-void MidiHandler::addListener(MidiListener* listener){
-    if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;
-    listeners_.push_back(listener);
-    listener->addHandler(this);
-    onListenerAdded();
+void MidiHandler::addObserver(MidiObserver* observer){
+    if ( std::find(observers_.begin(), observers_.end(), observer) != observers_.end() ) return ;
+    observers_.push_back(observer);
+    onObserverAdded();
 }
 
-void MidiHandler::removeListener(MidiListener* listener){
-    auto it = std::find(listeners_.begin(), listeners_.end(), listener);
-    if ( it != listeners_.end() ){
-        listener->removeHandler(this);
-        listeners_.erase(it);
-        onListenerRemoved();
+void MidiHandler::removeObserver(MidiObserver* observer){
+    auto it = std::find(observers_.begin(), observers_.end(), observer);
+    if ( it != observers_.end() ){
+        onObserverRemoved();
     }
 }
 
-std::vector<MidiListener*>& MidiHandler::getListeners(){
-    return listeners_ ;
+std::vector<MidiObserver*>& MidiHandler::observers(){
+    return observers_ ;
 }
 
 bool MidiHandler::isNoteActive(uint8_t n) const {
@@ -215,5 +212,5 @@ void MidiHandler::reset(){
 }
 
 void MidiHandler::onReset(){}
-void MidiHandler::onListenerAdded(){}
-void MidiHandler::onListenerRemoved(){}
+void MidiHandler::onObserverAdded(){}
+void MidiHandler::onObserverRemoved(){}

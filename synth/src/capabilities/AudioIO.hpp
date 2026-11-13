@@ -20,13 +20,15 @@
 
 #include <cstddef>
 
+#include "capabilities/CapabilityFlags.hpp"
 #include "contexts/AudioContext.hpp"
+#include "interfaces/Capability.hpp"
 #include "interfaces/AudioProcessor.hpp"
 #include "interfaces/AudioObserver.hpp"
 #include "interfaces/BufferRW.hpp"
 #include "routing/AudioConnection.hpp"
 
-class AudioIO {
+class AudioIO : public Capability {
 private:
     AudioProcessor& processor_ ;
     std::vector<std::vector<AudioObserver*>> observers_ ;
@@ -94,5 +96,10 @@ private:
         return views ;
     }
 };
+
+template<>
+struct CapabilityTraits<CapabilityFlags::AudioIO> {
+    using Type = AudioIO ;
+}; 
 
 #endif // AUDIO_IO_HPP_

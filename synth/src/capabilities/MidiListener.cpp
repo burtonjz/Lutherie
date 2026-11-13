@@ -39,18 +39,3 @@ std::vector<MidiHandler*> MidiListener::getHandlers() const {
 size_t MidiListener::getNumHandlers() const {
     return handlers_.size();
 }
-
-void MidiListener::onKeyPressed([[maybe_unused]] const ActiveNote* note, [[maybe_unused]] bool repress){
-} 
-void MidiListener::onKeyReleased([[maybe_unused]] ActiveNote anote){
-}
-void MidiListener::onKeyOff([[maybe_unused]] ActiveNote anote){
-}
-void MidiListener::onPitchbend([[maybe_unused]] uint16_t pitchbend ){
-}
-
-// void MidiListener::onMidiControlEvent(MidiControlMessage messageType, uint8_t value){
-// }
-
-void MidiListener::onHandlerAdded(){}
-void MidiListener::onHandlerRemoved(){}

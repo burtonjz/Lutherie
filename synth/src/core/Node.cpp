@@ -15,174 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/BaseComponent.hpp"
-#include "core/AudioIO.hpp"
-#include "core/ModulatorComponent.hpp" 
-#include "params/ParameterMap.hpp"
-#include "api/ControlApiHandler.hpp"
-#include <unordered_set>
+#include "core/Node.hpp"
 
 
-BaseComponent::BaseComponent(int id, ComponentType type):
+
+Node::Node(int id, NodeType typ):
     id_(id),
-    type_(type),
-    parameters_(new ParameterMap)
+    type_(typ)
 {}
 
-BaseComponent::~BaseComponent(){
-    delete parameters_ ;
-};
-
-std::unordered_set<AudioIO*>& BaseComponent::getModulationInputs(){
-    return modulationModules_ ;
+int Node::id() const {
+    return id_ ;
 }
 
-void BaseComponent::setParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d){
-    if ( ! parameters_ ) return ;
-
-    // if the modulator is stateful (also a module), track it for signal chain
-    AudioIO* module = dynamic_cast<AudioIO*>(m);
-    if ( module ){
-        modulationModules_.insert(module);
-    }
-    
-    // update reciprocol tracking
-    m->addModulationTarget({.component = this, .param = p});
-
-    onSetParameterModulation(p,m,d);
+NodeType Node::type() const {
+    return type_ ;
 }
 
-void BaseComponent::setParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d){
-    if ( ! parameters_ ) return ;
-
-    // if the modulator is stateful (also a module), track it for signal chain
-    AudioIO* module = dynamic_cast<AudioIO*>(m);
-    if ( module ){
-        modulationModules_.insert(module);
-    }
-    
-    // update reciprocol tracking
-    m->addModulationTarget({.component = this, .param = p, .depth = true});
-
-    onSetParameterDepthModulation(p,m,d);
-} 
-
-void BaseComponent::removeParameterModulation(ParameterType p){
-    if ( ! parameters_ ) return ;
-
-    // if the modulator is stateful (also a module), remove tracking
-    ModulatorComponent* modulator = getParameterModulator(p);
-    if ( AudioIO* module = dynamic_cast<AudioIO*>(modulator) ){
-        modulationModules_.erase(module);
-    }
-
-    // update reciprocol tracking
-    if ( modulator ){
-        modulator->removeModulationTarget({this,p});
-    }
-    
-    onRemoveParameterModulation(p);
-}
-
-void BaseComponent::removeParameterDepthModulation(ParameterType p){
-    if ( ! parameters_ ) return ;
-
-    // if the modulator is stateful (also a module), remove tracking
-    ModulatorComponent* modulator = getParameterDepthModulator(p);
-    if ( AudioIO* module = dynamic_cast<AudioIO*>(modulator) ){
-        modulationModules_.erase(module);
-    }
-
-    // update reciprocol tracking
-    if ( modulator ){
-        modulator->removeModulationTarget({this,p});
-    }
-    
-    onRemoveParameterDepthModulation(p);
-}
-
-ModulatorComponent* BaseComponent::getParameterModulator(ParameterType p) const {
-    return parameters_->getParameter(p)->getModulator();
-}
-
-ModulatorComponent* BaseComponent::getParameterDepthModulator(ParameterType p) const {
-    return parameters_->getParameter(p)->getDepth()->getModulator();
-}
-
-double BaseComponent::getParameterDepth(ParameterType p) const {
-    if ( ! parameters_ ) throw std::runtime_error("no parameters pointer defined!");
-
-    auto d = parameters_->getParameter(p)->getDepth();
-
-    if ( !d ) throw std::runtime_error("depth parameter does not exist!");
-    return d->getInstantaneousValue();
-}
-
-void BaseComponent::setParameterDepth(ParameterType p, double depth){
-    if ( ! parameters_ ) return ;
-
-    auto d = parameters_->getParameter(p)->getDepth();
-
-    if ( !d ) return ;
-    d->setValue(depth);
-}
-
-ModulationStrategy BaseComponent::getParameterModulationStrategy(ParameterType p) const {
-    if ( ! parameters_ ) throw std::runtime_error("no parameters pointer defined!");
-
-    auto param = parameters_->getParameter(p);
-
-    if ( ! param ) throw std::runtime_error("no parameters pointer defined!");
-
-    return param->getModulationStrategy();
-}
-
-void BaseComponent::setParameterModulationStrategy(ParameterType p, ModulationStrategy strat){
-    if ( ! parameters_ ) return ;
-
-    auto param = parameters_->getParameter(p);
-
-    if ( ! param ) return ;
-
-    param->setModulationStrategy(strat);
-}
-
-void BaseComponent::updateParameters(){
-    if (parameters_) parameters_->modulate() ;
-}
-
-void BaseComponent::onSetParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d ){
-    if ( d.isEmpty() && m ){
-        auto required = m->getRequiredModulationParameters();
-        for ( auto mp : required ){
-            d.set(mp,0.0f);
-        }
-    }
-    parameters_->getParameter(p)->setModulation(m,d);
-}
-
-void BaseComponent::onRemoveParameterModulation(ParameterType p){
-    parameters_->getParameter(p)->removeModulation();
-}
-
-void BaseComponent::onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d ){
-    if ( d.isEmpty() && m ){
-        auto required = m->getRequiredModulationParameters();
-        for ( auto mp : required ){
-            d.set(mp,0.0f);
-        }
-    }
-    parameters_->getParameter(p)->getDepth()->setModulation(m,d);
-}
-
-void BaseComponent::onRemoveParameterDepthModulation(ParameterType p){
-    parameters_->getParameter(p)->getDepth()->removeModulation();
-}
-
-void BaseComponent::triggerComponentSync() const {
-    // notify clients
-    json j ;
-    j["action"] = "sync_component" ;
-    j["componentId"] = getId();
-    ControlApiHandler::instance()->handleClientMessage(j.dump());
+CapabilityFlags Node::capabilities() const {
+    return flags_ ;
 }

@@ -22,14 +22,16 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
+#include "capabilities/CapabilityFlags.hpp"
 #include "contexts/AudioContext.hpp"
+#include "interfaces/Capability.hpp"
 #include "interfaces/BufferProcessor.hpp"
 #include "interfaces/BufferObserver.hpp"
 #include "interfaces/BufferRW.hpp"
 #include "status/FileStatus.hpp"
 #include "routing/BufferConnection.hpp"
 
-class BufferIO {
+class BufferIO : public Capability {
 private:
     enum class Hook { Connected, Disconnected, Updated };
 
@@ -95,5 +97,10 @@ private:
 
     void notifyObservers();
 };
+
+template<>
+struct CapabilityTraits<CapabilityFlags::BufferIO> {
+    using Type = BufferIO ;
+}; 
 
 #endif // BUFFER_IO_HPP_

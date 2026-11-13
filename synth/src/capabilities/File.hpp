@@ -18,14 +18,16 @@
  #ifndef FILE_HPP_
  #define FILE_HPP_
 
+#include "capabilities/CapabilityFlags.hpp"
 #include "interfaces/FileListener.hpp"
+#include "interfaces/Capability.hpp"
 
 #include <filesystem>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
 
-class File {
+class File : public Capability {
 protected:
     std::filesystem::path path_ ;
     FileListener* listener_ ;
@@ -57,4 +59,9 @@ public:
     }
 };
 
- #endif // FILE_COMPONENT_HPP_
+template<>
+struct CapabilityTraits<CapabilityFlags::File> {
+    using Type = File ;
+}; 
+
+#endif // FILE_COMPONENT_HPP_

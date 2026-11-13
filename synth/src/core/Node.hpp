@@ -15,68 +15,68 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
  
-#ifndef __BASE_COMPONENT_HPP_
-#define __BASE_COMPONENT_HPP_
+#ifndef NODE_HPP_
+#define NODE_HPP_
 
-#include "types/ParameterType.hpp"
-#include "types/ComponentType.hpp"
-#include "params/ModulationParameter.hpp"
-#include "params/ParameterListener.hpp"
+#include "interfaces/Capability.hpp"
+#include "types/NodeType.hpp"
+#include "capabilities/CapabilityFlags.hpp"
 
 #include <nlohmann/json.hpp>
-#include <unordered_set>
-
-// forward declarations (needed to support modulation derived classes)
-class ParameterMap ; 
-class BaseComponent ;
-class ModulatorComponent ;
-class AudioIO ;
+#include <typeindex>
 
 using json = nlohmann::json ;
 
-class BaseComponent : public ParameterListener {
-protected:
+// forward declarations
+
+
+
+class Node {
+private:
     int id_ ;
-    ComponentType type_ ;
-    ParameterMap* parameters_ ; 
-    std::unordered_set<AudioIO*> modulationModules_ ; // used only for tracking, see SignalChain for context
+    NodeType type_ ; 
+    CapabilityFlags flags_ ;
+    std::unordered_map<std::type_index, std::unique_ptr<Capability*>> capabilities_ ;
 
 public:
-    BaseComponent(int id = -1, ComponentType type = ComponentType::Unknown);
+    Node(int id, NodeType typ);
 
-    virtual ~BaseComponent();
-    
-    int getId() const { return id_ ; }
-    ComponentType getType() const { return type_ ; }
-    ParameterMap* getParameters() { return parameters_ ;}
-    std::unordered_set<AudioIO*>& getModulationInputs() ;
+    Node(const Node&) = delete ;
+    Node& operator=(const Node&) = delete ;
+    Node(Node&&) = delete ;
+    Node& operator=(Node&&) = delete ;
 
-    /* depth/modulation are managed from component instead of parameterMap, to allow for
-     parent/child component setups. Non-virtual functions in this section have
-     default behaviors that should ALWAYS happen and custom functionality happens through
-     protected NVI functions 
-    */
-    void setParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d = {});
-    void setParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d = {});
-    void removeParameterModulation(ParameterType p);
-    void removeParameterDepthModulation(ParameterType p);
-    virtual ModulatorComponent* getParameterModulator(ParameterType p) const ;
-    virtual ModulatorComponent* getParameterDepthModulator(ParameterType p) const ;
-    virtual double getParameterDepth(ParameterType p) const ;
-    virtual void setParameterDepth(ParameterType p, double depth);
-    virtual ModulationStrategy getParameterModulationStrategy(ParameterType p) const ;
-    virtual void setParameterModulationStrategy(ParameterType p, ModulationStrategy strat);
+    int id() const ;
+    NodeType type() const ;
+    CapabilityFlags capabilities() const ;
 
-    // this function runs modulation on all internal parameters
-    virtual void updateParameters();
+    template<CapabilityFlags Flag> 
+    auto* getCapability(){
+        using T = typename CapabilityTraits<Flag>::Type ;
+        return getCapability<T>();
+    }
 
-protected:
-    virtual void onSetParameterModulation(ParameterType p, ModulatorComponent* m, ModulationData d );
-    virtual void onRemoveParameterModulation(ParameterType p);
-    virtual void onSetParameterDepthModulation(ParameterType p, ModulatorComponent* m, ModulationData d );
-    virtual void onRemoveParameterDepthModulation(ParameterType p);
-    void triggerComponentSync() const ;
-    
+    template<typename T>
+    T* getCapability(){
+        auto it = capabilities_.find(typeid(T));
+
+        if ( it == capabilities_.end() ) return nullptr ;
+
+        return static_cast<T*>(it->second);
+    }
+
+    template<CapabilityFlags Flag, typename... Args>
+    auto& AddCapability(Args&&... args){
+        using T = typename CapabilityTraits<Flag>::Type ;
+        auto capability = std::make_unique<T>(std::forward<Args>(args)...);
+        T& result = *capability ;
+        capabilities_.emplace(typeid(T), std::move(capability));
+        flags_ |= Flag ;
+        return result ;
+    }
+
+    virtual void serialize(json& msg) const = 0 ;
+    virtual void deserialize(const json& msg) = 0 ;
 };
 
-#endif // __BASE_COMPONENT_HPP_
+#endif // NODE_HPP_

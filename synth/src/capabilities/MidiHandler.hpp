@@ -18,13 +18,14 @@
 #ifndef MIDI_HANDLER_HPP_
 #define MIDI_HANDLER_HPP_
 
-#include "capabilities/MidiListener.hpp"
+#include "interfaces/Capability.hpp"
+#include "interfaces/MidiObserver.hpp"
 #include "midi/MidiNote.hpp"
 #include "midi/MidiEventQueue.hpp"
 
 #include <vector>
 
-class MidiHandler : public MidiListener {
+class MidiHandler : public Capability, public MidiObserver {
 protected:
     std::array<ActiveNote,128> notes_ ;
     std::array<uint8_t,128> noteIndices_ ;
@@ -33,47 +34,20 @@ protected:
     uint8_t lastPressedNote_ = 255 ;
     uint8_t lastReleasedNote_ = 255 ;
     
-    std::vector<MidiListener*> listeners_ ;
+    std::vector<MidiObserver*> observers_ ;
     MidiEventQueue queue_ ;
-
-    /**
-     * The below functions broadcast handler events to downstream objects
-     * Note: MidiHandlers will broadcast to chained handlers such that 
-     * each handler is able to act as if it is receiving raw midi. This allows
-     * a chained midi event handler to act in isolation in determining when a
-     * note should be killed.
-
-     * This means midiEventHandlers receive OFF as RELEASE, where as the end node
-     * midiEventListeners are the only ones that actually receive OFF events
-
-     * Importantly, this means that midi handlers that modify the release time should
-     * be at the end of the chain, so that other handlers in the chain don't mask the 
-     * release time from downstream modules (see Polyphonic Oscillator implementation for 
-     * an example into problems that can arise)
-    */
-    void notifyKeyPressed(const ActiveNote* note, bool rePressed = false);
-    void notifyKeyReleased(const ActiveNote& note); // only sends release event if downstream listener is NOT another handler
-    void notifyKeyOff(const ActiveNote& note); // sends release event if downstream listener is another handler
-    void notifyPitchbend(uint16_t pitchbend);
-
+    
 public:
     MidiHandler();
     virtual ~MidiHandler() = default ;
 
-    void addListener(MidiListener* listener);
-    void removeListener(MidiListener* listener);
-    std::vector<MidiListener*>& getListeners();
+    void addObserver(MidiObserver* listener);
+    void removeObserver(MidiObserver* listener);
+    std::vector<MidiObserver*>& observers();
     
     bool isNoteActive(uint8_t n) const ;
     void activateNote(const ActiveNote& anote);
     void deactivateNote(uint8_t n);
-
-    // all handlers are listeners so that they can chain operations if desired. 
-    // The below functions can be overridded to provide specialized operations when cascading events downwards
-    virtual void onKeyPressed(const ActiveNote* note, bool rePressed = false) override ;
-    virtual void onKeyReleased(ActiveNote anote) override ;
-    virtual void onKeyOff(ActiveNote anote) override ;
-    virtual void onPitchbend(uint16_t pitchbend) override ;
         
     // handler functions for root-level midi input from midi state
     void handleKeyPressed(const MidiNote note);
@@ -89,12 +63,34 @@ public:
     virtual void onTick([[maybe_unused]] float dt); // for adding custom tick actions to child objects
 
     // responding to connection events
-    virtual void onListenerAdded();
-    virtual void onListenerRemoved();
-    
+    virtual void onObserverAdded();
+    virtual void onObserverRemoved();
+
+    // override observer logic to provide specialized operations
+    // when cascading events downstream
+    virtual void onKeyPressed(const ActiveNote* anote, bool rePress = false) override ;
+    virtual void onKeyReleased(ActiveNote anote) override ;
+    virtual void onKeyOff(ActiveNote anote) override ;
+    virtual void onPitchbend(uint16_t pitchbend) override ;
+
 protected:
     void reset();
     virtual void onReset();
+
+    /**
+     * MidiHandler is also an observer, so that events can be broadcasted
+     * in a chain, with the intention that any handler receives events as
+     * 
+     * Raw MIDI events ON/OFF are mapped to PRESSED/RELEASED, so to accomplish
+     * this, Handler Observers receive OFF as RELEASE.
+
+     * Importantly, this means that midi handlers that modify the release time should
+     * often be at the end of the chain.
+    */
+    void notifyKeyPressed(const ActiveNote* note, bool rePressed = false);
+    void notifyKeyReleased(const ActiveNote& note); 
+    void notifyKeyOff(const ActiveNote& note); 
+    void notifyPitchbend(uint16_t pitchbend);
 };
 
 #endif // MIDI_HANDLER_HPP_

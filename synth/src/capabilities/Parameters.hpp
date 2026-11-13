@@ -20,6 +20,7 @@
 
 #include "params/ParameterMap.hpp"
 #include "status/ParamStatus.hpp"
+#include "interfaces/Capability.hpp"
 #include "interfaces/ParameterListener.hpp"
 
 // forward declarations
@@ -27,7 +28,7 @@ class ParameterMap ;
 class AudioIO ;
 class Modulator ;
 
-class Parameters {
+class Parameters : public Capability {
 private:
     ParameterMap map_ ; 
     ParameterListener* listener_ ;
@@ -52,7 +53,6 @@ public:
 
     template <ParameterType typ>
     Parameter<typ>* get() const { return map_.getParameter<typ>(); }
-
     // end templated
 
     void markPerVoice(ParameterType p);
