@@ -20,7 +20,7 @@
 
 #include "params/ParameterMap.hpp"
 #include "status/ParamStatus.hpp"
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "interfaces/ParameterListener.hpp"
 
 // forward declarations
@@ -42,8 +42,8 @@ public:
 
     // templated 
     template <ParameterType typ, typename... Args>
-    void add(Args&&... args){
-        map_.add<typ>(std::forward<Args>(args)...);
+    Parameter<typ>& add(Args&&... args){
+        return map_.add<typ>(std::forward<Args>(args)...);
     }
 
     template <ParameterType typ, typename... Args>
@@ -84,6 +84,6 @@ public:
 private:
     static ModulationData withRequiredDefaults(const ModulationSource* m, ModulationData d);
 
-};
+}; 
 
 #endif // PARAMETER_CAPABILITIES_HPP_

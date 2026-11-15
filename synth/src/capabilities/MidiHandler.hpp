@@ -18,7 +18,7 @@
 #ifndef MIDI_HANDLER_HPP_
 #define MIDI_HANDLER_HPP_
 
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "interfaces/MidiObserver.hpp"
 #include "midi/MidiNote.hpp"
 #include "midi/MidiEventQueue.hpp"

@@ -20,21 +20,21 @@
 #include <spdlog/spdlog.h>
 
 AudioIO::AudioIO(
-    AudioProcessor& processor, AudioContext audio,
+    AudioProcessor& processor,
     size_t inputs, size_t outputs
 ):
     processor_(processor),
     observers_(),
     currentFrame_(0),
-    sampleRate_(audio.sampleRate),
-    bufferSize_(audio.bufferSize),
+    sampleRate_(0),
+    bufferSize_(0),
     numInputs_(inputs),
     numOutputs_(outputs),
-    input_(numInputs_, std::vector<double>(bufferSize_)),
-    output_(numOutputs_, std::vector<double>(bufferSize_)),
-    inputView_(makeAccessor<BufferRead>(input_)),
-    outputView_(makeAccessor<BufferRead>(output_)),
-    outputWrite_(makeAccessor<BufferWrite>(output_)),
+    input_(numInputs_),
+    output_(numOutputs_),
+    inputView_(),
+    outputView_(),
+    outputWrite_(),
     accessor_(inputView_, outputWrite_, bufferSize_, sampleRate_),
     inputEdges_(numInputs_),
     outputEdges_(numOutputs_)
@@ -42,6 +42,7 @@ AudioIO::AudioIO(
 
 void AudioIO::prepare(AudioContext audio){
     sampleRate_ = audio.sampleRate ;
+    
     if ( audio.bufferSize == bufferSize_ ) return ;
     bufferSize_ = audio.bufferSize ;
 

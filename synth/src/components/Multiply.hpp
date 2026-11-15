@@ -18,25 +18,45 @@
 #ifndef GAIN_COMPONENT_HPP_
 #define GAIN_COMPONENT_HPP_
 
-#include "core/AudioSignalComponent.hpp"
+#include "core/Node.hpp"
+
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 #include "configs/MultiplyConfig.hpp"
-#include "params/ParameterMap.hpp"
+#include "params/Parameter.hpp"
+#include "types/ParameterType.hpp"
 
-class Multiply : public AudioSignalComponent {
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json ;
+
+class Multiply : 
+    public Node, 
+    public ComponentInfo ,
+    public AudioProcessor 
+{
+private:
+    Parameter<ParameterType::SCALAR>* scalar_ ;
+
 public:
-    Multiply(ComponentId id, MultiplyConfig cfg):
-        BaseComponent(id,ComponentType::Multiply),
-        AudioSignalComponent(1,1)
-    {
-        parameters_->add<ParameterType::SCALAR>(cfg.scalar, true);
-    }
+    Multiply(int id, MultiplyConfig cfg);
+    
+    Multiply(const Multiply&) = delete ;
+    Multiply& operator=(const Multiply&) = delete ;
+    Multiply(Multiply&&) = delete ;
+    Multiply& operator=(Multiply&&) = delete ;
+    
+    // Node
+    void serialize(json& msg) const override ;
+    void deserialize(const json& msg) override ;
 
-    void calculateSample(){
-        double input = aggregateInputs(0);
+    // Component Info
+    ComponentType componentType() const override ;
 
-        double scalar = parameters_->getParameter<ParameterType::SCALAR>()->getInstantaneousValue() ;
-        setBufferValue(0, input * scalar) ;
-    }
+    // AudioProcessor
+    void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
+    // void onTick(size_t newFrame) override ;
+    
 };
 
 

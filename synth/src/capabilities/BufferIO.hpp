@@ -22,9 +22,8 @@
 #include <spdlog/spdlog.h>
 #include <vector>
 
-#include "capabilities/CapabilityFlags.hpp"
 #include "contexts/AudioContext.hpp"
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "interfaces/BufferProcessor.hpp"
 #include "interfaces/BufferObserver.hpp"
 #include "interfaces/BufferRW.hpp"
@@ -97,10 +96,5 @@ private:
 
     void notifyObservers();
 };
-
-template<>
-struct CapabilityTraits<CapabilityFlags::BufferIO> {
-    using Type = BufferIO ;
-}; 
 
 #endif // BUFFER_IO_HPP_

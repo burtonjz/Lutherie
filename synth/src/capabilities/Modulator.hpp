@@ -18,7 +18,7 @@
 #ifndef __MODULATOR_HPP_
 #define __MODULATOR_HPP_
 
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "interfaces/ModulationSource.hpp"
 
 class Modulator : public Capability {

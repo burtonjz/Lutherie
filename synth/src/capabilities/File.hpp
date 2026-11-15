@@ -18,9 +18,8 @@
  #ifndef FILE_HPP_
  #define FILE_HPP_
 
-#include "capabilities/CapabilityFlags.hpp"
 #include "interfaces/FileListener.hpp"
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 
 #include <filesystem>
 #include <nlohmann/json.hpp>
@@ -58,10 +57,5 @@ public:
         return setPath(j["path"].get<std::string>());
     }
 };
-
-template<>
-struct CapabilityTraits<CapabilityFlags::File> {
-    using Type = File ;
-}; 
 
 #endif // FILE_COMPONENT_HPP_

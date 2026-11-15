@@ -110,7 +110,7 @@ class ParameterMap {
         }
 
         template <ParameterType typ>
-        void add(
+        Parameter<typ>& add(
             GET_PARAMETER_VALUE_TYPE(typ) defaultValue,
             bool modulatable,
             GET_PARAMETER_VALUE_TYPE(typ) minValue = GET_PARAMETER_TRAIT_MEMBER(typ, minimum), 
@@ -118,13 +118,15 @@ class ParameterMap {
             const ModulationSource* modulator = nullptr, ModulationData modData = {}
         ){
             if ( getParameter(typ) ){
-                SPDLOG_ERROR("Parameter {} already in map.", GET_PARAMETER_TRAIT_MEMBER(typ, name));
-                return ;
+                auto& msg = fmt::format("Parameter {} already in map.", GET_PARAMETER_TRAIT_MEMBER(typ, name));
+                SPDLOG_ERROR(msg);
+                throw std::runtime_error(msg);
             }
                 
             Parameter<typ>* p = new Parameter<typ>(defaultValue, modulatable, minValue, maxValue, modulator, modData);
             parameters_[static_cast<size_t>(typ)] = p ;
             if (modulatable) modulatable_.insert(typ);
+            return &p ;
         }
 
         template <ParameterType typ>

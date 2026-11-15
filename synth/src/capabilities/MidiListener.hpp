@@ -18,7 +18,7 @@
 #ifndef MIDI_LISTENER_HPP_
 #define MIDI_LISTENER_HPP_
 
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "interfaces/MidiObserver.hpp"
 #include <vector>
 

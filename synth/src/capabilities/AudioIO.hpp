@@ -20,9 +20,8 @@
 
 #include <cstddef>
 
-#include "capabilities/CapabilityFlags.hpp"
 #include "contexts/AudioContext.hpp"
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "interfaces/AudioProcessor.hpp"
 #include "interfaces/AudioObserver.hpp"
 #include "interfaces/BufferRW.hpp"
@@ -53,7 +52,7 @@ private:
     std::vector<AudioConnectionSet> outputEdges_ ;
 
 public:
-    AudioIO(AudioProcessor& processor, AudioContext audio, size_t inputs, size_t outputs);
+    AudioIO(AudioProcessor& processor, size_t inputs, size_t outputs);
     
     AudioIO(const AudioIO&) = delete ;
     AudioIO& operator=(const AudioIO&) = delete ;
@@ -96,10 +95,5 @@ private:
         return views ;
     }
 };
-
-template<>
-struct CapabilityTraits<CapabilityFlags::AudioIO> {
-    using Type = AudioIO ;
-}; 
 
 #endif // AUDIO_IO_HPP_
