@@ -19,7 +19,6 @@
 #define GAIN_COMPONENT_HPP_
 
 #include "core/Node.hpp"
-
 #include "interfaces/AudioProcessor.hpp"
 #include "interfaces/ComponentInfo.hpp"
 #include "configs/MultiplyConfig.hpp"

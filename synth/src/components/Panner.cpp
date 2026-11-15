@@ -16,20 +16,28 @@
  */
 
 #include "components/Panner.hpp"
-#include "params/ParameterMap.hpp"
+#include "capabilities/AudioIO.hpp"
+#include "capabilities/Parameters.hpp"
+#include "types/ComponentType.hpp"
 
-Panner::Panner(ComponentId id, PannerConfig cfg):
-    BaseComponent(id, ComponentType::Panner),
-    AudioSignalComponent(1,2)
+Panner::Panner(int id, PannerConfig cfg):
+    Node(id, NodeType::COMPONENT)
 {
-    parameters_->add<ParameterType::PAN>(cfg.pan,true);
+    addCapability<Capability::AudioIO>(*this, 1, 2);
+
+    auto& params = addCapability<Capability::Parameters>();
+    pan_ = &params.add<ParameterType::PAN>(cfg.pan, true);
+}
+    
+ComponentType Panner::componentType() const {
+    return ComponentType::Panner ;
 }
 
-void Panner::calculateSample(){
-    double input = aggregateInputs(0);
-    double pan = parameters_->getParameter<ParameterType::PAN>()->getInstantaneousValue();
+void Panner::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {
+    double input = accessor.input(0)[frame];
+    double pan = pan_->getInstantaneousValue();
     double v = pan / 2.0 + 0.5 ;
-    
-    setBufferValue(0, v * input);
-    setBufferValue(1, ( 1 - v ) * input);
+
+    accessor.output(0)[frame] = v * input ;
+    accessor.output(1)[frame] = (1 - v) * input ;
 }

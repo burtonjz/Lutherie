@@ -18,16 +18,36 @@
 #ifndef PANNER_HPP_
 #define PANNER_HPP_
 
-#include "core/AudioSignalComponent.hpp"
+#include "core/Node.hpp"
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 #include "configs/PannerConfig.hpp"
+#include "params/Parameter.hpp"
+#include "types/ParameterType.hpp"
 
-class Panner : public AudioSignalComponent {
+class Panner :
+    public Node,
+    public ComponentInfo,
+    public AudioProcessor
+{
+private:
+    Parameter<ParameterType::PAN>* pan_ ;
 
 public:
-    Panner(ComponentId id, PannerConfig cfg);
+    Panner(int id, PannerConfig cfg);
 
-    // overrides
-    void calculateSample() override ;
+    Panner(const Panner&) = delete ;
+    Panner& operator=(const Panner&) = delete ;
+    Panner(Panner&&) = delete ;
+    Panner& operator=(Panner&&) = delete ;
+
+    // Component Info
+    ComponentType componentType() const override ;
+
+    // AudioProcessor
+    void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
+    // void onTick(size_t newFrame) override ;
+    
 };
 
 #endif // PANNER_HPP_
