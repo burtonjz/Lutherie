@@ -18,6 +18,7 @@
 #include "components/Multiply.hpp"
 #include "capabilities/AudioIO.hpp"
 #include "capabilities/Parameters.hpp"
+#include "types/ComponentType.hpp"
 
 Multiply::Multiply(int id, MultiplyConfig cfg):
     Node(id, NodeType::COMPONENT)
