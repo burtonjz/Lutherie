@@ -16,21 +16,35 @@
  */
 
 #include "components/Delay.hpp"
-#include "params/ParameterMap.hpp"
+#include "capabilities/AudioIO.hpp"
+#include "capabilities/Parameters.hpp"
+#include "types/ComponentType.hpp"
 
-Delay::Delay(ComponentId id, DelayConfig cfg):
-    BaseComponent(id, ComponentType::Delay),
-    AudioSignalComponent(1,1),
-    delay_(cfg.max_delay_sec * sampleRate_)
+Delay::Delay(int id, DelayConfig cfg):
+    Node(id, NodeType::COMPONENT),
+    maxDelaySeconds_(cfg.max_delay_sec),
+    buffer_(0)
 {
-    parameters_->add<ParameterType::DELAY>(cfg.delay,true,0,cfg.max_delay_sec * sampleRate_);
+    addCapability<Capability::AudioIO>(*this, 1, 1);
+    
+    auto& params = addCapability<Capability::Parameters>();
+    delay_ = &params.add<ParameterType::DELAY>(cfg.delay, true, 0, maxDelaySeconds_); 
 }
 
-void Delay::calculateSample(){
-    double input = aggregateInputs(0);
-    delay_.write(input);
+void Delay::onPrepare(AudioContext ctx){
+    size_t size = maxDelaySeconds_ * ctx.sampleRate ;
+    delay_->setMaximum(size);
+    buffer_.setCapacity(maxDelaySeconds_ * ctx.sampleRate);
+}
 
-    size_t delay = parameters_->getParameter<ParameterType::DELAY>()->getInstantaneousValue() ; // in samples
+ComponentType Delay::componentType() const {
+    return ComponentType::Delay ;
+}
 
-    setBufferValue(0, delay_.read(delay));
+void Delay::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {
+    double input = accessor.input(0)[frame];
+    buffer_.write(input);
+
+    size_t delay = delay_->getInstantaneousValue();
+    accessor.output(0)[frame] = buffer_.read(delay);
 }

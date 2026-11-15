@@ -18,18 +18,41 @@
 #ifndef DELAY_HPP_
 #define DELAY_HPP_
 
-#include "core/AudioSignalComponent.hpp"
-#include "containers/DelayBuffer.hpp"
+#include "core/Node.hpp"
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 #include "configs/DelayConfig.hpp"
+#include "params/Parameter.hpp"
+#include "types/ParameterType.hpp"
 
-class Delay : public AudioSignalComponent {
+#include "containers/DelayBuffer.hpp"
+
+class Delay : 
+    public Node,
+    public ComponentInfo,
+    public AudioProcessor
+{
 private:
-    DelayBuffer delay_ ;
+    int maxDelaySeconds_ ;
+    DelayBuffer buffer_ ;
+    Parameter<ParameterType::DELAY>* delay_ ;
 
 public:
-    Delay(ComponentId id, DelayConfig cfg);
+    Delay(int id, DelayConfig cfg);
 
-    void calculateSample() override ;
+    Delay(const Delay&) = delete ;
+    Delay& operator=(const Delay&) = delete ;
+    Delay(Delay&&) = delete ;
+    Delay& operator=(Delay&&) = delete ;
+
+    // Component Info
+    ComponentType componentType() const override ;
+
+    // AudioProcessor
+    void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
+    void onPrepare(AudioContext ctx) override ;
+    // void onTick(size_t newFrame) override ;
+
 };
 
 #endif // DELAY_HPP_

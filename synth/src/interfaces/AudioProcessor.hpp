@@ -18,6 +18,7 @@
 #ifndef AUDIO_PROCESSOR_HPP_
 #define AUDIO_PROCESSOR_HPP_
 
+#include "contexts/AudioContext.hpp"
 #include "interfaces/BufferRW.hpp"
 #include <cstddef>
 
@@ -56,6 +57,7 @@ private:
 
 struct AudioProcessor {
     virtual void processFrame(const AudioAccessor& accessor, size_t frame) noexcept = 0 ;
+    virtual void onPrepare(AudioContext){}
     virtual void onTick(size_t /*newFrame*/){}
     virtual ~AudioProcessor() = default ;
 };

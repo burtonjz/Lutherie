@@ -43,7 +43,10 @@ AudioIO::AudioIO(
 void AudioIO::prepare(AudioContext audio){
     sampleRate_ = audio.sampleRate ;
     
-    if ( audio.bufferSize == bufferSize_ ) return ;
+    if ( audio.bufferSize == bufferSize_ ){
+        processor_.onPrepare(audio);
+        return ;
+    } 
     bufferSize_ = audio.bufferSize ;
 
     for ( auto& inp : input_ ){
@@ -64,6 +67,7 @@ void AudioIO::prepare(AudioContext audio){
     );
 
     currentFrame_ = 0 ;
+    processor_.onPrepare(audio);
 }
 
 void AudioIO::addInputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel){

@@ -46,6 +46,7 @@ public:
 
     // AudioProcessor
     void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
+    // void onPrepare(AudioContext ctx) override ;
     // void onTick(size_t newFrame) override ;
     
 };
