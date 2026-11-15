@@ -32,6 +32,6 @@ NodeType Node::type() const {
     return type_ ;
 }
 
-CapabilityFlags Node::capabilities() const {
+Capability::Flags Node::capabilities() const {
     return flags_ ;
 }

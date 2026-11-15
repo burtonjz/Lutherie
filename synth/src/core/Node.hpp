@@ -18,28 +18,23 @@
 #ifndef NODE_HPP_
 #define NODE_HPP_
 
-#include "interfaces/Capability.hpp"
+#include "capabilities/Capability.hpp"
 #include "types/NodeType.hpp"
-#include "capabilities/CapabilityFlags.hpp"
 
 #include <nlohmann/json.hpp>
-#include <typeindex>
 
 using json = nlohmann::json ;
-
-// forward declarations
-
-
 
 class Node {
 private:
     int id_ ;
     NodeType type_ ; 
-    CapabilityFlags flags_ ;
-    std::unordered_map<std::type_index, std::unique_ptr<Capability*>> capabilities_ ;
+    Capability::Flags flags_ ;
+    std::array<std::unique_ptr<Capability>, static_cast<size_t>(Capability::Count)> capabilities_ ;
 
 public:
     Node(int id, NodeType typ);
+    virtual ~Node() = default ;
 
     Node(const Node&) = delete ;
     Node& operator=(const Node&) = delete ;
@@ -48,35 +43,31 @@ public:
 
     int id() const ;
     NodeType type() const ;
-    CapabilityFlags capabilities() const ;
+    Capability::Flags capabilities() const ;
 
-    template<CapabilityFlags Flag> 
+    template<Capability::Flags Flag> 
     auto* getCapability(){
+        assert(Capability::isSingleFlag(Flag));
         using T = typename CapabilityTraits<Flag>::Type ;
-        return getCapability<T>();
+        auto c = capabilities_[Capability::index(Flag)].get();
+        return static_cast<T*>(c);
     }
 
-    template<typename T>
-    T* getCapability(){
-        auto it = capabilities_.find(typeid(T));
+    template<Capability::Flags Flag, typename... Args>
+    auto& addCapability(Args&&... args){
+        assert(Capability::isSingleFlag(Flag));
 
-        if ( it == capabilities_.end() ) return nullptr ;
-
-        return static_cast<T*>(it->second);
-    }
-
-    template<CapabilityFlags Flag, typename... Args>
-    auto& AddCapability(Args&&... args){
+        size_t idx = Capability::index(Flag);
+        assert(!capabilities_[idx]);
+        
         using T = typename CapabilityTraits<Flag>::Type ;
         auto capability = std::make_unique<T>(std::forward<Args>(args)...);
         T& result = *capability ;
-        capabilities_.emplace(typeid(T), std::move(capability));
+        capabilities_[idx] = std::move(capability);
         flags_ |= Flag ;
         return result ;
     }
-
-    virtual void serialize(json& msg) const = 0 ;
-    virtual void deserialize(const json& msg) = 0 ;
+    
 };
 
 #endif // NODE_HPP_

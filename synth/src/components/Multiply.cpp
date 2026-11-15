@@ -29,14 +29,6 @@ Multiply::Multiply(int id, MultiplyConfig cfg):
     scalar_ = &params.add<ParameterType::SCALAR>(cfg.scalar, true);
 }
 
-void Multiply::serialize(json& msg) const {
-
-}
-
-void Multiply::deserialize(const json& msg){
-
-}
-
 ComponentType Multiply::componentType() const { 
     return ComponentType::Multiply ; 
 }

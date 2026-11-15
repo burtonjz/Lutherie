@@ -45,10 +45,6 @@ public:
     Multiply& operator=(const Multiply&) = delete ;
     Multiply(Multiply&&) = delete ;
     Multiply& operator=(Multiply&&) = delete ;
-    
-    // Node
-    void serialize(json& msg) const override ;
-    void deserialize(const json& msg) override ;
 
     // Component Info
     ComponentType componentType() const override ;
@@ -56,7 +52,7 @@ public:
     // AudioProcessor
     void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
     // void onTick(size_t newFrame) override ;
-    
+
 };
 
 
