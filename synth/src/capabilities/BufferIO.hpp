@@ -35,8 +35,7 @@ class BufferIO :
     public BufferTrigger
 {
 private:
-    enum class Hook { 
-        Connected, Disconnected, Updated};
+    enum class Hook { Connected, Disconnected, Updated};
 
     BufferProcessor& processor_ ;
     std::vector<BufferObserver*> observers_ ;
