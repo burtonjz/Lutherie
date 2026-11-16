@@ -18,6 +18,7 @@
 #ifndef BUFFER_PROCESSOR_HPP_
 #define BUFFER_PROCESSOR_HPP_
 
+#include "contexts/AudioContext.hpp"
 #include "interfaces/BufferRW.hpp"
 #include "status/BufferStatus.hpp"
 
@@ -46,17 +47,31 @@ private:
 };
 
 struct BufferProcessor {
-    virtual void onInputUpdated(BufferAccessor& accessor) = 0 ;
+    virtual void process(BufferAccessor& accessor) = 0 ;
+
+    virtual void onInputUpdated(BufferAccessor& accessor){
+        return process(accessor);
+    }
 
     virtual void onInputConnected(BufferAccessor& accessor){
-        return onInputUpdated(accessor);
+        return process(accessor);
     }
 
     virtual void onInputDisconnected(BufferAccessor& accessor){
-        return onInputUpdated(accessor);
+        return process(accessor);
     }
 
+    virtual void onPrepare(AudioContext){}
+    
     virtual ~BufferProcessor() = default ;
+};
+
+
+// for 0 input BufferIO
+class BufferTrigger {
+public:
+    virtual void trigger() = 0 ;
+    virtual ~BufferTrigger() = default ;
 };
 
 #endif // BUFFER_PROCESSOR_HPP_

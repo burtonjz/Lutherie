@@ -23,7 +23,7 @@
 
 struct FileListener {
     virtual ~FileListener() = default ;
-    virtual FileStatus onPathSet([[maybe_unused]] const std::filesystem::path& path){}
+    virtual FileStatus onPathSet(const std::filesystem::path&) = 0 ;
 };
 
 #endif // FILE_LISTENER_HPP_

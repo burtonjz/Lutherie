@@ -16,8 +16,8 @@
  */
 
 #include "components/Multiply.hpp"
-#include "capabilities/AudioIO.hpp"
-#include "capabilities/Parameters.hpp"
+#include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
 #include "types/ComponentType.hpp"
 
 Multiply::Multiply(int id, MultiplyConfig cfg):

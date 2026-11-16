@@ -16,8 +16,8 @@
  */
 
 #include "components/Panner.hpp"
-#include "capabilities/AudioIO.hpp"
-#include "capabilities/Parameters.hpp"
+#include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
 #include "types/ComponentType.hpp"
 
 Panner::Panner(int id, PannerConfig cfg):

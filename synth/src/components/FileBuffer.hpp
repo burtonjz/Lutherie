@@ -18,19 +18,46 @@
 #ifndef FILE_BUFFER_HPP_
 #define FILE_BUFFER_HPP_
 
-#include "core/AudioBufferComponent.hpp"
-#include "core/FileComponent.hpp"
+#include "core/Node.hpp"
+#include "interfaces/FileListener.hpp"
+#include "interfaces/BufferProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 #include "configs/FileBufferConfig.hpp"
+#include <sndfile.h>
 
-class FileBuffer : public AudioBufferComponent, public FileComponent {
+class FileBuffer : 
+    public Node,
+    public ComponentInfo,
+    public FileListener,
+    public BufferProcessor
+{
+private:
+    BufferTrigger* trigger_ = nullptr ;
+    SF_INFO info_ ;
+    SNDFILE* file_ = nullptr ;
+    size_t sampleRate_ ;
+
 public:
-    FileBuffer(ComponentId id, FileBufferConfig cfg);
+    FileBuffer(int id, FileBufferConfig cfg);
 
-    void onSetPath() override ;
+    FileBuffer(const FileBuffer&) = delete ;
+    FileBuffer& operator=(const FileBuffer&) = delete ;
+    FileBuffer(FileBuffer&&) = delete ;
+    FileBuffer& operator=(FileBuffer&&) = delete ;
+
+    // Component Info
+    ComponentType componentType() const override ;
+
+    // File Listener
+    FileStatus onPathSet(const std::filesystem::path& path) override ;
+
+    // Buffer Processor
+    void process(BufferAccessor& accessor) override ;
+    void onPrepare(AudioContext ctx) override ;
 
 private:
     void loadWavBuffer();
-    void resample(std::vector<double>& buffer, int srcRate, int dstRate);
+    void resample(BufferResize& buf, int srcRate, int dstRate);
 
 };
 

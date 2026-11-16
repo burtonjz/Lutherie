@@ -18,35 +18,35 @@
 #include "interfaces/BufferProcessor.hpp"
 #include "capabilities/BufferIO.hpp"
 
-BufferContext::BufferContext(BufferIO& io, size_t changed):
+BufferAccessor::BufferAccessor(BufferIO& io, size_t changed):
     io_(io),
     changed_(changed)
 {}
 
-size_t BufferContext::changedInput() const {
+size_t BufferAccessor::changedInput() const {
     return changed_ ;
 }
 
-size_t BufferContext::numInputs() const {
+size_t BufferAccessor::numInputs() const {
     return io_.getNumInputs();
 }
 
-size_t BufferContext::numOutputs() const {
+size_t BufferAccessor::numOutputs() const {
     return io_.getNumOutputs();
 }
 
-std::span<const BufferRead> BufferContext::inputs(size_t channel) const {
+std::span<const BufferRead> BufferAccessor::inputs(size_t channel) const {
     return io_.getInputView(channel);
 }
 
-BufferResize BufferContext::output(size_t channel) const {
+BufferResize BufferAccessor::output(size_t channel) const {
     return io_.getOutputResize(channel);
 }
 
-void BufferContext::setStatus(size_t channel, BufferStatus s){
+void BufferAccessor::setStatus(size_t channel, BufferStatus s){
     io_.setStatus(channel, s);
 }
 
-void BufferContext::setAllStatus(BufferStatus s){
+void BufferAccessor::setAllStatus(BufferStatus s){
     io_.setAllStatus(s);
 }

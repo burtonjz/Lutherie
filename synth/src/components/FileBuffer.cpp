@@ -16,67 +16,108 @@
  */
 
 #include "components/FileBuffer.hpp"
+#include "capabilities/BufferIO.hpp" // IWYU pragma: keep
+#include "capabilities/File.hpp"     // IWYU pragma: keep
+#include "types/ComponentType.hpp"
 
 #include <sndfile.h>
 #include <samplerate.h>
 
-FileBuffer::FileBuffer(ComponentId id,[[maybe_unused]] FileBufferConfig cfg):
-    BaseComponent(id, ComponentType::FileBuffer),
-    AudioBufferComponent(0,2)
+FileBuffer::FileBuffer(int id, FileBufferConfig):
+    Node(id, NodeType::COMPONENT),
+    sampleRate_(0)
 {
+    auto* buf = &addCapability<Capability::BufferIO>(*this, 0, 2);
+    trigger_ = buf ;
+
+    addCapability<Capability::File>(this);
 }
 
-void FileBuffer::onSetPath(){
-    loadWavBuffer();
-    notifyDownstream(0);
-    notifyDownstream(1);
+ComponentType FileBuffer::componentType() const {
+    return ComponentType::FileBuffer ;
 }
 
-void FileBuffer::loadWavBuffer(){
-    SF_INFO sfinfo{};
-    SNDFILE* file = sf_open(getPath().c_str(), SFM_READ, &sfinfo);
+FileStatus FileBuffer::onPathSet(const std::filesystem::path& path){
+    const char* sPath = path.c_str();
 
-    if ( !file ){
+    info_ = {};
+
+    SPDLOG_DEBUG("attempting to load file: {}", sPath);
+    file_ = sf_open(path.c_str(), SFM_READ, &info_);
+    if ( !file_ ){
         SPDLOG_ERROR("Error opening file: {}", sf_strerror(nullptr));
-        return ;
+        return FileStatus::LoadFailed ;
+    }
+    SPDLOG_DEBUG(
+        "file {} loaded. Channels={}, SampleRate={}, Frames={}", 
+        sPath, info_.channels, info_.samplerate, info_.frames 
+    );
+
+    if ( info_.channels > 2 ){
+        SPDLOG_WARN(
+            "This application does not support reading "
+            "in more than two channels. "
+            "Additional channels will be ignored."
+        );
     }
 
-    SPDLOG_DEBUG("file {} loaded. Channels={}, SampleRate={}, Frames={}", getPath().string(), sfinfo.channels, sfinfo.samplerate, sfinfo.frames );
-    if ( sfinfo.channels > 2 ){
-        SPDLOG_WARN("This application does not support reading in more than two channels. Additional channels will be ignored.");
-    }
+    trigger_->trigger(); // runs process
 
-    std::vector<double> interleaved(sfinfo.frames * sfinfo.channels);
-    sf_count_t count = sf_readf_double(file, interleaved.data(), sfinfo.frames);
+    return FileStatus::Ok ;
+}
 
-    buffers_.assign(2, std::vector<double>(sfinfo.frames));
+void FileBuffer::onPrepare(AudioContext ctx){
+    sampleRate_ = ctx.sampleRate ;
+}
+
+void FileBuffer::process(BufferAccessor& accessor){
+    std::vector<double> interleaved(info_.frames * info_.channels);
+    
+    sf_count_t count = sf_readf_double(
+        file_, interleaved.data(), 
+        info_.frames
+    );
+    
+    BufferResize res0 = accessor.output(0);
+    BufferResize res1 = accessor.output(1);
+
+    BufferWrite ch0 = res0.write();
+    BufferWrite ch1 = res1.write();
+
+    res0.resize(info_.frames);
+    res1.resize(info_.frames);
 
     // de-interleave buffers and force to two channels
     for ( sf_count_t frame = 0; frame < count ; ++frame){
-        if ( sfinfo.channels == 1){
-            buffers_[0][frame] = interleaved[frame];
-            buffers_[1][frame] = interleaved[frame];
+        if ( info_.channels == 1){
+            ch0[frame] = interleaved[frame];
+            ch1[frame] = interleaved[frame];
         } else {
-            buffers_[0][frame] = interleaved[frame * sfinfo.channels];
-            buffers_[1][frame] = interleaved[frame * sfinfo.channels + 1];
+            ch0[frame] = interleaved[frame * info_.channels];
+            ch1[frame] = interleaved[frame * info_.channels + 1];
         }
     }
 
     // resample (if necessary)
-    int i = 0 ;
-    for ( auto& ch : buffers_ ){
-        SPDLOG_DEBUG("resampling audio for channel {}. Rate {} -> {}", i++, sfinfo.samplerate, sampleRate_);
-        resample(ch, sfinfo.samplerate, sampleRate_);
+    if ( (size_t)info_.samplerate != sampleRate_ ){
+        SPDLOG_DEBUG("resampling audio. Rate {} -> {}", info_.samplerate, sampleRate_);
+        resample(res0, info_.samplerate, sampleRate_);
+        resample(res1, info_.samplerate, sampleRate_);
+        SPDLOG_DEBUG("resampling complete.");
     }
+    
+    sf_close(file_);
 
-    sf_close(file);
+    accessor.setAllStatus(BufferStatus::Ready);
 }
 
-void FileBuffer::resample(std::vector<double>& buffer, int srcRate, int dstRate){
+void FileBuffer::resample(BufferResize& buf, int srcRate, int dstRate){
     if ( srcRate == dstRate ) return ;
 
+    BufferRead read = buf.read();
+
     double ratio = (double)dstRate / srcRate ;
-    std::vector<float> in(buffer.begin(), buffer.end());
+    std::vector<float> in(read.begin(), read.end());
     std::vector<float> out((size_t)(in.size() * ratio + 1));
 
     SRC_DATA data{};
@@ -88,5 +129,5 @@ void FileBuffer::resample(std::vector<double>& buffer, int srcRate, int dstRate)
 
     src_simple(&data, SRC_SINC_BEST_QUALITY, 1);
     out.resize(data.output_frames_gen);
-    buffer.assign(out.begin(), out.end());
+    buf.assign(out.begin(), out.end());
 }

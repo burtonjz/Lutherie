@@ -21,7 +21,7 @@
 #include "status/BufferStatus.hpp"
 #include <spdlog/spdlog.h>
 
-BufferIO::BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs, size_t outputs):
+BufferIO::BufferIO(BufferProcessor& processor, size_t inputs, size_t outputs):
     processor_(processor),
     observers_(),
     numInputs_(inputs),
@@ -32,8 +32,13 @@ BufferIO::BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs
     outputViews_(outputs),
     inputEdges_(inputs),
     outputEdges_(outputs),
-    sampleRate_(audio.sampleRate)
+    sampleRate_(0)
 {}
+
+void BufferIO::prepare(AudioContext audio){
+    sampleRate_ = audio.sampleRate ;
+    processor_.onPrepare(audio);
+}
 
 void BufferIO::addInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
     inputEdges_.at(toChannel).insert({edge, edgeChannel});
@@ -162,9 +167,9 @@ BufferResize BufferIO::getOutputResize(size_t channel){
 }
 
 void BufferIO::process(Hook h, size_t changedInput){
-    BufferAccessor accessor(*this, changedInput);
-
     rebuildInputViews(changedInput);
+
+    BufferAccessor accessor(*this, changedInput);
 
     switch (h){
     case Hook::Connected:
@@ -178,8 +183,19 @@ void BufferIO::process(Hook h, size_t changedInput){
         break ;
     }
 
-    // processor has full write access to all output channels
-    // so rebuild them all.
+    publishOutputs();
+}
+
+void BufferIO::trigger(){
+    assert(numInputs_ == 0);
+
+    BufferAccessor accessor(*this, 0);
+    processor_.process(accessor);
+
+    publishOutputs();
+}
+
+void BufferIO::publishOutputs(){
     for ( size_t ch = 0 ; ch < numOutputs_; ++ch ){
         rebuildOutputView(ch);
     }

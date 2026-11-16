@@ -30,9 +30,13 @@
 #include "status/FileStatus.hpp"
 #include "routing/BufferConnection.hpp"
 
-class BufferIO : public Capability {
+class BufferIO : 
+    public Capability,
+    public BufferTrigger
+{
 private:
-    enum class Hook { Connected, Disconnected, Updated };
+    enum class Hook { 
+        Connected, Disconnected, Updated};
 
     BufferProcessor& processor_ ;
     std::vector<BufferObserver*> observers_ ;
@@ -53,7 +57,9 @@ private:
     double sampleRate_ ;
 
 public:
-    BufferIO(AudioContext audio, BufferProcessor& processor, size_t inputs, size_t outputs);
+    BufferIO(BufferProcessor& processor, size_t inputs, size_t outputs);
+
+    void prepare(AudioContext audio);
 
     BufferIO(const BufferIO&) = delete ;
     BufferIO& operator=(const BufferIO&) = delete ;
@@ -71,12 +77,14 @@ public:
     size_t getNumOutputs() const ;
 
     FileStatus exportBuffer(std::string savePath);
-        
-private:
-    friend class BufferContext ;
 
-    // read only view of all input edges connected to specified channel.
-    // Empty/Not Ready buffer is empty span.
+    // only valid for 0 input bufferIO objects
+    void trigger() override ;
+
+private:
+    friend class BufferAccessor ;
+
+    // start friend methods
     std::span<const BufferRead> getInputView(size_t channel) const ;
     void rebuildInputViews(size_t channel);
 
@@ -84,17 +92,18 @@ private:
     void rebuildOutputView(size_t channel);
 
     BufferResize getOutputResize(size_t channel);
+    // end friend methods
 
     void process(Hook h, size_t changedInput);
-    void notifyDownstream();
+
+    void publishOutputs();
+    void notifyDownstream(); 
 
     size_t getMaxBufferFrames() const ;
     std::vector<double> getInterleavedBuffers(const SF_INFO& info) const ;
 
     void setStatus(size_t channel, BufferStatus s);
     void setAllStatus(BufferStatus s);
-
-    void notifyObservers();
 };
 
 #endif // BUFFER_IO_HPP_

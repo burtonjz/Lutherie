@@ -16,8 +16,8 @@
  */
 
 #include "components/Delay.hpp"
-#include "capabilities/AudioIO.hpp"
-#include "capabilities/Parameters.hpp"
+#include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
 #include "types/ComponentType.hpp"
 
 Delay::Delay(int id, DelayConfig cfg):
