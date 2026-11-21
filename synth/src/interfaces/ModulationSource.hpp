@@ -19,7 +19,7 @@
 #define MODULATION_SOURCE_HPP_
 
 #include "params/ModulationParameter.hpp"
-#include "types/ParameterType.hpp"
+#include "types/ModulationStrategy.hpp"
 #include <set>
 
 struct ModulationSource {
