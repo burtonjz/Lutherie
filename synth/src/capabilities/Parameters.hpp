@@ -25,12 +25,14 @@
 #include "params/ParameterMask.hpp"
 #include "params/SlotBank.hpp"
 #include "params/SlotBankConfig.hpp"
+#include "interfaces/ModulationSource.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "types/ParameterType.hpp"
 #include "types/ParameterConfig.hpp"
 #include "status/ParamStatus.hpp"
+#include <stdexcept>
 
 // forward declarations
-class ModulationSource ;
 class ParameterDefinition ;
 class ParameterObserver ;
 class OrderedSlotBank ;
@@ -101,6 +103,31 @@ public:
     ParamStatus removeModulation(ParameterType p);
     ParamStatus setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
     ParamStatus removeDepthModulation(ParameterType p);
+
+    template<ParameterType::Value typ>
+    void parameterAccessor(ParameterAccessor<typ>& accessor, uint8_t slot = 0) const {
+        ParameterType p = ParameterType(typ);
+        uint8_t idx = p.to_uint8();
+        
+        if ( !active_.test(idx) ){
+            auto msg = fmt::format(
+                "Parameter {} is not in use. Cannot provide accessor.",
+                p.toString()
+            );
+            SPDLOG_ERROR(msg);
+            throw std::invalid_argument(msg);
+        }
+
+        ParameterDefinition* def = definitions_[p.to_uint8()].get();
+        
+        if ( slot >= def->slotCount() ){
+            auto msg = "slot index out of range." ;
+            SPDLOG_ERROR(msg);
+            throw std::invalid_argument(msg);
+        }
+
+        accessor.slot_ = def->slot(slot);
+    }
 
 private:
     bool parameterAvailable(uint8_t idx) const ;

@@ -62,7 +62,7 @@ public:
     bool hasBank() const ;
     SlotBank& bank() const ;
     size_t slotCount() const ;
-    ParameterSlotBase* slot(size_t idx) const ;
+    ParameterSlotBase* slot(size_t idx = 0) const ;
     
     const ParameterConfig& config() const ;
     uint32_t revision() const ;

@@ -22,10 +22,14 @@
 #include "interfaces/AudioProcessor.hpp"
 #include "interfaces/ComponentInfo.hpp"
 #include "configs/DelayConfig.hpp"
-#include "params/Parameter.hpp"
 #include "types/ParameterType.hpp"
 
 #include "containers/DelayBuffer.hpp"
+
+// forward declarations
+template<ParameterType::Value>
+class ParameterSlot ;
+class ParameterDefinition ;
 
 class Delay : 
     public Node,
@@ -35,7 +39,9 @@ class Delay :
 private:
     int maxDelaySeconds_ ;
     DelayBuffer buffer_ ;
-    Parameter<ParameterType::DELAY>* delay_ ;
+
+    ParameterDefinition* delayDef_ ;
+    ParameterSlot<ParameterType::DELAY>* delay_ ;
 
 public:
     Delay(int id, DelayConfig cfg);

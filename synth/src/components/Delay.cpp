@@ -18,6 +18,8 @@
 #include "components/Delay.hpp"
 #include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
 #include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "params/ParameterDefinition.hpp"
+#include "params/ParameterSlot.hpp"
 #include "types/ComponentType.hpp"
 
 Delay::Delay(int id, DelayConfig cfg):
@@ -28,13 +30,16 @@ Delay::Delay(int id, DelayConfig cfg):
     addCapability<Capability::AudioIO>(*this, 1, 1);
     
     auto& params = addCapability<Capability::Parameters>();
-    delay_ = &params.add<ParameterType::DELAY>(cfg.delay, true, 0, maxDelaySeconds_); 
+
+    delayDef_ = params.addUnitParameter(ParameterConfig(ParameterType::DELAY));
+    delay_ = static_cast<ParameterSlot<ParameterType::DELAY>*>(delayDef_->slot());
 }
 
 void Delay::onPrepare(AudioContext ctx){
-    size_t size = maxDelaySeconds_ * ctx.sampleRate ;
-    delay_->setMaximum(size);
-    buffer_.setCapacity(maxDelaySeconds_ * ctx.sampleRate);
+    using T = ParameterTraits<ParameterType::DELAY>::ValueType ;
+    T size = maxDelaySeconds_ * ctx.sampleRate ;
+    delayDef_->setRange({0, size});
+    buffer_.setCapacity(static_cast<size_t>(size));
 }
 
 ComponentType Delay::componentType() const {
@@ -45,6 +50,6 @@ void Delay::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {
     double input = accessor.input(0)[frame];
     buffer_.write(input);
 
-    size_t delay = delay_->getInstantaneousValue();
+    size_t delay = delay_->modulatedValue();
     accessor.output(0)[frame] = buffer_.read(delay);
 }
