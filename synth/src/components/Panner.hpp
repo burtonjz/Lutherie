@@ -21,8 +21,8 @@
 #include "core/Node.hpp"
 #include "interfaces/AudioProcessor.hpp"
 #include "interfaces/ComponentInfo.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "configs/PannerConfig.hpp"
-#include "params/Parameter.hpp"
 #include "types/ParameterType.hpp"
 
 class Panner :
@@ -31,7 +31,7 @@ class Panner :
     public AudioProcessor
 {
 private:
-    Parameter<ParameterType::PAN>* pan_ ;
+    ParameterAccessor<ParameterType::PAN> pan_ ;
 
 public:
     Panner(int id, PannerConfig cfg);

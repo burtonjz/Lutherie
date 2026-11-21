@@ -20,13 +20,14 @@
 #include "capabilities/Parameters.hpp" // IWYU pragma: keep
 #include "types/ComponentType.hpp"
 
-Panner::Panner(int id, PannerConfig cfg):
+Panner::Panner(int id, PannerConfig):
     Node(id, NodeType::COMPONENT)
 {
     addCapability<Capability::AudioIO>(*this, 1, 2);
 
     auto& params = addCapability<Capability::Parameters>();
-    pan_ = &params.add<ParameterType::PAN>(cfg.pan, true);
+    params.addUnitParameter(ParameterConfig(ParameterType::PAN));
+    params.parameterAccessor<ParameterType::PAN>(pan_, 0);
 }
     
 ComponentType Panner::componentType() const {
@@ -35,7 +36,7 @@ ComponentType Panner::componentType() const {
 
 void Panner::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {
     double input = accessor.input(0)[frame];
-    double pan = pan_->getInstantaneousValue();
+    double pan = pan_.modulatedValue();
     double v = pan / 2.0 + 0.5 ;
 
     accessor.output(0)[frame] = v * input ;

@@ -21,8 +21,8 @@
 #include "core/Node.hpp"
 #include "interfaces/AudioProcessor.hpp"
 #include "interfaces/ComponentInfo.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "configs/MultiplyConfig.hpp"
-#include "params/Parameter.hpp"
 #include "types/ParameterType.hpp"
 
 #include <nlohmann/json.hpp>
@@ -35,7 +35,7 @@ class Multiply :
     public AudioProcessor 
 {
 private:
-    Parameter<ParameterType::SCALAR>* scalar_ ;
+    ParameterAccessor<ParameterType::SCALAR> scalar_ ;
 
 public:
     Multiply(int id, MultiplyConfig cfg);

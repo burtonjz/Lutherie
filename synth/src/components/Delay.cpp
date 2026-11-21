@@ -19,6 +19,7 @@
 #include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
 #include "capabilities/Parameters.hpp" // IWYU pragma: keep
 #include "types/ComponentType.hpp"
+#include "types/ParameterConfig.hpp"
 
 Delay::Delay(int id, DelayConfig cfg):
     Node(id, NodeType::COMPONENT),
@@ -28,6 +29,7 @@ Delay::Delay(int id, DelayConfig cfg):
     addCapability<Capability::AudioIO>(*this, 1, 1);
     
     auto& params = addCapability<Capability::Parameters>();
+    params.addUnitParameter(ParameterConfig(ParameterType::DELAY));
     params.parameterAccessor<ParameterType::DELAY>(delay_, 0);
 }
 

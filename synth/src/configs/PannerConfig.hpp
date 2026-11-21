@@ -28,7 +28,7 @@ class Panner ;
 
 // define default configuration
 struct PannerConfig {
-    double pan = 0 ;
+    bool pan = 0 ;
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PannerConfig, pan) // macro to serialize/deserialize json <-> structs
