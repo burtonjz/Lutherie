@@ -18,72 +18,97 @@
 #ifndef PARAMETER_CAPABILITIES_HPP_
 #define PARAMETER_CAPABILITIES_HPP_
 
-#include "params/ParameterMap.hpp"
-#include "status/ParamStatus.hpp"
+
 #include "capabilities/Capability.hpp"
-#include "interfaces/ParameterListener.hpp"
+#include "meta/CollectionDescriptor.hpp"
+#include "params/ModulationParameter.hpp"
+#include "params/ParameterMask.hpp"
+#include "params/SlotBank.hpp"
+#include "params/SlotBankConfig.hpp"
+#include "types/ParameterType.hpp"
+#include "types/ParameterConfig.hpp"
+#include "status/ParamStatus.hpp"
 
 // forward declarations
-class ParameterMap ;
-class AudioIO ;
-class Modulator ;
+class ModulationSource ;
+class ParameterDefinition ;
+class ParameterObserver ;
+class OrderedSlotBank ;
+class PooledSlotBank ;
+class SlotBank ;
 
 class Parameters : public Capability {
 private:
-    ParameterMap map_ ; 
-    ParameterListener* listener_ ;
+    using Definitions = std::array<std::unique_ptr<ParameterDefinition>, ParameterType::count> ;
+    using ParameterToBank = std::array<SlotBank*, ParameterType::count> ;
+    using BankToDefinitions = std::unordered_map<SlotBank*, ParameterMask<ParameterType::count>> ;
+    using Collections = std::unordered_map<CollectionDescriptor, std::vector<ParameterDefinition*>, CollectionHash> ;
+
+    std::vector<std::unique_ptr<SlotBank>> banks_ ;
+    OrderedSlotBank* unitBank_ ; // used for single-instance, individual parameters
+
+    Definitions definitions_ ;
+    Collections collections_ ;
+
+    // lookups 
+    ParameterToBank p2b_ ;
+    BankToDefinitions b2d_ ;
+    
+    // definition masks
+    ParameterMask<ParameterType::count> active_ ; // in use
+    ParameterMask<ParameterType::count> single_ ; // standalone parameter
+    ParameterMask<ParameterType::count> structured_ ; // part of a collection
+    ParameterMask<ParameterType::count> modulatable_ ; // capable of modulation
+
+    ParameterObserver* observer_ ;
 
 public:
-    // owning node's ParameterListener 
-    explicit Parameters(ParameterListener* listener = nullptr);
+    explicit Parameters(ParameterObserver* observer = nullptr);
+    ~Parameters() = default ;
 
     Parameters(const Parameters&) = delete ;
     Parameters& operator=(const Parameters&) = delete ;
 
-    // templated 
-    template <ParameterType typ, typename... Args>
-    Parameter<typ>& add(Args&&... args){
-        return map_.add<typ>(std::forward<Args>(args)...);
-    }
+    ParameterDefinition* definition(ParameterType p) const ;
+    
+    std::vector<CollectionDescriptor> collectionDescriptors() const ;
+    std::span<ParameterDefinition* const> collection(const CollectionDescriptor& c) const ;
 
-    template <ParameterType typ, typename... Args>
-    void addCollection(Args&&... args){
-        map_.addCollection<typ>(std::forward<Args>(args)...);
-    }
+    void observe(ParameterType p);
 
-    template <ParameterType typ>
-    Parameter<typ>* get() const { return map_.getParameter<typ>(); }
-    // end templated
+    ParameterDefinition* addPooledParameter(
+        ParameterConfig cfg,
+        SlotManager& manager,
+        size_t capacity,
+        const ModulationSource* modulator = nullptr,
+        ModulationData modData = {}
+    );
 
-    void markPerVoice(ParameterType p);
-    void listen(ParameterType p);
-    ParameterBase* get(ParameterType p) const ;
+    ParameterDefinition* addUnitParameter(
+        ParameterConfig cfg, 
+        const ModulationSource* modulator = nullptr,
+        ModulationData modData = {}
+    );
+
+    std::span<ParameterDefinition*> addCollection(
+        CollectionDescriptor descriptor,
+        std::initializer_list<ParameterConfig> configs,
+        OrderedBankConfig bankCfg
+    );
+
     void modulate();
-
-    ParameterMap& map();
-    const ParameterMap& map() const ;
-
-    // Modulation
     ParamStatus setModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
     ParamStatus removeModulation(ParameterType p);
     ParamStatus setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
     ParamStatus removeDepthModulation(ParameterType p);
 
-    const ModulationSource* getModulator(ParameterType p);
-    const ModulationSource* getDepthModulator(ParameterType p);
-
-    std::optional<double> getDepth(ParameterType p) const ;
-    ParamStatus setDepth(ParameterType p, double v);
-
-    std::optional<ModulationStrategy> getStrategy(ParameterType p) const ;
-    ParamStatus setStrategy(ParameterType p, ModulationStrategy s);
-
-    json toJson(json& output) const ;
-    void fromJson(const json& j);
-
 private:
-    static ModulationData withRequiredDefaults(const ModulationSource* m, ModulationData d);
+    bool parameterAvailable(uint8_t idx) const ;
 
+    ModulationData withRequiredDefaults(const ModulationSource* m, ModulationData d);
+
+    OrderedSlotBank& createOrderedBank(OrderedBankConfig cfg);
+    PooledSlotBank& createPooledBank(PooledBankConfig cfg);
 }; 
 
 #endif // PARAMETER_CAPABILITIES_HPP_

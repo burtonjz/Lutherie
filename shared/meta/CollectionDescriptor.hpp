@@ -30,7 +30,7 @@ enum class CollectionStructure {
 };
 
 struct CollectionDescriptor {
-    std::vector<ParameterType> params ;
+    std::vector<ParameterType> parameters ;
     CollectionStructure structure ;
     size_t groupSize = 0 ; // for GROUPED only
 
@@ -38,7 +38,7 @@ struct CollectionDescriptor {
         ParameterType p
     ){
         return {
-            .params={p},
+            .parameters={p},
             .structure=CollectionStructure::INDEPENDENT,
             .groupSize=0
         };
@@ -52,7 +52,7 @@ struct CollectionDescriptor {
             throw std::invalid_argument("Grouped collections must have size > 1");
         }
         return {
-            .params={p},
+            .parameters={p},
             .structure=CollectionStructure::GROUPED,
             .groupSize=groupSize
         };
@@ -65,7 +65,7 @@ struct CollectionDescriptor {
             throw std::invalid_argument("Synchronized collections require at least 2 parameter types");
         }
         return {
-            .params=params,
+            .parameters=params,
             .structure=CollectionStructure::SYNCHRONIZED,
         };
     }
@@ -73,16 +73,60 @@ struct CollectionDescriptor {
     bool isValid() const {
         switch(structure){
         case CollectionStructure::INDEPENDENT:
-            return params.size() == 1 ;
+            return parameters.size() == 1 ;
         case CollectionStructure::GROUPED:
-            return params.size() == 1 && groupSize > 1 ;
+            return parameters.size() == 1 && groupSize > 1 ;
         case CollectionStructure::SYNCHRONIZED:
-            return params.size() > 1 ;
+            return parameters.size() > 1 ;
         default:
             return false ;
         }
     }
-
 };
+
+struct CollectionHash {
+    size_t operator()(const CollectionDescriptor& collection) const {
+        size_t seed = 0 ;
+
+        // Fibonacci Hashing
+        auto hashCombine = [&seed](size_t value) {
+            seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        };
+
+        hashCombine(std::hash<int>{}(
+            static_cast<int>(collection.structure)
+        ));
+
+        for (const auto& param : collection.parameters) {
+            hashCombine(std::hash<uint8_t>{}(param.to_uint8()));
+        }
+
+        if (collection.structure == CollectionStructure::GROUPED) {
+            hashCombine(std::hash<size_t>{}(collection.groupSize));
+        }
+
+        return seed ;
+    }
+};
+
+// JSON (de)serialization
+namespace nlohmann {
+template <>
+struct adl_serializer<CollectionDescriptor> {
+    static CollectionDescriptor from_json(const json& j){
+        return CollectionDescriptor {
+            .parameters = j.at("parameters"),
+            .structure = j.at("structure"),
+            .groupSize = j.at("groupSize")
+        };
+    }
+
+    static void to_json(json& j, const CollectionDescriptor& req){
+        j["parameters"] = req.parameters ;
+        j["structure"] = req.structure ;
+        j["groupSize"] = req.groupSize ;
+    }
+};
+} 
 
 #endif // __COLLECTION_DESCRIPTOR_HPP_

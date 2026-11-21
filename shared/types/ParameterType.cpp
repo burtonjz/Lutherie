@@ -16,54 +16,128 @@
  */
 
 #include "types/ParameterType.hpp"
+#include "types/ModulationStrategy.hpp"
+#include "types/ParameterTraits.hpp"
 
-json ParameterValueToJson(const ParameterValue& v){
-    return std::visit([](auto&& v) -> json {
-        if constexpr ( std::is_same_v<std::decay_t<decltype(v)>, uint8_t> ){
-            return static_cast<int>(v);
-        } else return v ;
-    }, v);
+uint8_t ParameterType::to_uint8(ParameterType p){
+    return static_cast<uint8_t>(p.value_);
 }
 
-ParameterType stringToParameter(std::string str) {
-    static const std::unordered_map<std::string_view, ParameterType> str2Type = {
-        #define X(NAME) {ParameterTraits<ParameterType::NAME>::name, ParameterType::NAME},
+uint8_t ParameterType::to_uint8() const {
+    return static_cast<uint8_t>(value_);
+}
+
+ParameterType ParameterType::from_uint8(uint8_t val){
+    return ParameterType(static_cast<Value>(val));
+}
+
+std::string ParameterType::toString(ParameterType p){
+    return visit(p, [](auto traits){
+        return std::string(decltype(traits)::name);
+    });
+}
+
+std::string ParameterType::toString() const {
+    return toString(value_);
+}
+
+ParameterType ParameterType::fromString(std::string_view str){
+    std::optional<ParameterType> result ;
+
+    #define X(NAME) \
+        if ( str == ParameterTraits<Value::NAME>::name ) result = Value::NAME ;
         PARAMETER_TYPE_LIST
-        #undef X
-    };
+    #undef X
+
+    if ( result ) return *result ;
     
-    auto it = str2Type.find(str);
-    if ( it != str2Type.end() ){
-        return it->second;
-    }
-    throw std::runtime_error("Unknown parameter name: " + str);
+    throw std::invalid_argument("Unknown ParameterType: " + std::string(str));
 }
 
-ModulationStrategy modStrategyFromString(std::string str){
-    static const std::unordered_map<std::string, ModulationStrategy> str2strat = {
-        #define X(NAME) {#NAME, ModulationStrategy::NAME},
-        MODULATION_STRATEGY_LIST
-        #undef X
-    };
+ParameterSupports ParameterType::supports(ParameterType p){
+    return visit(p, [](auto traits){
+        using T = decltype(traits);
 
-    auto it = str2strat.find(str);
-    if ( it != str2strat.end() ){
-        return it->second;
-    }
-    throw std::invalid_argument("Unknown ModulationStrategy: " + str);
+        return ParameterSupports{
+            T::Supports::rangeUpdate,
+            T::Supports::modulatable,
+            T::Supports::multiValue
+        };
+    });
 }
 
-std::string modStrategyToString(ModulationStrategy str){
-    static const std::unordered_map<ModulationStrategy, std::string> strat2str = {
-        #define X(NAME) {ModulationStrategy::NAME, #NAME},
-        MODULATION_STRATEGY_LIST
-        #undef X
-    };
+ParameterSupports ParameterType::supports() const {
+    return supports(value_);
+}
 
-    auto it = strat2str.find(str);
-    if ( it != strat2str.end() ){
-        return it->second;
-    }
-        
-    throw std::invalid_argument("Unknown ModulationStrategy." );
+ParameterLimits ParameterType::limits(ParameterType p){
+    return visit(p, [](auto traits){
+        using T = decltype(traits);
+
+        return ParameterLimits{
+            T::Limits::minimum,
+            T::Limits::maximum
+        };
+    });
+}
+
+ParameterLimits ParameterType::limits() const {
+    return limits(value_);
+}
+
+ParameterValue ParameterType::defaultValue(ParameterType p){
+    return visit(p, [](auto traits) -> ParameterValue {
+        using T = decltype(traits);
+        return T::Defaults::value ;
+    });
+}
+
+ParameterValue ParameterType::defaultValue() const {
+    return defaultValue(value_);
+}
+
+ModulationStrategy ParameterType::defaultModulationStrategy(ParameterType p, ModulatorRange range){
+    return visit(p, [range](auto traits) -> ModulationStrategy {
+        using T = decltype(traits);
+
+        for ( const auto& [r, s]: T::Defaults::modulationStrategy){
+            if ( range == r ) return s ;
+        }
+        return ModulationStrategy::NONE ;
+    });
+}
+
+ModulationStrategy ParameterType::defaultModulationStrategy(ModulatorRange range) const {
+    return defaultModulationStrategy(value_, range);
+}
+
+// JSON
+inline void from_json(const json& j, ParameterType& t){
+    t = ParameterType::fromString(j.get_ref<const std::string&>());
+}
+
+inline void to_json(json& j, const ParameterType& t){
+    j = t.toString();
+};
+
+inline void from_json(const json& j, ParameterSupports& supports){
+    supports.modulatable = j["modulatable"];
+    supports.multiValue = j["multiValue"];
+    supports.rangeUpdate = j["rangeUpdate"];
+}
+
+inline void to_json(json& j, const ParameterSupports& supports){
+    j["modulatable"] = supports.modulatable ;
+    j["multiValue"] = supports.multiValue ;
+    j["rangeUpdate"] = supports.rangeUpdate ;
+}
+
+inline void from_json(const json& j, ParameterLimits& limits){
+    limits.maximum = j["maximum"].get<ParameterValue>();
+    limits.minimum = j["minimum"].get<ParameterValue>();
+}
+
+inline void to_json(json& j, const ParameterLimits& limits){
+    j["maximum"] = limits.maximum ;
+    j["minimum"] = limits.minimum ;
 }

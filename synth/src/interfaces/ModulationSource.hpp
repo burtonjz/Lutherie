@@ -24,8 +24,8 @@
 
 struct ModulationSource {
     virtual double modulate(double value, ModulationData* mdat) const = 0 ;
-    virtual ModulatorRange getModulatorRange() const = 0 ;
-    virtual const std::set<ModulationParameter>& getRequiredModulationParameters() const = 0 ;
+    virtual ModulatorRange range() const = 0 ;
+    virtual const std::set<ModulationParameter>& requiredParameters() const = 0 ;
     virtual ~ModulationSource() = default ;
 };
 

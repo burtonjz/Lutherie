@@ -15,14 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PARAMETER_LISTENER_HPP_
-#define PARAMETER_LISTENER_HPP_
+#ifndef SLOT_BANK_VIEW_HPP_
+#define SLOT_BANK_VIEW_HPP_
 
-#include "types/ParameterType.hpp"
+#include "params/SlotBankConfig.hpp"
+#include <cstddef>
+#include <cstdint>
+#include <span>
 
-struct ParameterListener {
-    virtual ~ParameterListener() = default ;
-    virtual void onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection = false){} ;
+// for use by Slot Manager to determine slot selection
+struct SlotBankView {
+    size_t capacity ;
+    size_t count ; // live slots
+
+    std::span<const SlotState> state ; // size == capacity
+    std::span<const uint64_t>  stamp ; // acquire order; smaller == older
+    std::span<const uint32_t>  key ; // generalized id
 };
 
-#endif // PARAMETER_LISTENER_HPP_
+#endif // SLOT_BANK_VIEW_HPP_

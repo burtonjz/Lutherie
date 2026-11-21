@@ -18,665 +18,83 @@
 #ifndef __PARAMETER_TYPE_HPP_
 #define __PARAMETER_TYPE_HPP_
 
-#include "types/FilterType.hpp"
-#include "types/Waveform.hpp"
-#include "types/MonophonicTriggerType.hpp"
-#include "types/ScaleType.hpp"
-#include "types/ScaleNote.hpp"
-#include "config/Config.hpp"
+#include "types/ParameterTraits.hpp"
+#include <stdexcept>
 
-#include <variant>
-#include <cstdint>
+struct ParameterSupports {
+    bool rangeUpdate ;
+    bool modulatable ;
+    bool multiValue ;
+};
 
-using ParameterValue = std::variant<bool, uint8_t, int, float, double> ;
-using json = nlohmann::json ;
+inline void from_json(const json& j, ParameterSupports& supports);
+inline void to_json(json& j, const ParameterSupports& supports);
 
-json ParameterValueToJson(const ParameterValue& v);
+struct ParameterLimits {
+    ParameterValue minimum ;
+    ParameterValue maximum ;
+};
 
+inline void from_json(const json& j, ParameterLimits& limits);
+inline void to_json(json& j, const ParameterLimits& limits);
 
-/*
-To add a ParameterType, the following is required:
-1. add it to the X Macro PARAMETER_TYPE_LIST
-2. Define the specialized ParameterTraits struct
+class ParameterType {
+public:
+    using Value = _parameter_detail::Type ;
 
-*/ 
-
-// X-Macro for generating dispatch functions (see synth/src/params/ParameterMap.cpp for examples)
-#define PARAMETER_TYPE_LIST \
-    X(SCALAR) \
-    X(DELAY) \
-    X(DEPTH) \
-    X(STATUS) \
-    X(WAVEFORM) \
-    X(FREQUENCY) \
-    X(AMPLITUDE) \
-    X(GAIN) \
-    X(PHASE) \
-    X(PAN) \
-    X(DETUNE) \
-    X(ATTACK) \
-    X(DECAY) \
-    X(SUSTAIN) \
-    X(RELEASE) \
-    X(FILTER_TYPE) \
-    X(CUTOFF) \
-    X(BANDWIDTH) \
-    X(SHELF) \
-    X(Q_FACTOR) \
-    X(BPM) \
-    X(MIDI_VALUE) \
-    X(VELOCITY) \
-    X(START_POSITION) \
-    X(DURATION) \
-    X(SCALE_NOTE) \
-    X(SCALE_TYPE) \
-    X(TRIGGER) \
-    X(SAMPLE) \
-    X(LOOP) \
-    X(PLAYBACK_RATE) \
-    X(RECORD)
-
-/**
- * @brief types of parameters that might exist within any given module
- * 
-*/
-enum class ParameterType: uint8_t {
-    #define X(name) \
-        name,
-        PARAMETER_TYPE_LIST
+    #define X(NAME) static constexpr auto NAME = _parameter_detail::Type::NAME ;
+    PARAMETER_TYPE_LIST
     #undef X
-    N_PARAMETERS
-};
 
-constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
-
-ParameterType stringToParameter(std::string str);
-
-/* 
-every ParameterType will store a default modulation strategy
-based on the type of variable it is. This can be overridden in
-a Parameter instance. 
-*/ 
-#define MODULATION_STRATEGY_LIST \
-    X(ADDITIVE) \
-    X(MULTIPLICATIVE_ZERO) \
-    X(MULTIPLICATIVE_UNITY) \
-    X(EXPONENTIAL) \
-    X(REPLACE) \
-    X(NONE) 
-
-enum class ModulationStrategy : uint8_t {
-    #define X(name) \
-        name,
-        MODULATION_STRATEGY_LIST
-    #undef X
-    N_STRATEGIES
-};
-
-ModulationStrategy modStrategyFromString(std::string str);
-std::string modStrategyToString(ModulationStrategy str);
-
-enum class ModulatorRange : uint8_t {
-    UNIPOLAR,
-    BIPOLAR,
-    UNKNOWN
-};
-
-// Parameter Traits access
-template <ParameterType Type> struct ParameterTraits ;
-
-
-template <> struct ParameterTraits<ParameterType::SCALAR>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "scalar" ;
-    static constexpr float minimum = -1.0f ;
-    static constexpr float maximum = 1.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::DELAY>{
-    using ValueType = int ; // number of samples
-    static constexpr std::string_view name = "delay" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 48000.0f * 4.0f ;
-    static constexpr float defaultValue = 0.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-    
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::DEPTH>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "depth" ;
-    static constexpr float minimum = -10.0f ;
-    static constexpr float maximum = 10.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-
-    static constexpr size_t uiPrecision = 2 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::STATUS>{
-    using ValueType = bool ;
-    static constexpr std::string_view name = "status" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 1.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::WAVEFORM>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "waveform" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = Waveform::count ;
-    static constexpr float defaultValue = Waveform::SINE ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::FREQUENCY>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "frequency" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 30000.0f ; // static safeguard, implementation should use dynamic nyquist 
-    static constexpr float defaultValue = 440.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "amplitude" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 1.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::MULTIPLICATIVE_ZERO},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::MULTIPLICATIVE_ZERO},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::GAIN>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "gain" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 16.0f ; // a bit above +24 db
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::MULTIPLICATIVE_ZERO},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::MULTIPLICATIVE_UNITY},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::MULTIPLICATIVE_ZERO},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; 
-    static constexpr size_t uiPrecisionDb = 1 ;
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::PHASE>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "phase" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 1.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::PAN>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "pan" ;
-    static constexpr float minimum = -1.0f ;
-    static constexpr float maximum = 1.0f ;
-    static constexpr float defaultValue = 0.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::DETUNE>{
-    using ValueType = double ;
-    static constexpr std::string_view name = "detune" ;
-    static constexpr float minimum = -4800.0f ;
-    static constexpr float maximum = 4800.0f ;
-    static constexpr float defaultValue = 0.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 2 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-
-    // ui decomposition constants
-    static constexpr float harmonicMin = 0.5f ;
-    static constexpr float harmonicMax = 8.0f ;
-    static constexpr size_t harmonicPrecision = 2 ;
-    static constexpr float detuneCentsMin = -100.0f ; 
-    static constexpr float detuneCentsMax = 100.0f ;
-    static constexpr size_t detunePrecision = 1 ;
-};
-
-template <> struct ParameterTraits<ParameterType::ATTACK>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "attack" ;
-    static constexpr float minimum = 0.001f ;
-    static constexpr float maximum = 4.00f ;
-    static constexpr float defaultValue = 0.01f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-
-};
-
-template <> struct ParameterTraits<ParameterType::DECAY>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "decay" ;
-    static constexpr float minimum = 0.001f ;
-    static constexpr float maximum = 4.0f ;
-    static constexpr float defaultValue = 0.01f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::SUSTAIN>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "sustain" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 1.0f ;
-    static constexpr float defaultValue = 0.8f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::RELEASE>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "release" ;
-    static constexpr float minimum = 0.001f ;
-    static constexpr float maximum = 4.0f ;
-    static constexpr float defaultValue = 0.01f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 3 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "filter type" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = FilterType::count ;
-    static constexpr float defaultValue = FilterType::LowPass ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::CUTOFF>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "cutoff" ;
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 30000.0f ;
-    static constexpr float defaultValue = 20000.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "bandwidth" ;
-    static constexpr float minimum = 0.1f ;
-    static constexpr float maximum = 4.0f ;
-    static constexpr float defaultValue = 2.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::SHELF>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "shelf slope" ;
-    static constexpr float minimum = 0.1f ;
-    static constexpr float maximum = 2.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 2 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "q factor" ;
-    static constexpr float minimum = 0.5f ;
-    static constexpr float maximum = 10.0f ;
-    static constexpr float defaultValue = 0.5f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 2 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::BPM>{
-    using ValueType = int ;
-    static constexpr std::string_view name = "bpm";
-    static constexpr float minimum = 0.0f ;
-    static constexpr float maximum = 1000.0f ;
-    static constexpr float defaultValue = 120.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::ADDITIVE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::ADDITIVE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::MIDI_VALUE>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "midi value" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 127 ;
-    static constexpr float defaultValue = 69 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::VELOCITY>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "midi velocity" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 127 ;
-    static constexpr float defaultValue = 100 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::START_POSITION>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "start";
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 64 ;
-    static constexpr float defaultValue = 0 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::DURATION>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "duration" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 64 ;
-    static constexpr float defaultValue = 1 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "note" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = ScaleNote::count ;
-    static constexpr float defaultValue = ScaleNote::C ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "scale type" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = ScaleType::count ;
-    static constexpr float defaultValue = ScaleType::MAJOR ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::TRIGGER>{
-    using ValueType = uint8_t ;
-    static constexpr std::string_view name = "retrigger" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = MonophonicTriggerType::count ;
-    static constexpr float defaultValue = MonophonicTriggerType::LEGATO ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-  
-template <> struct ParameterTraits<ParameterType::SAMPLE>{
-    using ValueType = int ;
-    static constexpr std::string_view name = "sample" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = std::numeric_limits<float>::max() ;
-    static constexpr float defaultValue = 0 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::LOOP>{
-    using ValueType = bool ;
-    static constexpr std::string_view name = "loop" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 1 ;
-    static constexpr float defaultValue = 0 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-template <> struct ParameterTraits<ParameterType::PLAYBACK_RATE>{
-    using ValueType = float ;
-    static constexpr std::string_view name = "playback rate" ;
-    static constexpr float minimum = 0.05f ;
-    static constexpr float maximum = 8.0f ;
-    static constexpr float defaultValue = 1.0f ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::EXPONENTIAL},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::EXPONENTIAL},
-    }};
-
-    static constexpr size_t uiPrecision = 2 ; // num decimals
-    static constexpr bool supportRangeUpdate = true ;
-};
-
-template <> struct ParameterTraits<ParameterType::RECORD>{
-    using ValueType = bool ;
-    static constexpr std::string_view name = "record" ;
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 1 ;
-    static constexpr float defaultValue = 0 ;
-    static constexpr std::array<std::pair<ModulatorRange,ModulationStrategy>, 3> defaultStrategy = {{
-        {ModulatorRange::UNIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::BIPOLAR, ModulationStrategy::NONE},
-        {ModulatorRange::UNKNOWN, ModulationStrategy::NONE},
-    }};
-
-    static constexpr size_t uiPrecision = 0 ; // num decimals
-    static constexpr bool supportRangeUpdate = false ;
-};
-
-/*
-The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime
-
-EX:
-ParameterType p = ParameterType::FREQUENCY ;
-auto defaultFrequency = GET_PARAMETER_TRAIT_MEMBER(p, defaultValue);
-*/ 
-
-template <typename Func>
-auto dispatchParameterTrait(ParameterType p, Func&& func){
-     switch(p) { 
-        #define X(NAME) case ParameterType::NAME: return func(ParameterTraits<ParameterType::NAME>{});
-        PARAMETER_TYPE_LIST
-        #undef X
-        default: throw std::runtime_error("Unknown ParameterType");
+    ParameterType() = default ;
+    constexpr ParameterType(Value v): value_(v){} 
+    constexpr operator Value() const { return value_ ; }
+    static constexpr int count = static_cast<size_t>(Value::N_PARAMETER_TYPES);
+
+    template <typename Func>
+    static decltype(auto) visit(ParameterType p, Func&& func){
+        switch (p){
+            #define X(NAME) \
+                case NAME: \
+                    return std::forward<Func>(func)(ParameterTraits<NAME>{});
+            PARAMETER_TYPE_LIST
+            #undef X
+            default:
+                throw std::runtime_error("unknown ParameterType");
+        }
     }
-} 
 
-#define GET_PARAMETER_VALUE_TYPE(type) \
-    typename ParameterTraits<type>::ValueType 
-    
-#define GET_PARAMETER_TRAIT_MEMBER(type, member) \
-    dispatchParameterTrait(type, [](auto traits) { return decltype(traits)::member ; })
+    uint8_t to_uint8() const ;
+    static uint8_t to_uint8(ParameterType p);
+    static ParameterType from_uint8(uint8_t val);
 
-#define GET_PARAMETER_MODULATION_STRATEGY(type, range) \
-    [&]() { \
-        for (auto& [r, s] : GET_PARAMETER_TRAIT_MEMBER(type, defaultStrategy)) { \
-            if ((range) == r) return s; \
-        } \
-        return ModulationStrategy::NONE ; \
-    }()
+    std::string toString() const ;
+    static std::string toString(ParameterType p);
+    static ParameterType fromString(std::string_view str);
+
+    static json valueToJson(ParameterType p, const ParameterValue& v);
+
+    ParameterSupports supports() const ;
+    static ParameterSupports supports(ParameterType p);
+
+    ParameterLimits limits() const ;
+    static ParameterLimits limits(ParameterType p);
+
+    ParameterValue defaultValue() const ;
+    static ParameterValue defaultValue(ParameterType p);
+
+    ModulationStrategy defaultModulationStrategy(ModulatorRange range) const ;
+    static ModulationStrategy defaultModulationStrategy(ParameterType p, ModulatorRange range);
+
+private:
+    Value value_ ;
+
+};
+
+inline void from_json(const json& j, ParameterType& t);
+inline void to_json(json& j, const ParameterType& t);
+
+template <ParameterType::Value Type>
+using ParameterValueType = typename ParameterTraits<Type>::ValueType ;
 
 #endif // __PARAMETER_TYPE_HPP_
