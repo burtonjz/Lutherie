@@ -193,7 +193,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 .name = "Buffer Chopper",
                 .type = ComponentType::Chopper,
-                .collection = CollectionDescriptor::Grouped(ParameterType::SAMPLE, 2),
+                .collection = CollectionDescriptor::Grouped(ParameterType::SAMPLE, 2, 1),
                 .numBufferInputs = 1,
                 .numBufferOutputs = 1,
                 .allowMultipleBufferConnections = false

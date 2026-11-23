@@ -22,15 +22,12 @@
 
 class MidiObserver {
 public:
-    virtual void onKeyPressed(const ActiveNote*, bool /*rePress*/ = false){} 
-    virtual void onKeyReleased(ActiveNote ){}
-    virtual void onKeyOff(ActiveNote){}
-    virtual void onPitchbend(uint16_t /*pitchbend*/);
-
-    // observer functions for responding to connection events
-    virtual void onHandlerAdded(){}
-    virtual void onHandlerRemoved(){}
+    void onKeyEvent(const MidiNote& note);
     
+    virtual void onKeyPressed(const MidiNote&){} 
+    virtual void onKeyReleased(const MidiNote&){}
+    virtual void onKeyOff(MidiNote){}
+    virtual void onPitchbend(uint16_t /*pitchbend*/){};
 };
 
 #endif // MIDI_OBSERVER_HPP_

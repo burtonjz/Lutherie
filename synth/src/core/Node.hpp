@@ -20,6 +20,8 @@
 
 #include "capabilities/Capability.hpp"
 #include "types/NodeType.hpp"
+#include "types/ParameterType.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -67,7 +69,19 @@ public:
         flags_ |= Flag ;
         return result ;
     }
-    
+
+protected:
+    // for updating/viewing template parameters
+    ParameterAccessor createParameterAccessor() const {
+        return ParameterAccessor();
+    }
+
+    template<ParameterType::Value typ>
+    SlotAccessor<typ> createSlotAccessor(){
+        return SlotAccessor<typ>() ;
+    }
+
+
 };
 
 #endif // NODE_HPP_

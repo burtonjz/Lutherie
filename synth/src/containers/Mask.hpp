@@ -15,15 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PARAMETER_MASK_HPP_
-#define PARAMETER_MASK_HPP_
+#ifndef MASK_HPP_
+#define MASK_HPP_
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
 
 template <size_t N>
-class ParameterMask {
+class Mask {
 private:
     static constexpr size_t wordBits = 64 ;
     static constexpr size_t wordCount = (N + wordBits - 1) / wordBits ;
@@ -31,7 +31,7 @@ private:
     std::array<uint64_t, wordCount> words_ ;
 
 public:
-    ParameterMask(): words_(0) {}
+    Mask(): words_(0) {}
 
     void set(size_t i, bool value = true){
         const auto mask = (uint64_t)1 << (i % wordBits);
@@ -63,4 +63,4 @@ public:
 };
 
 
-#endif // PARAMETER_MASK_HPP_
+#endif // MASK_HPP_

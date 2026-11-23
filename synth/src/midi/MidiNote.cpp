@@ -16,6 +16,7 @@
  */
 
 #include "midi/MidiNote.hpp"
+#include <cassert>
 #include <cmath>
 
 // static functions/params
@@ -26,52 +27,64 @@ void MidiNote::initialize(){
 }
 std::array<double, 128> MidiNote::frequencies_ ;
 
+MidiNote::MidiNote(uint8_t channel, uint8_t note, uint8_t vel, NoteStatus st):
+    channel_(channel),
+    note_(note),
+    velocity_(vel),
+    status_(st)
+{}
+
 MidiNote::MidiNote():
-    midiNote_(0),
-    midiVelocity_(0),
-    midiOn_(false)
+    MidiNote(0, 0, 0, NoteStatus::OFF)
 {}
 
-MidiNote::MidiNote(uint8_t midiNote, uint8_t midiVelocity, bool midiOn):
-    midiNote_(midiNote),
-    midiVelocity_(midiVelocity),
-    midiOn_(midiOn)
-{}
-
-uint8_t MidiNote::getMidiNote() const {
-    return midiNote_ ;
+uint8_t MidiNote::channel() const {
+    return channel_ ;
 }
 
-void MidiNote::setMidiNote(uint8_t note ){
-    if ( note > 127 ) midiNote_ = 127 ;
-    else midiNote_ = note ;
+void MidiNote::setChannel(uint8_t channel){
+    assert(channel < 127);
+    channel_ = channel ;
 }
 
-uint8_t MidiNote::getMidiVelocity() const {
-    return midiVelocity_ ;
+uint8_t MidiNote::note() const {
+    return note_ ;
 }
 
-void MidiNote::setMidiVelocity(uint8_t velocity){
-        if ( velocity > 127 ) midiVelocity_ = 127 ;
-        else midiVelocity_ = velocity ;
+void MidiNote::setNote(uint8_t note){
+    assert(note < 127);
+    note_ = note ;
 }
 
-bool MidiNote::getStatus() const {
-    return midiOn_ ;
+uint8_t MidiNote::velocity() const {
+    return velocity_ ;
 }
 
-void MidiNote::setStatus(bool midiOn){
-    if ( midiOn_ != midiOn ){
-        midiOn_ = midiOn ;
-    }
+void MidiNote::setVelocity(uint8_t vel){
+    assert(vel < 127);
+    velocity_ = vel ;
 }
 
-double MidiNote::getFrequency(uint8_t note){
-    if ( note > 127 ) return frequencies_[127] ;
+NoteStatus MidiNote::status() const {
+    return status_ ;
+}
+
+void MidiNote::setStatus(NoteStatus st){
+    status_ = st ;
+}
+
+double MidiNote::frequency(uint8_t note){
     return frequencies_[note] ;
 }
 
-double MidiNote::getFrequency() const {
-    return frequencies_[midiNote_] ;
+double MidiNote::frequency() const {
+    return frequency(note_);
 }
 
+void MidiNote::resetTime(){
+    time_ = 0.0f ;
+}
+
+void MidiNote::updateTime(float dt){
+    time_ += dt ;
+}

@@ -18,7 +18,6 @@
 #ifndef CAPABILITY_HPP_
 #define CAPABILITY_HPP_
 
-#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <fmt/format.h>
@@ -26,19 +25,18 @@
 #include <stdexcept>
 
 #define CAPABILITY_LIST(X) \
-    X(Parameters,   0) \
-    X(AudioIO,      1) \
-    X(BufferIO,     2) \
-    X(MidiHandler,  3) \
-    X(MidiListener, 4) \
-    X(Modulator,    5) \
-    X(AudioProbe,   6) \
-    X(File,         7)
+    X(Parameters, 0) \
+    X(AudioIO,    1) \
+    X(BufferIO,   2) \
+    X(MidiIO,     3) \
+    X(Modulator,  4) \
+    X(AudioProbe, 5) \
+    X(File,       6)
 
 class Capability {
 public:
     enum Flags : uint32_t {
-        None         = 0,
+        None = 0,
         #define X(flag, idx) flag = 1u << idx,
             CAPABILITY_LIST(X)
         #undef X
@@ -113,8 +111,5 @@ struct CapabilityTraits ;
     };                                          
     CAPABILITY_LIST(X)
 #undef X 
-
-
-
 
 #endif // CAPABILITY_HPP_

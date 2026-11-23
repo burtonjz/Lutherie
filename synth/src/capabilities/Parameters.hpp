@@ -22,7 +22,7 @@
 #include "capabilities/Capability.hpp"
 #include "meta/CollectionDescriptor.hpp"
 #include "params/ModulationParameter.hpp"
-#include "params/ParameterMask.hpp"
+#include "containers/Mask.hpp"
 #include "params/SlotBank.hpp"
 #include "params/SlotBankConfig.hpp"
 #include "interfaces/ModulationSource.hpp"
@@ -44,7 +44,7 @@ class Parameters : public Capability {
 private:
     using Definitions = std::array<std::unique_ptr<ParameterDefinition>, ParameterType::count> ;
     using ParameterToBank = std::array<SlotBank*, ParameterType::count> ;
-    using BankToDefinitions = std::unordered_map<SlotBank*, ParameterMask<ParameterType::count>> ;
+    using BankToDefinitions = std::unordered_map<SlotBank*, Mask<ParameterType::count>> ;
     using Collections = std::unordered_map<CollectionDescriptor, std::vector<ParameterDefinition*>, CollectionHash> ;
 
     std::vector<std::unique_ptr<SlotBank>> banks_ ;
@@ -58,10 +58,10 @@ private:
     BankToDefinitions b2d_ ;
     
     // definition masks
-    ParameterMask<ParameterType::count> active_ ; // in use
-    ParameterMask<ParameterType::count> single_ ; // standalone parameter
-    ParameterMask<ParameterType::count> structured_ ; // part of a collection
-    ParameterMask<ParameterType::count> modulatable_ ; // capable of modulation
+    Mask<ParameterType::count> active_ ; // in use
+    Mask<ParameterType::count> single_ ; // standalone parameter
+    Mask<ParameterType::count> structured_ ; // part of a collection
+    Mask<ParameterType::count> modulatable_ ; // capable of modulation
 
     ParameterObserver* observer_ ;
 

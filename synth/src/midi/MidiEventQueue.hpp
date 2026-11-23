@@ -22,34 +22,28 @@
 #include <atomic>
 #include "midi/MidiNote.hpp"
 
-struct MidiEvent {
-    enum class Type { NotePressed, NoteReleased, NoteOff };
-    Type type ;
-    ActiveNote anote ;
-    bool rePressed = false ;
-};
-
 class MidiEventQueue {
 private:
-    std::array<MidiEvent, 128> buffer_ ;
+    static constexpr size_t QUEUE_SIZE = 255 ;
+    std::array<MidiNote, QUEUE_SIZE> buffer_ ;
     std::atomic<size_t> head_{0};
     std::atomic<size_t> tail_{0};
 
 public:
-    bool push(const MidiEvent& event){
+    bool push(MidiNote note){
         size_t head = head_.load(std::memory_order_relaxed);
-        size_t next = ( head + 1 ) % 128 ;
+        size_t next = ( head + 1 ) % QUEUE_SIZE ;
         if ( next == tail_.load(std::memory_order_acquire) ) return false ;
-        buffer_[head] = event ;
+        buffer_[head] = note ;
         head_.store(next, std::memory_order_release);
         return true ;
     }
 
-    bool pop( MidiEvent& outEvent ){
+    bool pop(MidiNote& note){
         size_t tail = tail_.load(std::memory_order_relaxed);
         if ( tail == head_.load(std::memory_order_acquire) ) return false ;
-        outEvent = buffer_[tail];
-        tail_.store((tail + 1) % 128, std::memory_order_release);
+        note = buffer_[tail];
+        tail_.store((tail + 1) % QUEUE_SIZE, std::memory_order_release);
         return true ;
     }
 };
