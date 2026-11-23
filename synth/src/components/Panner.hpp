@@ -31,7 +31,7 @@ class Panner :
     public AudioProcessor
 {
 private:
-    ParameterAccessor<ParameterType::PAN> pan_ ;
+    SlotAccessor<ParameterType::PAN> pan_ ;
 
 public:
     Panner(int id, PannerConfig cfg);

@@ -187,10 +187,8 @@ void BufferIO::process(Hook h, size_t changedInput){
 }
 
 void BufferIO::trigger(){
-    assert(numInputs_ == 0);
-
     BufferAccessor accessor(*this, 0);
-    processor_.process(accessor);
+    processor_.onTrigger(accessor);
 
     publishOutputs();
 }

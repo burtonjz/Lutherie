@@ -77,7 +77,6 @@ public:
 
     FileStatus exportBuffer(std::string savePath);
 
-    // only valid for 0 input bufferIO objects
     void trigger() override ;
 
 private:

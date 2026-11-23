@@ -51,8 +51,67 @@ std::vector<CollectionDescriptor> Parameters::collectionDescriptors() const {
     return out ;
 }
 
+std::optional<ParameterSupports> Parameters::supports(ParameterType p) const {
+    uint8_t idx = p.to_uint8();
+    if ( active_.test(idx) ){
+        return definitions_[idx]->supports();
+    }
+    return std::nullopt ;
+}
+
+ParamStatus Parameters::setSupports(ParameterType p, ParameterSupports supports){
+    uint8_t idx = p.to_uint8();
+    if ( !active_.test(idx) ) return ParamStatus::NoSuchParameter ;
+    return definitions_[idx]->setSupports(std::move(supports));
+}
+
+std::optional<ParameterLimits> Parameters::limits(ParameterType p) const {
+    uint8_t idx = p.to_uint8();
+    if ( active_.test(idx) ){
+        return definitions_[idx]->limits();
+    }
+    return std::nullopt ;
+}
+
+ParamStatus Parameters::setLimits(ParameterType p, ParameterLimits limits){
+    uint8_t idx = p.to_uint8();
+    if ( !active_.test(idx) ) return ParamStatus::NoSuchParameter ;
+    return definitions_[idx]->setLimits(std::move(limits));
+}
+
+std::optional<ParameterValue> Parameters::defaultValue(ParameterType p) const {
+    uint8_t idx = p.to_uint8();
+    if ( active_.test(idx) ){
+        return definitions_[idx]->defaultValue();
+    }
+    return std::nullopt ;
+}
+
+ParamStatus Parameters::setDefault(ParameterType p, ParameterValue v){
+    uint8_t idx = p.to_uint8();
+    if ( !active_.test(idx) ) return ParamStatus::NoSuchParameter ;
+    return definitions_[idx]->setDefaultValue(std::move(v));
+}
+
+
 std::span<ParameterDefinition* const> Parameters::collection(const CollectionDescriptor& c) const {
     return collections_.at(c);
+}
+
+void Parameters::bindParameter(ParameterAccessor& accessor, ParameterType p) const {
+    uint8_t idx = p.to_uint8();
+    
+    if ( !active_.test(idx) ){
+        auto msg = fmt::format(
+            "Parameter {} is not in use. Cannot provide accessor.",
+            p.toString()
+        );
+        SPDLOG_ERROR(msg);
+        throw std::invalid_argument(msg);
+    }
+
+    ParameterDefinition* def = definitions_[p.to_uint8()].get();
+    accessor.def_ = def ;
 }
 
 void Parameters::observe(ParameterType p){
@@ -74,16 +133,26 @@ bool Parameters::parameterAvailable(uint8_t idx) const {
     return true ;
 }
 
-ParameterDefinition* Parameters::addPooledParameter(
+void Parameters::freezeParameterCreation(){
+    freezeCreation_ = true ;
+}
+
+void Parameters::addPooledParameter(
     ParameterConfig cfg,
     SlotManager& manager,
     size_t capacity,
     const ModulationSource* modulator,
     ModulationData modData
 ){
+    if ( freezeCreation_ ){
+        auto msg = "Parameters frozen. Cannot add new pooled parameter." ;
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
     uint8_t idx = cfg.parameter().to_uint8();
     if ( !parameterAvailable(idx) ){
-        throw std::invalid_argument("cannot create parameter: already claimed");
+        throw std::invalid_argument("cannot create pooled parameter: already claimed");
     }
 
     if ( capacity < 2 ){
@@ -105,18 +174,22 @@ ParameterDefinition* Parameters::addPooledParameter(
     b2d_[&bank].set(idx);
     active_.set(idx);
     single_.set(idx);
-
-    return definitions_[idx].get();
 }
 
-ParameterDefinition* Parameters::addUnitParameter(
+void Parameters::addUnitParameter(
     ParameterConfig cfg, 
     const ModulationSource* modulator,
     ModulationData modData
 ){
+    if ( freezeCreation_ ){
+        auto msg = "Parameters frozen. Cannot add new unit parameter." ;
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
     uint8_t idx = cfg.parameter().to_uint8();
     if ( !parameterAvailable(idx) ){
-        throw std::invalid_argument("cannot create parameter: already claimed");
+        throw std::invalid_argument("cannot create unit parameter: already claimed");
     }
     
     definitions_[idx] = std::make_unique<ParameterDefinition>(
@@ -126,18 +199,25 @@ ParameterDefinition* Parameters::addUnitParameter(
     b2d_[unitBank_].set(idx);
     active_.set(idx);
     single_.set(idx);
-
-    return definitions_[idx].get();
 }
 
-std::span<ParameterDefinition*> Parameters::addCollection(
+void Parameters::addCollection(
     CollectionDescriptor descriptor,
-    std::initializer_list<ParameterConfig> configs,
+    std::vector<ParameterConfig> configs,
     OrderedBankConfig bankCfg
 ){
+    if ( freezeCreation_ ){
+        auto msg = "Parameters frozen. Cannot add new collection." ;
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
     // all parameters must be available
     for ( const auto& cfg : configs ){
         uint8_t idx = cfg.parameter().to_uint8();
+        if ( !parameterAvailable(idx) ){
+            throw std::invalid_argument("cannot create collection: at least one parameter already claimed");
+        }
         if ( active_.test(idx) ){
             auto msg = fmt::format(
                 "Parameter Type {} is already in use",
@@ -162,8 +242,26 @@ std::span<ParameterDefinition*> Parameters::addCollection(
         structured_.set(idx);
         collections_[descriptor].push_back(definitions_[idx].get());
     }
+}
 
-    return collections_[descriptor];
+void Parameters::addCollection(
+    CollectionDescriptor descriptor
+){
+    std::vector<ParameterConfig> cfg ;
+    size_t minCapacity = MAX_SLOTS ;
+    for ( const auto& p : descriptor.parameters() ){
+        ParameterConfig pc(p);
+        minCapacity = std::min(minCapacity, pc.supports().maxSlots);
+        cfg.push_back(std::move(pc));
+    }
+
+    OrderedBankConfig bankCfg{
+        .capacity = minCapacity,
+        .stride = descriptor.groupSize(),
+        .initialCount = descriptor.initialCount()
+    };
+
+    addCollection(std::move(descriptor), cfg, bankCfg);
 }
 
 void Parameters::modulate(){

@@ -18,6 +18,7 @@
 #ifndef PARAMETER_CONFIG_HPP_
 #define PARAMETER_CONFIG_HPP_
 
+#include "status/ParamStatus.hpp"
 #include "types/ParameterTraits.hpp"
 #include "types/ParameterType.hpp"
 
@@ -34,37 +35,20 @@ public:
         ParameterLimits limits, ParameterSupports supports
     );
 
+    bool operator==(const ParameterConfig& other) const ;
+
     ParameterConfig(ParameterType p);
 
     ParameterType parameter() const ;
     
     const ParameterValue& defaultValue() const ;
-    void setDefaultValue(const ParameterValue& value);
+    ParamStatus setDefaultValue(const ParameterValue& value);
 
     const ParameterLimits& limits() const ;
-    void setLimits(const ParameterLimits& limits);
+    ParamStatus setLimits(const ParameterLimits& limits);
 
     const ParameterSupports& supports() const ;
-    void setSupports(const ParameterSupports& supports);
-};
-
-class CollectionConfig {
-private:
-    ParameterType typ_ ;
-    ParameterLimits limits_ ;
-    ParameterSupports supports_ ;
-
-public:
-    CollectionConfig(ParameterType p, ParameterLimits limits, ParameterSupports supports);
-    CollectionConfig(ParameterType p);
-
-    ParameterType parameter() const ;
-
-    const ParameterLimits& limits() const ;
-    void setLimits(const ParameterLimits& limits);
-
-    const ParameterSupports& supports() const ;
-    void setSupports(const ParameterSupports& supports);
+    ParamStatus setSupports(const ParameterSupports& supports);
 };
 
 // JSON (de)serialization
@@ -73,12 +57,6 @@ template <>
 struct adl_serializer<ParameterConfig> {
     static ParameterConfig from_json(const json& j);
     static void to_json(json& j, const ParameterConfig& cfg);
-};
-
-template <>
-struct adl_serializer<CollectionConfig> {
-    static CollectionConfig from_json(const json& j);
-    static void to_json(json& j, const CollectionConfig& cfg);
 };
 } 
 

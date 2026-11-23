@@ -23,7 +23,8 @@ enum class ParamStatus {
     NoSuchParameter,
     NotModulatable,
     NoDepth,
-    NullSource
+    NullSource,
+    InvalidConfig
 };
 
 #endif // PARAM_RESULT_HPP_

@@ -37,7 +37,7 @@ private:
     int maxDelaySeconds_ ;
     DelayBuffer buffer_ ;
 
-    ParameterAccessor<ParameterType::DELAY> delay_ ;
+    SlotAccessor<ParameterType::DELAY> delay_ ;
 
 public:
     Delay(int id, DelayConfig cfg);

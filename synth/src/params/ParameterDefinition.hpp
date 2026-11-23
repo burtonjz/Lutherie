@@ -20,16 +20,16 @@
 
 #include "interfaces/ModulationSource.hpp"
 #include "types/ParameterConfig.hpp"
-#include "types/ParameterType.hpp"
 
 // forward declarations
 class ParameterSlotBase ;
-class ParameterObserver ;
+struct ParameterObserver ;
 class SlotBank ;
 
 class ParameterDefinition {
 private:
     ParameterConfig config_ ;
+    // std::vector<ParameterValue> defaults_ ; // per slot
 
     SlotBank* bank_ ; // non owning
     size_t column_ ; // column index of bank for definition's slots
@@ -59,15 +59,27 @@ public:
     ParameterDefinition(const ParameterDefinition&) = delete ;
     ParameterDefinition& operator=(const ParameterDefinition&) = delete ;
  
+    const ParameterConfig& config() const ;
+    
+    const ParameterSupports& supports() const ;
+    ParamStatus setSupports(ParameterSupports supports);
+
+    const ParameterLimits& limits() const ;
+    ParamStatus setLimits(ParameterLimits limits);
+
+    const ParameterValue& defaultValue() const ;
+    ParamStatus setDefaultValue(ParameterValue v);
+
+    uint32_t revision() const ;
+    
+    // std::span<const ParameterValue> defaultValues() const ;
+    // ParameterValue defaultValue(size_t idx) const ;
+    // void setDefaultValue(size_t idx, ParameterValue v);
+
     bool hasBank() const ;
     SlotBank& bank() const ;
     size_t slotCount() const ;
     ParameterSlotBase* slot(size_t idx = 0) const ;
-    
-    const ParameterConfig& config() const ;
-    uint32_t revision() const ;
-    void setRange(const ParameterLimits& limits);
-    void setDefaultValue(const ParameterValue& v);
  
     const ModulationSource* modulator() const ;
     ModulationStrategy modulationStrategy() const ;
@@ -117,8 +129,6 @@ public:
     void removeObserver(ParameterObserver* l);
     void notifyObservers(uint16_t slot) const ;
 
-private:
-    template <typename F> void forEachSlot(F&& f) const ;
 };
 
 

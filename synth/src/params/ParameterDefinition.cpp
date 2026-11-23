@@ -19,6 +19,8 @@
 #include "interfaces/ParameterObserver.hpp"
 #include "params/ParameterSlot.hpp"
 #include "params/SlotBank.hpp"
+#include <spdlog/spdlog.h>
+#include <stdexcept>
 
 ParameterDefinition::ParameterDefinition(
     ParameterConfig cfg, SlotBank& bank,
@@ -30,6 +32,11 @@ ParameterDefinition::ParameterDefinition(
     modulator_(modulator),
     modData_(std::move(modData))
 {
+    if ( config_.supports().maxSlots > slotCount() ){
+        auto msg = "Invalid Bank: slot capacity larger than supported by parameter" ;
+        SPDLOG_ERROR(msg);
+        throw std::invalid_argument(msg);
+    }
     modStrategy_ = config_.parameter().defaultModulationStrategy(ModulatorRange::UNKNOWN);
 
     // build bank column for this definition
@@ -64,38 +71,71 @@ ParameterDefinition::ParameterDefinition(ParameterConfig cfg):
     modStrategy_ = config_.parameter().defaultModulationStrategy(ModulatorRange::UNKNOWN);
 }
 
-const ParameterConfig& ParameterDefinition::config() const { 
-    return config_; 
-}
+// std::span<const ParameterValue> ParameterDefinition::defaultValues() const {
+//     return defaults_ ;
+// }
+
+// ParameterValue ParameterDefinition::defaultValue(size_t idx) const {
+//     assert (idx < slotCount());
+//     return defaults_[idx];
+// }
+
+// void ParameterDefinition::setDefaultValue(size_t idx, ParameterValue v){
+//     assert(idx < slotCount());
+
+//     const auto& limits = config_.limits();
+//     v = v < limits.minimum 
+//         ? limits.minimum
+//         : v > limits.maximum ? limits.maximum : v ;
+//     defaults_[idx] = v ;
+// }
 
 size_t ParameterDefinition::slotCount() const { 
     return bank_ ? bank_->capacity() : 0 ;
 }
 
+const ParameterConfig& ParameterDefinition::config() const {
+    return config_ ;
+}
+
+const ParameterSupports& ParameterDefinition::supports() const {
+    return config_.supports();
+}
+
+ParamStatus ParameterDefinition::setSupports(ParameterSupports supports){
+    return config_.setSupports(supports);
+}
+
+const ParameterLimits& ParameterDefinition::limits() const {
+    return config_.limits();
+}
+
+ParamStatus ParameterDefinition::setLimits( ParameterLimits limits){
+    return config_.setLimits(limits);
+}
+
+const ParameterValue& ParameterDefinition::defaultValue() const {
+    return config_.defaultValue();
+}
+
+ParamStatus ParameterDefinition::setDefaultValue(ParameterValue v){
+    return config_.setDefaultValue(v);
+}
+
 uint32_t ParameterDefinition::revision() const { 
-    return revision_; 
-}
-
-void ParameterDefinition::setRange(const ParameterLimits& limits){
-    config_.setLimits(limits);
-    ++revision_ ;
-}
-
-void ParameterDefinition::setDefaultValue(const ParameterValue& v){
-    config_.setDefaultValue(v);
-    ++revision_ ;
+    return revision_ ; 
 }
 
 const ModulationSource* ParameterDefinition::modulator() const { 
-    return modulator_; 
+    return modulator_ ; 
 }
 
 ModulationStrategy ParameterDefinition::modulationStrategy() const { 
-    return modStrategy_; 
+    return modStrategy_ ; 
 }
 
 const ModulationData& ParameterDefinition::modulationTemplate() const { 
-    return modData_; 
+    return modData_ ; 
 }
 
 ParameterDefinition* ParameterDefinition::depth(){ 
@@ -138,7 +178,9 @@ void ParameterDefinition::removeObserver(ParameterObserver* obs){
 }
 
 void ParameterDefinition::notifyObservers(uint16_t slot) const {
-    for (auto* obs : observers_) obs->onParameterChanged(*this, slot);
+    for (auto* obs : observers_){
+        obs->onParameterChanged(config_.parameter(), slot);
+    }
 }
 
 ParameterSlotBase* ParameterDefinition::slot(size_t i) const { 

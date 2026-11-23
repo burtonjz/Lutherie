@@ -18,6 +18,7 @@
 #ifndef PARAMETER_OBSERVER_HPP_
 #define PARAMETER_OBSERVER_HPP_
 
+#include "types/ParameterType.hpp"
 #include <cstdint>
 
 // forward declarations
@@ -26,7 +27,7 @@ class ParameterDefinition ;
 struct ParameterObserver {
 public:
     virtual ~ParameterObserver() = default ;
-    virtual void onParameterChanged(const ParameterDefinition&, uint16_t /*slot*/){} ;
+    virtual void onParameterChanged(ParameterType, uint16_t /*slot*/){} ;
 };
 
 #endif // PARAMETER_OBSERVER_HPP_

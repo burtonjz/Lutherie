@@ -33,8 +33,9 @@
 #include <stdexcept>
 
 // forward declarations
+struct CollectionRequest ;
 class ParameterDefinition ;
-class ParameterObserver ;
+struct ParameterObserver ;
 class OrderedSlotBank ;
 class PooledSlotBank ;
 class SlotBank ;
@@ -64,6 +65,8 @@ private:
 
     ParameterObserver* observer_ ;
 
+    bool freezeCreation_ = false ;
+
 public:
     explicit Parameters(ParameterObserver* observer = nullptr);
     ~Parameters() = default ;
@@ -71,14 +74,11 @@ public:
     Parameters(const Parameters&) = delete ;
     Parameters& operator=(const Parameters&) = delete ;
 
-    ParameterDefinition* definition(ParameterType p) const ;
+    // ==== PARAMETER CREATION ====
     
-    std::vector<CollectionDescriptor> collectionDescriptors() const ;
-    std::span<ParameterDefinition* const> collection(const CollectionDescriptor& c) const ;
+    void freezeParameterCreation(); 
 
-    void observe(ParameterType p);
-
-    ParameterDefinition* addPooledParameter(
+    void addPooledParameter(
         ParameterConfig cfg,
         SlotManager& manager,
         size_t capacity,
@@ -86,17 +86,60 @@ public:
         ModulationData modData = {}
     );
 
-    ParameterDefinition* addUnitParameter(
+    void addUnitParameter(
         ParameterConfig cfg, 
         const ModulationSource* modulator = nullptr,
         ModulationData modData = {}
     );
 
-    std::span<ParameterDefinition*> addCollection(
+    void addCollection(
         CollectionDescriptor descriptor,
-        std::initializer_list<ParameterConfig> configs,
+        std::vector<ParameterConfig> configs,
         OrderedBankConfig bankCfg
     );
+
+    void addCollection(
+        CollectionDescriptor descriptor
+    );
+
+    // ==== PARAMETER VIEW ====
+    void bindParameter(ParameterAccessor& accessor, ParameterType p) const ;
+    
+    template <ParameterType::Value typ>
+    void bindSlot(SlotAccessor<typ>& accessor, size_t idx) const {
+        auto def = definition(typ);
+        if ( !def ){
+            auto msg = "parameter not available" ;
+            SPDLOG_ERROR(msg);
+            throw new std::invalid_argument(msg);
+        }
+
+        ParameterAccessor acc ;
+        bindParameter(acc, typ);
+
+        if ( idx >= acc.slotCount() ){
+            auto msg = "slot out of range" ;
+            SPDLOG_ERROR(msg);
+            throw new std::invalid_argument(msg);
+        }
+        acc.bindSlot(accessor, idx);
+    }
+
+    // ==== PARAMETER DEFINITION ====
+    std::vector<CollectionDescriptor> collectionDescriptors() const ;
+    
+    std::optional<ParameterSupports> supports(ParameterType p) const ;
+    ParamStatus setSupports(ParameterType p, ParameterSupports supports);
+
+    std::optional<ParameterLimits> limits(ParameterType p) const ;
+    ParamStatus setLimits(ParameterType p, ParameterLimits limits);
+
+    std::optional<ParameterValue> defaultValue(ParameterType p) const ;
+    ParamStatus setDefault(ParameterType p, ParameterValue v);
+
+    // TODO: HANDLE COLLECTION REQUEST CHANGES
+    
+    void observe(ParameterType p);
 
     void modulate();
     ParamStatus setModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
@@ -104,33 +147,10 @@ public:
     ParamStatus setDepthModulation(ParameterType p, const ModulationSource* m, ModulationData d = {});
     ParamStatus removeDepthModulation(ParameterType p);
 
-    template<ParameterType::Value typ>
-    void parameterAccessor(ParameterAccessor<typ>& accessor, uint8_t slot = 0) const {
-        ParameterType p = ParameterType(typ);
-        uint8_t idx = p.to_uint8();
-        
-        if ( !active_.test(idx) ){
-            auto msg = fmt::format(
-                "Parameter {} is not in use. Cannot provide accessor.",
-                p.toString()
-            );
-            SPDLOG_ERROR(msg);
-            throw std::invalid_argument(msg);
-        }
-
-        ParameterDefinition* def = definitions_[p.to_uint8()].get();
-        
-        if ( slot >= def->slotCount() ){
-            auto msg = "slot index out of range." ;
-            SPDLOG_ERROR(msg);
-            throw std::invalid_argument(msg);
-        }
-
-        accessor.slot_ = def->slot(slot);
-    }
-
 private:
     bool parameterAvailable(uint8_t idx) const ;
+    ParameterDefinition* definition(ParameterType p) const ;
+    std::span<ParameterDefinition* const> collection(const CollectionDescriptor& c) const ;
 
     ModulationData withRequiredDefaults(const ModulationSource* m, ModulationData d);
 

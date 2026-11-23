@@ -59,9 +59,9 @@ ParameterSupports ParameterType::supports(ParameterType p){
         using T = decltype(traits);
 
         return ParameterSupports{
-            T::Supports::rangeUpdate,
-            T::Supports::modulatable,
-            T::Supports::multiValue
+            .rangeUpdate = T::Supports::rangeUpdate,
+            .modulatable = T::Supports::modulatable,
+            .maxSlots = T::Supports::maxSlots
         };
     });
 }
@@ -122,13 +122,13 @@ inline void to_json(json& j, const ParameterType& t){
 
 inline void from_json(const json& j, ParameterSupports& supports){
     supports.modulatable = j["modulatable"];
-    supports.multiValue = j["multiValue"];
+    supports.maxSlots = j["maxSlots"];
     supports.rangeUpdate = j["rangeUpdate"];
 }
 
 inline void to_json(json& j, const ParameterSupports& supports){
     j["modulatable"] = supports.modulatable ;
-    j["multiValue"] = supports.multiValue ;
+    j["maxSlots"] = supports.maxSlots ;
     j["rangeUpdate"] = supports.rangeUpdate ;
 }
 

@@ -24,7 +24,13 @@
 struct ParameterSupports {
     bool rangeUpdate ;
     bool modulatable ;
-    bool multiValue ;
+    size_t maxSlots ;
+
+    bool operator==(const ParameterSupports& other) const {
+        return rangeUpdate == other.rangeUpdate
+            && modulatable == other.modulatable
+            && maxSlots == other.maxSlots ;
+    }
 };
 
 inline void from_json(const json& j, ParameterSupports& supports);
@@ -33,6 +39,11 @@ inline void to_json(json& j, const ParameterSupports& supports);
 struct ParameterLimits {
     ParameterValue minimum ;
     ParameterValue maximum ;
+
+    bool operator==(const ParameterLimits& other) const {
+        return minimum == other.minimum
+            && maximum == other.maximum ;
+    } 
 };
 
 inline void from_json(const json& j, ParameterLimits& limits);

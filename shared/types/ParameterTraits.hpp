@@ -135,7 +135,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::SCALAR>{
     struct Supports {
         static constexpr bool rangeUpdate = true ; 
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ; 
+        static constexpr size_t maxSlots  = 255 ; 
     };
 
     struct Defaults {
@@ -168,7 +168,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::DELAY>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -201,7 +201,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::DEPTH>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -234,7 +234,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::STATUS>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -267,7 +267,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::WAVEFORM>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -300,7 +300,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::FREQUENCY>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -333,7 +333,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::AMPLITUDE>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -366,7 +366,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::GAIN>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -400,7 +400,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::PHASE>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -433,7 +433,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::PAN>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -466,7 +466,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::ATTACK>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -499,7 +499,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::DECAY>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -532,7 +532,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::SUSTAIN>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -565,7 +565,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::RELEASE>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -598,7 +598,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::DETUNE>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -638,7 +638,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::FILTER_TYPE>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -671,7 +671,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::CUTOFF>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -704,7 +704,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::BANDWIDTH>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -737,7 +737,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::SHELF>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -770,7 +770,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::Q_FACTOR>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -803,7 +803,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::BPM>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -836,7 +836,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::MIDI_VALUE>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -869,7 +869,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::VELOCITY>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -902,7 +902,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::START_POSITION>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -935,7 +935,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::DURATION>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 255 ;
     };
 
     struct Defaults {
@@ -968,7 +968,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::SCALE_NOTE>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = ScaleNote::count  ;
     };
 
     struct Defaults {
@@ -1001,7 +1001,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::SCALE_TYPE>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -1034,7 +1034,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::TRIGGER>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -1067,7 +1067,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::SAMPLE>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -1100,7 +1100,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::LOOP>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -1133,7 +1133,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::PLAYBACK_RATE>{
     struct Supports {
         static constexpr bool rangeUpdate = true ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {
@@ -1166,7 +1166,7 @@ template <> struct ParameterTraits<_parameter_detail::Type::RECORD>{
     struct Supports {
         static constexpr bool rangeUpdate = false ;
         static constexpr bool modulatable = true ;
-        static constexpr bool multiValue  = true ;
+        static constexpr size_t maxSlots  = 1 ;
     };
 
     struct Defaults {

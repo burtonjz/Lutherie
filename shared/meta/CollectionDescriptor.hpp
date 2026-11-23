@@ -20,7 +20,6 @@
 
 #include "types/ParameterType.hpp"
 
-#include <stdexcept>
 #include <vector>
 
 enum class CollectionStructure {
@@ -29,103 +28,57 @@ enum class CollectionStructure {
     SYNCHRONIZED // multiple collections must have same length and parallel indices
 };
 
-struct CollectionDescriptor {
-    std::vector<ParameterType> parameters ;
-    CollectionStructure structure ;
-    size_t groupSize = 0 ; // for GROUPED only
+class CollectionDescriptor {
+private:
+    std::vector<ParameterType> parameters_ ;
+    CollectionStructure structure_ ;
+    size_t groupSize_ ; // for GROUPED only
+    size_t initialCount_ ;
 
+    CollectionDescriptor(
+        std::vector<ParameterType> parameters,
+        CollectionStructure structure,
+        size_t initialCount = 0, size_t groupSize = 1
+    );
+
+public:
     static CollectionDescriptor Independent(
-        ParameterType p
-    ){
-        return {
-            .parameters={p},
-            .structure=CollectionStructure::INDEPENDENT,
-            .groupSize=0
-        };
-    }
+        ParameterType p, 
+        size_t initialCount = 0
+    );
 
     static CollectionDescriptor Grouped(
         ParameterType p,
-        size_t groupSize
-    ){
-        if (groupSize < 2){
-            throw std::invalid_argument("Grouped collections must have size > 1");
-        }
-        return {
-            .parameters={p},
-            .structure=CollectionStructure::GROUPED,
-            .groupSize=groupSize
-        };
-    }
+        size_t groupSize,
+        size_t initialCount = 0
+    );
 
     static CollectionDescriptor Synchronized(
-        const std::vector<ParameterType>& params
-    ){
-        if ( params.size() < 2 ){
-            throw std::invalid_argument("Synchronized collections require at least 2 parameter types");
-        }
-        return {
-            .parameters=params,
-            .structure=CollectionStructure::SYNCHRONIZED,
-        };
-    }
+        std::vector<ParameterType> params,
+        size_t initialCount = 0
+    );
 
-    bool isValid() const {
-        switch(structure){
-        case CollectionStructure::INDEPENDENT:
-            return parameters.size() == 1 ;
-        case CollectionStructure::GROUPED:
-            return parameters.size() == 1 && groupSize > 1 ;
-        case CollectionStructure::SYNCHRONIZED:
-            return parameters.size() > 1 ;
-        default:
-            return false ;
-        }
-    }
+    std::span<const ParameterType> parameters() const ;
+    CollectionStructure structure() const ;
+    size_t groupSize() const ;
+    size_t initialCount() const ;
+
+private:
+    bool isValid() const ;
+
 };
 
 struct CollectionHash {
-    size_t operator()(const CollectionDescriptor& collection) const {
-        size_t seed = 0 ;
-
-        // Fibonacci Hashing
-        auto hashCombine = [&seed](size_t value) {
-            seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        };
-
-        hashCombine(std::hash<int>{}(
-            static_cast<int>(collection.structure)
-        ));
-
-        for (const auto& param : collection.parameters) {
-            hashCombine(std::hash<uint8_t>{}(param.to_uint8()));
-        }
-
-        if (collection.structure == CollectionStructure::GROUPED) {
-            hashCombine(std::hash<size_t>{}(collection.groupSize));
-        }
-
-        return seed ;
-    }
+    size_t operator()(const CollectionDescriptor& collection) const ;
 };
 
 // JSON (de)serialization
 namespace nlohmann {
 template <>
 struct adl_serializer<CollectionDescriptor> {
-    static CollectionDescriptor from_json(const json& j){
-        return CollectionDescriptor {
-            .parameters = j.at("parameters"),
-            .structure = j.at("structure"),
-            .groupSize = j.at("groupSize")
-        };
-    }
+    static CollectionDescriptor from_json(const json& j);
 
-    static void to_json(json& j, const CollectionDescriptor& req){
-        j["parameters"] = req.parameters ;
-        j["structure"] = req.structure ;
-        j["groupSize"] = req.groupSize ;
-    }
+    static void to_json(json& j, const CollectionDescriptor& cd);
 };
 } 
 

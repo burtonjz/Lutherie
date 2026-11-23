@@ -27,7 +27,7 @@ Multiply::Multiply(int id, MultiplyConfig):
     
     auto& params = addCapability<Capability::Parameters>();
     params.addUnitParameter(ParameterConfig(ParameterType::SCALAR));
-    params.parameterAccessor<ParameterType::SCALAR>(scalar_, 0);
+    params.bindSlot<ParameterType::SCALAR>(scalar_, 0);
 }
 
 ComponentType Multiply::componentType() const { 

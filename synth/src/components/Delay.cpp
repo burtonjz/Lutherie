@@ -29,17 +29,19 @@ Delay::Delay(int id, DelayConfig cfg):
     addCapability<Capability::AudioIO>(*this, 1, 1);
     
     auto& params = addCapability<Capability::Parameters>();
+
     params.addUnitParameter(ParameterConfig(ParameterType::DELAY));
-    params.parameterAccessor<ParameterType::DELAY>(delay_, 0);
+    params.bindSlot<ParameterType::DELAY>(delay_, 0);
 }
 
 void Delay::onPrepare(AudioContext ctx){
     using T = ParameterTraits<ParameterType::DELAY>::ValueType ;
     T size = maxDelaySeconds_ * ctx.sampleRate ;
 
-    getCapability<Capability::Parameters>()
-        ->definition(ParameterType::DELAY)
-        ->setRange({0, size});
+    getCapability<Capability::Parameters>()->setLimits(
+        ParameterType::DELAY, 
+        {0, size}
+    );
     
     buffer_.setCapacity(static_cast<size_t>(size));
 }

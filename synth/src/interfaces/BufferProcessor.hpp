@@ -61,13 +61,18 @@ struct BufferProcessor {
         return process(accessor);
     }
 
+    // buffer trigger response
+    virtual void onTrigger(BufferAccessor& accessor){
+        return process(accessor);
+    }
+
     virtual void onPrepare(AudioContext){}
     
     virtual ~BufferProcessor() = default ;
 };
 
 
-// for 0 input BufferIO
+// if your BufferProcessor needs to arbitrarily receive an accessor
 class BufferTrigger {
 public:
     virtual void trigger() = 0 ;

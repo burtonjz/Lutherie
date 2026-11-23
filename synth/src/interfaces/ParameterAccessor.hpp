@@ -21,22 +21,88 @@
 #include "types/ParameterType.hpp"
 #include "params/ParameterSlot.hpp"
 
+/*
+    Provide templated access to parameter slot values.
+    
+    - Only constructable by a Node. 
+    - Not Moveable. 
+    - Should not be referenced in destructor
+
+    Use Parameters capability/ParameterValue variant when not on hot path.
+*/
+
 template <ParameterType::Value typ>
-class ParameterAccessor {
+class SlotAccessor {
 public:
     using T = ParameterTraits<typ>::ValueType ;
 
-    T value() const { 
+    T value() const noexcept { 
         assert(slot_ != nullptr);
         return slot_->value(); 
     }
 
-    T modulatedValue() const { 
+    T modulatedValue() const noexcept { 
         assert(slot_ != nullptr);
         return slot_->modulatedValue(); 
     }
 
-    ParameterAccessor() = default ;
+    void setValue(T value, bool notify = true){
+        slot_->setValue(value, notify);
+    }
+
+    SlotAccessor(const SlotAccessor&) = delete ;
+    SlotAccessor& operator=(const SlotAccessor&) = delete ;
+
+    SlotAccessor(SlotAccessor&&) = delete ;
+    SlotAccessor& operator=(SlotAccessor&&) = delete ;
+
+private:
+    friend class ParameterAccessor ; // fills out slot
+    ParameterSlot<typ>* slot_ = nullptr ;
+
+    friend class Node ; // construction access
+    SlotAccessor() = default ;
+};
+
+
+class ParameterAccessor {
+public:
+    size_t slotCount() const {
+        assert(def_ != nullptr);
+        return def_->slotCount();
+    }
+
+    template <ParameterType::Value typ>
+    void bindSlot(SlotAccessor<typ>& slot, size_t idx) const {
+        slot.slot_ = slot<typ>(idx);
+    }
+
+    const ParameterLimits& limits() const {
+        return def_->limits();
+    }
+    
+    ParamStatus setLimits(ParameterLimits limits){
+        return def_->setLimits(std::move(limits));
+    }
+
+    const ParameterValue& defaultValue() const {
+        return def_->defaultValue();
+    }
+
+    ParamStatus setDefaultValue(ParameterValue v){
+        return def_->setDefaultValue(std::move(v));
+    }
+
+    // ==== SLOT CONVENIENCE WRAPPERS ====
+    template <ParameterType::Value typ>
+    ParameterTraits<typ>::ValueType slotValue(size_t idx) const noexcept {
+        return slot<typ>(idx)->value();
+    }
+
+    template <ParameterType::Value typ>
+    ParameterTraits<typ>::ValueType slotModulatedValue(size_t idx) const noexcept {
+        return slot<typ>(idx)->modulatedValue();
+    }
 
     ParameterAccessor(const ParameterAccessor&) = delete ;
     ParameterAccessor& operator=(const ParameterAccessor&) = delete ;
@@ -45,14 +111,19 @@ public:
     ParameterAccessor& operator=(ParameterAccessor&&) = delete ;
 
 private:
-    friend class Parameters ;
+    friend class Parameters ; // fills out definition
+    ParameterDefinition* def_ = nullptr ;
 
-    ParameterSlot<typ>* slot_ = nullptr ;
+    friend class Node ; // construction access
+    ParameterAccessor() = default ;
 
-    ParameterAccessor(ParameterSlot<typ>& slot):
-        slot_(&slot)
-    {}
+    template<ParameterType::Value typ>
+    ParameterSlot<typ>* slot(size_t idx) const noexcept {
+        assert(def_ != nullptr);
+        assert(typ == def_->config().parameter());
+        assert(idx < slotCount());
+        return static_cast<ParameterSlot<typ>*>(def_->slot(idx));
+    }
 };
-
 
 #endif // PARAMETER_ACCESSOR_HPP_

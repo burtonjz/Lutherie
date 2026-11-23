@@ -27,7 +27,7 @@ Panner::Panner(int id, PannerConfig):
 
     auto& params = addCapability<Capability::Parameters>();
     params.addUnitParameter(ParameterConfig(ParameterType::PAN));
-    params.parameterAccessor<ParameterType::PAN>(pan_, 0);
+    params.bindSlot<ParameterType::PAN>(pan_, 0);
 }
     
 ComponentType Panner::componentType() const {

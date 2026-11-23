@@ -35,7 +35,7 @@ class Multiply :
     public AudioProcessor 
 {
 private:
-    ParameterAccessor<ParameterType::SCALAR> scalar_ ;
+    SlotAccessor<ParameterType::SCALAR> scalar_ ;
 
 public:
     Multiply(int id, MultiplyConfig cfg);
