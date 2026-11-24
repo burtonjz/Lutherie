@@ -18,15 +18,15 @@
 #ifndef STREAM_RECORDER_HPP_
 #define STREAM_RECORDER_HPP_
 
-#include "core/AudioBufferComponent.hpp"
+#include "core/BufferIO.hpp"
 #include "core/AudioProbe.hpp"
 #include "configs/StreamRecorderConfig.hpp"
 
-class StreamRecorder : public AudioBufferComponent, public AudioProbe {
+class StreamRecorder : public BufferIO, public AudioProbe {
 public:
-    StreamRecorder(ComponentId id, StreamRecorderConfig cfg);
+    StreamRecorder(int id, StreamRecorderConfig cfg);
 
-    void process(const double* data, size_t size, ComponentId id) override ;
+    void process(const double* data, size_t size, int id) override ;
     void onParameterChanged(ParameterType p, bool isCollection = false) override ;
 };
 

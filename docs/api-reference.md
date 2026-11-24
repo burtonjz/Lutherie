@@ -238,7 +238,7 @@ A malformed connection to the socket only closes if the peer disconnects or a re
 
 ## 3. Data API
 
-The Data API is **push-only**: clients connect and receive a stream of binary messages whenever the engine has buffer data to report -- currently triggered by a) `get_buffer_data` on the Control API, or b) an `AudioBufferComponent` publishing state. Anything a client sends on this socket is read and discarded (logged as unexpected).
+The Data API is **push-only**: clients connect and receive a stream of binary messages whenever the engine has buffer data to report -- currently triggered by a) `get_buffer_data` on the Control API, or b) an `BufferIO` publishing state. Anything a client sends on this socket is read and discarded (logged as unexpected).
 
 ### 3.1 Wire format
 

@@ -29,10 +29,10 @@
 #include <utility>
 #include <spdlog/spdlog.h>
 
-PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
+PolyOscillator::PolyOscillator(int id, PolyOscillatorConfig cfg):
     BaseComponent(id, ComponentType::PolyOscillator),
-    AudioSignalComponent(0,1),
-    MidiEventListener(),
+    AudioIO(0,1),
+    MidiListener(),
     children_(),
     modulators_{},
     modulationData_({})
@@ -52,7 +52,7 @@ bool PolyOscillator::isGenerative() const {
 
 void PolyOscillator::calculateSample(){
     double v = 0.0 ;
-    childPool_.forEachActive([&](Oscillator& obj, std::size_t index){
+    childPool_.forEachActive([&](Oscillator& obj, size_t index){
         obj.calculateSample();
         v += obj.data()[index];
     }, bufferIndex_);
@@ -60,14 +60,14 @@ void PolyOscillator::calculateSample(){
 }
 
 void PolyOscillator::tick(){
-    AudioSignalComponent::tick();
+    AudioIO::tick();
     childPool_.forEachActive([&](Oscillator& obj){
         obj.tick();
     });
 }
 
 void PolyOscillator::clearBuffer(){
-    AudioSignalComponent::clearBuffer();
+    AudioIO::clearBuffer();
     // now clear children
     childPool_.forEachActive([](Oscillator& obj){
         obj.clearBuffer();

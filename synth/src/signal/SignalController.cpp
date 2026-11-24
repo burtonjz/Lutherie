@@ -16,7 +16,12 @@
  */
 
 #include "signal/SignalController.hpp"
+#include "core/AudioEngine.hpp"
+#include "core/AudioDevice.hpp"
 #include "core/ComponentManager.hpp"
+#include "requests/ConnectionRequest.hpp"
+#include "types/ConnectionEndpoint.hpp"
+#include "types/NodeType.hpp"
 
 SignalController* SignalController::instance(){
     static SignalController controller ;
@@ -24,96 +29,191 @@ SignalController* SignalController::instance(){
 }
 
 SignalController::SignalController(){
-    setNumChannels(1); // prime output channels
 }
 
-size_t SignalController::getNumChannels() const {
-    return numChannels_ ;
+bool SignalController::handleConnection(const ConnectionRequest& req){
+    const ConnectionEndpoint& inbound = req.inbound();
+    const ConnectionEndpoint& outbound = req.outbound();
+
+    // validate endpoints/components
+    const bool inIsComponent = inbound.type() == NodeType::COMPONENT ;
+    const bool outIsComponent = inbound.type() == NodeType::COMPONENT ;
+
+    AudioIO* cIn = inIsComponent
+        ? ComponentManager::instance()->getSignalComponent(outbound.id())
+        : nullptr ;
+
+    if ( inIsComponent && !cIn ){
+        SPDLOG_ERROR("no component with id {} found. Cannot make connection", inbound.id());
+        return false ;
+    }
+
+    AudioIO* cOut = outIsComponent
+        ? ComponentManager::instance()->getSignalComponent(outbound.id())
+        : nullptr ;
+
+    if ( outIsComponent && !cOut ){
+        SPDLOG_ERROR("no component with id {} found. Cannot make connection", outbound.id());
+        return false ;
+    }
+    
+    // component to component
+    if ( cIn && cOut ){
+        if ( req.remove() ){
+            return disconnect(
+                cOut, outbound.index().value(),
+                cIn, inbound.index().value()
+            );
+        }
+        return connect(
+            cOut, outbound.index().value(),
+            cIn, inbound.index().value()
+        );
+    }
+
+    // sources
+    if ( cIn ){
+        if ( req.remove() ){
+            return unregisterSource(
+                cIn, inbound.index().value(), 
+                outbound
+            );    
+        }
+        return registerSource(
+            cIn, inbound.index().value(), 
+            outbound
+        );
+    }
+
+    // sinks 
+    if ( cOut ){
+        if ( req.remove() ){
+            return registerSink(
+                cOut, outbound.index().value(),
+                outbound
+            );
+        }
+        return registerSink(
+            cOut, outbound.index().value(),
+            outbound
+        );
+    }
+
+    // both are devices
+    SPDLOG_ERROR("This application does not currently support device to device audio connections.");
+    return false ;
 }
 
-void SignalController::setNumChannels(size_t numChannels){
-    numChannels_ = numChannels ;
-    signalChain_.allocateOutputChannels(numChannels);
-    outputs_.resize(numChannels);
-}
-
-void SignalController::connect(
-    AudioSignalComponent* outbound, size_t outboundIndex, 
-    AudioSignalComponent* inbound, size_t inboundIndex
+bool SignalController::connect(
+    AudioIO* outbound, size_t outboundIndex, 
+    AudioIO* inbound, size_t inboundIndex
 ){
-    if (!outbound) return ;
-    if (!inbound) return ;
-    inbound->connectInput(outbound,outboundIndex, inboundIndex);
-    if ( inbound->getNumOutputs() == 0 ){
+    if ( !outbound ) return false ;
+    if ( !inbound )  return false ;
+
+    if ( !inbound->connectInput(outbound,outboundIndex, inboundIndex) ){
+        return false ;
+    }
+
+    if ( inbound->numOutputs() == 0 ){
         signalChain_.addPseudoSink(inbound, inboundIndex);
     }
+
     SPDLOG_DEBUG(
-        "outbound signal {} index {} connected to inbound {} index {}. re-calculating topological order",
+        "outbound signal {} index {} connected to inbound {} index {}. re-calculating signal chain.",
         fmt::ptr(outbound), outboundIndex, fmt::ptr(inbound), inboundIndex
     );
     signalChain_.calculateTopologicalOrder();
+
+    return true ;
 }
 
-void SignalController::disconnect(
-    AudioSignalComponent* outbound, size_t outboundIndex, 
-    AudioSignalComponent* inbound, size_t inboundIndex
+bool SignalController::disconnect(
+    AudioIO* outbound, size_t outboundIndex, 
+    AudioIO* inbound, size_t inboundIndex
 ){
-    if (!outbound) return ;
-    if (!inbound) return ;
-    inbound->disconnectInput(outbound, outboundIndex, inboundIndex);
-    if ( inbound->getNumOutputs() == 0 ){
+    if ( !outbound ) return false ;
+    if ( !inbound )  return false ;
+
+    if ( inbound->disconnectInput(outbound, outboundIndex, inboundIndex) ){
+        return false ;
+    }
+
+    if ( inbound->numOutputs() == 0 ){
         signalChain_.removePseudoSink(inbound, inboundIndex);
     }
+    
     SPDLOG_DEBUG(
-        "outbound signal {} index {} disconnected from inbound {} index {}. re-calculating topological order",
+        "outbound signal {} index {} disconnected from inbound {} index {}. re-calculating signal chain",
         fmt::ptr(outbound), outboundIndex, fmt::ptr(inbound), inboundIndex
     );
     signalChain_.calculateTopologicalOrder();
+
+    return true ;
 }
 
-void SignalController::registerSink(
-    AudioSignalComponent* outbound, size_t outboundIdx, 
-    size_t inboundIdx
+bool SignalController::registerSink(
+    AudioIO* outbound, size_t outboundIdx, 
+    const ConnectionEndpoint& device
 ){
-    signalChain_.addSink(outbound, outboundIdx, inboundIdx);
+    if ( !signalChain_.addSink(outbound, outboundIdx, device) ){
+        return false ;
+    }
     signalChain_.calculateTopologicalOrder();
+    return true ;
 }
 
-void SignalController::unregisterSink(
-    AudioSignalComponent* outbound, size_t outboundIdx, 
-    size_t inboundIdx
+bool SignalController::unregisterSink(
+    AudioIO* outbound, size_t outboundIdx, 
+    const ConnectionEndpoint& device
 ){
-    signalChain_.removeSink(outbound, outboundIdx, inboundIdx);
+    if ( !signalChain_.removeSink(outbound, outboundIdx, device) ){
+        return false ;
+    }
     signalChain_.calculateTopologicalOrder();
+    return true ;
 }
 
-const SignalConnectionSet& SignalController::getSinks(size_t channel) const {
-    return signalChain_.getSinks(channel) ;
+const AudioConnectionSet& SignalController::getSinks(const ConnectionEndpoint& device) const {
+    return signalChain_.getSinks(device);
 }
 
-std::pair<double*, size_t> SignalController::processFrame(){
+bool SignalController::registerSource(
+    AudioIO* inbound, size_t inboundIdx, 
+    const ConnectionEndpoint& device
+){
+    return signalChain_.addSource(inbound, inboundIdx, device);
+}
+
+bool SignalController::unregisterSource(
+    AudioIO* inbound, size_t inboundIdx, 
+    const ConnectionEndpoint& device
+){
+    return signalChain_.removeSource(inbound, inboundIdx, device);
+}
+
+const AudioConnectionSet& SignalController::getSources(const ConnectionEndpoint& device) const {
+    return signalChain_.getSinks(device);
+}
+
+void SignalController::populateSources(const ConnectionEndpoint& device, double* data, size_t size){
+    for ( auto& [c, ch] : getSources(device) ){
+        c->
+    }
+}
+
+void SignalController::processSignalChain(){
     const auto& chain = signalChain_.getSignalComponentChain();
 
-    // process modules in chain order
-    for ( AudioSignalComponent*  mod : chain ){
+    for ( AudioIO*  mod : chain ){
         mod->updateParameters();
         mod->calculateSample();
         mod->tick();
     }
-
-    // sum up sinks
-    for ( size_t channel = 0 ; channel < numChannels_ ; ++channel ){
-        outputs_[channel] = 0.0 ;
-        for ( const auto& conn : signalChain_.getSinks(channel) ){
-            outputs_[channel] += conn.component->getLastSample(conn.index);
-        }
-    }
-
-    return {outputs_.data(), outputs_.size()} ;
 }
 
 void SignalController::clearBuffer(){
-    for ( auto id : ComponentManager::instance()->getSignalComponentIds() ){
+    for ( auto id : ComponentManager::instance()->getSignalints() ){
         auto m = ComponentManager::instance()->getSignalComponent(id);
         if ( m->isGenerative()){
             m->clearBuffer();

@@ -19,8 +19,8 @@
 #define __MODULE_POLYOSCILLATOR_HPP_
 
 #include "midi/MidiNote.hpp"
-#include "core/AudioSignalComponent.hpp"
-#include "midi/MidiEventListener.hpp"
+#include "core/AudioIO.hpp"
+#include "midi/MidiListener.hpp"
 #include "containers/RTMap.hpp"
 #include "containers/FixedPool.hpp"
 #include "components/Oscillator.hpp"
@@ -29,7 +29,7 @@
 #include <cstdint>
 
 
-class PolyOscillator : public AudioSignalComponent, public MidiEventListener {
+class PolyOscillator : public AudioIO, public MidiListener {
 private:
     RTMap<uint8_t, Oscillator*, 128> children_ ;
     FixedPool<Oscillator, 128> childPool_ ;
@@ -46,7 +46,7 @@ private:
     
 public:
     // Constructors
-    PolyOscillator(ComponentId id, PolyOscillatorConfig cfg);
+    PolyOscillator(int id, PolyOscillatorConfig cfg);
     
     // Module Overrides
     bool isGenerative() const override ;
@@ -54,7 +54,7 @@ public:
     void clearBuffer() override ;
     void tick() override ;
 
-    // MidiEventListener Overrides
+    // MidiListener Overrides
     void onKeyPressed(const ActiveNote* note, bool rePress = false) override ;
     void onKeyReleased(ActiveNote anote) override ;
     void onKeyOff(ActiveNote anote) override ;

@@ -23,7 +23,7 @@
 
 #include <spdlog/spdlog.h>
 
-Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
+Sequencer::Sequencer(int id, SequencerConfig cfg):
     BaseComponent(id, ComponentType::Sequencer),
     currentTime_(0),
     lastQueriedBeat_(-1),

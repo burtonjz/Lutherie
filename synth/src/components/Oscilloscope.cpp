@@ -19,7 +19,7 @@
 #include "api/StreamingApiHandler.hpp"
 #include <spdlog/spdlog.h>
 
-Oscilloscope::Oscilloscope(ComponentId id, [[maybe_unused]] OscilloscopeConfig cfg):
+Oscilloscope::Oscilloscope(int id, [[maybe_unused]] OscilloscopeConfig cfg):
     BaseComponent(id, ComponentType::Oscilloscope),
     AudioProbe(),
     captureBuffer_(),
@@ -42,7 +42,7 @@ void Oscilloscope::onInputDisconnect(){
     collecting_ = signalInputs_.size() > 0 ;
 }
 
-void Oscilloscope::process(const double* data, size_t size, ComponentId id){
+void Oscilloscope::process(const double* data, size_t size, int id){
     /*
     An oscilloscope works by trying to "map" the source signal so that we can consistently display cycles
     in our viewer. The main trick is that we therefore need the outbound buffer to send starting from a 

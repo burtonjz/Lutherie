@@ -19,7 +19,7 @@ Update the [ComponentType](../shared/types/ComponentType.hpp) X Macro to create 
 In `synth/src/components/`, create `MyComponent.hpp` and `MyComponent.cpp`. The class must have the following construction signature:
 
 ```cpp
-MyComponent(ComponentId id, const MyComponentConfig& config);
+MyComponent(int id, const MyComponentConfig& config);
 ```
 
 Where `MyComponentConfig` is defined in the next step.
@@ -95,15 +95,15 @@ All Components must inherit from `BaseComponent`. It is generally expected that 
 
 | Component | Constructor | Connections | Description |
 | --- | --- | --- | --- |
-|BaseComponent|BaseComponent(ComponentId id, ComponentType type)| inbound parameter modulation | Direct inheritance unneccessary in header files as other classes virtually inherit in their constructors. However, the constructor must be called during component class construction. |
-|AudioSignalComponent|AudioSignalComponent(size_t in, size_t out)| inbound/outbound audio signal | used for real-time audio processing, so no allocation or other blockers should be introduced on hot path|
-|AudioBufferComponent|AudioBufferComponent(size_t in, size_t out)| inbound/outbound audio buffer | used to process audio buffers (e.g., read from an audio file or saved from an audio stream via converter)|
+|BaseComponent|BaseComponent(int id, ComponentType type)| inbound parameter modulation | Direct inheritance unneccessary in header files as other classes virtually inherit in their constructors. However, the constructor must be called during component class construction. |
+|AudioIO|AudioIO(size_t in, size_t out)| inbound/outbound audio signal | used for real-time audio processing, so no allocation or other blockers should be introduced on hot path|
+|BufferIO|BufferIO(size_t in, size_t out)| inbound/outbound audio buffer | used to process audio buffers (e.g., read from an audio file or saved from an audio stream via converter)|
 |ModulatorComponent|ModulatorComponent()| outbound modulation | specifies a unique path for modulation output to be read by Parameter objects. |
-|MidiEventHandler|MidiEventHandler()| outbound MIDI | allows component to manage and manipulate an incoming stream of midi information. Note: all handlers are listeners, as they receive midi states from a centralized object. |
-|MidiEventListener|MidiEventListener()| inbound MIDI | allows a component to respond to midi signals. |
-|AudioProbe|AudioProbe()|inbound audio signal only| inherits from AudioSignalComponent, audio sink with outbound UDP data sends. |
+|MidiHandler|MidiHandler()| outbound MIDI | allows component to manage and manipulate an incoming stream of midi information. Note: all handlers are listeners, as they receive midi states from a centralized object. |
+|MidiListener|MidiListener()| inbound MIDI | allows a component to respond to midi signals. |
+|AudioProbe|AudioProbe()|inbound audio signal only| inherits from AudioIO, audio sink with outbound UDP data sends. |
 
-Most new components will only inherit from one of these. "Converter" components (i.e., components responsible for manipulating data/connection type) are a notable exception -- however, only 1 designated "converter" component should be defined for cases where the input/output combo changes. For example, `BufferStreamer` is responsible for converting an `AudioBufferComponent` to a `AudioSignalComponent`, and so no other component should fulfill that role.  
+Most new components will only inherit from one of these. "Converter" components (i.e., components responsible for manipulating data/connection type) are a notable exception -- however, only 1 designated "converter" component should be defined for cases where the input/output combo changes. For example, `BufferStreamer` is responsible for converting an `BufferIO` to a `AudioIO`, and so no other component should fulfill that role.  
 
 If a component is inheriting from many of these subtypes, it is probably an indicator that the component is not following our "unix-like" philosophy, and it is probably worth rethinking how the pieces can be appropriately broken. After selecting the appropriate subtypes, reference its section below to see more specific implementation details.
   
@@ -126,7 +126,7 @@ Generally speaking, [BaseComponent](../synth/src/core/BaseComponent.hpp) functio
 | void onRemoveParameterDepthModulation(ParameterType p) | any additional operations required during a parameter depth modulation removal event |
 | void onParameterChanged(ParameterType p, bool isCollection) | register itself as a `ParameterListener`, allowing custom behavior whenever the instantaneous (modulated) value changes |
 
-### 5.2. AudioSignalComponent Requirements
+### 5.2. AudioIO Requirements
 
 All overrideable functions have "do-nothing" defaults, so not defining "required" functions does not cause compilation failure. However, the component will generally not be functional unless they fullfill some of the generally-expected overrides:
 
@@ -137,9 +137,9 @@ All overrideable functions have "do-nothing" defaults, so not defining "required
 |void onInputConnect()| No | update internal state after an input connect event |
 |void onInputDisconnect()| No | update internal state after an input disconnect event |
 
-### 5.3. AudioBufferComponent Requirements
+### 5.3. BufferIO Requirements
 
-Similar to the `AudioSignalComponent`. All overrideable functions have "do-nothing" defaults:
+Similar to the `AudioIO`. All overrideable functions have "do-nothing" defaults:
 
 |Function|Required|Description|
 |---|---|---|
@@ -159,7 +159,7 @@ in these functions, it is generally expected that the function queries its own p
 | ModulatorRange getModulatorRange() | No | Returns "unknown" by default. In order to maintain class separation between modulators and modulated parameters, the modulator needs a way to report what range of values it returns. This allows the parameter to set a reasonable default modulation strategy |
 
 
-### 5.5. MidiEventHandler Requirements
+### 5.5. MidiHandler Requirements
 
 The following overrides are not strictly necessary, but each override is generally available in order to provide any needed management functionality.
 
@@ -176,7 +176,7 @@ The following overrides are not strictly necessary, but each override is general
 | void onListenerRemoved() const | No | respond to a connection removed event. Default no-op |
 
 
-### 5.6. MidiEventListener Requirements
+### 5.6. MidiListener Requirements
 
 The following overrides are available to a component class in order to respond to MIDI events. By default, these are no-op:
 
@@ -192,17 +192,17 @@ The following overrides are available to a component class in order to respond t
 
 ### 5.7 AudioProbe Requirements
 
-`AudioProbe` components are a specialization of the `AudioSignalComponent`, where it has 1 audio input and 0 audio outputs. Built in is functionality for collecting and processing audio signal data, and flushing it through a UDP stream port to provide real-time visualization to the client application.
+`AudioProbe` components are a specialization of the `AudioIO`, where it has 1 audio input and 0 audio outputs. Built in is functionality for collecting and processing audio signal data, and flushing it through a UDP stream port to provide real-time visualization to the client application.
 
-All AudioSignalComponent overrides are valid to override here except for `calculateSample`. 
+All AudioIO overrides are valid to override here except for `calculateSample`. 
 
-The collection state is defined through the `collecting_` boolean. By default, this is turned off for this class. Generally, this variable can be toggled based on `AudioSignalComponent` overrideable events, such as responding to a parameter change or connection event.
+The collection state is defined through the `collecting_` boolean. By default, this is turned off for this class. Generally, this variable can be toggled based on `AudioIO` overrideable events, such as responding to a parameter change or connection event.
 
 The below are additional overrides available to AudioProbes.
 
 | Function | Description | 
 | --- | --- |
-| virtual void process(const double* data, size_t size, ComponentId id) | called through the streaming api. Only requirement is the final output must be sent via `StreamingApiHandler::instance()->send(const std::vector<float>& output, int componentId)` |
+| virtual void process(const double* data, size_t size, int id) | called through the streaming api. Only requirement is the final output must be sent via `StreamingApiHandler::instance()->send(const std::vector<float>& output, int componentId)` |
 
 ## 6. Register the Component Descriptor
 
@@ -227,7 +227,7 @@ By default, any basic `ParameterType` has a corresponding, sensible widget for d
 
 3. **MIDI Handler Chains**. Because all MIDI Handlers are listeners, this allows us to chain together MIDI operations in an indescriminate order. Raw MIDI specification only has **KEY ON** and **KEY OFF** signals, while our system includes a **KEY RELEASED** signal. 
 
-To allow components to behave predictably, `MidiEventHandler` broadcasts downstream in the following manner:
+To allow components to behave predictably, `MidiHandler` broadcasts downstream in the following manner:
 
 | Handler Sends | Handler Receives | Listener Receives |
 | --- | --- | --- |
@@ -304,9 +304,9 @@ void onRemoveParameterModulation(ParameterType param) override {
     // Or, remove modulation from children if needed
 }
 
-// from AudioSignalComponent
+// from AudioIO
 void tick(){
-    AudioSignalComponent::tick(); // you must run the parent tick function
+    AudioIO::tick(); // you must run the parent tick function
 
     // perform any additional per-sample actions
 

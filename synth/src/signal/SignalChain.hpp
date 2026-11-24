@@ -18,41 +18,42 @@
 #ifndef __SIGNAL_CHAIN_HPP_
 #define __SIGNAL_CHAIN_HPP_
 
-#include "core/AudioSignalComponent.hpp"
+#include "core/AudioIO.hpp"
+#include "types/ConnectionEndpoint.hpp"
 
 #include <unordered_set>
 #include <vector>
+#include <optional>
 #include <spdlog/spdlog.h>
 
-// This class will store information regarding tracing a signal back to it's source
-// (either a generator module or eventually an audio input), and handle order of  operations of ticking
-// through modules
+// forward declarations
+class AudioDevice ;
 
 class SignalChain {
 private:
-    // true peripheral output sinks. key = peripheral output channel
-    std::map<size_t, SignalConnectionSet> sinks_ ; 
+    std::map<const ConnectionEndpoint, AudioConnectionSet, EndpointHash> sinks_ ; // components connected to device output
+    std::map<const ConnectionEndpoint, AudioConnectionSet, EndpointHash> sources_ ; // components connected to device input
+    AudioConnectionSet pseudoSinks_ ;  // topographical endpoints not connected to device (e.g., analysis, audio->buffer)) 
     
-    // topographical calculation sinks that don't contribute to a peripheral channel output
-    // e.g., analysis, audio -> buffer
-    SignalConnectionSet pseudoSinks_ ; 
-    
-    std::vector<AudioSignalComponent*> topologicalOrder_ ;
-    std::unordered_set<AudioSignalComponent*> visited_  ;
-    std::unordered_set<AudioSignalComponent*> modulatorOnly_ ;
+    std::vector<AudioIO*> topologicalOrder_ ;
+    std::unordered_set<AudioIO*> visited_  ;
+    std::unordered_set<AudioIO*> modulatorOnly_ ;
 
 public:
     SignalChain();
 
-    void allocateOutputChannels(size_t numChannels);
-    const std::vector<AudioSignalComponent*>& getSignalComponentChain() const ;
-    const SignalConnectionSet& getSinks(size_t channel) const ;
+    const std::vector<AudioIO*>& getSignalComponentChain() const ;
 
-    void addSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx);
-    void removeSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx);
+    const AudioConnectionSet& getSinks(const ConnectionEndpoint& device) const ;
+    bool addSink(AudioIO* component, size_t channel, const ConnectionEndpoint& device);
+    bool removeSink(AudioIO* component, size_t channel, const ConnectionEndpoint& device);
 
-    void addPseudoSink(AudioSignalComponent* component, size_t channel);
-    void removePseudoSink(AudioSignalComponent* component, size_t channel);
+    bool addPseudoSink(AudioIO* component, size_t channel);
+    bool removePseudoSink(AudioIO* component, size_t channel);
+
+    const AudioConnectionSet& getSources(const ConnectionEndpoint& device) const ;
+    bool addSource(AudioIO* component, size_t channel, const ConnectionEndpoint& device);
+    bool removeSource(AudioIO* component, size_t channel, const ConnectionEndpoint& device);
 
     void calculateTopologicalOrder();
     void reset();
@@ -66,9 +67,9 @@ private:
      * @param result resulting ordered vector
      */
     void topologicalSort(
-        AudioSignalComponent* module, 
-        std::unordered_set<AudioSignalComponent*>& visited,
-        std::vector<AudioSignalComponent*>& result    
+        AudioIO* module, 
+        std::unordered_set<AudioIO*>& visited,
+        std::vector<AudioIO*>& result    
     );
 };
 

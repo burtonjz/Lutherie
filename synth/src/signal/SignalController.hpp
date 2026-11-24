@@ -18,15 +18,15 @@
 #ifndef __SIGNAL_CONTROLLER_HPP_
 #define __SIGNAL_CONTROLLER_HPP_
 
-#include "core/AudioSignalComponent.hpp"
+#include "core/AudioIO.hpp"
+#include "requests/ConnectionRequest.hpp"
 #include "signal/SignalChain.hpp"
+#include "types/ConnectionEndpoint.hpp"
 
 class SignalController {
 private:
     SignalChain signalChain_ ;
-    size_t numChannels_ ;
-    std::vector<double> outputs_ ;
-
+    
     SignalController();
 
 public:
@@ -37,24 +37,30 @@ public:
     SignalController(SignalController&&) = delete ;
     SignalController& operator=(SignalController&&) = delete ;
 
-    size_t getNumChannels() const ;
-    void setNumChannels(size_t numChannels);
-
-    void connect(AudioSignalComponent* from, size_t fromIndex, AudioSignalComponent* to, size_t toIndex);
-    void disconnect(AudioSignalComponent* from, size_t fromIndex, AudioSignalComponent* to, size_t toIndex);
-
-    /**
-     * @brief the specified component's output is aggregated into the engine's output signal
-     */
-    void registerSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx);
-    void unregisterSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx);
-
-    const SignalConnectionSet& getSinks(size_t channel) const ;
-
-    std::pair<double*, size_t> processFrame();
+    void processSignalChain();
+    
     void clearBuffer();
     void updateProcessingGraph();
     void reset();
+    
+
+    bool handleConnection(const ConnectionRequest& req);
+
+    const AudioConnectionSet& getSinks(const ConnectionEndpoint& device) const ;
+    const AudioConnectionSet& getSources(const ConnectionEndpoint& device) const ;
+
+    void populateSources(const ConnectionEndpoint& device, double* data, size_t size);
+    
+private:
+    bool connect(AudioIO* from, size_t fromIndex, AudioIO* to, size_t toIndex);
+    bool disconnect(AudioIO* from, size_t fromIndex, AudioIO* to, size_t toIndex);
+
+    bool registerSink(AudioIO* outbound, size_t outboundIdx, const ConnectionEndpoint& device);
+    bool unregisterSink(AudioIO* outbound, size_t outboundIdx, const ConnectionEndpoint& device);
+
+    bool registerSource(AudioIO* inbound, size_t inboundIdx, const ConnectionEndpoint& device);
+    bool unregisterSource(AudioIO* inbound, size_t inboundIdx, const ConnectionEndpoint& device);
+    
 };
 
 #endif // __SIGNAL_CONTROLLER_HPP_

@@ -19,13 +19,13 @@
 #define __COMPONENT_MANAGER_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "core/AudioSignalComponent.hpp"
-#include "core/AudioBufferComponent.hpp"
+#include "core/AudioIO.hpp"
+#include "core/BufferIO.hpp"
 #include "core/ModulatorComponent.hpp"
 #include "core/FileComponent.hpp"
 #include "core/AudioProbe.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "midi/MidiEventListener.hpp"
+#include "midi/MidiHandler.hpp"
+#include "midi/MidiListener.hpp"
 
 #include "midi/MidiController.hpp"
 
@@ -46,17 +46,17 @@ using json = nlohmann::json ;
 class ComponentManager {
 private:
     int nextID_ = 0 ;
-    std::unordered_map<ComponentId, std::unique_ptr<BaseComponent>> components_ ;
+    std::unordered_map<int, std::unique_ptr<BaseComponent>> components_ ;
     
     // "views" of different component groups
-    std::unordered_set<ComponentId> allIds_ ;
-    std::unordered_set<ComponentId> midiHandlers_ ;
-    std::unordered_set<ComponentId> midiListeners_ ;
-    std::unordered_set<ComponentId> modulators_ ;
-    std::unordered_set<ComponentId> audioSignals_ ;
-    std::unordered_set<ComponentId> audioBuffers_ ;
-    std::unordered_set<ComponentId> audioProbes_ ;
-    std::unordered_set<ComponentId> fileComponents_ ;
+    std::unordered_set<int> allIds_ ;
+    std::unordered_set<int> midiHandlers_ ;
+    std::unordered_set<int> midiListeners_ ;
+    std::unordered_set<int> modulators_ ;
+    std::unordered_set<int> audioSignals_ ;
+    std::unordered_set<int> audioBuffers_ ;
+    std::unordered_set<int> audioProbes_ ;
+    std::unordered_set<int> fileComponents_ ;
 
     explicit ComponentManager();
 
@@ -69,8 +69,8 @@ public:
     ComponentManager& operator=(ComponentManager&&) = delete ;
 
     template<ComponentType T>
-    ComponentId create([[maybe_unused]] const std::string& name, ComponentConfig_t<T> cfg) {        
-        ComponentId id = nextID_++;
+    int create([[maybe_unused]] const std::string& name, ComponentConfig_t<T> cfg) {        
+        int id = nextID_++;
         
         components_.emplace(id, std::make_unique<ComponentType_t<T>>(id, cfg));
 
@@ -95,7 +95,7 @@ public:
     }
 
     template<ComponentType T>
-    ComponentType_t<T>* get(ComponentId id) const {
+    ComponentType_t<T>* get(int id) const {
         BaseComponent* m = getRaw(id);
         if (!m) return nullptr ;
 
@@ -106,24 +106,24 @@ public:
         return nullptr ;
     }
 
-    BaseComponent* getRaw(ComponentId id) const ;
-    AudioSignalComponent* getSignalComponent(ComponentId id) const ;
-    AudioBufferComponent* getBufferComponent(ComponentId id) const ;
-    ModulatorComponent* getModulator(ComponentId id) const ;
-    MidiEventHandler* getMidiHandler(ComponentId id) const ;
-    MidiEventListener* getMidiListener(ComponentId id) const ;
-    AudioProbe* getAudioProbe(ComponentId id) const ;
-    FileComponent* getFileComponent(ComponentId id) const ;
+    BaseComponent* getRaw(int id) const ;
+    AudioIO* getSignalComponent(int id) const ;
+    BufferIO* getBufferComponent(int id) const ;
+    ModulatorComponent* getModulator(int id) const ;
+    MidiHandler* getMidiHandler(int id) const ;
+    MidiListener* getMidiListener(int id) const ;
+    AudioProbe* getAudioProbe(int id) const ;
+    FileComponent* getFileComponent(int id) const ;
 
-    const std::unordered_set<ComponentId>& getComponentIds() const ;
-    const std::unordered_set<ComponentId>& getSignalComponentIds() const ;
-    const std::unordered_set<ComponentId>& getModulatorIds() const ;
-    const std::unordered_set<ComponentId>& getMidiHandlerIds() const ;
-    const std::unordered_set<ComponentId>& getMidiListenerIds() const ;
-    const std::unordered_set<ComponentId>& getAudioProbeIds() const ;
-    const std::unordered_set<ComponentId>& getFileComponentIds() const ;
+    const std::unordered_set<int>& getints() const ;
+    const std::unordered_set<int>& getSignalints() const ;
+    const std::unordered_set<int>& getModulatorIds() const ;
+    const std::unordered_set<int>& getMidiHandlerIds() const ;
+    const std::unordered_set<int>& getMidiListenerIds() const ;
+    const std::unordered_set<int>& getAudioProbeIds() const ;
+    const std::unordered_set<int>& getFileints() const ;
 
-    void remove(ComponentId id);
+    void remove(int id);
 
     void reset();
 
@@ -137,13 +137,13 @@ public:
     // saving / loading
     json serializeComponent(BaseComponent* c) const ;
     json serializeComponents() const ;
-    void getComponentConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentConnections(int id, std::vector<ConnectionRequest>& requests) const ;
 
 private:
-    void getComponentMidiConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
-    void getComponentSignalConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
-    void getComponentModulationConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
-    void getComponentBufferConnections(ComponentId id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentMidiConnections(int id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentAudioConnections(int id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentModulationConnections(int id, std::vector<ConnectionRequest>& requests) const ;
+    void getComponentBufferConnections(int id, std::vector<ConnectionRequest>& requests) const ;
 };
 
 #endif // __COMPONENT_MANAGER_HPP_

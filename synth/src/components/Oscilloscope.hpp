@@ -32,14 +32,14 @@ private:
     double hysteresisRatio_ ;        // fraction of signal range (to ignore false triggers)
     double silenceThreshold_ ;       // min peak-to-peak to attempt trigger
     
-    std::unordered_map<ComponentId, std::vector<float>> prevWindow_ ;
-    std::unordered_map<ComponentId, double> lastTriggerPos_ ;
+    std::unordered_map<int, std::vector<float>> prevWindow_ ;
+    std::unordered_map<int, double> lastTriggerPos_ ;
 
 public:
-    Oscilloscope(ComponentId, OscilloscopeConfig cfg);
+    Oscilloscope(int, OscilloscopeConfig cfg);
     ~Oscilloscope() = default ;
     
-    void process(const double* data, size_t size, ComponentId id) override ;
+    void process(const double* data, size_t size, int id) override ;
     void onInputConnect() override ;
     void onInputDisconnect() override ;
 

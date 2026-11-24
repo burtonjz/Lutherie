@@ -18,17 +18,17 @@
 #ifndef SEQUENCER_HPP_
 #define SEQUENCER_HPP_
 
-#include "midi/MidiEventHandler.hpp"
+#include "midi/MidiHandler.hpp"
 #include "configs/SequencerConfig.hpp"
 
-class Sequencer : public MidiEventHandler {
+class Sequencer : public MidiHandler {
 private:
     float currentTime_ ;
     float lastQueriedBeat_ ;
     bool  lastStatus_ ;
 
 public:
-    Sequencer(ComponentId id, SequencerConfig cfg);
+    Sequencer(int id, SequencerConfig cfg);
 
     void onTick(float dt) override ;
     void pushToQueue(uint8_t midiNote, uint8_t velocity, bool noteOn);

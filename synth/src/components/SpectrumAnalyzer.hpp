@@ -35,10 +35,10 @@ private:
     std::vector<float> magnitudeHistory_ ;
 
 public:
-    SpectrumAnalyzer(ComponentId, SpectrumAnalyzerConfig cfg);
+    SpectrumAnalyzer(int, SpectrumAnalyzerConfig cfg);
     ~SpectrumAnalyzer();
     
-    void process(const double* data, size_t size, ComponentId id) override ;
+    void process(const double* data, size_t size, int id) override ;
     void onInputConnect() override ;
     void onInputDisconnect() override ;
 

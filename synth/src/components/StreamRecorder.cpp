@@ -19,9 +19,9 @@
 #include "params/ParameterMap.hpp"
 #include "api/StreamingApiHandler.hpp"
 
-StreamRecorder::StreamRecorder(ComponentId id, [[maybe_unused]] StreamRecorderConfig cfg):
+StreamRecorder::StreamRecorder(int id, [[maybe_unused]] StreamRecorderConfig cfg):
     BaseComponent(id, ComponentType::StreamRecorder),
-    AudioBufferComponent(0,1),
+    BufferIO(0,1),
     AudioProbe()
 {
     parameters_->add<ParameterType::RECORD>(false, false);
@@ -33,12 +33,12 @@ void StreamRecorder::onParameterChanged(ParameterType p, [[maybe_unused]] bool i
 
     collecting_ = parameters_->getParameter<ParameterType::RECORD>()->getValue();
 
-    if ( !collecting_ && AudioBufferComponent::buffers_[0].size() > 0 ){
+    if ( !collecting_ && BufferIO::buffers_[0].size() > 0 ){
         notifyDownstream(0);
     }
 }
 
-void StreamRecorder::process(const double* data, size_t size, ComponentId id){
+void StreamRecorder::process(const double* data, size_t size, int id){
     DataApiHeader header = {
         .componentId = static_cast<uint32_t>(id),
         .channel = 0
@@ -51,6 +51,6 @@ void StreamRecorder::process(const double* data, size_t size, ComponentId id){
     StreamingApiHandler::instance()->send(header, output.data(), output.size());
 
     // also stash into internal buffer
-    auto& internalBuffer = AudioBufferComponent::buffers_[0];
+    auto& internalBuffer = BufferIO::buffers_[0];
     internalBuffer.insert(internalBuffer.end(), data, data + size);
 }

@@ -18,13 +18,13 @@
 #ifndef __MODULE_OSCILLATOR_HPP_
 #define __MODULE_OSCILLATOR_HPP_
 
-#include "core/AudioSignalComponent.hpp"
+#include "core/AudioIO.hpp"
 #include "core/ModulatorComponent.hpp"
 #include "configs/OscillatorConfig.hpp"
 #include "types/Waveform.hpp"
 #include <random>
 
-class Oscillator : public AudioSignalComponent, public ModulatorComponent {
+class Oscillator : public AudioIO, public ModulatorComponent {
 private:
     double phase_ ;
     double increment_ ;
@@ -38,7 +38,7 @@ public:
         * @brief Construct a new Oscillator module
         * 
         */
-    Oscillator(ComponentId id, OscillatorConfig cfg);
+    Oscillator(int id, OscillatorConfig cfg);
 
     /**
         * @brief Construct a child oscillator module

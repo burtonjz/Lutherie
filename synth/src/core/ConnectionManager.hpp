@@ -18,8 +18,26 @@
 #ifndef CONNECTION_MANAGER_HPP_
 #define CONNECTION_MANAGER_HPP_
 
-class ConnectionManager {
+// forward declarations
+class ConnectionRequest ;
 
+// THINGS TO CAPTURE IN HERE
+// modulation:
+// std::set<ModulationTarget>& getModulationTargets(){
+//         return modulated_ ;
+//     }
+// 
+class ConnectionManager {
+private:
+
+public:
+    // bool handleConnection(const ConnectionRequest& connection);
+    // byId(int id, DeviceType typ);
+    // bool handleMidiConnection(ConnectionRequest connection);
+    // std::vector<ConnectionRequest> getComponentConnections(int id) const ;
+    // void getComponentConnections(int id, std::vector<ConnectionRequest>& requests) const ;
+    // bool handleModulationConnection(ConnectionRequest request);
+    // bool handleBufferConnection(ConnectionRequest request);
 };
 
 #endif // CONNECTION_MANAGER_HPP_

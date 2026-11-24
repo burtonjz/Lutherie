@@ -1057,10 +1057,10 @@ json ControlApiHandler::getBufferData(const json& request){
         ));
     }
 
-    if ( channel >= c->getNumOutputs() ){
+    if ( channel >= c->numOutputs() ){
         throw std::runtime_error(fmt::format(
             "Invalid channel number for buffer component. Got {}, but only has {} channels",
-            channel, c->getNumOutputs()
+            channel, c->numOutputs()
         ));
     }
 

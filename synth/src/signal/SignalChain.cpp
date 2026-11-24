@@ -16,72 +16,120 @@
  */
 
 #include "signal/SignalChain.hpp"
+#include "core/AudioDevice.hpp"
+#include "types/ConnectionEndpoint.hpp"
+#include <stdexcept>
 
 SignalChain::SignalChain():
     sinks_()
 {}
 
-void SignalChain::allocateOutputChannels(size_t numChannels){
-    SPDLOG_DEBUG("allocating {} peripheral output channels", numChannels);
-    for ( size_t i = 0 ; i < numChannels ; ++i ){
-        if ( !sinks_.contains(i) ){
-            sinks_[i];
-        }
-    }
-}
-
-const std::vector<AudioSignalComponent*>& SignalChain::getSignalComponentChain() const {
+const std::vector<AudioIO*>& SignalChain::getSignalComponentChain() const {
     return topologicalOrder_ ;
 }
 
-const SignalConnectionSet& SignalChain::getSinks(size_t channel) const {
-    if ( !sinks_.contains(channel) ){
-        SPDLOG_ERROR("channel {} requested but outbound nodes only has {} allocated", channel, sinks_.size());
+const AudioConnectionSet& SignalChain::getSinks(const ConnectionEndpoint& device) const {
+    if ( !sinks_.contains(device) ){
+        auto msg = fmt::format("device endpoint '{}' is not registered in signal chain.", device.toString());
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
-    assert(sinks_.contains(channel));
-    return sinks_.at(channel);
+    return sinks_.at(device);
 }
 
-void SignalChain::addSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx){
-    if ( !outbound ){
-        SPDLOG_WARN("Not adding a nullptr as a sink.");
-        return ;
+bool SignalChain::addSink(AudioIO* component, size_t channel, const ConnectionEndpoint& device){
+    if ( !component ){
+        SPDLOG_WARN("Ignoring nullptr component.");
+        return false ;
     }
-    if ( outboundIdx > outbound->getNumOutputs() ){
-        SPDLOG_WARN("outbound index out of bounds for component. Cannot add requested sink.");
-        return ;
+    if ( channel > component->numOutputs() ){
+        SPDLOG_ERROR("channel out of bounds for component.");
+        return false ;
     }
     
-    sinks_[inboundIdx].insert({outbound, outboundIdx});
+    sinks_[device].insert({component, channel});
+    return true ;
 }
 
-void SignalChain::removeSink(AudioSignalComponent* outbound, size_t outboundIdx, size_t inboundIdx){
-    if ( !outbound || outboundIdx > outbound->getNumOutputs() ){
-        SPDLOG_WARN("outbound index out of bounds for specified component. Cannot remove sink.");
-        return ; 
+bool SignalChain::removeSink(AudioIO* component, size_t channel, const ConnectionEndpoint& device){
+    if ( !component ){
+        SPDLOG_WARN("Ignoring nullptr component.");
+        return false ;
+    }
+    if ( channel > component->numOutputs() ){
+        SPDLOG_ERROR("channel out of bounds for component.");
+        return false ;
     }
 
-    sinks_[inboundIdx].erase({outbound, outboundIdx});
+    sinks_[device].erase({component, channel});
+    return true ;
 }
 
-void SignalChain::addPseudoSink(AudioSignalComponent* component, size_t channel){
-    if ( !component || channel > component->getNumInputs() ){
-        SPDLOG_WARN("inbound index out of bounds for specified component. Cannot remove pseudo-sink.");
-        return ;
+bool SignalChain::addPseudoSink(AudioIO* component, size_t channel){
+    if ( !component ){
+        SPDLOG_WARN("Ignoring nullptr component.");
+        return false ;
+    }
+    if ( channel > component->numOutputs() ){
+        SPDLOG_ERROR("channel out of bounds for component.");
+        return false ;
     }
 
-    SPDLOG_DEBUG("component with id {} added as pseudo-sink.", component->getId().value());
+    SPDLOG_DEBUG("component with id {} added as pseudo-sink.", component->getId());
     pseudoSinks_.insert({component, channel});
+    return true ;
 }
 
-void SignalChain::removePseudoSink(AudioSignalComponent* component, size_t channel){
-    if ( !component || channel > component->getNumInputs() ){
-        SPDLOG_WARN("inbound index out of bounds for specified component. Cannot add pseudo-sink.");
-        return ;
+bool SignalChain::removePseudoSink(AudioIO* component, size_t channel){
+    if ( !component ){
+        SPDLOG_WARN("Ignoring nullptr component.");
+        return false ;
+    }
+    if ( channel > component->numOutputs() ){
+        SPDLOG_ERROR("channel out of bounds for component.");
+        return false ;
     }
 
-    SPDLOG_DEBUG("component with id {} is no longer a pseudo-sink.", component->getId().value());
+    SPDLOG_DEBUG("component with id {} is no longer a pseudo-sink.", component->getId());
     pseudoSinks_.erase({component, channel});
+    return true ;
+}
+
+const AudioConnectionSet& SignalChain::getSources(const ConnectionEndpoint& device) const {
+    if ( !sources_.contains(device) ){
+        auto msg = fmt::format("device endpoint '{}' is not registered in signal chain.", device.toString());
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+    return sources_.at(device);
+}
+
+bool SignalChain::addSource(AudioIO* component, size_t channel, const ConnectionEndpoint& device){
+    if ( !component ){
+        SPDLOG_WARN("Ignoring nullptr component.");
+        return false ;
+    }
+    if ( channel > component->numOutputs() ){
+        SPDLOG_ERROR("channel out of bounds for component.");
+        return false ;
+    }
+    
+    sources_[device].insert({component, channel});
+    return true ;
+}
+
+bool SignalChain::removeSource(AudioIO* component, size_t channel, const ConnectionEndpoint& device){
+    if ( !component ){
+        SPDLOG_WARN("Ignoring nullptr component.");
+        return false ;
+    }
+    if ( channel > component->numOutputs() ){
+        SPDLOG_ERROR("channel out of bounds for component.");
+        return false ;
+    }
+
+    sources_[device].erase({component, channel});
+    return true ;
 }
 
 void SignalChain::calculateTopologicalOrder(){
@@ -113,20 +161,20 @@ void SignalChain::reset(){
 }
 
 void SignalChain::topologicalSort(
-    AudioSignalComponent* module, 
-    std::unordered_set<AudioSignalComponent*>& visited,
-    std::vector<AudioSignalComponent*>& result    
+    AudioIO* module, 
+    std::unordered_set<AudioIO*>& visited,
+    std::vector<AudioIO*>& result    
 ){
     if ( visited.count(module) ) return ;
     visited.insert(module);
 
     // Process stateful modulators in signal chain (e.g., Oscillator)
-    for ( AudioSignalComponent* m : module->getModulationInputs() ){
+    for ( AudioIO* m : module->getModulationInputs() ){
         topologicalSort(m, visited, result);
     }
 
     // Now process normal signal chain
-    for ( size_t i = 0; i < module->getNumInputs(); ++i ){
+    for ( size_t i = 0; i < module->numInputs(); ++i ){
         for ( const auto& conn : module->getInputs(i)){
             topologicalSort(conn.component, visited, result);
         }

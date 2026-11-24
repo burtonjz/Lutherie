@@ -21,7 +21,7 @@
 #include <kissfft/kiss_fft.h>
 #include <spdlog/spdlog.h>
 
-SpectrumAnalyzer::SpectrumAnalyzer(ComponentId id, [[maybe_unused]] SpectrumAnalyzerConfig cfg):
+SpectrumAnalyzer::SpectrumAnalyzer(int id, [[maybe_unused]] SpectrumAnalyzerConfig cfg):
     BaseComponent(id, ComponentType::SpectrumAnalyzer),
     AudioProbe(),
     fftSize_(Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value()),
@@ -53,7 +53,7 @@ void SpectrumAnalyzer::onInputDisconnect(){
 }
 
 
-void SpectrumAnalyzer::process(const double* data, size_t size, ComponentId id){
+void SpectrumAnalyzer::process(const double* data, size_t size, int id){
     if ( !fftConfig_ ) return ;
 
     for ( size_t i = 0 ; i < size ; ++i ){
