@@ -16,28 +16,39 @@
  */
 
 #include "components/LinearFader.hpp"
-#include "core/BaseComponent.hpp"
-#include "types/ComponentType.hpp"
-#include "params/ModulationParameter.hpp"
-#include "params/ParameterMap.hpp"
-#include "types/ParameterType.hpp"
 
-const ComponentType LinearFader::staticType = ComponentType::LinearFader ;
+#include "capabilities/MidiIO.hpp"     // IWYU pragma: keep
+#include "capabilities/Modulator.hpp"  // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "midi/MidiNote.hpp"
 
-LinearFader::LinearFader(ComponentId id, LinearFaderConfig cfg):
-    BaseComponent(id, ComponentType::LinearFader),
-    ModulatorComponent()
+LinearFader::LinearFader(int id, LinearFaderConfig cfg):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::LinearFader),
+    ModulationSource(
+        ModulatorRange::UNIPOLAR, {
+            ModulationParameter::MIDI_NOTE, 
+            ModulationParameter::INITIAL_VALUE
+    }),
+    MidiProcessor(),
+    attack_(createSlotAccessor<ParameterType::ATTACK>()),
+    release_(createSlotAccessor<ParameterType::RELEASE>())
 {
-    parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
-    parameters_->add<ParameterType::RELEASE>(cfg.release, true);
+    addCapability<Capability::MidiIO>(*this, 1, 1);
+    addCapability<Capability::Modulator>(*this);
 
-    expectedParams_ = {
-        ModulationParameter::MIDI_NOTE, 
-        ModulationParameter::INITIAL_VALUE
-    };
+    auto& params = addCapability<Capability::Parameters>();
+
+    params.addUnitParameter(ParameterType::ATTACK);
+    params.addUnitParameter(ParameterType::RELEASE);
+
+    params.bindSlot<ParameterType::ATTACK>(attack_, 0);
+    params.bindSlot<ParameterType::RELEASE>(release_, 0);
+
+    params.freezeParameterCreation();
 }
 
-double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mData) const {
+double LinearFader::modulate(double, ModulationData* mData) const {
     double output = 0.0 ;
 
     // check required data / set to defaults
@@ -51,35 +62,48 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
         mData->set(ModulationParameter::LAST_OUTPUT, 0.0f );    
     }
     
-    uint8_t midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
-    auto anote = notes_[midiNote] ;
-    if ( !isNoteActive(midiNote) ) return output ;
+    uint8_t midiValue = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE));
+    if ( !noteActive(midiValue) ) return output ;
+    const MidiNote& midiNote = note(midiValue);
 
-    float start_level = mData->get(ModulationParameter::INITIAL_VALUE) ;
+    float startLevel = mData->get(ModulationParameter::INITIAL_VALUE) ;
     
-    if ( anote.note.getStatus() ){
-        // note is pressed
-        float attack = parameters_->getParameter<ParameterType::ATTACK>()->getInstantaneousValue() ;
-        if ( anote.time <= attack ) {
-            output = start_level + (1.0f - start_level) * (anote.time / attack) ;
-        } else {
-            output = 1.0f ; // full modulation
-        }
-    } else {
-        // note is released
-        float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
-        if ( anote.time >= release ){
-            output = 0.0 ;
-        } else {
-            output =  start_level * (1.0f - ( anote.time / release )); 
-        }
+    switch( midiNote.status() ){
+    case NoteStatus::PRESSED:
+    case NoteStatus::REPRESSED:
+        output = handleAttack(startLevel, midiNote.time());
+        break ;
+    case NoteStatus::RELEASED:
+        output = handleRelease(startLevel, midiNote.time());
+        break ;
+    default:
+        break ;  
     }
 
     mData->set(ModulationParameter::LAST_OUTPUT, output) ;
     return output ;
 }
 
-bool LinearFader::shouldKillNote(const ActiveNote& note) const {
-    float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
-    return ( !note.note.getStatus() && note.time > release ) ;
+double LinearFader::handleAttack(float startLevel, float time) const {
+    float attack = attack_.modulatedValue();
+    if ( time <= attack ) {
+        return startLevel + (1.0f - startLevel) * (time / attack) ;
+    } 
+
+    return 1.0 ;
+}
+
+double LinearFader::handleRelease(float startLevel, float time) const {
+    // note is released
+    float release = release_.modulatedValue();
+    if ( time >= release ){
+        return 0.0 ;
+    } 
+    
+    return  startLevel * (1.0f - ( time / release )); 
+}
+
+bool LinearFader::shouldKillNote(const MidiNote& note, size_t) const {
+    float release = release_.modulatedValue();
+    return note.time() > release ;
 }

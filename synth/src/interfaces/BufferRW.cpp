@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "interfaces/BufferProcessor.hpp"
+#include "BufferRW.hpp"
 #include "capabilities/BufferIO.hpp"
 
 BufferAccessor::BufferAccessor(BufferIO& io, size_t changed):
@@ -28,19 +28,19 @@ size_t BufferAccessor::changedInput() const {
 }
 
 size_t BufferAccessor::numInputs() const {
-    return io_.getNumInputs();
+    return io_.numInputs();
 }
 
 size_t BufferAccessor::numOutputs() const {
-    return io_.getNumOutputs();
+    return io_.numOutputs();
 }
 
 std::span<const BufferRead> BufferAccessor::inputs(size_t channel) const {
-    return io_.getInputView(channel);
+    return io_.inputView(channel);
 }
 
 BufferResize BufferAccessor::output(size_t channel) const {
-    return io_.getOutputResize(channel);
+    return io_.outputResize(channel);
 }
 
 void BufferAccessor::setStatus(size_t channel, BufferStatus s){

@@ -18,20 +18,23 @@
 #include "components/Multiply.hpp"
 #include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
 #include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 #include "types/ComponentType.hpp"
 
 Multiply::Multiply(int id, MultiplyConfig):
-    Node(id, NodeType::COMPONENT)
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::Multiply),
+    AudioProcessor(),
+    scalar_(createSlotAccessor<ParameterType::SCALAR>())
 {
     addCapability<Capability::AudioIO>(*this, 1, 1);
     
     auto& params = addCapability<Capability::Parameters>();
     params.addUnitParameter(ParameterConfig(ParameterType::SCALAR));
     params.bindSlot<ParameterType::SCALAR>(scalar_, 0);
-}
 
-ComponentType Multiply::componentType() const { 
-    return ComponentType::Multiply ; 
+    params.freezeParameterCreation();
 }
 
 void Multiply::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {

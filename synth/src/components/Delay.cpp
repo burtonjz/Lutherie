@@ -18,13 +18,18 @@
 #include "components/Delay.hpp"
 #include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
 #include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterConfig.hpp"
 
 Delay::Delay(int id, DelayConfig cfg):
     Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::Delay),
+    AudioProcessor(),
     maxDelaySeconds_(cfg.max_delay_sec),
-    buffer_(0)
+    buffer_(0),
+    delay_(createSlotAccessor<ParameterType::DELAY>())
 {
     addCapability<Capability::AudioIO>(*this, 1, 1);
     
@@ -32,6 +37,8 @@ Delay::Delay(int id, DelayConfig cfg):
 
     params.addUnitParameter(ParameterConfig(ParameterType::DELAY));
     params.bindSlot<ParameterType::DELAY>(delay_, 0);
+
+    params.freezeParameterCreation();
 }
 
 void Delay::onPrepare(AudioContext ctx){
@@ -44,10 +51,6 @@ void Delay::onPrepare(AudioContext ctx){
     );
     
     buffer_.setCapacity(static_cast<size_t>(size));
-}
-
-ComponentType Delay::componentType() const {
-    return ComponentType::Delay ;
 }
 
 void Delay::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {

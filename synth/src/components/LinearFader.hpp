@@ -18,27 +18,41 @@
 #ifndef __MODULATOR_LINEAR_FADER_HPP_
 #define __MODULATOR_LINEAR_FADER_HPP_
 
-#include "core/BaseComponent.hpp"
-#include "core/ModulatorComponent.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "types/ComponentType.hpp"
+#include "core/Node.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/MidiProcessor.hpp"
+#include "interfaces/ModulationSource.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "configs/LinearFaderConfig.hpp"
 
-class LinearFader : public ModulatorComponent, public MidiEventHandler { 
+class LinearFader : 
+    public Node,
+    public ComponentInfo,
+    public ModulationSource,
+    public MidiProcessor 
+{
 private:
-    KeyMap pending_ ; // MidiModulator holds on to release notes until their release is complete, or the note is pressed again
+    SlotAccessor<ParameterType::ATTACK> attack_ ;
+    SlotAccessor<ParameterType::RELEASE> release_ ;
      
 public:
     const static ComponentType staticType ;
 
-    LinearFader(ComponentId id, LinearFaderConfig cfg);
+    LinearFader(int id, LinearFaderConfig cfg);
+
+    LinearFader(const LinearFader&) = delete ;
+    LinearFader& operator=(const LinearFader&) = delete ;
+    LinearFader(LinearFader&&) = delete ;
+    LinearFader& operator=(LinearFader&&) = delete ;
     
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override;
-    ModulatorRange getModulatorRange() const override { return ModulatorRange::UNIPOLAR ; }
-    
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
+    // MODULATION SOURCE
+    double modulate(double value, ModulationData* mData) const override ;
+
+    // MIDI PROCESSOR
+    virtual bool shouldKillNote(const MidiNote& note, size_t ch = 0) const override ;
+
+    double handleAttack(float startLevel, float time) const ;
+    double handleRelease(float startLevel, float time) const ;
 };
 
 #endif // __MODULATOR_LINEAR_FADER_HPP_

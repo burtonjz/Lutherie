@@ -65,11 +65,11 @@ public:
     void addOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel);
     void removeOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChannel);
 
-    void addObserver(AudioObserver* observer, size_t channel);
-    void removeObserver(AudioObserver* observer, size_t channel);
+    void addObserver(AudioObserver* obs, size_t channel);
+    void removeObserver(AudioObserver* obs, size_t channel);
 
-    size_t getNumInputs() const ;
-    size_t getNumOutputs() const ;
+    size_t numInputs() const ;
+    size_t numOutputs() const ;
 
     double getCurrentSample(size_t channel) const ;
     double getLastSample(size_t channel) const ;

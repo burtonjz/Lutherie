@@ -35,9 +35,9 @@ class BufferIO :
     public BufferTrigger
 {
 private:
-    enum class Hook { Connected, Disconnected, Updated};
+    enum class Event { Connected, Disconnected, Updated};
 
-    BufferProcessor& processor_ ;
+    BufferProcessor* processor_ ;
     std::vector<BufferObserver*> observers_ ;
 
     size_t numInputs_ ;
@@ -55,8 +55,14 @@ private:
 
     double sampleRate_ ;
 
+    BufferIO(BufferProcessor* processor, size_t inputs, size_t outputs);
+
 public:
+    // constructor for standard object. processor as reference to force valid
     BufferIO(BufferProcessor& processor, size_t inputs, size_t outputs);
+
+    // constructor for special-case input-only BufferIO
+    BufferIO(size_t inputs);
 
     void prepare(AudioContext audio);
 
@@ -69,11 +75,12 @@ public:
     void addOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
     void removeOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel);
 
-    void addObserver(BufferObserver* observer);
-    void removeObserver(BufferObserver* observer);
+    void addObserver(BufferObserver* obs);
+    void removeObserver(BufferObserver* obs);
+    void bindObserver(BufferObserver* obs);
 
-    size_t getNumInputs() const ;
-    size_t getNumOutputs() const ;
+    size_t numInputs() const ;
+    size_t numOutputs() const ;
 
     FileStatus exportBuffer(std::string savePath);
 
@@ -81,24 +88,27 @@ public:
 
 private:
     friend class BufferAccessor ;
+    friend class BufferObserver ;
 
     // start friend methods
-    std::span<const BufferRead> getInputView(size_t channel) const ;
+    std::span<const BufferRead> inputView(size_t channel) const ;
     void rebuildInputViews(size_t channel);
 
-    const BufferRead getOutputView(size_t channel) const ;
+    BufferRead outputView(size_t channel) const ;
     void rebuildOutputView(size_t channel);
 
-    BufferResize getOutputResize(size_t channel);
+    BufferResize outputResize(size_t channel);
     // end friend methods
 
-    void process(Hook h, size_t changedInput);
-
+    void process(Event e, size_t changedInput);
+    void notifyObservers(Event e, size_t changedInput) const ;
+    
     void publishOutputs();
     void notifyDownstream(); 
+    
 
-    size_t getMaxBufferFrames() const ;
-    std::vector<double> getInterleavedBuffers(const SF_INFO& info) const ;
+    size_t maxBufferFrames() const ;
+    std::vector<double> interleavedBuffers(const SF_INFO& info) const ;
 
     void setStatus(size_t channel, BufferStatus s);
     void setAllStatus(BufferStatus s);

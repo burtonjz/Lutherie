@@ -86,39 +86,39 @@ void AudioIO::removeOutputEdge(AudioIO* edge, size_t edgeChannel, size_t toChann
     outputEdges_.at(toChannel).erase({edge, edgeChannel});
 }
 
-void AudioIO::addObserver(AudioObserver* observer, size_t channel){
-    if ( !observer ){
-        SPDLOG_ERROR("cannot add nullptr observer.");
+void AudioIO::addObserver(AudioObserver* obs, size_t channel){
+    if ( !obs ){
+        SPDLOG_ERROR("cannot add nullptr obs.");
         return ;
     }
     auto& observers = observers_[channel];
-    auto it = std::find(observers.begin(), observers.end(), observer);
+    auto it = std::find(observers.begin(), observers.end(), obs);
     if ( it != observers.end() ){
-        SPDLOG_ERROR("observer already added.");
+        SPDLOG_ERROR("obs already added.");
         return ;
     }
-    observers.push_back(observer);
+    observers.push_back(obs);
 }
 
-void AudioIO::removeObserver(AudioObserver* observer, size_t channel){
-    if ( !observer ){
-        SPDLOG_ERROR("cannot remove nullptr observer.");
+void AudioIO::removeObserver(AudioObserver* obs, size_t channel){
+    if ( !obs ){
+        SPDLOG_ERROR("cannot remove nullptr obs.");
         return ;
     }
     auto& observers = observers_[channel];
-    auto it = std::find(observers.begin(), observers.end(), observer);
+    auto it = std::find(observers.begin(), observers.end(), obs);
     if ( it == observers.end() ){
-        SPDLOG_ERROR("observer not currently added. Nothing to do.");
+        SPDLOG_ERROR("obs not currently added. Nothing to do.");
         return ;
     }
     observers.erase(it);
 }
 
-size_t AudioIO::getNumInputs() const {
+size_t AudioIO::numInputs() const {
     return numInputs_ ;
 }
 
-size_t AudioIO::getNumOutputs() const {
+size_t AudioIO::numOutputs() const {
     return numOutputs_ ;
 }
 

@@ -81,6 +81,10 @@ double MidiNote::frequency() const {
     return frequency(note_);
 }
 
+float MidiNote::time() const {
+    return time_ ;
+}
+
 void MidiNote::resetTime(){
     time_ = 0.0f ;
 }

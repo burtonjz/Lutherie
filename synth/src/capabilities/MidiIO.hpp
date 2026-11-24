@@ -31,7 +31,6 @@ class MidiObserver ;
 
 class MidiIO : public Capability {
 private:
-    static constexpr uint8_t INVALID_NOTE = 255 ;
     using NoteMap = std::array<MidiNote,128> ;
 
     MidiProcessor& processor_ ;
@@ -46,8 +45,8 @@ private:
     std::vector<std::vector<MidiObserver*>> observers_ ;
     
 
-    uint8_t lastPressedNote_ = INVALID_NOTE ;
-    uint8_t lastReleasedNote_ = INVALID_NOTE ;
+    std::vector<uint8_t> lastNotePressed_ ;
+    std::vector<uint8_t> lastNoteReleased_ ;
     
 public:
     MidiIO(MidiProcessor& processor, size_t inputs, size_t outputs);
@@ -77,10 +76,10 @@ public:
 
 private:
     void reset();
-
     void setActive(uint8_t note, size_t ch = 0);
-
     void processEvent(MidiNote note, size_t ch = 0);
+
+    friend MidiProcessor ; // just for view wrappers
     
 };
 

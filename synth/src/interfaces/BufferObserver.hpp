@@ -20,9 +20,30 @@
 
 #include "interfaces/BufferRW.hpp"
 
-struct BufferObserver {
-    virtual void onOutputChannelReady(BufferRead output, size_t channel) = 0 ;
+// forward declarations
+class BufferIO ;
+
+class BufferObserver {
+public:
+    // public event handles
+    virtual void onInputConnected(size_t channel){ onInputUpdated(channel); }
+    virtual void onInputDisconnected(size_t channel){ onInputUpdated(channel); }
+    virtual void onInputUpdated(size_t /*channel*/){}
+
+    virtual void onOutputChannelReady(size_t /*channel*/){};
+    
     virtual ~BufferObserver() = default ;
+
+protected:
+    BufferObserver();
+
+    // only valid if BufferObserver is bound to capability
+    std::span<const BufferRead> viewInputs(size_t channel) const ;
+
+private:
+    friend BufferIO ;
+    BufferIO* io_ ;
+    void bind(BufferIO* io);
 };
 
 #endif // BUFFER_OBSERVER_HPP_

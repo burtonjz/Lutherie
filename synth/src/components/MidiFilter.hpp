@@ -18,16 +18,26 @@
 #ifndef __MIDI_FILTER_HPP_
 #define __MIDI_FILTER_HPP_
 
+#include "core/Node.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/MidiProcessor.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "configs/MidiFilterConfig.hpp"
-#include "midi/MidiEventHandler.hpp"
 
-class MidiFilter : public MidiEventHandler {
-protected:
-    void onKeyPressed(const ActiveNote* note, bool rePressed = false) override ;
-    void onKeyReleased(ActiveNote anote) override ;
+class MidiFilter :
+    public Node,
+    public ComponentInfo,
+    public MidiProcessor
+{
+private:
+    ParameterAccessor midiValue_ ;
+
+    // MIDI PROCESSOR
+    void handleKeyPressed(MidiNote note, size_t ch = 0) override ;
+    void handleKeyReleased(MidiNote note, size_t ch = 0) override ;
 
 public:
-    MidiFilter(ComponentId id, MidiFilterConfig cfg);
+    MidiFilter(int id, MidiFilterConfig cfg);
 
 private:
     bool passNote(uint8_t midi) const ;

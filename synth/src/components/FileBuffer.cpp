@@ -25,16 +25,15 @@
 
 FileBuffer::FileBuffer(int id, FileBufferConfig):
     Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::FileBuffer),
+    FileListener(),
+    BufferProcessor(),
     sampleRate_(0)
 {
     auto* buf = &addCapability<Capability::BufferIO>(*this, 0, 2);
     trigger_ = buf ;
 
     addCapability<Capability::File>(this);
-}
-
-ComponentType FileBuffer::componentType() const {
-    return ComponentType::FileBuffer ;
 }
 
 FileStatus FileBuffer::onPathSet(const std::filesystem::path& path){

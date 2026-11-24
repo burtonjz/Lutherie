@@ -23,7 +23,18 @@
 class ComponentInfo {
 public:
     virtual ~ComponentInfo() = default ;
-    virtual ComponentType componentType() const = 0 ;
+    
+    ComponentType componentType() const {
+        return typ_ ;
+    }
+
+protected:
+    ComponentInfo(ComponentType typ):
+        typ_(typ)
+    {}
+
+private:
+    ComponentType typ_ ;
 };
 
 #endif // COMPONENT_INFO_HPP_

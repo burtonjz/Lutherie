@@ -18,19 +18,27 @@
 #ifndef BUFFER_REVERSER_HPP_
 #define BUFFER_REVERSER_HPP_
 
-#include "core/AudioBufferComponent.hpp"
 #include "configs/BufferReverserConfig.hpp"
+#include "core/Node.hpp"
+#include "interfaces/BufferProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
 
-class BufferReverser : public AudioBufferComponent {
-private:
+class BufferReverser : 
+    public Node,
+    public ComponentInfo,
+    public BufferProcessor
+{
     
 public:
-    BufferReverser(ComponentId id, BufferReverserConfig cfg);
+    BufferReverser(int id, BufferReverserConfig cfg);
+
+    BufferReverser(const BufferReverser&) = delete ;
+    BufferReverser& operator=(const BufferReverser&) = delete ;
+    BufferReverser(BufferReverser&&) = delete ;
+    BufferReverser& operator=(BufferReverser&&) = delete ;
 
 protected:
-    void onInputConnect() override ;
-    void onInputDisconnect() override ;
-    void onInputUpdated() override ;
+    void process(BufferAccessor& accessor) override ;
 
 };
 

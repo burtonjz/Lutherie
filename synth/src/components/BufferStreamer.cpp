@@ -16,23 +16,44 @@
  */
 
 #include "components/BufferStreamer.hpp"
-#include "params/ParameterMap.hpp"
 
-BufferStreamer::BufferStreamer(ComponentId id, [[maybe_unused]] BufferStreamerConfig cfg):
-    BaseComponent(id, ComponentType::BufferStreamer),
-    AudioBufferComponent(1,0),
-    AudioSignalComponent(0,1),
-    bufferPos_(0.0)
+#include "capabilities/BufferIO.hpp"   // IWYU pragma: keep
+#include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "interfaces/ParameterAccessor.hpp"
+
+BufferStreamer::BufferStreamer(int id, [[maybe_unused]] BufferStreamerConfig cfg):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::BufferStreamer),
+    BufferObserver(),
+    AudioProcessor(),
+    MidiObserver(),
+    ParameterObserver(),
+    status_(createSlotAccessor<ParameterType::STATUS>()),
+    loop_(createSlotAccessor<ParameterType::LOOP>()),
+    playbackRate_(createSlotAccessor<ParameterType::PLAYBACK_RATE>())
 {
-    parameters_->add<ParameterType::STATUS>(true, false);
-    parameters_->add<ParameterType::LOOP>(false, false);
-    parameters_->add<ParameterType::PLAYBACK_RATE>(cfg.playback,true);
-    parameters_->getParameter(ParameterType::STATUS)->addListener(this);
+    auto& buf = addCapability<Capability::BufferIO>(1);
+    buf.addObserver(this);
+    buf.bindObserver(this);
+
+    addCapability<Capability::AudioIO>(*this, 0, 1);
+
+    auto& params = addCapability<Capability::Parameters>();
+
+    params.bindSlot<ParameterType::STATUS>(status_, 0);
+    params.bindSlot<ParameterType::LOOP>(loop_, 0);
+    params.bindSlot<ParameterType::PLAYBACK_RATE>(playbackRate_, 0);
+    params.observe(ParameterType::STATUS);
+
+    params.freezeParameterCreation();
 }
 
-void BufferStreamer::calculateSample(){
-    if ( !parameters_->getParameter<ParameterType::STATUS>()->getValue() ){
-        setBufferValue(0, 0);
+// AUDIO PROCESSOR
+void BufferStreamer::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {
+    BufferWrite output = accessor.output(0);
+    if ( !status_.value() ){
+        output[frame] = 0 ;
         return ;
     }
 
@@ -48,20 +69,19 @@ void BufferStreamer::calculateSample(){
 
     // aggregate buffer inputs
     double value = 0 ;
-    bool bufferExceedsInputs = true ;
-    for ( const auto& c : AudioBufferComponent::getInputs(0) ){
-        if ( !c.component ) continue ;
-        const auto& buf = c.component->getBuffer(c.index);
-        if ( idx >= buf.size() ) continue ;
-        bufferExceedsInputs = false ;
+    bool exceedsAllInputs = true ;
+    bool midiTriggerMode = numMidiConnections() > 0 ;
+    for ( const auto& inp : viewInputs(0) ){
+        size_t size = inp.size();
+        if ( idx >= size ) continue ;
         
-        size_t size = buf.size();
-
+        exceedsAllInputs = false ;
+        
         // clamp samples
-        double y0 = buf[ idx == 0 ? 0 : idx - 1];
-        double y1 = buf[idx];
-        double y2 = buf[(idx + 1 < size) ? idx + 1 : size - 1];
-        double y3 = buf[(idx + 2 < size) ? idx + 2 : size - 1];
+        double y0 = inp[idx == 0 ? 0 : idx - 1];
+        double y1 = inp[idx];
+        double y2 = inp[(idx + 1 < size) ? idx + 1 : size - 1];
+        double y3 = inp[(idx + 2 < size) ? idx + 2 : size - 1];
 
         // basis matrix, expanded and regrouped by power of frac
         // (which allows us to avoid pow costs)
@@ -73,47 +93,45 @@ void BufferStreamer::calculateSample(){
         // Horner's method to optimize polynomial evaluation
         // c3 * frac^3 + c2 * frac^2 + c1 * frac + c0 ;
         double val = ((c3 * frac + c2) * frac + c1) * frac + c0 ;
-        if ( midiTriggerMode_ ){
+        
+        // factor in midi velocity (when in midi mode)
+        if ( midiTriggerMode ){
             val *= midiVelocity_ ;
         }
         value +=  val ;
     }
-    setBufferValue(0, value);
+    
+    output[frame] = value ;
 
     if ( 
-        bufferExceedsInputs && !midiTriggerMode_ &&
-        parameters_->getParameter<ParameterType::LOOP>()->getValue()
+        exceedsAllInputs && 
+        !midiTriggerMode &&
+        loop_.modulatedValue()
     ){
-        bufferPos_ = 0.0 ;    
-    } else {
-        double rate = parameters_->getParameter<ParameterType::PLAYBACK_RATE>()->getInstantaneousValue();
+        bufferPos_ = 0.0 ; 
+        return ;   
+    } 
+    
+    if ( !exceedsAllInputs ){
+        double rate = playbackRate_.modulatedValue();
         bufferPos_ += rate ;
     }
 }
 
-void BufferStreamer::onParameterChanged([[maybe_unused]] ParameterType p, [[maybe_unused]] bool isCollection){
-    if ( parameters_->getParameter<ParameterType::STATUS>()->getValue() && !midiTriggerMode_ ){
+void BufferStreamer::onKeyPressed(const MidiNote& note){
+    bufferPos_ = 0.0 ; // reset regardless of which key
+    midiVelocity_ = note.velocity() / 127.0 ; // keep track of velocity
+    // just let the full buffer play out on press, no need to kill it on release
+}
+
+void BufferStreamer::onParameterChanged(ParameterType, uint16_t){
+    // only listening to status
+    // if status toggles true (and we aren't in midi mode), reset position
+    if ( status_.value() && numMidiConnections() == 0 ){
         bufferPos_ = 0.0 ;
     }
 }
 
-void BufferStreamer::onKeyPressed([[maybe_unused]] const ActiveNote* note,[[maybe_unused]] bool repress){
-    // irrespective of which key, reset
-    bufferPos_ = 0.0 ;
-    midiVelocity_ = note->note.getMidiVelocity() / 127.0 ;
-}
-
-void BufferStreamer::onHandlerAdded(){
-    midiTriggerMode_ = true ;
-}
-
-void BufferStreamer::onHandlerRemoved(){
-    if ( getNumHandlers() == 0 ){
-        midiTriggerMode_ = false ;
-        bufferPos_ = 0.0 ;
-    }
-}
-
-void BufferStreamer::onInputUpdated(){
+void BufferStreamer::onInputUpdated(size_t channel){
     bufferPos_ = 0.0 ;
 }

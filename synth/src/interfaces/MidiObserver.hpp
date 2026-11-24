@@ -19,15 +19,41 @@
 #define MIDI_OBSERVER_HPP_
 
 #include "midi/MidiNote.hpp"
+#include <cstddef>
 
 class MidiObserver {
 public:
-    void onKeyEvent(const MidiNote& note);
+    void onKeyEvent(const MidiNote& note){
+        switch(note.status()){
+        case NoteStatus::PRESSED:
+        case NoteStatus::REPRESSED:
+            onKeyPressed(note);
+            break ;
+        case NoteStatus::RELEASED:
+            onKeyReleased(note);
+            break ;
+        case NoteStatus::OFF:
+            onKeyOff(note);
+            break ;
+        default:
+            break ;
+        }
+    }
     
+    size_t numMidiConnections() const {
+        return numConnections_ ;
+    }
+
     virtual void onKeyPressed(const MidiNote&){} 
     virtual void onKeyReleased(const MidiNote&){}
-    virtual void onKeyOff(MidiNote){}
+    virtual void onKeyOff(const MidiNote&){}
     virtual void onPitchbend(uint16_t /*pitchbend*/){};
+
+private:
+    friend class MidiIO ; // for connection tracking
+
+    size_t numConnections_ ;
+
 };
 
 #endif // MIDI_OBSERVER_HPP_

@@ -50,6 +50,13 @@ public:
 protected:
     bool push(MidiNote note, size_t ch = 0);
 
+    const MidiNote& note(uint8_t note, size_t ch = 0) const ;
+    size_t notesActive(size_t ch = 0) const ;
+    bool noteActive(uint8_t note, size_t ch = 0) const ;
+    uint8_t lastNotePressed(size_t ch = 0) const ;
+    uint8_t lastNoteReleased(size_t ch = 0) const ;
+
+
 private:
     // MidiIO is used for
     // 1. constructing queues (based on number of outputs)

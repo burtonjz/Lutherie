@@ -16,26 +16,52 @@
  */
 
 #include "components/ADSREnvelope.hpp"
-#include "params/ModulationParameter.hpp"
-#include "params/ParameterMap.hpp"
-#include "types/ParameterType.hpp"
-ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
-    BaseComponent(id,ComponentType::ADSREnvelope),
-    ModulatorComponent()
-{
-    parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
-    parameters_->add<ParameterType::DECAY>(cfg.decay, true);
-    parameters_->add<ParameterType::SUSTAIN>(cfg.sustain, true);
-    parameters_->add<ParameterType::RELEASE>(cfg.release, true);
-    parameters_->add<ParameterType::TRIGGER>(cfg.trigger, false);
 
-    expectedParams_ = {
-        ModulationParameter::MIDI_NOTE, 
-        ModulationParameter::INITIAL_VALUE
-    };
+#include "capabilities/MidiIO.hpp"     // IWYU pragma: keep
+#include "capabilities/Modulator.hpp"  // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
+
+#include "interfaces/ComponentInfo.hpp"
+#include "params/ModulationParameter.hpp"
+#include "types/MonophonicTriggerType.hpp"
+#include "types/ParameterType.hpp"
+
+ADSREnvelope::ADSREnvelope(int id, ADSREnvelopeConfig):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::ADSREnvelope),
+    ModulationSource(
+        ModulatorRange::UNIPOLAR, {
+            ModulationParameter::MIDI_NOTE, 
+            ModulationParameter::INITIAL_VALUE
+    }),
+    MidiProcessor(),
+    attack_(createSlotAccessor<ParameterType::ATTACK>()),
+    decay_(createSlotAccessor<ParameterType::DECAY>()),
+    sustain_(createSlotAccessor<ParameterType::SUSTAIN>()),
+    release_(createSlotAccessor<ParameterType::RELEASE>()),
+    trigger_(createSlotAccessor<ParameterType::TRIGGER>())
+{
+    addCapability<Capability::MidiIO>(*this, 1, 1);
+    addCapability<Capability::Modulator>(*this);
+
+    auto& params = addCapability<Capability::Parameters>();
+
+    params.addUnitParameter(ParameterType::ATTACK);
+    params.addUnitParameter(ParameterType::DECAY);
+    params.addUnitParameter(ParameterType::SUSTAIN);
+    params.addUnitParameter(ParameterType::RELEASE);
+    params.addUnitParameter(ParameterType::TRIGGER);
+
+    params.bindSlot<ParameterType::ATTACK>(attack_, 0);
+    params.bindSlot<ParameterType::DECAY>(decay_, 0);
+    params.bindSlot<ParameterType::SUSTAIN>(sustain_, 0);
+    params.bindSlot<ParameterType::RELEASE>(release_, 0);
+    params.bindSlot<ParameterType::TRIGGER>(trigger_, 0);
+
+    params.freezeParameterCreation();
 }
 
-double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mData) const {
+double ADSREnvelope::modulate(double, ModulationData* mData) const {
     double output = 0.0 ;
 
     // check required data
@@ -50,57 +76,72 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
     
     // get the midi note
     bool monophonicMode = !mData->has(ModulationParameter::MIDI_NOTE);
-    auto behavior = MonophonicTriggerType::from_uint8(
-        parameters_->getParameter<ParameterType::TRIGGER>()->getValue()
-    );
-    uint8_t midiNote ;
+    auto behavior = MonophonicTriggerType::from_uint8(trigger_.value());
+
+    uint8_t midiValue ;
     if ( monophonicMode ){ 
-        midiNote = activeCount_ > 0 ? lastPressedNote_ : lastReleasedNote_ ;
-        if ( midiNote == 255 ) return output ; // no notes ever played!
-        midiNote = resolveMonophonicNote(midiNote, mData, behavior);
-        
+        midiValue = notesActive() > 0 
+            ? lastNotePressed() 
+            : lastNoteReleased();
+
+        if ( midiValue == MidiNote::INVALID ) return output ; // no notes ever played!
+        midiValue = resolveMonophonicNote(midiValue, mData, behavior);    
     } else {
-        midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
+        midiValue = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
     }
     
-    auto anote = notes_[midiNote] ;
-    if ( !isNoteActive(midiNote) ) return output ;
+    if ( !noteActive(midiValue) ) return output ;
+    const MidiNote& midiNote = note(midiValue);
 
     // set start level
     if ( monophonicMode ){
-        updateMonophonicState(midiNote, anote.note.getStatus(), mData, behavior);
+        updateMonophonicState(midiValue, midiNote.status(), mData, behavior);
     }
-    float start_level = mData->get(ModulationParameter::INITIAL_VALUE);
+    float startLevel = mData->get(ModulationParameter::INITIAL_VALUE);
 
     // calculate ADSR
-    if ( anote.note.getStatus() ){ // Attack Decay Sustain
-        float attack = parameters_->getParameter<ParameterType::ATTACK>()->getInstantaneousValue() ;
-        float decay = parameters_->getParameter<ParameterType::DECAY>()->getInstantaneousValue() ;
-        float sustain = parameters_->getParameter<ParameterType::SUSTAIN>()->getInstantaneousValue() ;
-        
-        if ( anote.time <= attack ) {
-            output = start_level + ( 1.0f - start_level ) * (anote.time / attack) ;
-        } else if ( anote.time <= (attack + decay) ) {
-            output = 1.0f - (1.0f - sustain) * ((anote.time - attack) / decay );
-        } else {
-            output = sustain ;
-        }
-    } else { // Release
-        float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
-        if ( anote.time >= release ){
-            output = 0.0 ;
-        } else {
-            output = start_level * (1 - (anote.time / release)) ;
-        }
-    }
-
+    switch ( midiNote.status() ){
+    case NoteStatus::PRESSED:
+    case NoteStatus::REPRESSED:
+        output = handleADS(startLevel, midiNote.time());
+        break ;
+    case NoteStatus::RELEASED:
+        output = handleR(startLevel, midiNote.time());
+        break ;
+    default:
+        break ;
+    } 
+    
     mData->set(ModulationParameter::LAST_OUTPUT, output) ;
     return output ;
 }
 
-bool ADSREnvelope::shouldKillNote(const ActiveNote& note) const {
-    float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
-    return ( !note.note.getStatus() && note.time > release ) ;
+double ADSREnvelope::handleADS(float startLevel, float time) const {
+    auto attack = attack_.modulatedValue();
+    auto decay = decay_.modulatedValue();
+    auto sustain = sustain_.modulatedValue();
+
+    if ( time <= attack ) {
+        return startLevel + ( 1.0f - startLevel ) * (time / attack) ;
+    } else if ( time <= (attack + decay) ) {
+        return 1.0f - (1.0f - sustain) * ((time - attack) / decay );
+    } else {
+        return sustain ;
+    }
+}
+
+double ADSREnvelope::handleR(float startLevel, float time) const {
+    float release = release_.modulatedValue();
+    if ( time >= release ){
+        return 0.0 ;
+    } else {
+        return startLevel * (1 - (time / release)) ;
+    }
+}
+
+bool ADSREnvelope::shouldKillNote(const MidiNote& note, size_t) const {
+    float release = release_.modulatedValue();
+    return note.time() > release ;
 }
 
 uint8_t ADSREnvelope::resolveMonophonicNote(
@@ -110,7 +151,7 @@ uint8_t ADSREnvelope::resolveMonophonicNote(
     if ( behavior == MonophonicTriggerType::LEGATO ){
         if ( mData->has(ModulationParameter::LAST_MIDI_NOTE) ){
             uint8_t latchedNote = static_cast<uint8_t>(mData->get(ModulationParameter::LAST_MIDI_NOTE));
-            if ( isNoteActive(latchedNote) ){
+            if ( noteActive(latchedNote) ){
                 return latchedNote ;
             }
         }
@@ -119,13 +160,17 @@ uint8_t ADSREnvelope::resolveMonophonicNote(
 }
 
 void ADSREnvelope::updateMonophonicState(
-    uint8_t midiNote, bool isPressed, 
+    uint8_t midiNote, NoteStatus st, 
     ModulationData* mData, MonophonicTriggerType behavior) const 
 {
+    bool isPressed = st == NoteStatus::PRESSED || st == NoteStatus::REPRESSED ;
+    
     bool wasPressed = mData->has(ModulationParameter::LAST_STATE) &&
         mData->get(ModulationParameter::LAST_STATE) > 0.0f ;
+
     bool noteChanged = mData->has(ModulationParameter::LAST_MIDI_NOTE) &&
         mData->get(ModulationParameter::LAST_MIDI_NOTE) != midiNote ;
+
     switch ( behavior ){
     case MonophonicTriggerType::LEGATO:
         if ( isPressed != wasPressed ){

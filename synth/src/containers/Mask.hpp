@@ -21,6 +21,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <bit>
 
 template <size_t N>
 class Mask {
@@ -45,6 +46,13 @@ public:
 
     void reset(){
         words_.fill(0);
+    }
+
+    size_t count() const {
+        size_t total = 0;
+        for (auto bits : words_)
+            total += std::popcount(bits);
+        return total;
     }
 
     template <typename F>

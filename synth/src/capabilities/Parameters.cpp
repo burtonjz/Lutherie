@@ -21,7 +21,7 @@
 #include "params/SlotBank.hpp"
 #include <stdexcept>
 
-Parameters::Parameters(ParameterObserver* observer):
+Parameters::Parameters(ParameterObserver* obs):
     banks_(),
     unitBank_(),
     definitions_(),
@@ -32,7 +32,7 @@ Parameters::Parameters(ParameterObserver* observer):
     single_(),
     structured_(),
     modulatable_(),
-    observer_(observer)
+    observer_(obs)
 {
     auto unit = std::make_unique<OrderedSlotBank>(OrderedBankConfig());
     unitBank_ = unit.get();
@@ -201,6 +201,10 @@ void Parameters::addUnitParameter(
     single_.set(idx);
 }
 
+void Parameters::addUnitParameter(ParameterType p){
+    addUnitParameter(ParameterConfig(p));
+}
+
 void Parameters::addCollection(
     CollectionDescriptor descriptor,
     std::vector<ParameterConfig> configs,
@@ -277,7 +281,7 @@ ParamStatus Parameters::setModulation(ParameterType p, const ModulationSource* m
     if ( !param->config().supports().modulatable ) 
         return ParamStatus::NotModulatable ;
 
-    param->setModulation(m, withRequiredDefaults(m, std::move(d)));
+    param->setModulation(m, withExpectedDefaults(m, std::move(d)));
     return ParamStatus::Ok ;
 }
 
@@ -298,7 +302,7 @@ ParamStatus Parameters::setDepthModulation(ParameterType p, const ModulationSour
     if ( !depth->config().supports().modulatable ) 
         return ParamStatus::NotModulatable ;
 
-    depth->setModulation(m, withRequiredDefaults(m, std::move(d)));
+    depth->setModulation(m, withExpectedDefaults(m, std::move(d)));
     return ParamStatus::Ok ;
 }
 
@@ -327,9 +331,9 @@ PooledSlotBank& Parameters::createPooledBank(PooledBankConfig cfg){
     return ref ;
 }
 
-ModulationData Parameters::withRequiredDefaults(const ModulationSource* m, ModulationData d){
+ModulationData Parameters::withExpectedDefaults(const ModulationSource* m, ModulationData d){
     if ( d.isEmpty() ){
-        for ( auto mp : m->requiredParameters() ){
+        for ( auto mp : m->expectedParameters() ){
             d.set(mp, 0.0f);
         }
     }

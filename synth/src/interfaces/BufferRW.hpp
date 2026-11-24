@@ -35,7 +35,6 @@ using BufferRead = std::span<const double> ;
 using BufferWrite = std::span<double> ;
 
 // writable and resizeable
-// resize nullifies span, so need wrapper class
 class BufferResize {
 public:
     BufferResize(const BufferResize&) = delete ;
@@ -57,11 +56,7 @@ public:
 
 private:
     friend class BufferIO ;
-    
-    explicit BufferResize(std::vector<double>& b): 
-        buf_(&b)
-    {}
-
+    explicit BufferResize(std::vector<double>& b): buf_(&b){}
     std::vector<double>* buf_ ;
 };
 
@@ -77,6 +72,28 @@ private:
     {}
 
     std::vector<BufferStatus> status_ ;
+};
+
+// object given to BufferProcessor: read inputs, resize outputs
+class BufferAccessor {
+public:
+    size_t changedInput() const ;
+    size_t numInputs() const ;
+    size_t numOutputs() const ;
+
+    std::span<const BufferRead> inputs(size_t channel) const ;
+    BufferResize output(size_t channel) const ;
+
+    void setStatus(size_t channel, BufferStatus s);
+    void setAllStatus(BufferStatus s);
+
+private:
+    friend class BufferIO ;
+
+    BufferAccessor(BufferIO& io, size_t changed);
+
+    BufferIO& io_ ;
+    size_t changed_ ;
 };
 
 #endif // BUFFER_RW_HPP_

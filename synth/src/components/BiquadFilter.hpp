@@ -17,33 +17,59 @@
 #ifndef __BIQUAD_FILTER_HPP_
 #define __BIQUAD_FILTER_HPP_
 
-#include "core/AudioSignalComponent.hpp"
-#include "core/ModulatorComponent.hpp"
-
+#include "core/Node.hpp"
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/ParameterAccessor.hpp"
+#include "interfaces/ParameterObserver.hpp"
+#include "interfaces/ModulationSource.hpp"
 #include "configs/BiquadFilterConfig.hpp"
+#include "types/ParameterType.hpp"
 
-class BiquadFilter : public AudioSignalComponent, public ModulatorComponent {
+class BiquadFilter : 
+    public Node, 
+    public ComponentInfo,
+    public AudioProcessor,
+    public ModulationSource,
+    public ParameterObserver
+{
 private:
     double state1_ ;
     double state2_ ;
     std::array<double,5> coefficients_ ;
-
     bool dirty_ ;
-public:
-    BiquadFilter(ComponentId id, BiquadFilterConfig cfg);
 
+    SlotAccessor<ParameterType::FILTER_TYPE> filterType_ ;
+    SlotAccessor<ParameterType::FREQUENCY> cutoff_ ;
+    SlotAccessor<ParameterType::GAIN> gain_ ;
+    SlotAccessor<ParameterType::Q_FACTOR> qFactor_ ;
+    SlotAccessor<ParameterType::BANDWIDTH> bandwidth_ ;
+    SlotAccessor<ParameterType::SHELF> shelf_ ;
+
+    double sampleRate_ = 0 ;
+
+public:
+    BiquadFilter(int id, BiquadFilterConfig cfg);
+
+    BiquadFilter(const BiquadFilter&) = delete ;
+    BiquadFilter& operator=(const BiquadFilter&) = delete ;
+    BiquadFilter(BiquadFilter&&) = delete ;
+    BiquadFilter& operator=(BiquadFilter&&) = delete ;
+
+    // MODULATION SOURCE
     double modulate(double value, ModulationData* mData ) const override ;
 
-    ModulatorRange getModulatorRange() const override { return ModulatorRange::UNKNOWN ; }
+    // AUDIO PROCESSOR
+    void onPrepare(AudioContext ctx) override ;
+    void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
 
-    void calculateSample() override ;
-    void tick() override ;
-    void onParameterChanged(ParameterType p, bool isCollection = false) override ;
+    // PARAMETER OBSERVER
+    void onParameterChanged(ParameterType p, uint16_t slot = 0) override ;
 
 private:
     void calculateCoefficients();
-    inline double getCurrentOutput(double input);
-    inline double getCurrentOutput(double input, double& s1, double& s2) const ;
+    inline double currentOutput(double input);
+    inline double currentOutput(double input, double& s1, double& s2) const ;
 
     // RBJ cookbook amplitude term for peaking/shelf filters:
     // A = 10^(dB/40) = sqrt(linear gain)

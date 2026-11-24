@@ -68,7 +68,7 @@ private:
     bool freezeCreation_ = false ;
 
 public:
-    explicit Parameters(ParameterObserver* observer = nullptr);
+    explicit Parameters(ParameterObserver* obs = nullptr);
     ~Parameters() = default ;
 
     Parameters(const Parameters&) = delete ;
@@ -91,6 +91,8 @@ public:
         const ModulationSource* modulator = nullptr,
         ModulationData modData = {}
     );
+
+    void addUnitParameter(ParameterType p);
 
     void addCollection(
         CollectionDescriptor descriptor,
@@ -152,7 +154,7 @@ private:
     ParameterDefinition* definition(ParameterType p) const ;
     std::span<ParameterDefinition* const> collection(const CollectionDescriptor& c) const ;
 
-    ModulationData withRequiredDefaults(const ModulationSource* m, ModulationData d);
+    ModulationData withExpectedDefaults(const ModulationSource* m, ModulationData d);
 
     OrderedSlotBank& createOrderedBank(OrderedBankConfig cfg);
     PooledSlotBank& createPooledBank(PooledBankConfig cfg);

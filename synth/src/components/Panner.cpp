@@ -18,21 +18,22 @@
 #include "components/Panner.hpp"
 #include "capabilities/AudioIO.hpp"    // IWYU pragma: keep
 #include "capabilities/Parameters.hpp" // IWYU pragma: keep
-#include "types/ComponentType.hpp"
 
 Panner::Panner(int id, PannerConfig):
-    Node(id, NodeType::COMPONENT)
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::Panner),
+    AudioProcessor(),
+    pan_(createSlotAccessor<ParameterType::PAN>())
 {
     addCapability<Capability::AudioIO>(*this, 1, 2);
 
     auto& params = addCapability<Capability::Parameters>();
     params.addUnitParameter(ParameterConfig(ParameterType::PAN));
     params.bindSlot<ParameterType::PAN>(pan_, 0);
+
+    params.freezeParameterCreation();
 }
-    
-ComponentType Panner::componentType() const {
-    return ComponentType::Panner ;
-}
+
 
 void Panner::processFrame(const AudioAccessor& accessor, size_t frame) noexcept {
     double input = accessor.input(0)[frame];

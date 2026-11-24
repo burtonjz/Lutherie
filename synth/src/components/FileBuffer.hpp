@@ -45,9 +45,6 @@ public:
     FileBuffer(FileBuffer&&) = delete ;
     FileBuffer& operator=(FileBuffer&&) = delete ;
 
-    // Component Info
-    ComponentType componentType() const override ;
-
     // File Listener
     FileStatus onPathSet(const std::filesystem::path& path) override ;
 

@@ -18,28 +18,49 @@
 #ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
 #define __MODULATOR_ADSR_ENVELOPE_HPP_
 
-#include "core/BaseComponent.hpp"
-#include "core/ModulatorComponent.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
+#include "core/Node.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/MidiProcessor.hpp"
+#include "interfaces/ModulationSource.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "configs/ADSREnvelopeConfig.hpp"
+#include "types/ParameterType.hpp"
 
-class ADSREnvelope : public ModulatorComponent, public MidiEventHandler {      
+
+class ADSREnvelope : 
+    public Node,
+    public ComponentInfo,
+    public ModulationSource,
+    public MidiProcessor 
+{      
+private:
+    SlotAccessor<ParameterType::ATTACK> attack_ ;
+    SlotAccessor<ParameterType::DECAY> decay_ ;
+    SlotAccessor<ParameterType::SUSTAIN> sustain_ ;
+    SlotAccessor<ParameterType::RELEASE> release_ ;
+
+    SlotAccessor<ParameterType::TRIGGER> trigger_ ;
+
 public:
-    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
-    
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override ;
-    ModulatorRange getModulatorRange() const override { return ModulatorRange::UNIPOLAR ; }
+    ADSREnvelope(int id, ADSREnvelopeConfig cfg);
 
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
+    ADSREnvelope(const ADSREnvelope&) = delete ;
+    ADSREnvelope& operator=(const ADSREnvelope&) = delete ;
+    ADSREnvelope(ADSREnvelope&&) = delete ;
+    ADSREnvelope& operator=(ADSREnvelope&&) = delete ;
+
+    // MODULATION SOURCE
+    double modulate(double value, ModulationData* mData) const override ;
+
+    // MIDI PROCESSOR
+    virtual bool shouldKillNote(const MidiNote& note, size_t ch = 0) const override ;
 
 private:
     uint8_t resolveMonophonicNote(uint8_t currentNote, ModulationData* mData, MonophonicTriggerType behavior) const ;
-    void updateMonophonicState(uint8_t midiNote, bool isPressed, ModulationData* mData, MonophonicTriggerType behavior) const ;
+    void updateMonophonicState(uint8_t midiNote, NoteStatus st, ModulationData* mData, MonophonicTriggerType behavior) const ;
 
-
+    double handleADS(float startLevel, float time) const ;
+    double handleR(float startLevel, float time) const ;
 };
 
 #endif // __MODULATOR_ADSR_ENVELOPE_HPP_

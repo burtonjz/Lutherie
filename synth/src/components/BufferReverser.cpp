@@ -16,43 +16,28 @@
  */
 
 #include "components/BufferReverser.hpp"
+#include "capabilities/BufferIO.hpp" // IWYU pragma: keep
+#include "interfaces/ComponentInfo.hpp"
+#include "status/BufferStatus.hpp"
+#include "types/NodeType.hpp"
 
-BufferReverser::BufferReverser(ComponentId id, [[maybe_unused]] BufferReverserConfig cfg):
-    BaseComponent(id, ComponentType::BufferReverser),
-    AudioBufferComponent(1,1)
+BufferReverser::BufferReverser(int id, [[maybe_unused]] BufferReverserConfig cfg):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::BufferReverser),
+    BufferProcessor()
 {
+    addCapability<Capability::BufferIO>(*this, 1, 1);
 }
 
-void BufferReverser::onInputConnect(){
-    onInputUpdated();
-}
+void BufferReverser::process(BufferAccessor& accessor){
+    auto input = accessor.inputs(0);
+    size_t size = input.size();
 
-void BufferReverser::onInputDisconnect(){
-    onInputUpdated();
-}
+    accessor.output(0).resize(size);
 
-void BufferReverser::onInputUpdated(){
-    const auto& inp = getInputs(0);
-    if ( inp.size() == 0 ){
-        if ( buffers_.at(0).size() > 0 ){
-            buffers_[0].clear();
-            notifyDownstream(0);
-        }
-        return ;
-    } 
-        
-    BufferConnection conn = *inp.begin();
-    const auto& buf = conn.component->getBuffer(conn.index);    
-
-    // guard against empty inbound buffer
-    if ( buf.empty() ){
-        SPDLOG_WARN("inbound buffer is empty.");
-        buffers_[0].clear();
-        notifyDownstream(0);
-        return ;
+    if ( size > 0 ){
+        accessor.output(0).assign(input.rbegin(), input.rend());
     }
 
-    
-    buffers_[0].assign(buf.rbegin(), buf.rend());
-    notifyDownstream(0);
+    accessor.setAllStatus(BufferStatus::Ready);
 }

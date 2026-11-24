@@ -41,9 +41,6 @@ public:
     Panner(Panner&&) = delete ;
     Panner& operator=(Panner&&) = delete ;
 
-    // Component Info
-    ComponentType componentType() const override ;
-
     // AudioProcessor
     void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
     // void onPrepare(AudioContext ctx) override ;

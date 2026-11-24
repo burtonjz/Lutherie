@@ -18,21 +18,27 @@
 #ifndef MONOPHONIC_FILTER_HPP_
 #define MONOPHONIC_FILTER_HPP_
 
-#include "core/BaseComponent.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "midi/MidiNote.hpp"
+#include "core/Node.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/MidiProcessor.hpp"
 #include "configs/MonophonicFilterConfig.hpp"
 
+#include <vector>
 
-class MonophonicFilter : public MidiEventHandler {
+class MonophonicFilter :
+    public Node,    
+    public ComponentInfo,
+    public MidiProcessor
+{
     private:
         std::vector<uint8_t> noteStack_ ;
     
     public:
-        MonophonicFilter(ComponentId id, MonophonicFilterConfig cfg);
+        MonophonicFilter(int id, MonophonicFilterConfig cfg);
 
-        void onKeyPressed(const ActiveNote* note, bool rePressed) override ;
-        void onKeyReleased(ActiveNote anote) override ;
+        // MIDI PROCESSOR
+        void handleKeyPressed(MidiNote note, size_t ch = 0) override ;
+        void handleKeyReleased(MidiNote note, size_t ch = 0) override ;
 
 };
 

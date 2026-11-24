@@ -21,9 +21,8 @@
 #include "status/BufferStatus.hpp"
 #include <spdlog/spdlog.h>
 
-BufferIO::BufferIO(BufferProcessor& processor, size_t inputs, size_t outputs):
+BufferIO::BufferIO(BufferProcessor* processor, size_t inputs, size_t outputs):
     processor_(processor),
-    observers_(),
     numInputs_(inputs),
     numOutputs_(outputs),
     outputs_(outputs, std::vector<double>()),
@@ -35,19 +34,27 @@ BufferIO::BufferIO(BufferProcessor& processor, size_t inputs, size_t outputs):
     sampleRate_(0)
 {}
 
+BufferIO::BufferIO(BufferProcessor& processor, size_t inputs, size_t outputs):
+    BufferIO(&processor, inputs, outputs)
+{}
+
+BufferIO::BufferIO(size_t inputs):
+    BufferIO(nullptr, inputs, 0)
+{}
+
 void BufferIO::prepare(AudioContext audio){
     sampleRate_ = audio.sampleRate ;
-    processor_.onPrepare(audio);
+    if ( processor_ ) processor_->onPrepare(audio);
 }
 
 void BufferIO::addInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
     inputEdges_.at(toChannel).insert({edge, edgeChannel});
-    process(Hook::Connected, toChannel);
+    process(Event::Connected, toChannel);
 }
 
 void BufferIO::removeInputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
     inputEdges_.at(toChannel).erase({edge, edgeChannel});
-    process(Hook::Disconnected, toChannel);
+    process(Event::Disconnected, toChannel);
 }
 
 void BufferIO::addOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toChannel){
@@ -58,37 +65,42 @@ void BufferIO::removeOutputEdge(BufferIO* edge, size_t edgeChannel, size_t toCha
     outputEdges_.at(toChannel).erase({edge, edgeChannel});
 }
 
-void BufferIO::addObserver(BufferObserver* observer){
-    if ( !observer ){
-        SPDLOG_ERROR("cannot add nullptr observer.");
+void BufferIO::addObserver(BufferObserver* obs){
+    if ( !obs ){
+        SPDLOG_ERROR("cannot add nullptr obs.");
         return ;
     }
-    auto it = std::find(observers_.begin(), observers_.end(), observer);
+    auto it = std::find(observers_.begin(), observers_.end(), obs);
     if ( it != observers_.end() ){
-        SPDLOG_ERROR("observer already added.");
+        SPDLOG_ERROR("obs already added.");
         return ;
     }
-    observers_.push_back(observer);
+    observers_.push_back(obs);
 }
 
-void BufferIO::removeObserver(BufferObserver* observer){
-    if ( !observer ){
-        SPDLOG_ERROR("cannot remove nullptr observer.");
+void BufferIO::removeObserver(BufferObserver* obs){
+    if ( !obs ){
+        SPDLOG_ERROR("cannot remove nullptr obs.");
         return ;
     }
-    auto it = std::find(observers_.begin(), observers_.end(), observer);
+    auto it = std::find(observers_.begin(), observers_.end(), obs);
     if ( it == observers_.end() ){
-        SPDLOG_ERROR("observer not currently added. Nothing to do.");
+        SPDLOG_ERROR("obs not currently added. Nothing to do.");
         return ;
     }
     observers_.erase(it);
 }
 
-size_t BufferIO::getNumInputs() const {
+void BufferIO::bindObserver(BufferObserver* obs){
+    if ( !obs ) return ;
+    obs->bind(this);
+}
+
+size_t BufferIO::numInputs() const {
     return numInputs_ ;
 }
 
-size_t BufferIO::getNumOutputs() const {
+size_t BufferIO::numOutputs() const {
     return numOutputs_ ;
 }
 
@@ -121,8 +133,8 @@ FileStatus BufferIO::exportBuffer(std::string savePath){
         return FileStatus::LoadFailed ;
     }
 
-    sfinfo.frames = static_cast<sf_count_t>(getMaxBufferFrames());
-    auto output = getInterleavedBuffers(sfinfo);
+    sfinfo.frames = static_cast<sf_count_t>(maxBufferFrames());
+    auto output = interleavedBuffers(sfinfo);
 
     sf_count_t count = sf_write_double(
         file, output.data(), 
@@ -135,7 +147,7 @@ FileStatus BufferIO::exportBuffer(std::string savePath){
     return FileStatus::Ok ;
 }
 
-std::span<const BufferRead> BufferIO::getInputView(size_t channel) const {
+std::span<const BufferRead> BufferIO::inputView(size_t channel) const {
     return inputViews_[channel];
 }
 
@@ -144,11 +156,11 @@ void BufferIO::rebuildInputViews(size_t channel){
     v.clear();
     v.reserve(inputEdges_[channel].size());
     for ( const BufferConnection& c : inputEdges_.at(channel)){
-        v.push_back(c.buffer->getOutputView(c.channel));
+        v.push_back(c.buffer->outputView(c.channel));
     }
 }
 
-const BufferRead BufferIO::getOutputView(size_t channel) const {
+BufferRead BufferIO::outputView(size_t channel) const {
     return outputViews_[channel];
 }
 
@@ -162,34 +174,52 @@ void BufferIO::rebuildOutputView(size_t channel){
     return ;
 }
 
-BufferResize BufferIO::getOutputResize(size_t channel){
+BufferResize BufferIO::outputResize(size_t channel){
     return BufferResize(outputs_.at(channel));
 }
 
-void BufferIO::process(Hook h, size_t changedInput){
+void BufferIO::process(Event e, size_t changedInput){
     rebuildInputViews(changedInput);
+    notifyObservers(e, changedInput);
+    if ( !processor_ ) return ;
 
     BufferAccessor accessor(*this, changedInput);
-
-    switch (h){
-    case Hook::Connected:
-        processor_.onInputConnected(accessor);
+    switch (e){
+    case Event::Connected:
+        processor_->onInputConnected(accessor);
         break ;
-    case Hook::Disconnected:
-        processor_.onInputDisconnected(accessor);
+    case Event::Disconnected:
+        processor_->onInputDisconnected(accessor);
         break ;
-    case Hook::Updated:
-        processor_.onInputUpdated(accessor);
+    case Event::Updated:
+        processor_->onInputUpdated(accessor);
         break ;
     }
 
     publishOutputs();
 }
 
-void BufferIO::trigger(){
-    BufferAccessor accessor(*this, 0);
-    processor_.onTrigger(accessor);
+void BufferIO::notifyObservers(Event e, size_t changedInput) const {
+    for ( const auto& obs : observers_ ){
+        switch (e){
+        case Event::Connected:
+            obs->onInputConnected(changedInput);
+            break ;
+        case Event::Disconnected:
+            obs->onInputDisconnected(changedInput);
+            break ;
+        case Event::Updated:
+            obs->onInputUpdated(changedInput);
+            break ;
+        }
+    }
+}
 
+void BufferIO::trigger(){
+    if ( !processor_ ) return ;
+
+    BufferAccessor accessor(*this, 0);
+    processor_->onTrigger(accessor);
     publishOutputs();
 }
 
@@ -207,17 +237,17 @@ void BufferIO::notifyDownstream(){
 
         if ( ready ){
             for ( auto& obs : observers_ ){
-                obs->onOutputChannelReady(getOutputView(ch), ch);
+                obs->onOutputChannelReady(ch);
             }
         }
         
         for ( const auto& conn : outputEdges_.at(ch) ){
-            conn.buffer->process(Hook::Updated, ch);
+            conn.buffer->process(Event::Updated, ch);
         }
     }
 }
 
-size_t BufferIO::getMaxBufferFrames() const {
+size_t BufferIO::maxBufferFrames() const {
     size_t numFrames = 0 ;
     for ( const auto& out : outputs_ ){
         if ( out.size() > numFrames ){
@@ -227,7 +257,7 @@ size_t BufferIO::getMaxBufferFrames() const {
     return numFrames ;
 }
 
-std::vector<double> BufferIO::getInterleavedBuffers(const SF_INFO& info) const {
+std::vector<double> BufferIO::interleavedBuffers(const SF_INFO& info) const {
     std::vector<double> interleaved(info.frames * info.channels);
     for ( sf_count_t frame = 0 ; frame < info.frames ; ++frame ){
         for ( int channel = 0 ; channel < info.channels; ++channel ){

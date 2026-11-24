@@ -18,21 +18,39 @@
 #ifndef CHOPPER_HPP_
 #define CHOPPER_HPP_
 
-#include "core/AudioBufferComponent.hpp"
+#include "core/Node.hpp"
+#include "interfaces/BufferProcessor.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/ParameterObserver.hpp"
+#include "interfaces/ParameterAccessor.hpp"
 #include "configs/ChopperConfig.hpp"
-
-class Chopper : public AudioBufferComponent {
+class Chopper : 
+    public Node,
+    public ComponentInfo,
+    public BufferProcessor,
+    public ParameterObserver
+{
 private:
-    
+    BufferTrigger* trigger_ = nullptr ;
+
+    ParameterAccessor sample_ ;
+    SlotAccessor<ParameterType::SAMPLE> begin_ ;
+    SlotAccessor<ParameterType::SAMPLE> end_ ;
+
 public:
-    Chopper(ComponentId id, ChopperConfig cfg);
+    Chopper(int id, ChopperConfig cfg);
 
-protected:
-    void onInputConnect() override ;
-    void onInputDisconnect() override ;
-    void onInputUpdated() override ;
+    Chopper(const Chopper&) = delete ;
+    Chopper& operator=(const Chopper&) = delete ;
+    Chopper(Chopper&&) = delete ;
+    Chopper& operator=(Chopper&&) = delete ;
 
-    void onParameterChanged(ParameterType p, bool isCollection) override ;
+    // Buffer Processor
+    void process(BufferAccessor& accessor) override ;
+    void onTrigger(BufferAccessor& accessor) override ;
+
+    // ParameterObserver
+    void onParameterChanged(ParameterType p, uint16_t slot) override ;
 
 };
 

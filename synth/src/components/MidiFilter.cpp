@@ -1,32 +1,41 @@
 #include "components/MidiFilter.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
-#include "types/ParameterType.hpp"
 
-MidiFilter::MidiFilter(ComponentId id, [[maybe_unused]] MidiFilterConfig cfg):
-    BaseComponent(id, ComponentType::MidiFilter)
+#include "capabilities/Capability.hpp"
+#include "capabilities/MidiIO.hpp"     // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "meta/CollectionDescriptor.hpp"
+#include "meta/ComponentRegistry.hpp"
+
+MidiFilter::MidiFilter(int id, [[maybe_unused]] MidiFilterConfig cfg):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::ADSREnvelope),
+    MidiProcessor(),
+    midiValue_(createParameterAccessor())
 {
-    parameters_->addCollection<ParameterType::MIDI_VALUE>({});
+    addCapability<Capability::MidiIO>(*this, 1, 1);
+    auto& params = addCapability<Capability::Parameters>();
+
+    const CollectionDescriptor& col = ComponentRegistry
+        ::getComponentDescriptor(componentType())
+        .collection.value();
+
+    params.addCollection(col);
+    params.bindParameter(midiValue_, ParameterType::MIDI_VALUE);
 }
 
-void MidiFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
-    if ( !note ) return ;
-    
-    if ( passNote(note->note.getMidiNote()) ){
-        MidiEventHandler::onKeyPressed(note, rePressed);
-    } 
+void MidiFilter::handleKeyPressed(MidiNote note, size_t ch){    
+    if ( passNote(note.note()) ) push(std::move(note), ch);
 }
 
-void MidiFilter::onKeyReleased(ActiveNote anote){
-    if ( passNote(anote.note.getMidiNote()) ){
-        MidiEventHandler::onKeyReleased(anote);
-    }
+void MidiFilter::handleKeyReleased(MidiNote note, size_t ch){
+    if ( passNote(note.note()) ) push(std::move(note), ch);
 }
 
 bool MidiFilter::passNote(uint8_t midi) const {
-    auto c = parameters_->getCollection<ParameterType::MIDI_VALUE>();
-    for ( const auto& idx : c->getIndices() ){
-        if ( c->getValue(idx) == midi ) return true ;
+    for ( size_t i = 0 ; i < midiValue_.slotCount(); ++i ){
+        if ( midiValue_.slotValue<ParameterType::MIDI_VALUE>(i) == midi ){
+            return true ;
+        } 
     }
     return false ;
 }

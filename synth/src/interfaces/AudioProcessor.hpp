@@ -39,7 +39,7 @@ private:
     friend class AudioIO ;
 
     AudioAccessor(
-        std::span<const BufferRead> in, 
+        std::span<BufferRead> in, 
         std::span<const BufferWrite> out,
         size_t frames, double sampleRate
     ):
@@ -49,7 +49,7 @@ private:
         sampleRate_(sampleRate)
     {}
 
-    std::span<const BufferRead>  inputs_ ;
+    std::span<BufferRead>  inputs_ ;
     std::span<const BufferWrite> outputs_ ;
     size_t frames_ ;
     double sampleRate_ ;

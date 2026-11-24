@@ -41,6 +41,8 @@ private:
     static std::array<double, 128> frequencies_ ;
 
 public:
+    static constexpr uint8_t INVALID = 255 ;
+
     MidiNote(uint8_t channel, uint8_t note, uint8_t vel, NoteStatus st);
     MidiNote();
 
@@ -61,6 +63,7 @@ public:
     static double frequency(uint8_t note);
     double frequency() const ;
 
+    float time() const ;
     void resetTime();
     void updateTime(float dt);
 

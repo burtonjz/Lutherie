@@ -16,6 +16,7 @@
  */
 
 #include "interfaces/MidiProcessor.hpp"
+#include "capabilities/MidiIO.hpp"
 
 void MidiProcessor::handleKeyPressed(MidiNote note, size_t ch){
     push(std::move(note), ch);
@@ -34,6 +35,26 @@ void MidiProcessor::onReset(){}
 
 bool MidiProcessor::push(MidiNote note, size_t ch){
     return queues_[ch]->push(std::move(note));
+}
+
+const MidiNote& MidiProcessor::note(uint8_t note, size_t ch) const {
+    return io_->notes_[ch][note];
+}
+
+size_t MidiProcessor::notesActive(size_t ch) const {
+    return io_->active_[ch].count();
+}
+
+bool MidiProcessor::noteActive(uint8_t note, size_t ch) const {
+    return io_->active_[ch].test(note);
+}
+
+uint8_t MidiProcessor::lastNotePressed(size_t ch) const {
+    return io_->lastNotePressed_[ch];
+}
+
+uint8_t MidiProcessor::lastNoteReleased(size_t ch) const {
+    return io_->lastNoteReleased_[ch];
 }
 
 void MidiProcessor::evaluateReleasedKey(MidiNote& note, size_t ch){

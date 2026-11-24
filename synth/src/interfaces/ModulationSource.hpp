@@ -20,13 +20,31 @@
 
 #include "params/ModulationParameter.hpp"
 #include "types/ModulationStrategy.hpp"
-#include <set>
+#include <initializer_list>
 
-struct ModulationSource {
+class ModulationSource {
+public:
     virtual double modulate(double value, ModulationData* mdat) const = 0 ;
-    virtual ModulatorRange range() const = 0 ;
-    virtual const std::set<ModulationParameter>& requiredParameters() const = 0 ;
+    
+    ModulatorRange range() const {
+        return range_ ;
+    }
+    
+    std::span<const ModulationParameter> expectedParameters() const {
+        return expected_ ;
+    }
+
     virtual ~ModulationSource() = default ;
+
+protected:
+    ModulationSource(ModulatorRange range, std::initializer_list<ModulationParameter> expected):
+        expected_(expected),
+        range_(range)
+    {}
+
+private:
+    std::vector<ModulationParameter> expected_ ;
+    ModulatorRange range_ ;
 };
 
 #endif // MODULATION_SOURCE_HPP_

@@ -22,30 +22,6 @@
 #include "interfaces/BufferRW.hpp"
 #include "status/BufferStatus.hpp"
 
-// forward declarations
-class BufferIO ;
-
-class BufferAccessor {
-public:
-    size_t changedInput() const ;
-    size_t numInputs() const ;
-    size_t numOutputs() const ;
-
-    std::span<const BufferRead> inputs(size_t channel) const ;
-    BufferResize output(size_t channel) const ;
-
-    void setStatus(size_t channel, BufferStatus s);
-    void setAllStatus(BufferStatus s);
-
-private:
-    friend class BufferIO ;
-
-    BufferAccessor(BufferIO& io, size_t changed);
-
-    BufferIO& io_ ;
-    size_t changed_ ;
-};
-
 struct BufferProcessor {
     virtual void process(BufferAccessor& accessor) = 0 ;
 

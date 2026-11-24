@@ -16,85 +16,86 @@
  */
 
 #include "components/Chopper.hpp"
-#include "params/ParameterMap.hpp"
+#include "capabilities/BufferIO.hpp" // IWYU pragma: keep
+#include "capabilities/Parameters.hpp" // IWYU pragma: keep
+#include "meta/ComponentRegistry.hpp"
+#include "types/ComponentType.hpp"
 
-Chopper::Chopper(ComponentId id,[[maybe_unused]] ChopperConfig cfg):
-    BaseComponent(id, ComponentType::Chopper),
-    AudioBufferComponent(1,1)
+Chopper::Chopper(int id, ChopperConfig):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::Chopper),
+    BufferProcessor(),
+    ParameterObserver(),
+    sample_(createParameterAccessor()),
+    begin_(createSlotAccessor<ParameterType::SAMPLE>()),
+    end_(createSlotAccessor<ParameterType::SAMPLE>())
 {
-    parameters_->addCollection<ParameterType::SAMPLE>({0,0});
-    parameters_->getCollection<ParameterType::SAMPLE>()->addListener(this);
-}
+    auto* buf = &addCapability<Capability::BufferIO>(*this, 1, 1);
+    trigger_ = buf ;
 
-void Chopper::onInputConnect(){
-    onInputUpdated();
-}
+    auto& params = addCapability<Capability::Parameters>(this);
 
-void Chopper::onInputDisconnect(){
-    onInputUpdated();
-}
-
-void Chopper::onInputUpdated(){
-    auto collection = parameters_->getCollection<ParameterType::SAMPLE>();
-    if ( collection->size() != 2 ){
-        SPDLOG_ERROR("Chopper collection size is not 2. This is a programming bug.");
-        return ;
-    }
-
-    const auto& inp = getInputs(0);
-    if ( inp.size() > 0 ){
-        BufferConnection conn = *inp.begin();
-        const auto& buf = conn.component->getBuffer(conn.index);    
-
-        collection->setMaxValue(buf.size()-1);
-        collection->setValue(0,0); // start
-        collection->setValue(1,buf.size()-1); // end 
-        collection->notifyListeners();
-    } else {
-        collection->setMaxValue(0);
-        collection->setValue(0,0); // start
-        collection->setValue(1,0); // end
-        collection->notifyListeners();
-    }
-
-    triggerComponentSync();
-}
-
-void Chopper::onParameterChanged(ParameterType p, bool isCollection){
-    SPDLOG_DEBUG("onParameterChanged: ParameterType={}, isCollection={}", GET_PARAMETER_TRAIT_MEMBER(p, name), isCollection);
-    if ( !isCollection || p != ParameterType::SAMPLE ) return ;
-
-    const auto& inp = getInputs(0);
-    if ( inp.size() == 0 ){
-        SPDLOG_WARN("parameter update received, but no input buffer is available. ignoring.");
-        return ;
-    } 
-        
-    BufferConnection conn = *inp.begin();
-    const auto& buf = conn.component->getBuffer(conn.index);    
-
-    // guard against empty inbound buffer
-    if ( buf.empty() ){
-        SPDLOG_WARN("parameter update received, but inbound buffer is empty.");
-        buffers_[0].clear();
-        notifyDownstream(0);
-        return ;
-    }
-
-    auto collection = parameters_->getCollection<ParameterType::SAMPLE>();
-    if ( collection->size() != 2 ){
-        SPDLOG_ERROR("Chopper collection size is not 2. This is a programming bug.");
-        return ;
-    }
-
-    int start = collection->getValue(0);
-    int end   = collection->getValue(1);
-
-    buffers_[0].assign(
-        buf.begin() + start,
-        buf.begin() + end
+    params.addCollection(
+        ComponentRegistry
+            ::getComponentDescriptor(ComponentType::Chopper)
+            .collection.value()
     );
 
-    SPDLOG_DEBUG("Chopper buffer updated: startSample={}, endSample={}, size={}", start, end, buffers_[0].size());
-    notifyDownstream(0);
+    params.bindParameter(sample_, ParameterType::SAMPLE);
+    params.observe(ParameterType::SAMPLE);
+
+    sample_.bindSlot(begin_, 0);
+    sample_.bindSlot(end_, 1);
+
+    params.freezeParameterCreation();
+}
+
+void Chopper::process(BufferAccessor& accessor){
+    static constexpr ParameterType p = ParameterType::SAMPLE ;
+    using ValueType = ParameterTraits<p>::ValueType ;
+
+    accessor.setAllStatus(BufferStatus::NotReady);
+
+    const auto& inp = accessor.inputs(0);
+    if ( inp.size() > 0 ){
+        ValueType lastSample = inp.size() - 1 ;
+        sample_.setLimits({0, lastSample});
+        begin_.setValue(0, false);
+        end_.setValue(lastSample, true);
+    } else {
+        sample_.setLimits({0, 0});
+        begin_.setValue(0, false);
+        end_.setValue(0, true);
+    }
+}
+
+void Chopper::onTrigger(BufferAccessor& accessor){
+    const auto& inp = accessor.inputs(0);
+    
+    if ( inp.size() == 0 ){
+        SPDLOG_WARN("parameter update received, but inbound buffer is empty.");
+        accessor.output(0).clear();
+        accessor.setAllStatus(BufferStatus::Ready);
+        return ;
+    } else {
+        accessor.output(0).resize(inp.size());
+    }
+
+    int start =  begin_.value();
+    int end = end_.value();
+    accessor.output(0).assign(
+        inp.begin() + start,
+        inp.begin() + end
+    );
+
+    SPDLOG_DEBUG(
+        "Chopper buffer updated: startSample={}, endSample={}, size={}", 
+        start, end, accessor.output(0).size()
+    );
+    accessor.setAllStatus(BufferStatus::Ready);
+}
+
+void Chopper::onParameterChanged(ParameterType p, uint16_t){
+    if ( p != ParameterType::SAMPLE ) return ;
+    trigger_->trigger();
 }

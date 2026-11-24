@@ -16,68 +16,55 @@
  */
 
 #include "components/MonophonicFilter.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include <spdlog/spdlog.h>
-#include <fmt/ranges.h>
-#include <ranges>
 
-MonophonicFilter::MonophonicFilter(ComponentId id, [[maybe_unused]] MonophonicFilterConfig cfg):
-    BaseComponent(id, ComponentType::MonophonicFilter)
-{}
+#include "capabilities/Capability.hpp"
+#include "capabilities/MidiIO.hpp"     // IWYU pragma: keep
 
-void MonophonicFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
-    uint8_t midiNote = note->note.getMidiNote() ;
-    SPDLOG_DEBUG("received note press event for midiNote {}.", midiNote);
-    noteStack_.push_back(midiNote);
-    SPDLOG_DEBUG("current noteStack_: {}", fmt::format("{}", fmt::join(
-        noteStack_ | std::views::transform([](uint8_t v){ return (int)v; }),
-        ", "
-    )));
-    
-    if (noteStack_.size() > 1) {
-        ActiveNote& lastNote = notes_[noteStack_[noteStack_.size() - 2]];
-        SPDLOG_DEBUG("previous midi note {} is still held. Sending release event", lastNote.note.getMidiNote());
-        lastNote.note.setStatus(false);
-        MidiEventHandler::onKeyReleased(lastNote);
-    } else {
-        SPDLOG_DEBUG("no previous note held, no note released");
-    }
-    
-    MidiEventHandler::onKeyPressed(note, rePressed);
+MonophonicFilter::MonophonicFilter(int id, MonophonicFilterConfig):
+    Node(id, NodeType::COMPONENT),
+    ComponentInfo(ComponentType::MonophonicFilter),
+    MidiProcessor()
+{
+    addCapability<Capability::MidiIO>(*this, 1, 1);
 }
 
-void MonophonicFilter::onKeyReleased(ActiveNote anote){
-    uint8_t midiNote = anote.note.getMidiNote();
-    SPDLOG_DEBUG("received release event for midiNote {}.", midiNote);
+void MonophonicFilter::handleKeyPressed(MidiNote n, size_t ch){
+    uint8_t midiValue = n.note();
+    noteStack_.push_back(midiValue);
     
-    auto it = std::find(noteStack_.begin(), noteStack_.end(), midiNote);
-    
-    if ( it == noteStack_.end() ){
-        SPDLOG_DEBUG("midiNote was not in the noteStack_. Ignoring.");
-        return ;
+    if ( noteStack_.size() > 1 ){
+        // release previous note
+        uint8_t lastValue = noteStack_[noteStack_.size() - 2];
+        push(MidiNote(
+            ch, lastValue, 
+            0, NoteStatus::RELEASED
+        ));
     } 
+    
+    push(std::move(n), ch);
+}
 
+void MonophonicFilter::handleKeyReleased(MidiNote n, size_t ch){
+    uint8_t midiValue = n.note();
+    
+    auto it = std::find(noteStack_.begin(), noteStack_.end(), midiValue);
+    if ( it == noteStack_.end() ) return ;
+    
     bool isActiveNote = ( it == noteStack_.end() - 1 );
-    SPDLOG_DEBUG("Erasing midiNote {} from stack. isActiveNote={}.", (int)midiNote,  isActiveNote);
     noteStack_.erase(it);
-    SPDLOG_DEBUG("current noteStack_: {}", fmt::format("{}", fmt::join(
-        noteStack_ | std::views::transform([](uint8_t v){ return (int)v; }),
-        ", "
-    )));
 
-    if ( isActiveNote ){
-        // release and trigger last
-        MidiEventHandler::onKeyReleased(anote);
+    if ( !isActiveNote ) return ;
+        
+    // release active
+    push(std::move(n), ch);    
+    if ( noteStack_.empty() ) return ;
 
-        if ( !noteStack_.empty() ){
-            uint8_t nextNote = noteStack_.back();
-            ActiveNote* nextANote = &notes_[nextNote];
-            nextANote->note.setStatus(true);
-            MidiEventHandler::onKeyPressed(nextANote, false);
-        } else {
-            SPDLOG_DEBUG("noteStack_ is empty, will not trigger any note in response to release.");
-        } 
-    } else {
-        SPDLOG_DEBUG("pressed note was not activeNote, not triggering new key press or release.");
-    }   
+    // trigger last
+    uint8_t last = noteStack_.back();
+    uint8_t vel = note(last,ch).velocity() ;
+    vel = vel > 0 ? vel : 100 ;
+    push(MidiNote(
+        ch, last, 
+        vel, NoteStatus::PRESSED
+    )); 
 }

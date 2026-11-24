@@ -30,7 +30,9 @@ MidiIO::MidiIO(MidiProcessor& processor, size_t inputs, size_t outputs):
     notes_(numOutputs_),
     active_(numOutputs_),
     outputEdges_(numOutputs_),
-    observers_(numOutputs_)
+    observers_(numOutputs_),
+    lastNotePressed_(MidiNote::INVALID, numOutputs_),
+    lastNoteReleased_(MidiNote::INVALID, numOutputs_)
 {
     assert(outputs > 1);
 
@@ -63,15 +65,16 @@ void MidiIO::addObserver(MidiObserver* obs, size_t ch){
     auto it = std::find(observers.begin(), observers.end(), obs);
     if ( it != observers.end() ) return ;
     observers.push_back(obs);
+    obs->numConnections_++ ;
 }
 
 void MidiIO::removeObserver(MidiObserver* obs, size_t ch){
     assert ( ch < numInputs_ );
     auto& observers = observers_[ch];
-    observers.erase(
-        std::remove(observers.begin(), observers.end(), obs),
-        observers.end()
-    );
+    auto it = std::find(observers.begin(), observers.end(), obs);
+    if ( it == observers.end() ) return ;
+    observers.erase(it);
+    obs->numConnections_-- ;
 }
 
 std::span<MidiObserver* const> MidiIO::observers(size_t ch) const {
@@ -138,10 +141,10 @@ void MidiIO::processEvent(MidiNote note, size_t ch){
     switch ( notes[v].status() ){
     case NoteStatus::PRESSED:
     case NoteStatus::REPRESSED:
-        lastPressedNote_ = v ;
+        lastNotePressed_[ch] = v ;
         break ;
     case NoteStatus::RELEASED:
-        lastReleasedNote_ = v ;
+        lastNoteReleased_[ch] = v ;
         break ;
     default:
         break ;
@@ -194,6 +197,9 @@ void MidiIO::reset(){
 
     processor_.onReset(); 
     for ( size_t ch = 0; ch < numOutputs_; ++ch ){
+        lastNotePressed_[ch]  = MidiNote::INVALID ;
+        lastNoteReleased_[ch] = MidiNote::INVALID ;
+
         active_[ch].forEach([&](size_t n){
             MidiNote& note = notes_[ch][n];
             processor_.killNote(note, ch);

@@ -18,27 +18,53 @@
 #ifndef BUFFER_STREAMER_HPP_
 #define BUFFER_STREAMER_HPP_
 
-#include "core/AudioBufferComponent.hpp"
-#include "core/AudioSignalComponent.hpp"
-#include "midi/MidiEventListener.hpp"
+
 #include "configs/BufferStreamerConfig.hpp"
 
-class BufferStreamer : public AudioBufferComponent, public AudioSignalComponent, public MidiEventListener {
+#include "core/Node.hpp"
+#include "interfaces/AudioProcessor.hpp"
+#include "interfaces/BufferObserver.hpp"
+#include "interfaces/ComponentInfo.hpp"
+#include "interfaces/MidiObserver.hpp"
+#include "interfaces/ParameterAccessor.hpp"
+#include "interfaces/ParameterObserver.hpp"
+
+class BufferStreamer : 
+    public Node,
+    public ComponentInfo,
+    public BufferObserver,
+    public AudioProcessor,
+    public MidiObserver,
+    public ParameterObserver
+{
 private:
-    double bufferPos_ ;
-    bool midiTriggerMode_ = false ;
+    SlotAccessor<ParameterType::STATUS> status_ ;
+    SlotAccessor<ParameterType::LOOP> loop_ ;
+    SlotAccessor<ParameterType::PLAYBACK_RATE> playbackRate_ ;
+
+    double bufferPos_ = 0.0 ;
     double midiVelocity_ = 1.0 ;
 
 public:
-    BufferStreamer(ComponentId id, BufferStreamerConfig cfg);
+    BufferStreamer(int id, BufferStreamerConfig cfg);
 
-    void calculateSample() override ;
-    void onParameterChanged([[maybe_unused]] ParameterType p, bool isCollection = false) override ;
+    BufferStreamer(const BufferStreamer&) = delete ;
+    BufferStreamer& operator=(const BufferStreamer&) = delete ;
+    BufferStreamer(BufferStreamer&&) = delete ;
+    BufferStreamer& operator=(BufferStreamer&&) = delete ;
 
-    void onKeyPressed(const ActiveNote* note, bool repress = false) override ;
-    void onHandlerAdded() override ;
-    void onHandlerRemoved() override ;
-    void onInputUpdated() override ;
+    // BUFFER OBSERVER
+    void onInputUpdated(size_t channel) override ;
+
+    // AUDIO PROCESSOR
+    void processFrame(const AudioAccessor& accessor, size_t frame) noexcept override ;
+
+    // MIDI OBSERVER
+    void onKeyPressed(const MidiNote& note) override ;
+
+    // PARAMETER OBSERVER
+    void onParameterChanged(ParameterType p, uint16_t slot) override ;
+
 };
 
 #endif // BUFFER_STREAMER_HPP_
